@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chargement...</title> <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#DC2626" id="theme-color-meta">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <style>
+        /* Transitions douces pour l'apparition des éléments */
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; opacity: 0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Pour masquer le contenu tant que la config n'est pas chargée */
+        body.loading { opacity: 0; }
+        body.loaded { opacity: 1; transition: opacity 0.5s ease; }
+    </style>
+</head>
+<body class="loading bg-gray-50 text-gray-800">
+
+    <nav id="navbar" class="fixed w-full z-50 top-0 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="#" class="flex items-center gap-2">
+                <img id="nav-logo" src="" alt="Logo" class="h-10 w-10 object-contain hidden">
+                <span id="nav-name" class="text-xl font-bold uppercase tracking-wider"></span>
+            </a>
+            
+            <button class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+
+            <div class="hidden md:flex items-center gap-6">
+                <a href="#menu" class="hover:text-gray-300 transition">La Carte</a>
+                <a href="#loyalty" id="nav-loyalty-link" class="hidden hover:text-gray-300 transition">Fidélité</a>
+                <a href="#infos" class="hover:text-gray-300 transition">Infos</a>
+                <a href="#" id="cta-nav" class="px-5 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition">
+                    Commander
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <header id="hero" class="relative h-[80vh] flex items-center justify-center bg-cover bg-center">
+        <div class="absolute inset-0 bg-black/50"></div> <div class="relative z-10 text-center px-4 max-w-4xl mx-auto text-white">
+            <span id="hero-status" class="inline-block px-3 py-1 mb-4 text-sm font-bold uppercase tracking-widest border border-white/30 rounded-full backdrop-blur-sm">
+                </span>
+            <h1 id="hero-title" class="text-5xl md:text-7xl font-bold mb-6 leading-tight"></h1>
+            <p id="hero-desc" class="text-xl md:text-2xl mb-8 font-light text-gray-200"></p>
+            <div class="flex flex-col md:flex-row gap-4 justify-center">
+                <a href="#menu" id="cta-hero" class="px-8 py-4 rounded-full font-bold text-lg shadow-xl transform hover:scale-105 transition">
+                    Voir le Menu
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <section id="menu" class="py-20">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Notre Carte</h2>
+                <div class="w-24 h-1 mx-auto rounded-full" id="section-divider"></div>
+            </div>
+            
+            <div id="menu-container" class="space-y-16"></div>
+        </div>
+    </section>
+
+    <section id="loyalty" class="py-20 hidden">
+        <div class="container mx-auto px-4">
+            <div id="loyalty-card" class="max-w-3xl mx-auto rounded-3xl p-8 md:p-12 text-white shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/10 blur-3xl"></div>
+                
+                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div class="text-center md:text-left">
+                        <h3 class="text-3xl font-bold mb-2" id="loyalty-title">Club Fidélité</h3>
+                        <p class="mb-6 opacity-90" id="loyalty-desc">Gagnez des points à chaque commande !</p>
+                        <div class="flex gap-4 justify-center md:justify-start">
+                            <button class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition">
+                                Connexion
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-6xl">
+                        <i class="fas fa-gift animate-bounce"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="infos" class="bg-gray-900 text-white py-16">
+        <div class="container mx-auto px-4 grid md:grid-cols-3 gap-12">
+            <div>
+                <h4 class="text-xl font-bold mb-6 text-gray-400 uppercase">Nous trouver</h4>
+                <p id="footer-address" class="text-lg mb-2"></p>
+                <p id="footer-phone" class="text-lg mb-4"></p>
+                <div id="socials-container" class="flex gap-4 text-2xl"></div>
+            </div>
+
+            <div>
+                <h4 class="text-xl font-bold mb-6 text-gray-400 uppercase">Horaires</h4>
+                <ul id="hours-list" class="space-y-2 text-gray-300"></ul>
+            </div>
+
+            <div class="text-center md:text-right">
+                <h2 id="footer-brand" class="text-3xl font-bold mb-2"></h2>
+                <p class="text-gray-500 text-sm">Propulsé par <span class="text-white">SnackTemplates™</span></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="snack-config.js"></script> <script src="app.js"></script>  
+    <div id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 z-50 px-6 py-3 flex justify-between items-center shadow-2xl">
+    <a href="#hero" class="flex flex-col items-center text-gray-400 hover:text-white transition">
+        <i class="fas fa-home text-xl mb-1"></i>
+        <span class="text-[10px] uppercase">Accueil</span>
+    </a>
+    
+    <div class="relative -top-8">
+        <a href="#" class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-4 border-gray-900 transform active:scale-95 transition">
+            <i class="fas fa-utensils text-2xl"></i>
+        </a>
+    </div>
+
+    <a href="#menu" class="flex flex-col items-center text-gray-400 hover:text-white transition">
+        <i class="fas fa-hamburger text-xl mb-1"></i>
+        <span class="text-[10px] uppercase">Carte</span>
+    </a>
+</div>
+  </body>
+</html>
