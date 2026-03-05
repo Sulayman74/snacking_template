@@ -186,14 +186,14 @@ document.addEventListener("DOMContentLoaded", () => {
       link.addEventListener("click", () => mobileBtn.click());
     });
   }
-// --- NAVIGATION MOBILE (Tab Bar iOS) ---
+  // --- NAVIGATION MOBILE (Tab Bar iOS) ---
   const mobileHomeBtn = document.getElementById("mobile-link-home");
-  if(mobileHomeBtn) {
-      mobileHomeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        switchView("home");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
+  if (mobileHomeBtn) {
+    mobileHomeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      switchView("home");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   }
 
   // ------------------------------------------------------------
@@ -454,10 +454,10 @@ window.closeProductModal = function () {
   }, 300);
 };
 // ------------------------------------------------------------
-  // EFFACER LE BADGE DE NOTIFICATION A L'OUVERTURE
-  // ------------------------------------------------------------
-  if ('clearAppBadge' in navigator) {
-    navigator.clearAppBadge().catch((error) => {
-      console.log('Erreur lors de la suppression du badge', error);
-    });
-  }
+// EFFACER LE BADGE DE NOTIFICATION A L'OUVERTURE
+// ------------------------------------------------------------
+if ("clearAppBadge" in navigator) {
+  navigator.clearAppBadge().catch((error) => {
+    console.log("Erreur lors de la suppression du badge", error);
+  });
+}

@@ -14,37 +14,49 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Écouteur pour le clic sur la notification
+// 1. ALLUMER LE BADGE : Gérer les messages quand l'app est en arrière-plan
+messaging.onBackgroundMessage(function(payload) {
+  console.log('[firebase-messaging-sw.js] Message reçu en background ', payload);
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/assets/icon-192.png'
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+
+  // Allumer la pastille rouge
+  if (navigator.setAppBadge) {
+    navigator.setAppBadge(1).catch((error) => console.log('Badges non supportés'));
+  }
+});
+
+// 2. ÉTEINDRE LE BADGE : Écouteur pour le clic sur la notification
 self.addEventListener('notificationclick', function(event) {
   console.log('[firebase-messaging-sw.js] Notification cliquée !');
 
-  // 1. On ferme la notification
+  // On ferme la notification
   event.notification.close();
 
-  // NOUVEAU : On efface la petite pastille rouge (badge) de l'icône !
+  // On efface la petite pastille rouge (badge) de l'icône !
   if (navigator.clearAppBadge) {
     navigator.clearAppBadge().catch((error) => {
       console.log('Erreur lors de la suppression du badge', error);
     });
   }
 
-  // 2. On définit l'URL à ouvrir (ici, la racine de ton site)
+  // On définit l'URL à ouvrir
   const urlToOpen = new URL('/', self.location.origin).href;
 
-  // 3. Logique d'ouverture
+  // Logique d'ouverture
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      
-      // A. On cherche si l'application est déjà ouverte quelque part
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
-        // Si elle est ouverte, on la ramène juste au premier plan
         if (client.url === urlToOpen && 'focus' in client) {
           return client.focus();
         }
       }
-      
-      // B. Si elle n'était pas ouverte, on la lance !
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
