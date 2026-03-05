@@ -31,9 +31,6 @@
     </style>
 </head>
 <body class="loading bg-gray-50 text-gray-800">
-<button onclick="demanderPermissionNotifs()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold">
-  M'avertir des promos
-</button>
     <nav id="navbar" class="fixed w-full z-50 top-0 transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <a href="#" class="flex items-center gap-2">
@@ -171,7 +168,9 @@
             </form>
         </div>
     </section>
-
+<button onclick="demanderPermissionNotifs()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold">
+  M'avertir des promos
+</button>
 <footer id="infos" class="relative overflow-hidden bg-gray-900/40 backdrop-blur-xl border-t border-white/10 text-white py-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
 
         <div class="liquid-blob absolute -top-24 -left-24 w-96 h-96 bg-red-600/30 rounded-full blur-3xl pointer-events-none"></div>
@@ -296,10 +295,10 @@
       if (permission === 'granted') {
         console.log("Permission accordée !");
         
+        
         getToken(messaging, { vapidKey: 'BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098' }).then((currentToken) => {
           if (currentToken) {
-            console.log("Jeton FCM récupéré :", currentToken);
-            alert("Super, vous recevrez nos promos !");
+            prompt("Super ! Voici votre jeton pour tester (Copiez-le) :", currentToken);
           } else {
             console.log("Aucun jeton disponible.");
           }

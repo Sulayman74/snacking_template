@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snack-app-v2'; // Changé en v2 pour forcer la mise à jour
+const CACHE_NAME = 'snack-app-v3'; 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
