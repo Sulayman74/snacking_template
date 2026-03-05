@@ -1,13 +1,10 @@
-// sw.js
-const CACHE_NAME = 'snack-app-v1';
+const CACHE_NAME = 'snack-app-v2'; // Changé en v2 pour forcer la mise à jour
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './snack-config.js', //
-  './app.js',          //
-  // On ne cache pas Tailwind CDN en prod idéalement, mais pour la démo oui
-  'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+  './styles.css',
+  './snack-config.js',
+  './app.js'
 ];
 
 // Installation
