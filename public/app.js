@@ -196,14 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  const mobileMenuBtn = document.getElementById("mobile-link-menu");
-  if(mobileMenuBtn) {
-      mobileMenuBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        switchView("full-menu");
-      });
-  }
-
   // ------------------------------------------------------------
   // 6. LOGIQUE AVIS & FORMULAIRE
   // ------------------------------------------------------------
@@ -461,3 +453,11 @@ window.closeProductModal = function () {
     document.body.style.overflow = ""; // Réactiver le scroll
   }, 300);
 };
+// ------------------------------------------------------------
+  // EFFACER LE BADGE DE NOTIFICATION A L'OUVERTURE
+  // ------------------------------------------------------------
+  if ('clearAppBadge' in navigator) {
+    navigator.clearAppBadge().catch((error) => {
+      console.log('Erreur lors de la suppression du badge', error);
+    });
+  }
