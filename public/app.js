@@ -186,18 +186,23 @@ document.addEventListener("DOMContentLoaded", () => {
       link.addEventListener("click", () => mobileBtn.click());
     });
   }
-  // Ouvre la vue Accueil et remonte tout en haut
-  document.getElementById("footer-link-home").addEventListener("click", (e) => {
-    e.preventDefault(); // Empêche le comportement standard du lien #
-    switchView("home");
-    window.scrollTo({ top: 0, behavior: "smooth" }); // Remonte en douceur
-  });
+// --- NAVIGATION MOBILE (Tab Bar iOS) ---
+  const mobileHomeBtn = document.getElementById("mobile-link-home");
+  if(mobileHomeBtn) {
+      mobileHomeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        switchView("home");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+  }
 
-  // Ouvre la vue "La Carte" (le full-menu)
-  document.getElementById("footer-link-menu").addEventListener("click", (e) => {
-    e.preventDefault();
-    switchView("menu");
-  });
+  const mobileMenuBtn = document.getElementById("mobile-link-menu");
+  if(mobileMenuBtn) {
+      mobileMenuBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        switchView("full-menu");
+      });
+  }
 
   // ------------------------------------------------------------
   // 6. LOGIQUE AVIS & FORMULAIRE

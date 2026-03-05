@@ -44,7 +44,7 @@
 </button>
 
             <div class="hidden md:flex items-center gap-2">
-                <a href="#menu" class="hover:text-gray-300 transition">La Carte</a>
+                <a href="#full-menu" class="hover:text-gray-300 transition">La Carte</a>
                 <a href="#loyalty" id="nav-loyalty-link" class="hidden hover:text-gray-300 transition">Fidélité</a>
                 <a href="#infos" class="hover:text-gray-300 transition">Infos</a>
                 <a href="#" id="cta-nav" class="px-5 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition">
@@ -171,64 +171,63 @@
     </section>
 
 <footer id="infos" class="relative overflow-hidden bg-gray-900/40 backdrop-blur-xl border-t border-white/10 text-white py-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
-        
+
         <div class="liquid-blob absolute -top-24 -left-24 w-96 h-96 bg-red-600/30 rounded-full blur-3xl pointer-events-none"></div>
+
         <div class="liquid-blob absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none animation-delay-2000"></div>
 
-        <div class="relative z-10 container mx-auto px-4 grid md:grid-cols-4 gap-12">
+
+
+        <div class="relative z-10 container mx-auto px-4 grid md:grid-cols-3 gap-12">
+
             <div>
+
                 <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest">Nous trouver</h4>
+
                 <p id="footer-address" class="text-lg mb-2 font-light"></p>
+
                 <p id="footer-phone" class="text-lg mb-4 font-light"></p>
+
                 <div id="socials-container" class="flex gap-4 text-2xl"></div>
-            </div>
 
+            </div>
             <div>
+
                 <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest">Horaires</h4>
-                <ul id="hours-list" class="space-y-2 font-light text-gray-200"></ul>
-            </div>
 
-            <div>
-                <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest">Navigation</h4>
-                <ul class="space-y-3 font-light text-gray-200">
-                    <li>
-                        <a href="#hero" id="footer-link-home" class="hover:text-red-500 transition cursor-pointer flex items-center gap-2">
-                            <i class="fas fa-home text-sm w-4"></i> Accueil
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#menu" id="footer-link-menu" class="hover:text-red-500 transition cursor-pointer flex items-center gap-2">
-                            <i class="fas fa-hamburger text-sm w-4"></i> La Carte
-                        </a>
-                    </li>
-                </ul>
+                <ul id="hours-list" class="space-y-2 font-light text-gray-200"></ul>
+
             </div>
 
             <div class="text-center md:text-right">
-                <h2 id="footer-brand" class="text-3xl font-bold mb-2 drop-shadow-lg"></h2>
-                <p class="text-gray-400 text-sm font-light">Propulsé par <span class="text-white font-bold">SnackTemplates™</span></p>
-            </div>
-        </div>
-    </footer>
 
-    <script src="snack-config.js"></script> <script src="app.js"></script>  
-    <div id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 z-50 px-6 py-3 flex justify-between items-center shadow-2xl">
-    <a href="#hero" class="flex flex-col items-center text-gray-400 hover:text-white transition">
-        <i class="fas fa-home text-xl mb-1"></i>
-        <span class="text-[10px] uppercase">Accueil</span>
-    </a>
-    
-<div class="relative -top-6">
-        <a href="#" id="mobile-cta-btn" target="_blank" class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-4 border-gray-900 transform active:scale-95 transition">
-            <i id="mobile-cta-icon" class="fas fa-utensils text-2xl"></i>
+                <h2 id="footer-brand" class="text-3xl font-bold mb-2 drop-shadow-lg"></h2>
+
+                <p class="text-gray-400 text-sm font-light">Propulsé par <span class="text-white font-bold">SnackTemplates™</span></p>
+
+            </div>
+
+        </div>
+
+    </footer>
+<div id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full bg-gray-900/60 backdrop-blur-2xl border-t border-white/10 z-50 px-6 pt-3 pb-6 flex justify-between items-center shadow-[0_-5px_30px_rgba(0,0,0,0.2)]">
+        
+        <a href="#hero" id="mobile-link-home" class="flex flex-col items-center text-gray-400 hover:text-white transition cursor-pointer">
+            <i class="fas fa-home text-2xl mb-1"></i>
+            <span class="text-[10px] uppercase font-bold tracking-wider">Accueil</span>
+        </a>
+        
+        <div class="relative -top-8">
+            <a href="#" id="mobile-cta-btn" target="_blank" class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(220,38,38,0.5)] transform active:scale-95 transition">
+                <i id="mobile-cta-icon" class="fas fa-utensils text-2xl"></i>
+            </a>
+        </div>
+
+        <a href="#full-menu" id="mobile-link-menu" class="flex flex-col items-center text-gray-400 hover:text-white transition cursor-pointer">
+            <i class="fas fa-hamburger text-2xl mb-1"></i>
+            <span class="text-[10px] uppercase font-bold tracking-wider">Carte</span>
         </a>
     </div>
-
-    <a href="#menu" class="flex flex-col items-center text-gray-400 hover:text-white transition">
-        <i class="fas fa-hamburger text-xl mb-1"></i>
-        <span class="text-[10px] uppercase">Carte</span>
-    </a>
-</div>
 
 <div id="product-modal-backdrop" onclick="closeProductModal()" class="fixed inset-0 bg-black/60 z-[70] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
 
@@ -263,6 +262,8 @@
         </div>
     </div>
 </div>
+    <script src="snack-config.js"></script> <script src="app.js"></script>  
+
 <script type="module">
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
