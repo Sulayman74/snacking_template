@@ -31,7 +31,9 @@
     </style>
 </head>
 <body class="loading bg-gray-50 text-gray-800">
-
+<button onclick="demanderPermissionNotifs()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold">
+  M'avertir des promos
+</button>
     <nav id="navbar" class="fixed w-full z-50 top-0 transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <a href="#" class="flex items-center gap-2">
@@ -44,7 +46,7 @@
 </button>
 
             <div class="hidden md:flex items-center gap-2">
-                <a href="#full-menu" class="hover:text-gray-300 transition">La Carte</a>
+                <a href="#menu" class="hover:text-gray-300 transition">La Carte</a>
                 <a href="#loyalty" id="nav-loyalty-link" class="hidden hover:text-gray-300 transition">Fidélité</a>
                 <a href="#infos" class="hover:text-gray-300 transition">Infos</a>
                 <a href="#" id="cta-nav" class="px-5 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition">
@@ -54,7 +56,7 @@
         </div>
 
         <div id="mobile-menu-overlay" class="fixed h-screen inset-0 z-40 bg-gray-900 hidden flex-col items-center justify-center space-y-10 opacity-0 transition-opacity duration-300">
-    <a href="#menu" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">La Carte</a>
+    <a href="#" onclick="switchView('menu'); return false;" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">La Carte</a>
     <a href="#loyalty" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110 hidden" id="mobile-link-loyalty">Fidélité</a>
     <a href="#infos" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Infos</a>
     <a href="#contact" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Contact</a>
@@ -210,7 +212,7 @@
         </div>
 
     </footer>
-<div id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full bg-gray-900/60 backdrop-blur-2xl border-t border-white/10 z-50 px-6 pt-3 pb-6 flex justify-between items-center shadow-[0_-5px_30px_rgba(0,0,0,0.2)]">
+<div id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full glass-nav z-50 px-6 pt-3 pb-6 flex justify-between items-center">
         
         <a href="#hero" id="mobile-link-home" class="flex flex-col items-center text-gray-400 hover:text-white transition cursor-pointer">
             <i class="fas fa-home text-2xl mb-1"></i>
@@ -223,7 +225,7 @@
             </a>
         </div>
 
-        <a href="#full-menu" id="mobile-link-menu" class="flex flex-col items-center text-gray-400 hover:text-white transition cursor-pointer">
+        <a href="#" onclick="switchView('menu'); return false;" id="mobile-link-menu" class="flex flex-col items-center text-gray-400 hover:text-white transition cursor-pointer">
             <i class="fas fa-hamburger text-2xl mb-1"></i>
             <span class="text-[10px] uppercase font-bold tracking-wider">Carte</span>
         </a>
@@ -265,14 +267,12 @@
     <script src="snack-config.js"></script> <script src="app.js"></script>  
 
 <script type="module">
-  // Import the functions you need from the SDKs you need
+  // 1. Imports corrects via CDN
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-messaging.js";
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  // 2. Ta config Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBIgi4AKo5nzRTO27KuvX0D6nHKsJIDkW8",
     authDomain: "snacking-template.firebaseapp.com",
@@ -283,9 +283,41 @@
     measurementId: "G-XT2YH4NE9Q"
   };
 
-  // Initialize Firebase
+  // 3. Initialisation globale
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
+  const messaging = getMessaging(app);
+
+  // 4. Fonction à attacher à un bouton (PAS exécutée toute seule !)
+  window.demanderPermissionNotifs = function() {
+    console.log("Demande de permission au navigateur...");
+    
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        console.log("Permission accordée !");
+        
+        getToken(messaging, { vapidKey: 'BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098' }).then((currentToken) => {
+          if (currentToken) {
+            console.log("Jeton FCM récupéré :", currentToken);
+            alert("Super, vous recevrez nos promos !");
+          } else {
+            console.log("Aucun jeton disponible.");
+          }
+        }).catch((err) => {
+          console.error("Erreur lors de la récupération du jeton : ", err);
+        });
+        
+      } else {
+        console.log("Permission refusée par l'utilisateur.");
+      }
+    });
+  };
+
+  // 5. Écouter les notifications si l'app est ouverte
+  onMessage(messaging, (payload) => {
+    console.log("Message reçu au premier plan :", payload);
+    alert(`Nouveau message : ${payload.notification.title}\n${payload.notification.body}`);
+  });
 </script>
   </body>
 </html>

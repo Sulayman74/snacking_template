@@ -1,13 +1,8 @@
-/* Animation Liquid Glass pour le footer */
-        .liquid-blob {
-            animation: liquidAnim 10s infinite alternate ease-in-out;
-        }
-        .animation-delay-2000 {
-            animation-delay: 2s;
-        }
-        @keyframes liquidAnim {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
-            100% { transform: translate(0, 0) scale(1); }
-        }
+/* Effet Liquid Glass pour la barre de navigation mobile */
+.glass-nav {
+    background-color: rgba(17, 24, 39, 0.65); /* Gris très foncé semi-transparent */
+    backdrop-filter: blur(20px); /* Le flou standard */
+    -webkit-backdrop-filter: blur(20px); /* LE SECRET POUR IPHONE/SAFARI */
+    border-top: 1px solid rgba(255, 255, 255, 0.1); /* La bordure lumineuse */
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3); /* L'ombre douce */
+}
