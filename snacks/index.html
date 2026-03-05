@@ -6,10 +6,13 @@
     <title>Chargement...</title> <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#DC2626" id="theme-color-meta">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="shortcut icon" href="favicon.ico">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -31,13 +34,15 @@
     <nav id="navbar" class="fixed w-full z-50 top-0 transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <a href="#" class="flex items-center gap-2">
-                <img id="nav-logo" src="" alt="Logo" class="h-10 w-10 object-contain hidden">
+                <img id="nav-logo" src="" alt="Logo" class="h-10 w-10 object-contain rounded-xl hidden">
                 <span id="nav-name" class="text-xl font-bold uppercase tracking-wider"></span>
             </a>
             
-            <button class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+<button id="mobile-menu-btn" class="md:hidden text-2xl text-white focus:outline-none transition-transform duration-300">
+    <i class="fas fa-bars"></i>
+</button>
 
-            <div class="hidden md:flex items-center gap-6">
+            <div class="hidden md:flex items-center gap-2">
                 <a href="#menu" class="hover:text-gray-300 transition">La Carte</a>
                 <a href="#loyalty" id="nav-loyalty-link" class="hidden hover:text-gray-300 transition">Fidélité</a>
                 <a href="#infos" class="hover:text-gray-300 transition">Infos</a>
@@ -46,6 +51,14 @@
                 </a>
             </div>
         </div>
+
+        <div id="mobile-menu-overlay" class="fixed h-screen inset-0 z-40 bg-gray-900 hidden flex-col items-center justify-center space-y-10 opacity-0 transition-opacity duration-300">
+    <a href="#menu" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">La Carte</a>
+    <a href="#loyalty" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110 hidden" id="mobile-link-loyalty">Fidélité</a>
+    <a href="#infos" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Infos</a>
+    <a href="#contact" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Contact</a>
+</div>
+</div>
     </nav>
 
     <header id="hero" class="relative h-[80vh] flex items-center justify-center bg-cover bg-center">
@@ -54,22 +67,43 @@
                 </span>
             <h1 id="hero-title" class="text-5xl md:text-7xl font-bold mb-6 leading-tight"></h1>
             <p id="hero-desc" class="text-xl md:text-2xl mb-8 font-light text-gray-200"></p>
-            <div class="flex flex-col md:flex-row gap-4 justify-center">
+            <!-- <div class="flex flex-col md:flex-row gap-4 justify-center">
                 <a href="#menu" id="cta-hero" class="px-8 py-4 rounded-full font-bold text-lg shadow-xl transform hover:scale-105 transition">
                     Voir le Menu
                 </a>
-            </div>
+            </div> -->
         </div>
     </header>
 
-    <section id="menu" class="py-20">
+<section id="bestsellers" class="py-12">
         <div class="container mx-auto px-4">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold mb-4">Notre Carte</h2>
-                <div class="w-24 h-1 mx-auto rounded-full" id="section-divider"></div>
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold mb-2">Nos Stars ⭐</h2>
+                <p class="text-gray-500">Les favoris du moment</p>
             </div>
             
-            <div id="menu-container" class="space-y-16"></div>
+            <div id="bestsellers-container" class="grid md:grid-cols-3 gap-6 mb-8">
+                </div>
+
+            <div class="text-center">
+                <button onclick="switchView('menu')" class="bg-gray-700/90 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:scale-105 transition transform">
+                    Voir toute la carte <i class="fas fa-arrow-right ml-2 text-green-600"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="full-menu" class="hidden h-full bg-white fixed inset-0 z-[60] overflow-y-auto">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center mb-1 bg-white/95 backdrop-blur py-2 z-10 border-b border-gray-100">
+                <h2 class="text-4xl font-bold">La Carte</h2>
+                <button onclick="switchView('home')" class="text-red-600 bg-red-100 w-12 rounded-full hover:bg-gray-200 transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div id="full-menu-container" class="space-y-10 pb-20">
+                </div>
         </div>
     </section>
 
@@ -93,6 +127,45 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section id="reviews" class="py-16 bg-white hidden">
+        <div class="container mx-auto px-4">
+            <div class="bg-gray-50 rounded-2xl p-8 text-center max-w-lg mx-auto border border-gray-100 shadow-sm">
+                <h3 class="text-xl text-black font-bold mb-4">Et vous, c'était comment ?</h3>
+                <div class="flex justify-center gap-3 text-4xl mb-6 cursor-pointer" id="interactive-stars">
+                    <i class="far fa-star text-gray-300 transition" data-value="1"></i>
+                    <i class="far fa-star text-gray-300 transition" data-value="2"></i>
+                    <i class="far fa-star text-gray-300 transition" data-value="3"></i>
+                    <i class="far fa-star text-gray-300 transition" data-value="4"></i>
+                    <i class="far fa-star text-gray-300 transition" data-value="5"></i>
+                </div>
+                <p id="rating-feedback" class="text-gray-600 font-medium min-h-[1.5rem]"></p>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="py-16 bg-gray-50 hidden">
+        <div class="container mx-auto px-4 max-w-xl">
+            <div class="text-center mb-10">
+                <h2 id="form-title" class="text-3xl font-bold text-black mb-4">Une question ?</h2>
+                <p id="form-desc" class="text-gray-600">Nous sommes là pour vous répondre.</p>
+            </div>
+            <form id="contact-form" method="POST" class="space-y-4 bg-gray-800 p-8 rounded-2xl shadow-xl">
+                <input type="hidden" name="source_avis" id="source-avis" value="contact_direct">
+                <div>
+                    <label class="block text-sm font-bold text-gray-200 mb-1">Email / Tél</label>
+                    <input type="text" name="contact" required class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-200 mb-1">Message</label>
+                    <textarea name="message" rows="3" required class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-black"></textarea>
+                </div>
+                <button type="submit" id="btn-submit-form" class="w-full py-4 rounded-xl font-bold text-white shadow-lg bg-black">
+                    Envoyer
+                </button>
+            </form>
         </div>
     </section>
 
@@ -124,9 +197,9 @@
         <span class="text-[10px] uppercase">Accueil</span>
     </a>
     
-    <div class="relative -top-8">
-        <a href="#" class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-4 border-gray-900 transform active:scale-95 transition">
-            <i class="fas fa-utensils text-2xl"></i>
+<div class="relative -top-6">
+        <a href="#" id="mobile-cta-btn" target="_blank" class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-4 border-gray-900 transform active:scale-95 transition">
+            <i id="mobile-cta-icon" class="fas fa-utensils text-2xl"></i>
         </a>
     </div>
 
@@ -134,6 +207,40 @@
         <i class="fas fa-hamburger text-xl mb-1"></i>
         <span class="text-[10px] uppercase">Carte</span>
     </a>
+</div>
+
+<div id="product-modal-backdrop" onclick="closeProductModal()" class="fixed inset-0 bg-black/60 z-[70] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
+
+<div id="product-modal" class="fixed bottom-0 left-0 w-full bg-white rounded-t-3xl shadow-2xl z-[80] transform translate-y-full transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+    
+    <button onclick="closeProductModal()" class="absolute top-4 right-4 bg-white/80 p-2 rounded-full shadow-md z-10 text-gray-800 hover:bg-gray-100">
+        <i class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i>
+    </button>
+
+    <div class="relative">
+        <div class="h-64 md:h-80 w-full">
+            <img id="modal-img" src="" class="w-full h-full object-cover rounded-t-3xl">
+        </div>
+        
+        <div class="p-6 md:p-10 pb-24"> <div class="flex justify-between items-start mb-4">
+                <h3 id="modal-title" class="text-3xl font-bold text-gray-900 font-oswald uppercase"></h3>
+                <span id="modal-price" class="text-2xl font-bold text-yellow-600"></span>
+            </div>
+
+            <div id="modal-tags" class="flex gap-2 mb-6 flex-wrap"></div>
+
+            <p id="modal-desc" class="text-gray-600 text-lg mb-8 leading-relaxed"></p>
+
+            <div id="modal-allergens-container" class="mb-8 p-4 bg-gray-50 rounded-xl hidden">
+                <h4 class="font-bold text-sm text-gray-400 uppercase mb-2">Infos & Allergènes</h4>
+                <p id="modal-allergens" class="text-gray-600 text-sm"></p>
+            </div>
+
+            <a href="#" id="modal-cta" class="block w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-black hover:scale-[1.02] transition-transform">
+                Commander par téléphone
+            </a>
+        </div>
+    </div>
 </div>
   </body>
 </html>

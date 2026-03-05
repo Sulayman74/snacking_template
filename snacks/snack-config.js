@@ -12,6 +12,10 @@ const snackConfig = {
         currency: "€",
         lang: "fr_FR"
     },
+    // -------------------------------------------------------------------------
+    //  Livraison? (Marketing)
+    // ------ exemple...
+    deliveryUrl: "https://www.ubereats.com/fr/store/...",
 
     // -------------------------------------------------------------------------
     // 2. UI & THEME (Tailwind & Design System)
@@ -37,7 +41,8 @@ const snackConfig = {
         },
 
         // Rayon des bordures (rounded-md, rounded-full, etc.)
-        borderRadius: "rounded-lg"
+        borderRadius: "rounded-lg",
+        heroImage: "./assets/heroImg.webp"
     },
 
     // -------------------------------------------------------------------------
@@ -48,7 +53,7 @@ const snackConfig = {
         enableOnlineOrder: true,      // Panier d'achat actif ?
         enableDelivery: false,        // Livraison disponible ?
         enableClickAndCollect: true,  // Retrait sur place ?
-        enableLoyaltyCard: true,      // Afficher la section fidélité ?
+        enableLoyaltyCard: false,      // Afficher la section fidélité ?
         maintenanceMode: false        // Si true, affiche une page "Bientôt de retour"
     },
 
@@ -101,7 +106,7 @@ const snackConfig = {
             street: "12 Rue de la République",
             city: "Lyon",
             zip: "69002",
-            googleMapsUrl: "https://maps.google.com/..."
+            googleMapsUrl: null
         },
         socials: {
             instagram: "@otacosfusion",
@@ -116,58 +121,219 @@ const snackConfig = {
     hours: [
         { day: "Lundi", open: "11:00", close: "23:00", closed: false },
         { day: "Mardi", open: "11:00", close: "23:00", closed: false },
-        { day: "Mercredi", open: "11:00", close: "23:00", closed: false },
+        { day: "Mercredi", open: "11:00", close: "23:00", closed: true },
         { day: "Jeudi", open: "11:00", close: "00:00", closed: false },
         { day: "Vendredi", open: "11:00", close: "01:00", closed: false }, // Nocturne
         { day: "Samedi", open: "11:00", close: "01:00", closed: false },
         { day: "Dimanche", open: "12:00", close: "23:00", closed: false }
     ],
 
-    // -------------------------------------------------------------------------
-    // 7. LE MENU (Données structurées)
+   // -------------------------------------------------------------------------
+    // 7. LE MENU (Données structurées - 16 Items de test)
     // -------------------------------------------------------------------------
     menu: {
         categories: [
+            // CATÉGORIE 1 : TACOS
             {
                 id: "tacos",
                 title: "Nos Tacos",
-                icon: "🌮", // Emoji ou SVG path
+                icon: "🌮",
                 items: [
                     {
                         id: "t_chicken",
                         name: "Le Chicken",
                         description: "Poulet mariné, sauce fromagère secrète.",
-                        price: 6.50,
-                        image: "assets/products/tacos-chicken.jpg",
-                        tags: ["Populaire", "Halal"], // Badges marketing
+                        price: 8.50,
+                        image: "./assets/tacos.webp",
+                        tags: ["Populaire", "Halal"], // <--- BEST SELLER 1
                         allergens: ["Lait", "Gluten"]
                     },
                     {
-                        id: "t_mixte",
-                        name: "Le Mixte",
-                        description: "Poulet & Viande hachée.",
-                        price: 7.50,
-                        image: "assets/products/tacos-mix.jpg",
-                        tags: [],
+                        id: "t_viande",
+                        name: "Le Carnivore",
+                        description: "Double viande hachée, cordon bleu.",
+                        price: 9.50,
+                        image: "./assets/tacos.webp",
+                        tags: ["Nouveau"],
                         allergens: ["Lait", "Gluten"]
+                    },
+                    {
+                        id: "t_vege",
+                        name: "Le Végé",
+                        description: "Falafels, chèvre, légumes grillés.",
+                        price: 7.50,
+                        image: "./assets/tacos.webp",
+                        tags: ["Végétarien"],
+                        allergens: ["Lait", "Gluten"]
+                    },
+                    {
+                        id: "t_lyon",
+                        name: "Le Lyonnais",
+                        description: "Steak, tenders, sauce algérienne.",
+                        price: 8.90,
+                        image: "./assets/tacos.webp",
+                        tags: [],
+                        allergens: ["Lait"]
                     }
                 ]
             },
+            
+            // CATÉGORIE 2 : BURGERS
+            {
+                id: "burgers",
+                title: "Burgers",
+                icon: "🍔",
+                items: [
+                    {
+                        id: "b_boss",
+                        name: "Le Big Boss",
+                        description: "Triple steak, cheddar fondant, bacon.",
+                        price: 10.50,
+                        image: "./assets/sandwich.webp", // Image temporaire
+                        tags: ["Populaire"], // <--- BEST SELLER 2
+                        allergens: ["Sésame", "Lait"]
+                    },
+                    {
+                        id: "b_cheese",
+                        name: "Classic Cheese",
+                        description: "L'indémodable steak cheddar.",
+                        price: 5.50,
+                        image: "./assets/sandwich.webp",
+                        tags: [],
+                        allergens: ["Sésame", "Lait"]
+                    },
+                    {
+                        id: "b_chicken",
+                        name: "Chicken Tower",
+                        description: "Filet de poulet pané croustillant.",
+                        price: 7.00,
+                        image: "./assets/sandwich.webp",
+                        tags: [],
+                        allergens: ["Sésame", "Gluten"]
+                    }
+                ]
+            },
+
+            // CATÉGORIE 3 : WRAPS & SANDWICHS
+            {
+                id: "wraps",
+                title: "Wraps & Sandwichs",
+                icon: "🌯",
+                items: [
+                    {
+                        id: "w_chevre",
+                        name: "Wrap Chèvre Miel",
+                        description: "Douceur du miel et caractère du chèvre.",
+                        price: 6.00,
+                        image: "./assets/sandwich.webp",
+                        tags: [],
+                        allergens: ["Lait"]
+                    },
+                    {
+                        id: "s_parisien",
+                        name: "Le Parisien",
+                        description: "Jambon crudités mayonnaise.",
+                        price: 5.50,
+                        image: "./assets/sandwich.webp",
+                        tags: [],
+                        allergens: ["Gluten"]
+                    },
+                    {
+                        id: "s_thon",
+                        name: "Le Thon Mayo",
+                        description: "Mélange thon mayonnaise maison.",
+                        price: 5.50,
+                        image: "./assets/sandwich.webp",
+                        tags: [],
+                        allergens: ["Poisson"]
+                    }
+                ]
+            },
+
+            // CATÉGORIE 4 : SIDES
             {
                 id: "sides",
-                title: "Accompagnements",
+                title: "A côté",
                 icon: "🍟",
                 items: [
                     {
                         id: "frites_cheddar",
                         name: "Frites Cheddar Bacon",
+                        price: 4.50,
+                        image: "assets/frites.webp",
+                        tags: ["Populaire"], // <--- BEST SELLER 3
+                        allergens: ["Lait"]
+                    },
+                    {
+                        id: "frites_simple",
+                        name: "Frites",
+                        price: 3.00,
+                        image: "assets/frites.webp",
+                        tags: [],
+                        allergens: []
+                    },
+                    {
+                        id: "nuggets",
+                        name: "Nuggets x6",
+                        price: 4.00,
+                        image: "assets/frites.webp",
+                        tags: [],
+                        allergens: ["Gluten"]
+                    }
+                ]
+            },
+
+            // CATÉGORIE 5 : BOISSONS & DESSERTS
+            {
+                id: "drinks",
+                title: "Boissons & Douceurs",
+                icon: "🥤",
+                items: [
+                    {
+                        id: "coca",
+                        name: "Coca-Cola 33cl",
+                        description: "L'original.",
+                        price: 1.50,
+                        image: "assets/heroImg.webp", // Image placeholder
+                        tags: [],
+                        allergens: []
+                    },
+                    {
+                        id: "tiramisu",
+                        name: "Tiramisu Maison",
+                        description: "Café ou Speculoos.",
                         price: 3.50,
-                        image: "assets/products/fries.jpg"
+                        image: "assets/heroImg.webp",
+                        tags: ["Fait Maison"],
+                        allergens: ["Lait", "Oeuf"]
+                    },
+                    {
+                        id: "cookie",
+                        name: "Cookie Pépite",
+                        description: "Cuit sur place chaque matin.",
+                        price: 2.00,
+                        image: "assets/heroImg.webp",
+                        tags: [],
+                        allergens: ["Gluten", "Oeuf"]
                     }
                 ]
             }
         ]
-    }
+    },
+    //  : AVIS ---
+    reviews: {
+        enable: true,
+        // Remplacez par le vrai lien Google Maps du client
+        googleMapsReviewLink: "https://search.google.com/local/writereview?placeid=EXAMPLE" 
+    },
+
+    //  : FORMULAIRE ---
+    form: {
+        enable: true,
+        title: "Contactez-nous",
+        description: "Une question sur les allergènes ou une réservation ?",
+        formspreeUrl: "https://formspree.io/f/mykdrzlq"
+    },
 };
 
 // Export pour utilisation dans app.js
