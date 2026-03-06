@@ -14,7 +14,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// 1. ALLUMER LE BADGE : Gérer les messages quand l'app est en arrière-plan
+// --- FORCE LE BADGE (Événement natif) ---
+// Cet événement s'exécute pour TOUS les messages entrants, garantissant le badge
+self.addEventListener('push', (event) => {
+  if ('setAppBadge' in self.navigator) {
+    event.waitUntil(self.navigator.setAppBadge(1));
+  }
+});
+
+// Gérer les messages quand l'app est en arrière-plan (Optionnel si push natif est là)
 messaging.onBackgroundMessage(function(payload) {
   console.log('[firebase-messaging-sw.js] Message reçu en background ', payload);
   const notificationTitle = payload.notification.title;
@@ -22,33 +30,19 @@ messaging.onBackgroundMessage(function(payload) {
     body: payload.notification.body,
     icon: '/assets/icon-192.png'
   };
-
   self.registration.showNotification(notificationTitle, notificationOptions);
-
-  // Allumer la pastille rouge
-  if (navigator.setAppBadge) {
-    navigator.setAppBadge(1).catch((error) => console.log('Badges non supportés'));
-  }
 });
 
-// 2. ÉTEINDRE LE BADGE : Écouteur pour le clic sur la notification
+// Écouteur pour le clic sur la notification
 self.addEventListener('notificationclick', function(event) {
-  console.log('[firebase-messaging-sw.js] Notification cliquée !');
-
-  // On ferme la notification
   event.notification.close();
 
-  // On efface la petite pastille rouge (badge) de l'icône !
-  if (navigator.clearAppBadge) {
-    navigator.clearAppBadge().catch((error) => {
-      console.log('Erreur lors de la suppression du badge', error);
-    });
+  // On efface le badge au clic
+  if ('clearAppBadge' in self.navigator) {
+    self.navigator.clearAppBadge();
   }
 
-  // On définit l'URL à ouvrir
   const urlToOpen = new URL('/', self.location.origin).href;
-
-  // Logique d'ouverture
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (let i = 0; i < windowClients.length; i++) {
