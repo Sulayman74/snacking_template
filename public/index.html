@@ -43,7 +43,7 @@
 </button>
 
             <div class="hidden md:flex items-center gap-2">
-                <a href="#menu" class="hover:text-gray-300 transition">La Carte</a>
+                <a href="#" onclick="switchView('menu'); return false;" class="hover:text-gray-300 transition">La Carte</a>
                 <a href="#loyalty" id="nav-loyalty-link" class="hidden hover:text-gray-300 transition">Fidélité</a>
                 <a href="#infos" class="hover:text-gray-300 transition">Infos</a>
                 <a href="#" id="cta-nav" class="px-5 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition">
@@ -117,9 +117,9 @@
                         <h3 class="text-3xl font-bold mb-2" id="loyalty-title">Club Fidélité</h3>
                         <p class="mb-6 opacity-90" id="loyalty-desc">Gagnez des points à chaque commande !</p>
                         <div class="flex gap-4 justify-center md:justify-start">
-                            <button class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition">
-                                Connexion
-                            </button>
+<button id="loyalty-main-btn" onclick="toggleAuthModal()" class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition">
+    Connexion
+</button>
                         </div>
                     </div>
                     <div class="text-6xl">
@@ -266,13 +266,47 @@
         </div>
     </div>
 </div>
-    <script src="snack-config.js"></script> <script src="app.js"></script>  
+<div id="auth-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl">
+        <button onclick="toggleAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        
+        <div class="text-center mb-8">
+            <h3 id="auth-title" class="text-2xl font-bold text-gray-900">Bienvenue !</h3>
+            <p id="auth-subtitle" class="text-gray-500">Connectez-vous pour votre carte de fidélité.</p>
+        </div>
 
-<script type="module">
+        <form id="auth-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                <input type="email" id="auth-email" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Mot de passe</label>
+                <input type="password" id="auth-password" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition">
+            </div>
+            
+            <button type="submit" id="auth-submit-btn" class="w-full py-4 bg-black text-white rounded-xl font-bold shadow-lg hover:scale-[1.02] transition-transform">
+                Se connecter
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm">
+            <span id="auth-switch-text">Pas encore de compte ?</span>
+            <button onclick="switchAuthMode()" id="auth-switch-btn" class="text-red-600 font-bold ml-1 hover:underline">S'inscrire</button>
+        </div>
+    </div>
+</div>
+    <script src="snack-config.js"></script> <script src="app.js"></script> <script type="module" src="firebase-init.js"></script>
+
+<!-- <script type="module">
   // 1. Imports corrects via CDN
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
   import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-messaging.js";
+  import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
   // 2. Ta config Firebase
   const firebaseConfig = {
@@ -289,6 +323,93 @@
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const messaging = getMessaging(app);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  // --- 3. GESTION DE LA FENÊTRE (MODAL) ---
+  let isSignUpMode = false;
+  
+  window.toggleAuthModal = () => {
+    document.getElementById('auth-modal').classList.toggle('hidden');
+  };
+  window.switchAuthMode = () => {
+    isSignUpMode = !isSignUpMode;
+    document.getElementById('auth-title').innerText = isSignUpMode ? "Créer un compte" : "Bienvenue !";
+    document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "S'inscrire" : "Se connecter";
+    document.getElementById('auth-switch-btn').innerText = isSignUpMode ? "Se connecter" : "S'inscrire";
+    document.getElementById('auth-switch-text').innerText = isSignUpMode ? "Déjà un compte ?" : "Pas encore de compte ?";
+  };
+
+  // --- 4. CONNEXION ET CRÉATION DE PROFIL ---
+  document.getElementById('auth-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+
+    try {
+      if (isSignUpMode) {
+        // A. Inscription Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // B. Création du profil dans Firestore (L'Étape Experte !)
+        await setDoc(doc(db, "users", user.uid), {
+          email: user.email,
+          role: "client", // Par défaut, c'est un client
+          points: 0,
+          createdAt: new Date().toISOString()
+        });
+        alert("Compte créé avec succès !");
+      } else {
+        // Connexion
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+      toggleAuthModal(); // On cache la fenêtre
+    } catch (error) {
+      alert("Erreur : " + error.message);
+    }
+  });
+
+  // --- 5. ÉCOUTER QUI EST CONNECTÉ (Client ou Admin ?) ---
+  onAuthStateChanged(auth, async (user) => {
+    // Le bouton de ta section fidélité
+    const loyaltyBtn = document.querySelector('#loyalty-card button'); 
+    
+    if (user) {
+      console.log("Connecté :", user.email);
+      
+      // On va lire le rôle dans Firestore
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        
+        if (userData.role === "admin") {
+            // MODE PATRON
+            if (loyaltyBtn) {
+                loyaltyBtn.innerText = "Scanner un client (Admin)";
+                loyaltyBtn.onclick = () => alert("La caméra s'ouvrira ici !");
+                loyaltyBtn.classList.add("bg-red-600", "text-white");
+                loyaltyBtn.classList.remove("bg-white", "text-black");
+            }
+        } else {
+            // MODE CLIENT NORMAL
+            if (loyaltyBtn) {
+                loyaltyBtn.innerText = "Afficher mon QR Code";
+                loyaltyBtn.onclick = () => alert("Le QR Code s'affichera ici !");
+            }
+        }
+      }
+    } else {
+      // DÉCONNECTÉ
+      if (loyaltyBtn) {
+        loyaltyBtn.innerText = "Connexion";
+        loyaltyBtn.onclick = toggleAuthModal;
+        loyaltyBtn.classList.add("bg-white", "text-black");
+        loyaltyBtn.classList.remove("bg-red-600", "text-white");
+      }
+    }
+  });   
 
   // 4. Fonction à attacher à un bouton (PAS exécutée toute seule !)
   window.demanderPermissionNotifs = function() {
@@ -320,6 +441,6 @@
     console.log("Message reçu au premier plan :", payload);
     alert(`Nouveau message : ${payload.notification.title}\n${payload.notification.body}`);
   });
-</script>
+</script> -->
   </body>
 </html>

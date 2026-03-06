@@ -53,7 +53,7 @@ const snackConfig = {
         enableOnlineOrder: true,      // Panier d'achat actif ?
         enableDelivery: false,        // Livraison disponible ?
         enableClickAndCollect: true,  // Retrait sur place ?
-        enableLoyaltyCard: false,      // Afficher la section fidélité ?
+        enableLoyaltyCard: true,      // Afficher la section fidélité ?
         maintenanceMode: false        // Si true, affiche une page "Bientôt de retour"
     },
 
