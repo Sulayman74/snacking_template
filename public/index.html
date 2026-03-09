@@ -3,34 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chargement...</title> <script src="https://cdn.tailwindcss.com"></script>
+    <title>Chargement...</title> 
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#DC2626" id="theme-color-meta">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
+    <meta name="theme-color" content="#DC2626" id="theme-color-meta">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
 
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="assets/icon-192.png">
-<link rel="shortcut icon" href="favicon.ico">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="shortcut icon" href="favicon.ico">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <style>
-        /* Transitions douces pour l'apparition des éléments */
-        .fade-in { animation: fadeIn 0.5s ease-in forwards; opacity: 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Pour masquer le contenu tant que la config n'est pas chargée */
-        body.loading { opacity: 0; }
-        body.loaded { opacity: 1; transition: opacity 0.5s ease; }
-    </style>
 </head>
-<body class="loading bg-gray-50 text-gray-800">
+
+<body class="bg-gray-50 text-gray-800">
+
+    <div id="splash-screen" class="fixed inset-0 z-[9999] bg-gray-900 flex flex-col items-center justify-center transition-opacity duration-500">
+        <img src="assets/icon-192.png" alt="O'Tacos Fusion" class="w-32 h-32 animate-pulse mb-8 rounded-3xl shadow-[0_0_40px_rgba(220,38,38,0.4)]">
+        
+        <div class="relative w-14 h-14">
+            <div class="absolute inset-0 border-4 border-gray-700 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-red-600 rounded-full border-t-transparent animate-spin"></div>
+        </div>
+        
+        <h2 class="text-white mt-6 font-bold tracking-widest uppercase text-lg animate-pulse">Tout est prêt...</h2>
+    </div>
+
     <nav id="navbar" class="fixed w-full z-50 top-0 transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <a href="#" class="flex items-center gap-2">
@@ -38,9 +42,9 @@
                 <span id="nav-name" class="text-xl font-bold uppercase tracking-wider"></span>
             </a>
             
-<button id="mobile-menu-btn" class="md:hidden text-2xl text-white focus:outline-none transition-transform duration-300">
-    <i class="fas fa-bars"></i>
-</button>
+            <button id="mobile-menu-btn" class="md:hidden text-2xl text-white focus:outline-none transition-transform duration-300">
+                <i class="fas fa-bars"></i>
+            </button>
 
             <div class="hidden md:flex items-center gap-2">
                 <a href="#" onclick="switchView('menu'); return false;" class="hover:text-gray-300 transition">La Carte</a>
@@ -49,33 +53,34 @@
                 <a href="#" id="cta-nav" class="px-5 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition">
                     Commander
                 </a>
+                <button id="nav-logout-btn" onclick="logoutUser()" class="hidden text-red-500 hover:text-red-700 font-bold transition flex items-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i> Quitter
+                </button>
             </div>
         </div>
 
         <div id="mobile-menu-overlay" class="fixed h-screen inset-0 z-40 bg-gray-900 hidden flex-col items-center justify-center space-y-10 opacity-0 transition-opacity duration-300">
-    <a href="#" onclick="switchView('menu'); return false;" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">La Carte</a>
-    <a href="#loyalty" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110 hidden" id="mobile-link-loyalty">Fidélité</a>
-    <a href="#infos" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Infos</a>
-    <a href="#contact" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Contact</a>
-</div>
-</div>
+            <a href="#" onclick="switchView('menu'); return false;" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">La Carte</a>
+            <a href="#loyalty" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110 hidden" id="mobile-link-loyalty">Fidélité</a>
+            <a href="#infos" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Infos</a>
+            <a href="#contact" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Contact</a>
+            <a href="#" id="mobile-logout-btn" onclick="logoutUser(); return false;" class="hidden mobile-link text-xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110 mt-8">
+                Déconnexion
+            </a>
+        </div>
     </nav>
 
     <header id="hero" class="relative h-[80vh] flex items-center justify-center bg-cover bg-center">
-        <div class="absolute inset-0 bg-black/50"></div> <div class="relative z-10 text-center px-4 max-w-4xl mx-auto text-white">
+        <div class="absolute inset-0 bg-black/50"></div> 
+        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto text-white">
             <span id="hero-status" class="inline-block px-3 py-1 mb-4 text-sm font-bold uppercase tracking-widest border border-white/30 rounded-full backdrop-blur-sm">
-                </span>
+            </span>
             <h1 id="hero-title" class="text-5xl md:text-7xl font-bold mb-6 leading-tight"></h1>
             <p id="hero-desc" class="text-xl md:text-2xl mb-8 font-light text-gray-200"></p>
-            <!-- <div class="flex flex-col md:flex-row gap-4 justify-center">
-                <a href="#menu" id="cta-hero" class="px-8 py-4 rounded-full font-bold text-lg shadow-xl transform hover:scale-105 transition">
-                    Voir le Menu
-                </a>
-            </div> -->
         </div>
     </header>
 
-<section id="bestsellers" class="py-12">
+    <section id="bestsellers" class="py-12">
         <div class="container mx-auto px-4">
             <div class="text-center mb-8">
                 <h2 class="text-3xl font-bold mb-2">Nos Stars ⭐</h2>
@@ -83,7 +88,7 @@
             </div>
             
             <div id="bestsellers-container" class="grid md:grid-cols-3 gap-6 mb-8">
-                </div>
+            </div>
 
             <div class="text-center">
                 <button onclick="switchView('menu')" class="bg-gray-700/90 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:scale-105 transition transform">
@@ -103,7 +108,7 @@
             </div>
 
             <div id="full-menu-container" class="space-y-10 pb-20">
-                </div>
+            </div>
         </div>
     </section>
 
@@ -117,9 +122,9 @@
                         <h3 class="text-3xl font-bold mb-2" id="loyalty-title">Club Fidélité</h3>
                         <p class="mb-6 opacity-90" id="loyalty-desc">Gagnez des points à chaque commande !</p>
                         <div class="flex gap-4 justify-center md:justify-start">
-<button id="loyalty-main-btn" onclick="toggleAuthModal()" class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition">
-    Connexion
-</button>
+                            <button id="loyalty-main-btn" onclick="toggleAuthModal()" class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition">
+                                Connexion
+                            </button>
                         </div>
                     </div>
                     <div class="text-6xl">
@@ -168,279 +173,186 @@
             </form>
         </div>
     </section>
+    
     <div class="w-full p-1 flex justify-center items-center">
-
         <button onclick="demanderPermissionNotifs()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold">
             M'avertir des promos
         </button>
     </div>
-<footer id="infos" class="relative overflow-hidden bg-gray-900/40 backdrop-blur-xl border-t border-white/10 text-white py-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
 
+    <footer id="infos" class="relative overflow-hidden bg-gray-900/40 backdrop-blur-xl border-t border-white/10 text-white py-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
         <div class="liquid-blob absolute -top-24 -left-24 w-96 h-96 bg-red-600/30 rounded-full blur-3xl pointer-events-none"></div>
-
         <div class="liquid-blob absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none animation-delay-2000"></div>
 
-
-
         <div class="relative z-10 container mx-auto px-4 grid md:grid-cols-3 gap-12">
-
             <div>
-
                 <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest">Nous trouver</h4>
-
                 <p id="footer-address" class="text-lg mb-2 font-light"></p>
-
                 <p id="footer-phone" class="text-lg mb-4 font-light"></p>
-
                 <div id="socials-container" class="flex gap-4 text-2xl"></div>
-
             </div>
             <div>
-
                 <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest">Horaires</h4>
-
                 <ul id="hours-list" class="space-y-2 font-light text-gray-200"></ul>
-
             </div>
-
             <div class="text-center md:text-right">
-
                 <h2 id="footer-brand" class="text-3xl font-bold mb-2 drop-shadow-lg"></h2>
-
                 <p class="text-gray-400 text-sm font-light">Propulsé par <span class="text-white font-bold">SnackTemplates™</span></p>
-
             </div>
-
         </div>
-
     </footer>
-<div id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full glass-nav z-50 px-6 pt-3 pb-6 flex justify-between items-center">
-        
+
+    <div id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full glass-nav z-50 px-6 pt-3 pb-6 flex justify-between items-center">
         <a href="#hero" id="mobile-link-home" class="flex flex-col items-center text-gray-400 hover:text-white transition cursor-pointer">
             <i class="fas fa-home text-2xl mb-1"></i>
             <span class="text-[10px] uppercase font-bold tracking-wider">Accueil</span>
         </a>
-        
         <div class="relative -top-8">
             <a href="#" id="mobile-cta-btn" target="_blank" class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(220,38,38,0.5)] transform active:scale-95 transition">
                 <i id="mobile-cta-icon" class="fas fa-utensils text-2xl"></i>
             </a>
         </div>
-
         <a href="#" onclick="switchView('menu'); return false;" id="mobile-link-menu" class="flex flex-col items-center text-gray-400 hover:text-white transition cursor-pointer">
             <i class="fas fa-hamburger text-2xl mb-1"></i>
             <span class="text-[10px] uppercase font-bold tracking-wider">Carte</span>
         </a>
     </div>
 
-<div id="product-modal-backdrop" onclick="closeProductModal()" class="fixed inset-0 bg-black/60 z-[70] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
+    <div id="product-modal-backdrop" onclick="closeProductModal()" class="fixed inset-0 bg-black/60 z-[70] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
 
-<div id="product-modal" class="fixed bottom-0 left-0 w-full bg-white rounded-t-3xl shadow-2xl z-[80] transform translate-y-full transition-transform duration-300 max-h-[90vh] overflow-y-auto">
-    
-    <button onclick="closeProductModal()" class="absolute top-4 right-4 bg-white/80 p-2 rounded-full shadow-md z-10 text-gray-800 hover:bg-gray-100">
-        <i class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i>
-    </button>
-
-    <div class="relative">
-        <div class="h-64 md:h-80 w-full">
-            <img id="modal-img" src="" class="w-full h-full object-cover rounded-t-3xl">
-        </div>
-        
-        <div class="p-6 md:p-10 pb-24"> <div class="flex justify-between items-start mb-4">
-                <h3 id="modal-title" class="text-3xl font-bold text-gray-900 font-oswald uppercase"></h3>
-                <span id="modal-price" class="text-2xl font-bold text-yellow-600"></span>
-            </div>
-
-            <div id="modal-tags" class="flex gap-2 mb-6 flex-wrap"></div>
-
-            <p id="modal-desc" class="text-gray-600 text-lg mb-8 leading-relaxed"></p>
-
-            <div id="modal-allergens-container" class="mb-8 p-4 bg-gray-50 rounded-xl hidden">
-                <h4 class="font-bold text-sm text-gray-400 uppercase mb-2">Infos & Allergènes</h4>
-                <p id="modal-allergens" class="text-gray-600 text-sm"></p>
-            </div>
-
-            <a href="#" id="modal-cta" class="block w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-black hover:scale-[1.02] transition-transform">
-                Commander par téléphone
-            </a>
-        </div>
-    </div>
-</div>
-<div id="auth-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl">
-        <button onclick="toggleAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black">
-            <i class="fas fa-times text-xl"></i>
+    <div id="product-modal" class="fixed bottom-0 left-0 w-full bg-white rounded-t-3xl shadow-2xl z-[80] transform translate-y-full transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+        <button onclick="closeProductModal()" class="absolute top-4 right-4 bg-white/80 p-2 rounded-full shadow-md z-10 text-gray-800 hover:bg-gray-100">
+            <i class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i>
         </button>
-        
-        <div class="text-center mb-8">
-            <h3 id="auth-title" class="text-2xl font-bold text-gray-900">Bienvenue !</h3>
-            <p id="auth-subtitle" class="text-gray-500">Connectez-vous pour votre carte de fidélité.</p>
-        </div>
 
-        <form id="auth-form" class="space-y-4">
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
-                <input type="email" id="auth-email" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition">
+        <div class="relative">
+            <div class="h-64 md:h-80 w-full">
+                <img id="modal-img" src="" class="w-full h-full object-cover rounded-t-3xl">
             </div>
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Mot de passe</label>
-                <input type="password" id="auth-password" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition">
+            <div class="p-6 md:p-10 pb-24"> 
+                <div class="flex justify-between items-start mb-4">
+                    <h3 id="modal-title" class="text-3xl font-bold text-gray-900 font-oswald uppercase"></h3>
+                    <span id="modal-price" class="text-2xl font-bold text-yellow-600"></span>
+                </div>
+                <div id="modal-tags" class="flex gap-2 mb-6 flex-wrap"></div>
+                <p id="modal-desc" class="text-gray-600 text-lg mb-8 leading-relaxed"></p>
+                <div id="modal-allergens-container" class="mb-8 p-4 bg-gray-50 rounded-xl hidden">
+                    <h4 class="font-bold text-sm text-gray-400 uppercase mb-2">Infos & Allergènes</h4>
+                    <p id="modal-allergens" class="text-gray-600 text-sm"></p>
+                </div>
+                <a href="#" id="modal-cta" class="block w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-black hover:scale-[1.02] transition-transform">
+                    Commander par téléphone
+                </a>
             </div>
-            
-            <button type="submit" id="auth-submit-btn" class="w-full py-4 bg-black text-white rounded-xl font-bold shadow-lg hover:scale-[1.02] transition-transform">
-                Se connecter
-            </button>
-        </form>
-
-        <div class="mt-6 text-center text-sm">
-            <span id="auth-switch-text">Pas encore de compte ?</span>
-            <button onclick="switchAuthMode()" id="auth-switch-btn" class="text-red-600 font-bold ml-1 hover:underline">S'inscrire</button>
         </div>
     </div>
-</div>
-    <script src="snack-config.js"></script> <script src="app.js"></script> <script type="module" src="firebase-init.js"></script>
 
-<!-- <script type="module">
-  // 1. Imports corrects via CDN
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
-  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-messaging.js";
-  import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    <div id="auth-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl">
+            <button onclick="toggleAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="text-center mb-8">
+                <h3 id="auth-title" class="text-2xl font-bold text-gray-900">Bienvenue !</h3>
+                <p id="auth-subtitle" class="text-gray-500">Connectez-vous pour votre carte de fidélité.</p>
+            </div>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                    <input type="email" id="auth-email" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition text-black">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Mot de passe</label>
+                    <input type="password" id="auth-password" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition text-black">
+                </div>
+                <button type="submit" id="auth-submit-btn" class="w-full py-4 bg-black text-white rounded-xl font-bold shadow-lg hover:scale-[1.02] transition-transform">
+                    Se connecter
+                </button>
+            </form>
+            <div class="mt-6 text-center text-sm">
+                <span id="auth-switch-text">Pas encore de compte ?</span>
+                <button onclick="switchAuthMode()" id="auth-switch-btn" class="text-red-600 font-bold ml-1 hover:underline">S'inscrire</button>
+            </div>
+        </div>
+    </div>
 
-  // 2. Ta config Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyBIgi4AKo5nzRTO27KuvX0D6nHKsJIDkW8",
-    authDomain: "snacking-template.firebaseapp.com",
-    projectId: "snacking-template",
-    storageBucket: "snacking-template.firebasestorage.app",
-    messagingSenderId: "472027657186",
-    appId: "1:472027657186:web:7c1621680d9863aa8dffbb",
-    measurementId: "G-XT2YH4NE9Q"
-  };
+    <div id="snackbar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl z-[200] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3">
+        <i id="snackbar-icon" class="fas fa-check-circle text-green-400 text-xl"></i>
+        <span id="snackbar-message" class="font-medium">Message ici</span>
+    </div>
 
-  // 3. Initialisation globale
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const messaging = getMessaging(app);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  // --- 3. GESTION DE LA FENÊTRE (MODAL) ---
-  let isSignUpMode = false;
-  
-  window.toggleAuthModal = () => {
-    document.getElementById('auth-modal').classList.toggle('hidden');
-  };
-  window.switchAuthMode = () => {
-    isSignUpMode = !isSignUpMode;
-    document.getElementById('auth-title').innerText = isSignUpMode ? "Créer un compte" : "Bienvenue !";
-    document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "S'inscrire" : "Se connecter";
-    document.getElementById('auth-switch-btn').innerText = isSignUpMode ? "Se connecter" : "S'inscrire";
-    document.getElementById('auth-switch-text').innerText = isSignUpMode ? "Déjà un compte ?" : "Pas encore de compte ?";
-  };
-
-  // --- 4. CONNEXION ET CRÉATION DE PROFIL ---
-  document.getElementById('auth-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-
-    try {
-      if (isSignUpMode) {
-        // A. Inscription Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+<div id="client-card-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0">
         
-        // B. Création du profil dans Firestore (L'Étape Experte !)
-        await setDoc(doc(db, "users", user.uid), {
-          email: user.email,
-          role: "client", // Par défaut, c'est un client
-          points: 0,
-          createdAt: new Date().toISOString()
-        });
-        alert("Compte créé avec succès !");
-      } else {
-        // Connexion
-        await signInWithEmailAndPassword(auth, email, password);
-      }
-      toggleAuthModal(); // On cache la fenêtre
-    } catch (error) {
-      alert("Erreur : " + error.message);
-    }
-  });
+        <div id="virtual-card" class="w-full max-w-sm rounded-3xl relative shadow-2xl overflow-hidden transform transition-transform scale-95 border border-white/20">
+            
+            <div id="card-bg-gradient" class="absolute inset-0 bg-gradient-to-br from-red-500 to-orange-600 z-0"></div>
+            
+            <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/20 blur-3xl z-0"></div>
+            <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-black/20 blur-2xl z-0"></div>
 
-  // --- 5. ÉCOUTER QUI EST CONNECTÉ (Client ou Admin ?) ---
-  onAuthStateChanged(auth, async (user) => {
-    // Le bouton de ta section fidélité
-    const loyaltyBtn = document.querySelector('#loyalty-card button'); 
-    
-    if (user) {
-      console.log("Connecté :", user.email);
-      
-      // On va lire le rôle dans Firestore
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        const userData = docSnap.data();
-        
-        if (userData.role === "admin") {
-            // MODE PATRON
-            if (loyaltyBtn) {
-                loyaltyBtn.innerText = "Scanner un client (Admin)";
-                loyaltyBtn.onclick = () => alert("La caméra s'ouvrira ici !");
-                loyaltyBtn.classList.add("bg-red-600", "text-white");
-                loyaltyBtn.classList.remove("bg-white", "text-black");
-            }
-        } else {
-            // MODE CLIENT NORMAL
-            if (loyaltyBtn) {
-                loyaltyBtn.innerText = "Afficher mon QR Code";
-                loyaltyBtn.onclick = () => alert("Le QR Code s'affichera ici !");
-            }
-        }
-      }
-    } else {
-      // DÉCONNECTÉ
-      if (loyaltyBtn) {
-        loyaltyBtn.innerText = "Connexion";
-        loyaltyBtn.onclick = toggleAuthModal;
-        loyaltyBtn.classList.add("bg-white", "text-black");
-        loyaltyBtn.classList.remove("bg-red-600", "text-white");
-      }
-    }
-  });   
+            <div class="relative z-10 p-6 text-white flex flex-col h-full">
+                
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 id="card-program-name" class="text-xl font-black uppercase tracking-widest opacity-90 drop-shadow-md">Team Fusion</h3>
+                    </div>
+                    <i class="fas fa-wifi text-white/60 rotate-90 text-3xl"></i>
+                </div>
+                
+                <div class="flex items-center justify-between bg-white/10 rounded-2xl p-4 backdrop-blur-md mb-6 border border-white/20 shadow-inner">
+                    <div class="flex flex-col">
+                        <span class="text-xs uppercase tracking-widest opacity-80 mb-1">Fidélité</span>
+                        <div id="points-display-container" class="flex items-baseline gap-1 transition-colors duration-500">
+                            <span id="card-points" class="text-5xl font-black drop-shadow-lg">0</span>
+                            <span class="text-xl font-bold opacity-70">/10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-2 rounded-xl shadow-lg w-24 h-24 flex items-center justify-center transform hover:scale-110 transition-transform">
+                        <img id="card-qr-img" src="" alt="QR Code" class="w-full h-full object-contain">
+                    </div>
+                    <p id="card-user-email" class="text-xs opacity-75 mt-1 font-mono">client@email.com</p>
+                </div>
+                
+                <div class="w-full mt-2">
+                    <div class="flex justify-between text-xs font-bold mb-2">
+                        <span id="progress-text" class="text-white/90 uppercase tracking-wider">Encore 10 points...</span>
+                        <i class="fas fa-gift text-yellow-300 text-lg" id="gift-icon"></i>
+                    </div>
+                    <div class="w-full bg-black/30 rounded-full h-3 overflow-hidden shadow-inner border border-white/10">
+                        <div id="card-progress-bar" class="bg-gradient-to-r from-yellow-400 to-yellow-200 h-full rounded-full transition-all duration-1000 ease-out w-[0%]"></div>
+                    </div>
+                </div>
+                <div class="w-full mt-2">
+                    <button id="promo-notif-btn" onclick="demanderPermissionNotifs()" class="mt-4 w-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 border border-white/20 hidden backdrop-blur-sm">
+                        <i class="fas fa-bell animate-pulse"></i> M'avertir de mes récompenses et promos
+                    </button>
+                    </div>
 
-  // 4. Fonction à attacher à un bouton (PAS exécutée toute seule !)
-  window.demanderPermissionNotifs = function() {
-    console.log("Demande de permission au navigateur...");
-    
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        console.log("Permission accordée !");
-        
-        
-        getToken(messaging, { vapidKey: 'BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098' }).then((currentToken) => {
-          if (currentToken) {
-            prompt("Super ! Voici votre jeton pour tester (Copiez-le) :", currentToken);
-          } else {
-            console.log("Aucun jeton disponible.");
-          }
-        }).catch((err) => {
-          console.error("Erreur lors de la récupération du jeton : ", err);
-        });
-        
-      } else {
-        console.log("Permission refusée par l'utilisateur.");
-      }
-    });
-  };
+            </div>
+        </div>
 
-  // 5. Écouter les notifications si l'app est ouverte
-  onMessage(messaging, (payload) => {
-    console.log("Message reçu au premier plan :", payload);
-    alert(`Nouveau message : ${payload.notification.title}\n${payload.notification.body}`);
-  });
-</script> -->
-  </body>
+        <button onclick="closeClientCard()" class="mt-8 text-white/50 hover:text-white flex flex-col items-center gap-2 transition-colors">
+            <i class="fas fa-times-circle text-4xl"></i>
+            <span class="uppercase tracking-widest text-xs font-bold">Fermer</span>
+        </button>
+    </div>
+
+    <div id="admin-scanner-modal" class="fixed inset-0 bg-black/95 z-[100] hidden flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl relative">
+            <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
+                <h3 class="font-bold"><i class="fas fa-camera text-red-500 mr-2"></i> Scanner un client</h3>
+                <button onclick="closeAdminScanner()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="reader" class="w-full bg-black min-h-[300px]"></div>
+        </div>
+        <p class="text-xs text-gray-500 mt-2 text-center">Si la caméra ne s'affiche pas, vérifiez les autorisations de votre navigateur.</p>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="snack-config.js"></script> 
+    <script type="module" src="firebase-init.js"></script>
+    <script type="module" src="app.js"></script> 
+
+</body>
 </html>
