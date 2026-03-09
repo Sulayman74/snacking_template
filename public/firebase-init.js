@@ -2,12 +2,36 @@
 // FIREBASE INITIALIZATION & AUTHENTICATION
 // ============================================================================
 
-import { collection, doc, getDoc, getDocs, getFirestore, increment, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  increment,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+  startAfter,
+  updateDoc,
+  where,
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import {
+  getMessaging,
+  getToken,
+  onMessage,
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
-// 1. IMPORTS
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 
 // 2. CONFIGURATION
@@ -18,7 +42,7 @@ const firebaseConfig = {
   storageBucket: "snacking-template.firebasestorage.app",
   messagingSenderId: "472027657186",
   appId: "1:472027657186:web:7c1621680d9863aa8dffbb",
-  measurementId: "G-XT2YH4NE9Q"
+  measurementId: "G-XT2YH4NE9Q",
 };
 
 // 3. INITIALISATION
@@ -28,71 +52,221 @@ const messaging = getMessaging(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+window.auth = auth;
+window.db = db;
+window.messaging = messaging;
+window.fs = { doc, getDoc, setDoc, updateDoc, increment, onSnapshot, query, collection, where, orderBy, limit, startAfter, getDocs };
+
+function updateUI(user) {
+  const cfg = window.snackConfig;
+  if (!cfg) return;
+  document.title = cfg.identity.name;
+
+  // ==========================================
+  // 1. Navbar et Hero (Identité & Logo)
+  // ==========================================
+  const navName = document.getElementById("nav-name");
+  if (navName) navName.innerText = cfg.identity.name;
+
+  const navLogo = document.getElementById("nav-logo");
+  if (navLogo && cfg.identity.logoUrl) {
+    navLogo.src = cfg.identity.logoUrl;
+    navLogo.classList.remove("hidden"); 
+  }
+
+  const heroTitle = document.getElementById("hero-title");
+  if (heroTitle) heroTitle.innerText = cfg.identity.name;
+
+  const heroDesc = document.getElementById("hero-desc");
+  if (heroDesc) heroDesc.innerText = cfg.identity.description;
+
+  const heroSection = document.getElementById("hero");
+  if (heroSection) {
+    heroSection.style.backgroundImage = `url('${cfg.identity.heroImg}')`;
+  }
+
+  // ==========================================
+  // 2. Liens d'appel (Mobile CTA & Desktop CTA)
+  // ==========================================
+  const mobileCtaBtn = document.getElementById("mobile-cta-btn");
+  const mobileCtaIcon = document.getElementById("mobile-cta-icon");
+  const desktopCtaBtn = document.getElementById("cta-nav"); 
+
+  if (cfg.features) {
+    const isDelivery = cfg.features.enableDelivery === true;
+    const primaryBg = cfg.theme?.colors?.primary?.split(" ")[0] || "bg-red-600";
+    const phoneClean = cfg.contact?.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
+
+    if (mobileCtaBtn && mobileCtaIcon) {
+      if (isDelivery) {
+        mobileCtaBtn.href = cfg.deliveryUrl || "#";
+        mobileCtaBtn.setAttribute("target", "_blank");
+        mobileCtaBtn.classList.remove("bg-green-600");
+        mobileCtaBtn.classList.add(primaryBg);
+        mobileCtaIcon.className = "fas fa-motorcycle text-2xl";
+      } else {
+        mobileCtaBtn.href = `tel:${phoneClean}`;
+        mobileCtaBtn.removeAttribute("target");
+        mobileCtaBtn.classList.remove(primaryBg);
+        mobileCtaBtn.classList.add("bg-green-600");
+        mobileCtaIcon.className = "fas fa-phone text-2xl animate-pulse";
+      }
+    }
+
+    if (desktopCtaBtn) {
+      if (isDelivery) {
+        desktopCtaBtn.href = cfg.deliveryUrl || "#";
+        desktopCtaBtn.setAttribute("target", "_blank");
+        desktopCtaBtn.innerHTML = '<i class="fas fa-motorcycle mr-2"></i> Commander en livraison';
+        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition text-white ${primaryBg}`;
+      } else {
+        desktopCtaBtn.href = `tel:${phoneClean}`;
+        desktopCtaBtn.removeAttribute("target");
+        desktopCtaBtn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> ${cfg.contact.phone || "Appeler"}`;
+        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition text-white bg-green-600`;
+      }
+    }
+  }
+
+  // ==========================================
+  // 📍 MISE À JOUR DU FOOTER (Adresse & Tél)
+  // ==========================================
+  const footerPhone = document.getElementById("footer-phone");
+  if (footerPhone && cfg.contact.phone) {
+    const phoneClean = cfg.contact.phone.replace(/\s/g, "");
+    footerPhone.innerHTML = `
+        <a href="tel:${phoneClean}" class="flex items-center gap-2 hover:text-red-500 transition group">
+            <i class="fas fa-phone text-red-600 group-hover:text-red-500"></i>
+            <span>${cfg.contact.phone}</span>
+        </a>`;
+  } else if (footerPhone) {
+    footerPhone.innerText = "Téléphone non renseigné";
+  }
+
+  const footerAddr = document.getElementById("footer-address");
+  if (footerAddr && cfg.contact.address) {
+    const a = cfg.contact.address;
+    if (a.street || a.city) {
+      const fullAddr = `${a.street}, ${a.zip || ""} ${a.city || ""}`.trim();
+      const isApple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
+      
+      let mapLink = a.googleMapsUrl;
+      if (!mapLink) {
+          mapLink = isApple 
+            ? `https://maps.apple.com/?q=${encodeURIComponent(fullAddr)}` 
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}`;
+      }
+
+      const iconClass = isApple ? "fa-map" : "fa-location-dot";
+
+      footerAddr.innerHTML = `
+          <a href="${mapLink}" target="_blank" class="flex items-start gap-2 hover:text-red-500 transition group">
+              <i class="fas ${iconClass} mt-1 text-red-600 group-hover:text-red-500"></i>
+              <span>${a.street}<br>${a.zip || ""} ${a.city || ""}</span>
+          </a>`;
+    } else {
+      footerAddr.innerText = "Adresse non renseignée dans la base.";
+    }
+  }
+
+  // ==========================================
+  // 3. Réseaux Sociaux & Horaires
+  // ==========================================
+  const socialsContainer = document.getElementById("socials-container");
+  if (socialsContainer && cfg.contact.socials) {
+    socialsContainer.innerHTML = "";
+    const s = cfg.contact.socials;
+
+    if (s.instagram) {
+      socialsContainer.innerHTML += `<a href="https://instagram.com/${s.instagram.replace("@", "")}" target="_blank" class="hover:text-pink-500 transition"><i class="fab fa-instagram"></i></a>`;
+    }
+    if (s.facebook) {
+      socialsContainer.innerHTML += `<a href="https://facebook.com/${s.facebook}" target="_blank" class="hover:text-blue-500 transition"><i class="fab fa-facebook"></i></a>`;
+    }
+    if (s.tiktok) {
+      socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" target="_blank" class="hover:text-black transition"><i class="fab fa-tiktok"></i></a>`;
+    }
+  }
+
+  const hoursList = document.getElementById("hours-list");
+  const heroStatus = document.getElementById("hero-status");
+
+  if (hoursList && cfg.hours && cfg.hours.length > 0) {
+    hoursList.innerHTML = "";
+
+    const todayIndex = new Date().getDay();
+    const todayMap = todayIndex === 0 ? 6 : todayIndex - 1; 
+
+    cfg.hours.forEach((h, index) => {
+      const isToday = index === todayMap;
+      const li = document.createElement("li");
+
+      const textColor = isToday ? "text-red-500 font-bold" : "text-gray-200";
+      li.className = textColor;
+      li.innerHTML = `<span class="inline-block w-24">${h.day}</span> ${h.closed ? "Fermé" : h.open + " - " + h.close}`;
+      hoursList.appendChild(li);
+
+      if (isToday && heroStatus) {
+        heroStatus.innerText = h.closed ? "Fermé" : `Ouvert : ${h.open} - ${h.close}`;
+        heroStatus.className = h.closed
+          ? "inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border border-red-500 rounded-full backdrop-blur-md bg-red-500/50 text-white"
+          : "inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border border-green-500 rounded-full bg-green-600/50 backdrop-blur-md text-white";
+      }
+    });
+  }
+}
+
 // ============================================================================
 // GESTION DE L'INTERFACE UTILISATEUR (MODALS)
 // ============================================================================
 let isSignUpMode = false;
 
-// On attache à 'window' pour que le HTML puisse déclencher ces fonctions
 window.toggleAuthModal = () => {
-  document.getElementById('auth-modal').classList.toggle('hidden');
+  document.getElementById("auth-modal").classList.toggle("hidden");
 };
 
 window.switchAuthMode = () => {
   isSignUpMode = !isSignUpMode;
-  document.getElementById('auth-title').innerText = isSignUpMode ? "Créer un compte" : "Bienvenue !";
-  document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "S'inscrire" : "Se connecter";
-  document.getElementById('auth-switch-btn').innerText = isSignUpMode ? "Se connecter" : "S'inscrire";
-  document.getElementById('auth-switch-text').innerText = isSignUpMode ? "Déjà un compte ?" : "Pas encore de compte ?";
+  document.getElementById("auth-title").innerText = isSignUpMode ? "Créer un compte" : "Bienvenue !";
+  document.getElementById("auth-submit-btn").innerText = isSignUpMode ? "S'inscrire" : "Se connecter";
+  document.getElementById("auth-switch-btn").innerText = isSignUpMode ? "Se connecter" : "S'inscrire";
+  document.getElementById("auth-switch-text").innerText = isSignUpMode ? "Déjà un compte ?" : "Pas encore de compte ?";
 };
 
-// ============================================================================
-// LOGIQUE D'AUTHENTIFICATION & FIRESTORE
-// ============================================================================
-
-// Écouteur de soumission du formulaire de connexion/inscription
-document.getElementById('auth-form').addEventListener('submit', async (e) => {
+document.getElementById("auth-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
+  const email = document.getElementById("auth-email").value;
+  const password = document.getElementById("auth-password").value;
 
-try {
-if (isSignUpMode) {
-      console.log("👉 1. Début de l'inscription Auth...");
+  try {
+    if (isSignUpMode) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
-      try {
-          await setDoc(doc(db, "users", user.uid), {
-            email: user.email,
-            role: "client",
-            points: 0,
-            createdAt: new Date().toISOString()
-          });
-//  TOAST de Succès avec Email
-      window.showToast(`Bienvenue ${user.email} ! 🎉`, "success");
-      } catch (dbError) {
-          console.error("❌ ERREUR FIRESTORE CRITIQUE :", dbError);
-      }
+      const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
       
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          email: user.email,
+          role: "client",
+          points: 0,
+          snackId: currentSnackId,
+          createdAt: new Date().toISOString(),
+        });
+        window.showToast(`Bienvenue ${user.email} ! 🎉`, "success");
+      } catch (dbError) {
+        console.error("❌ ERREUR FIRESTORE CRITIQUE :", dbError);
+      }
     } else {
-      // 1. Connexion
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      // 2. TOAST de Succès
       window.showToast(`Ravi de vous revoir ${user.email} ! 👋`, "success");
     }
-    
-    // REDIRECTION (On ferme le modal et on remonte en haut de la page)
-    window.toggleAuthModal();
-    if (typeof window.switchView === 'function') {
-        window.switchView('home'); // Si tu étais dans le menu, ça te ramène à l'accueil
-    }
-    window.scrollTo({ top: 0, behavior: "smooth" }); // Remonte la page doucement
 
+    window.toggleAuthModal();
+    if (typeof window.switchView === "function") window.switchView("home");
+    window.scrollTo({ top: 0, behavior: "smooth" }); 
   } catch (error) {
-    // Si le mot de passe est trop court ou autre erreur :
-    window.showToast("Erreur : " + error.message, 'error');
+    window.showToast("Erreur : " + error.message, "error");
   }
 });
 
@@ -100,411 +274,262 @@ if (isSignUpMode) {
 // ÉCOUTEUR D'ÉTAT (LE VIGILE AMÉLIORÉ 🕵️‍♂️)
 // ============================================================================
 onAuthStateChanged(auth, async (user) => {
-  // Les éléments de la carte Fidélité
-  const loyaltyBtn = document.getElementById('loyalty-main-btn');
-  const loyaltyDesc = document.getElementById('loyalty-desc');
-  
-  // Les boutons de navigation
-  const navLogoutBtn = document.getElementById('nav-logout-btn');
-  const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+  const loyaltyBtn = document.getElementById("loyalty-main-btn");
+  const loyaltyDesc = document.getElementById("loyalty-desc");
+  const navLogoutBtn = document.getElementById("nav-logout-btn");
+  const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
 
-  if (user) {
-    console.log("🟢 Connecté :", user.email);
-    
-    // On affiche les boutons de déconnexion généraux
-    if (navLogoutBtn) navLogoutBtn.classList.remove('hidden');
-    if (mobileLogoutBtn) mobileLogoutBtn.classList.remove('hidden');
-    
-    try {
-        // 🔍 LE VIGILE VÉRIFIE LE BADGE DANS LA BASE DE DONNÉES
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const role = userData.role || "client";
-            const points = userData.points || 0;
+  const DEFAULT_SNACK_ID = "Ym1YiO4Ue5Fb5UXlxr06";
 
-            if (role === "admin") {
-                // ==========================================
-                // 👑 MODE ADMIN (Le Boss)
-                // ==========================================
-                if (loyaltyDesc) {
-                    loyaltyDesc.innerHTML = `<span class="text-red-400 font-bold"><i class="fas fa-crown"></i> Compte Administrateur</span>`;
-                }
-                if (loyaltyBtn) {
-                    loyaltyBtn.innerHTML = '<i class="fas fa-camera"></i> Scanner un client';
-                    loyaltyBtn.onclick = window.openAdminScanner; // Ouvre la caméra !
-                    // On change le bouton en rouge pour le différencier
-                    loyaltyBtn.classList.add("bg-red-600", "text-white", "hover:bg-red-700");
-                    loyaltyBtn.classList.remove("bg-white", "text-black", "hover:bg-gray-100");
-                }
-            } else {
-                // ==========================================
-                // 👤 MODE CLIENT
-                // ==========================================
-                if (loyaltyDesc) {
-                    // C'est plus sympa d'afficher ses points directs ici !
-                    loyaltyDesc.innerHTML = `<span class="text-green-400 font-bold"><i class="fas fa-check-circle"></i> Membre Club :</span> Tu as <strong>${points} point(s)</strong> !`;
-                }
-                if (loyaltyBtn) {
-                    loyaltyBtn.innerHTML = '<i class="fas fa-qrcode"></i> Ma Carte de Fidélité';
-                    loyaltyBtn.onclick = window.openClientCard; // Ouvre le QR Code !
-                    // Design blanc classique
-                    loyaltyBtn.classList.add("bg-white", "text-black", "hover:bg-gray-100");
-                    loyaltyBtn.classList.remove("bg-red-600", "text-white", "hover:bg-red-700");
-                }
-            }
+  try {
+    if (user) {
+      console.log("🟢 Utilisateur connecté :", user.email);
+      if (navLogoutBtn) navLogoutBtn.classList.remove("hidden");
+      if (mobileLogoutBtn) mobileLogoutBtn.classList.remove("hidden");
+
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      let snackToLoad = DEFAULT_SNACK_ID;
+      let role = "client";
+      let points = 0;
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.snackId) snackToLoad = userData.snackId;
+        role = userData.role || "client";
+        points = userData.points || 0;
+      }
+
+      await window.loadSnackConfig(db, snackToLoad);
+      updateUI(user);
+      if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
+
+
+      if (role === "admin") {
+        if (loyaltyDesc) loyaltyDesc.innerHTML = `<span class="text-red-400 font-bold"><i class="fas fa-crown"></i> Mode Admin</span>`;
+        if (loyaltyBtn) {
+          loyaltyBtn.innerHTML = '<i class="fas fa-camera"></i> Scanner un client';
+          loyaltyBtn.onclick = window.openAdminScanner;
+          loyaltyBtn.className = "bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-red-700 transition transform hover:-translate-y-1";
         }
-    } catch (error) {
-        console.error("❌ Erreur lors de la vérification du rôle :", error);
-    }
+      } else {
+        if (loyaltyDesc) loyaltyDesc.innerHTML = `<span class="text-green-400 font-bold"><i class="fas fa-check-circle"></i> Membre :</span> Tu as <strong>${points} points</strong>`;
+        if (loyaltyBtn) {
+          loyaltyBtn.innerHTML = '<i class="fas fa-qrcode"></i> Ma Carte';
+          loyaltyBtn.onclick = window.openClientCard;
+          loyaltyBtn.className = "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
+        }
+      }
+    } else {
+      console.log("🔴 Utilisateur déconnecté (Mode Public).");
+      if (navLogoutBtn) navLogoutBtn.classList.add("hidden");
+      if (mobileLogoutBtn) mobileLogoutBtn.classList.add("hidden");
 
-  } else {
-    console.log("🔴 Utilisateur déconnecté.");
-    
-    // UTILISATEUR DÉCONNECTÉ : On recache les boutons de déconnexion
-    if (navLogoutBtn) navLogoutBtn.classList.add('hidden');
-    if (mobileLogoutBtn) mobileLogoutBtn.classList.add('hidden');
-    
-    // On remet la section fidélité par défaut
-    if (loyaltyDesc) loyaltyDesc.innerText = "Gagnez des points à chaque commande !";
-    if (loyaltyBtn) {
-      loyaltyBtn.innerHTML = 'Connexion';
-      loyaltyBtn.onclick = window.toggleAuthModal;
-      // Remise à zéro du design
-      loyaltyBtn.classList.add("bg-white", "text-black", "hover:bg-gray-100");
-      loyaltyBtn.classList.remove("bg-red-600", "text-white", "hover:bg-red-700");
+      // 🚨 FIX : Les bordures vertes sont bien présentes ici aussi !
+      if (loyaltyDesc) loyaltyDesc.innerText = "Gagnez des points à chaque commande !";
+      if (loyaltyBtn) {
+        loyaltyBtn.innerHTML = "Connexion";
+        loyaltyBtn.onclick = window.toggleAuthModal;
+        loyaltyBtn.className = "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
+      }
+
+      await window.loadSnackConfig(db, DEFAULT_SNACK_ID);
+      updateUI(null);
+      if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
     }
+  } catch (error) {
+    console.error("❌ Erreur d'initialisation :", error);
   }
 });
 
 // ============================================================================
 // 🔔 GESTION DES NOTIFICATIONS PUSH (FCM)
 // ============================================================================
-
 window.demanderPermissionNotifs = async () => {
-    console.log("⏳ Demande de permission au navigateur...");
-    
-    try {
-        const permission = await Notification.requestPermission();
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+      await navigator.serviceWorker.ready;
+      
+      const currentToken = await getToken(messaging, {
+        vapidKey: "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098",
+        serviceWorkerRegistration: registration,
+      });
+
+      if (currentToken) {
+        const user = auth.currentUser;
+        if (user) await updateDoc(doc(db, "users", user.uid), { fcmToken: currentToken });
         
-        if (permission === 'granted') {
-            console.log("✅ Permission accordée ! Réveil du Service Worker...");
-            
-            // 🪄 LE FIX EST ICI : On installe le travailleur MANUELLEMENT et on attend
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-            
-            // Petite pause pour s'assurer qu'il est bien "Actif"
-            await navigator.serviceWorker.ready; 
-            console.log("⚙️ Service Worker prêt et actif sur le scope :", registration.scope);
-
-            // 1. On récupère le jeton en disant à Firebase d'utiliser NOTRE travailleur
-            const currentToken = await getToken(messaging, { 
-                vapidKey: 'BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098',
-                serviceWorkerRegistration: registration // 👈 L'astuce magique !
-            });
-
-            if (currentToken) {
-                console.log("🔑 Jeton FCM généré :", currentToken);
-                
-                // 2. On sauvegarde le jeton dans le profil du client
-                const user = auth.currentUser;
-                if (user) {
-                    await updateDoc(doc(db, "users", user.uid), {
-                        fcmToken: currentToken
-                    });
-                    console.log("💾 Jeton sauvegardé dans Firestore !");
-                }
-
-                // 3. UI : Disparition du bouton et Toast
-                const notifBtn = document.getElementById('promo-notif-btn');
-                if (notifBtn) notifBtn.classList.add('hidden');
-                
-                window.showToast("🔔 Parfait ! Vous recevrez nos promos.", "success");
-
-            } else {
-                console.log("⚠️ Aucun jeton disponible. Vérifiez les permissions.");
-            }
-        } else {
-            console.log("❌ Permission refusée par l'utilisateur.");
-            window.showToast("Notifications refusées.", "error");
-            
-            const notifBtn = document.getElementById('promo-notif-btn');
-            if (notifBtn) notifBtn.classList.add('hidden');
-        }
-    } catch (error) {
-        console.error("❌ Erreur lors de la récupération du jeton : ", error);
-        window.showToast("Erreur d'activation des notifications.", "error");
+        const notifBtn = document.getElementById("promo-notif-btn");
+        if (notifBtn) notifBtn.classList.add("hidden");
+        window.showToast("🔔 Parfait ! Vous recevrez nos promos.", "success");
+      }
+    } else {
+      window.showToast("Notifications refusées.", "error");
+      const notifBtn = document.getElementById("promo-notif-btn");
+      if (notifBtn) notifBtn.classList.add("hidden");
     }
+  } catch (error) {
+    console.error("❌ Erreur : ", error);
+  }
 };
 
-// ============================================================================
-// 📨 ÉCOUTEUR DE MESSAGES (Quand l'app est OUVERTE)
-// ============================================================================
 onMessage(messaging, (payload) => {
-    console.log("📨 Message reçu au premier plan :", payload);
-    
-    // Au lieu d'un vieux alert(), on utilise notre magnifique Snackbar !
-    const titre = payload.notification?.title || "Nouvelle notification";
-    const message = payload.notification?.body || "";
-    
-    // On l'affiche pendant 5 secondes pour être sûr qu'il le lise
-    window.showToast(`🔔 ${titre} : ${message}`, "success");
+  const titre = payload.notification?.title || "Nouvelle notification";
+  const message = payload.notification?.body || "";
+  window.showToast(`🔔 ${titre} : ${message}`, "success");
 });
-
-// ============================================================================
-// 📡 RÉCUPÉRER LE MENU DIRECTEMENT DEPUIS FIRESTORE (FRONTEND)
-// ============================================================================
-window.chargerMenuDepuisDB = async () => {
-    console.log("⏳ Récupération du menu depuis Firestore...");
-    
-    try {
-        // On aspire les produits de la collection "produits"
-        const querySnapshot = await getDocs(collection(db, "produits"));
-        let tousLesProduits = [];
-        
-        querySnapshot.forEach((doc) => {
-            tousLesProduits.push({ id: doc.id, ...doc.data() });
-        });
-
-        // La structure pour que ton HTML (app.js) puisse ranger les cartes
-        const menuStructure = {
-            tacos: { title: "Nos Tacos", icon: "🌮", items: [] },
-            burgers: { title: "Burgers", icon: "🍔", items: [] },
-            wraps: { title: "Wraps & Sandwichs", icon: "🌯", items: [] },
-            sides: { title: "A côté", icon: "🍟", items: [] },
-            drinks: { title: "Boissons & Douceurs", icon: "🥤", items: [] }
-        };
-
-        // On trie chaque produit dans sa catégorie
-        tousLesProduits.forEach(produit => {
-            if (menuStructure[produit.categorieId]) {
-                menuStructure[produit.categorieId].items.push(produit);
-            }
-        });
-
-        console.log("✅ Menu chargé avec succès depuis Firebase !", menuStructure);
-        
-        // On renvoie le paquet prêt à l'emploi pour app.js
-        return { 
-            brut: tousLesProduits, 
-            categories: Object.values(menuStructure) 
-        };
-
-    } catch (error) {
-        console.error("❌ Impossible de charger le menu :", error);
-        return null;
-    }
-};
 
 // ============================================================================
 // 💳 CLUB FIDÉLITÉ : GESTION DU QR CODE ET DES POINTS
 // ============================================================================
-let html5QrcodeScanner = null; 
-let unsubscribeClientCard = null; // 👈 Pour écouter les points en direct !
+let html5QrcodeScanner = null;
+let unsubscribeClientCard = null; 
 
-// 🟢 FONCTION CLIENT : Afficher sa carte VIP
 window.openClientCard = async () => {
-    const user = auth.currentUser;
-    if (!user) return;
+  const user = auth.currentUser;
+  if (!user) return;
 
-    // 1. Appliquer le thème de la config (si existant)
-    if (typeof snackConfig !== 'undefined' && snackConfig.loyalty) {
-        document.getElementById('card-program-name').innerText = snackConfig.loyalty.programName;
-        document.getElementById('card-bg-gradient').className = `absolute inset-0 z-0 bg-gradient-to-br ${snackConfig.loyalty.cardDesign.backgroundGradient}`;
+  if (typeof window.snackConfig !== "undefined" && window.snackConfig.loyalty) {
+    document.getElementById("card-program-name").innerText = window.snackConfig.loyalty.programName;
+    document.getElementById("card-bg-gradient").className = `absolute inset-0 z-0 bg-gradient-to-br ${window.snackConfig.loyalty.cardDesign.backgroundGradient}`;
+  }
+
+  document.getElementById("card-user-email").innerText = user.email;
+  document.getElementById("card-qr-img").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${user.uid}`;
+
+  const modal = document.getElementById("client-card-modal");
+  modal.classList.remove("hidden");
+  setTimeout(() => {
+    modal.classList.remove("opacity-0");
+    document.getElementById("virtual-card").classList.remove("scale-95");
+  }, 10);
+
+  unsubscribeClientCard = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+    if (docSnap.exists()) {
+      const points = docSnap.data().points || 0;
+      animerCarteFidelite(points); 
     }
+  });
 
-    // 2. Générer le QR Code
-    document.getElementById('card-user-email').innerText = user.email;
-    document.getElementById('card-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${user.uid}`;
-
-    const modal = document.getElementById('client-card-modal');
-    modal.classList.remove('hidden');
-    setTimeout(() => {
-        modal.classList.remove('opacity-0');
-        document.getElementById('virtual-card').classList.remove('scale-95');
-    }, 10);
-
-    // 🪄 4. LA MAGIE DU TEMPS RÉEL (onSnapshot)
-    // Au lieu de lire la base 1 seule fois, on met la carte sur écoute !
-    unsubscribeClientCard = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-        if (docSnap.exists()) {
-            const points = docSnap.data().points || 0;
-            animerCarteFidelite(points); // On lance la machinerie UX !
-        }
-    });
-    // 🪄 5. LOGIQUE DES NOTIFICATIONS (Le consentement contextuel)
-    const notifBtn = document.getElementById('promo-notif-btn');
-    if ("Notification" in window) {
-        // "default" veut dire que le client n'a pas encore cliqué sur Autoriser ou Bloquer
-        if (Notification.permission === "default") {
-            notifBtn.classList.remove('hidden'); // On lui propose !
-        } else {
-            notifBtn.classList.add('hidden'); // Déjà répondu (oui ou non), on cache.
-        }
+  const notifBtn = document.getElementById("promo-notif-btn");
+  if ("Notification" in window) {
+    if (Notification.permission === "default") {
+      notifBtn.classList.remove("hidden"); 
+    } else {
+      notifBtn.classList.add("hidden"); 
     }
+  }
 };
 
-// 🎨 LE MOTEUR D'ANIMATION (UX 10/10)
 function animerCarteFidelite(points) {
-    const maxPoints = 10;
-    const ratio = Math.min((points / maxPoints) * 100, 100); // Bloque à 100% visuellement
-    
-    // Éléments HTML
-    const pointsText = document.getElementById('card-points');
-    const progressBar = document.getElementById('card-progress-bar');
-    const progressLabel = document.getElementById('progress-text');
-    const pointsContainer = document.getElementById('points-display-container');
-    const giftIcon = document.getElementById('gift-icon');
+  const maxPoints = 10;
+  const ratio = Math.min((points / maxPoints) * 100, 100); 
 
-    // Mise à jour basique
-    pointsText.innerText = points;
-    progressBar.style.width = `${ratio}%`;
+  const pointsText = document.getElementById("card-points");
+  const progressBar = document.getElementById("card-progress-bar");
+  const progressLabel = document.getElementById("progress-text");
+  const pointsContainer = document.getElementById("points-display-container");
+  const giftIcon = document.getElementById("gift-icon");
 
-    if (points >= maxPoints) {
-        // 🌟 SCÉNARIO GAGNANT (10/10 ou plus)
-        
-        // Textes et couleurs
-        pointsContainer.classList.add('text-green-300'); // Devient vert menthe
-        progressLabel.innerText = "🎉 MENU OFFERT ! PRÉSENTEZ CE CODE";
-        progressLabel.classList.add('text-green-300', 'animate-pulse');
-        giftIcon.classList.add('animate-bounce', 'text-green-300');
-        
-        // Animation CSS sur le chiffre
-        pointsText.classList.add('scale-125', 'transition-transform');
-        
-        // Notification Toast
-        window.showToast("Bravo ! Vous avez droit à votre Menu gratuit ! 🍔", "success");
+  pointsText.innerText = points;
+  progressBar.style.width = `${ratio}%`;
 
-    } else {
-        // 🔄 SCÉNARIO NORMAL (En cours)
-        
-        // On nettoie les classes de victoire si le boss lui a retiré ses 10 points
-        pointsContainer.classList.remove('text-green-300');
-        progressLabel.classList.remove('text-green-300', 'animate-pulse');
-        giftIcon.classList.remove('animate-bounce', 'text-green-300');
-        pointsText.classList.remove('scale-125');
-
-        // On calcule combien il en manque
-        const restants = maxPoints - points;
-        progressLabel.innerText = `Encore ${restants} point${restants > 1 ? 's' : ''}...`;
-    }
+  if (points >= maxPoints) {
+    pointsContainer.classList.add("text-green-300"); 
+    progressLabel.innerText = "🎉 MENU OFFERT ! PRÉSENTEZ CE CODE";
+    progressLabel.classList.add("text-green-300", "animate-pulse");
+    giftIcon.classList.add("animate-bounce", "text-green-300");
+    pointsText.classList.add("scale-125", "transition-transform");
+    window.showToast("Bravo ! Vous avez droit à votre Menu gratuit ! 🍔", "success");
+  } else {
+    pointsContainer.classList.remove("text-green-300");
+    progressLabel.classList.remove("text-green-300", "animate-pulse");
+    giftIcon.classList.remove("animate-bounce", "text-green-300");
+    pointsText.classList.remove("scale-125");
+    const restants = maxPoints - points;
+    progressLabel.innerText = `Encore ${restants} point${restants > 1 ? "s" : ""}...`;
+  }
 }
 
-// 🔴 FERMER LA CARTE
 window.closeClientCard = () => {
-    const modal = document.getElementById('client-card-modal');
-    modal.classList.add('opacity-0');
-    document.getElementById('virtual-card').classList.add('scale-95');
-    
-    // On coupe le micro de Firebase pour économiser les requêtes !
-    if (unsubscribeClientCard) {
-        unsubscribeClientCard();
-    }
+  const modal = document.getElementById("client-card-modal");
+  modal.classList.add("opacity-0");
+  document.getElementById("virtual-card").classList.add("scale-95");
 
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }, 300);
+  if (unsubscribeClientCard) unsubscribeClientCard();
+
+  setTimeout(() => {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }, 300);
 };
 
-// 🔴 FONCTION ADMIN : Ouvrir la caméra
 window.openAdminScanner = () => {
-    const modal = document.getElementById('admin-scanner-modal');
-    modal.classList.remove('hidden');
-
-    // On initialise la caméra
-    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-    
-    // Si la caméra lit un code, elle appelle cette fonction
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+  const modal = document.getElementById("admin-scanner-modal");
+  modal.classList.remove("hidden");
+  html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+  html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 };
 
 window.closeAdminScanner = () => {
-    document.getElementById('admin-scanner-modal').classList.add('hidden');
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear(); // Éteint la caméra
-    }
+  document.getElementById("admin-scanner-modal").classList.add("hidden");
+  if (html5QrcodeScanner) html5QrcodeScanner.clear(); 
 };
 
-// ============================================================================
-// 🎯 L'ADMIN A SCANNÉ UN CLIENT : LA LOGIQUE INTELLIGENTE
-// ============================================================================
 async function onScanSuccess(decodedText, decodedResult) {
-    // decodedText contient l'UID du client
-    console.log(`📸 Scan réussi ! UID du client : ${decodedText}`);
-    
-    // 1. On éteint la caméra immédiatement pour éviter les multi-scans
-    closeAdminScanner();
-    window.showToast("QR Code lu ! Vérification en cours...", "success");
+  const adminSnackId = window.snackConfig?.identity?.id;
+  console.log(`📸 Scan réussi ! UID du client : ${decodedText}`);
 
-    try {
-        const clientRef = doc(db, "users", decodedText);
-        const clientDoc = await getDoc(clientRef);
-        
-        // Sécurité : Est-ce un vrai client ?
-        if (!clientDoc.exists()) {
-            window.showToast("❌ Erreur : Ce QR Code n'est pas dans notre base.", "error");
-            return;
-        }
+  closeAdminScanner();
+  window.showToast("QR Code lu ! Vérification en cours...", "success");
 
-        const currentPoints = clientDoc.data().points || 0;
-        const maxPoints = 10; // Le palier de ton snack
+  try {
+    const clientRef = doc(db, "users", decodedText);
+    const clientDoc = await getDoc(clientRef);
 
-        // 🧠 LE CARREFOUR DES DÉCISIONS
-        if (currentPoints >= maxPoints) {
-            
-            // 🎁 CAS B : LE CLIENT RÉCLAME SON CADEAU
-            await updateDoc(clientRef, {
-                points: 0 // On remet sa carte à zéro
-            });
-            
-            // Notification explosive pour l'Admin en caisse
-            window.showToast("🎉 BINGO ! Donnez un Menu Gratuit ! (Carte remise à 0)", "success");
-            
-            // (Le client verra sa jauge se vider en direct sur son téléphone grâce au onSnapshot !)
-            
-        } else {
-            
-            // ➕ CAS A : AJOUT D'UN POINT CLASSIQUE
-            await updateDoc(clientRef, {
-                points: increment(1)
-            });
-            
-            const newTotal = currentPoints + 1;
-            
-            if (newTotal === maxPoints) {
-                // Il vient pile de gagner !
-                window.showToast(`✅ Point ajouté ! Le client gagne son menu ! 🎁`, "success");
-            } else {
-                // Routine classique
-                window.showToast(`✅ Point ajouté ! Total actuel : ${newTotal}/${maxPoints}`, "success");
-            }
-        }
-
-    } catch (error) {
-        console.error("❌ Erreur critique lors du scan :", error);
-        window.showToast("Erreur de communication avec le serveur.", "error");
+    if (!clientDoc.exists()) {
+      window.showToast("❌ Erreur : Ce QR Code n'est pas dans notre base.", "error");
+      return;
     }
+
+    const clientData = clientDoc.data();
+    if (clientData.snackId !== adminSnackId) {
+      window.showToast("⚠️ Ce client appartient à un autre établissement !", "error");
+      return;
+    }
+
+    const currentPoints = clientDoc.data().points || 0;
+    const maxPoints = 10; 
+
+    if (currentPoints >= maxPoints) {
+      await updateDoc(clientRef, { points: 0 });
+      window.showToast("🎉 BINGO ! Donnez un Menu Gratuit ! (Carte remise à 0)", "success");
+    } else {
+      await updateDoc(clientRef, { points: increment(1) });
+      const newTotal = currentPoints + 1;
+      if (newTotal === maxPoints) {
+        window.showToast(`✅ Point ajouté ! Le client gagne son menu ! 🎁`, "success");
+      } else {
+        window.showToast(`✅ Point ajouté ! Total actuel : ${newTotal}/${maxPoints}`, "success");
+      }
+    }
+  } catch (error) {
+    console.error("❌ Erreur critique lors du scan :", error);
+    window.showToast("Erreur de communication avec le serveur.", "error");
+  }
 }
 
-function onScanFailure(error) {
-    // Ignore les erreurs de scan, la caméra cherche en boucle
-}
+function onScanFailure(error) {}
 
-// ============================================================================
-// FONCTION DE DÉCONNEXION (LOGOUT)
-// ============================================================================
 window.logoutUser = async () => {
-    try {
-        await signOut(auth);
-        window.showToast("Vous êtes déconnecté. À bientôt !", "success");
-        // On ramène le client à l'accueil
-        if (typeof window.switchView === 'function') {
-            window.switchView('home');
-        }
-    } catch (error) {
-        console.error("Erreur de déconnexion", error);
-    }
+  try {
+    await signOut(auth);
+    window.showToast("Vous êtes déconnecté. À bientôt !", "success");
+    if (typeof window.switchView === "function") window.switchView("home");
+  } catch (error) {
+    console.error("Erreur de déconnexion", error);
+  }
 };
