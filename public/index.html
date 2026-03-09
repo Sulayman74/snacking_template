@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chargement...</title> 
+    <!-- <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self'; 
+        script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://www.gstatic.com https://unpkg.com; 
+        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; 
+        img-src 'self' data: blob: https://api.qrserver.com https://firebasestorage.googleapis.com; 
+        font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; 
+        connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com;
+    "> -->
     <meta name="description" content="Découvrez O'Tacos Fusion, les meilleurs Tacos et Burgers de la ville...">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
@@ -140,7 +148,47 @@
         </div>
     </section>
 
-    <section id="contact" class="py-20 bg-gray-100 hidden">
+    <section id="reviews" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="bg-gray-50 rounded-2xl p-8 text-center max-w-lg mx-auto border border-gray-100 shadow-sm">
+                <h3 class="text-xl text-black font-bold mb-4">Et vous, c'était comment ?</h3>
+                <div class="flex justify-center gap-3 text-4xl mb-6 cursor-pointer" id="interactive-stars">
+                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="1"></i>
+                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="2"></i>
+                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="3"></i>
+                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="4"></i>
+                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="5"></i>
+                </div>
+                <p id="rating-feedback" class="text-gray-600 font-medium min-h-[1.5rem]"></p>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="py-20 bg-gray-100">
+        <div class="container mx-auto px-4 max-w-2xl">
+            <div class="text-center mb-10">
+                <h2 id="form-title" class="text-4xl font-black text-gray-900 mb-4 tracking-tight">Une question ?</h2>
+                <p id="form-desc" class="text-gray-600 text-lg">Nous sommes là pour vous répondre.</p>
+            </div>
+            
+            <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-6 bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-gray-100">
+                <input type="hidden" name="source_avis" id="source-avis" value="contact_direct">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Email / Téléphone</label>
+                    <input type="text" name="contact" required class="w-full text-black px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Message</label>
+                    <textarea name="message" rows="4" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"></textarea>
+                </div>
+                <button type="submit" id="btn-submit-form" class="w-full py-4 rounded-xl font-bold text-white shadow-lg bg-gray-900 hover:bg-black transition transform hover:-translate-y-1">
+                    Envoyer le message
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- <section id="contact" class="py-20 bg-gray-100">
         <div class="container mx-auto px-4 max-w-2xl">
             <div class="text-center mb-10">
                 <h2 id="form-title" class="text-4xl font-black text-gray-900 mb-4 tracking-tight">Une question ?</h2>
@@ -161,7 +209,7 @@
                 </button>
             </form>
         </div>
-    </section>
+    </section> -->
 
     <footer id="infos" class="relative overflow-hidden bg-gray-900 text-white pt-20 pb-32 md:pb-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
         <div class="liquid-blob absolute -top-24 -left-24 w-96 h-96 bg-red-600/20 rounded-full blur-3xl pointer-events-none"></div>

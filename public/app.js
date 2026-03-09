@@ -48,8 +48,10 @@ window.initAppVisuals = async () => {
     body.classList.add("bg-gray-50", "text-gray-900");
   }
 
-  // 2. Menu Burger
+// 2. Menu Burger, Étoiles & Formulaire
   if (typeof setupMobileMenu === 'function') setupMobileMenu();
+  if (typeof setupReviews === 'function') setupReviews(); 
+  if (typeof setupContactForm === 'function') setupContactForm(); // 👈 Nouvelle ligne !
 
   // 🍔 3. CHARGER LE MENU ET LES BEST SELLERS
   await window.chargerMenuComplet();
@@ -378,6 +380,131 @@ function setupMobileMenu() {
                     newMobileBtn.click();
                 }
             });
+        });
+    }
+}
+
+// ============================================================================
+// GESTION DES ÉTOILES (AVIS CLIENT INTELLIGENT)
+// ============================================================================
+function setupReviews() {
+    const stars = document.querySelectorAll("#interactive-stars i");
+    const feedbackText = document.getElementById("rating-feedback");
+    const sourceAvisInput = document.getElementById("source-avis");
+    const contactSection = document.getElementById("contact");
+
+    stars.forEach(star => {
+        star.addEventListener("click", (e) => {
+            const val = parseInt(e.target.getAttribute("data-value"));
+            
+            // 1. On colore les étoiles
+            stars.forEach((s, index) => {
+                if (index < val) {
+                    s.classList.remove("far", "text-gray-300");
+                    s.classList.add("fas", "text-yellow-400", "scale-110");
+                } else {
+                    s.classList.remove("fas", "text-yellow-400", "scale-110");
+                    s.classList.add("far", "text-gray-300");
+                }
+            });
+
+            // 2. LOGIQUE MARKETING (Google Maps vs Formulaire Interne)
+            const cfg = window.snackConfig;
+            
+            // Sécurité : On cherche le lien Google (s'il n'y est pas, on évite le crash)
+            const googleReviewLink = cfg?.reviews?.googleMapsReviewLink || cfg?.contact?.address?.googleMapsUrl || null;
+
+            if (val >= 4) {
+                // 🌟 SCÉNARIO GAGNANT : Direction Google Maps
+                if (feedbackText) {
+                    feedbackText.innerHTML = `<span class="text-green-600 font-bold">Top ! On va sur Google... 🚀</span>`;
+                }
+                
+                setTimeout(() => {
+                    if (googleReviewLink) {
+                        window.open(googleReviewLink, "_blank");
+                    } else {
+                        // Fallback si tu as oublié de mettre ton lien Google dans Firestore
+                        if (feedbackText) feedbackText.innerHTML = `<span class="text-green-600 font-bold">Merci pour votre amour ! ❤️</span>`;
+                    }
+                }, 1000);
+
+            } else {
+                // 🛑 SCÉNARIO CRITIQUE : Interception vers le formulaire privé
+                if (feedbackText) {
+                    feedbackText.innerHTML = `<span class="text-orange-500 font-bold">Dites-nous tout ci-dessous 👇</span>`;
+                }
+                
+                if (sourceAvisInput) {
+                    sourceAvisInput.value = `Note : ${val}/5`;
+                }
+                
+                setTimeout(() => {
+                    if (contactSection) {
+                        // Fait glisser la page doucement jusqu'au formulaire
+                        contactSection.scrollIntoView({ behavior: "smooth" });
+                    }
+                }, 500);
+            }
+        });
+    });
+}
+// ============================================================================
+// GESTION DU FORMULAIRE DE CONTACT (AJAX / Formspree)
+// ============================================================================
+function setupContactForm() {
+    const contactForm = document.getElementById("contact-form");
+    const submitBtn = document.getElementById("btn-submit-form");
+
+    if (contactForm && submitBtn) {
+        contactForm.addEventListener("submit", async (e) => {
+            e.preventDefault(); // 🛑 Bloque la redirection vers Formspree
+
+            // UX : On montre que ça charge
+            const originalText = submitBtn.innerText;
+            submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Envoi...`;
+            submitBtn.disabled = true;
+
+            try {
+                // On envoie les données silencieusement en arrière-plan
+                const response = await fetch(contactForm.action, {
+                    method: contactForm.method,
+                    body: new FormData(contactForm),
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // 🎉 SUCCÈS : On vide le formulaire !
+                    contactForm.reset();
+                    
+                    // On remet le champ caché à sa valeur par défaut
+                    const sourceAvisInput = document.getElementById("source-avis");
+                    if (sourceAvisInput) sourceAvisInput.value = "contact_direct";
+
+                    // On éteint les étoiles si elles étaient allumées
+                    const stars = document.querySelectorAll("#interactive-stars i");
+                    stars.forEach(s => {
+                        s.classList.remove("fas", "text-yellow-400", "scale-110");
+                        s.classList.add("far", "text-gray-300");
+                    });
+                    const feedback = document.getElementById("rating-feedback");
+                    if (feedback) feedback.innerText = "";
+
+                    // Notification
+                    window.showToast("Message envoyé avec succès ! Merci.", "success");
+                } else {
+                    window.showToast("Oups, une erreur est survenue.", "error");
+                }
+            } catch (error) {
+                console.error("Erreur d'envoi du formulaire :", error);
+                window.showToast("Erreur de connexion.", "error");
+            } finally {
+                // On remet le bouton à son état normal
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
         });
     }
 }
