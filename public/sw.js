@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snack-app-v9'; 
+const CACHE_NAME = 'snack-app-v10'; 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -6,9 +6,9 @@ const ASSETS_TO_CACHE = [
   './snack-config.js',
   './app.js',
   './firebase-init.js',
-  './assets/icon-192.png',
-  './assets/icon-512.png',
-  './assets/logo.png',
+  './assets/icon-192.webp',
+  './assets/icon-512.webp',
+  './assets/logo.webp',
   './assets/heroImg.webp'
 ];
 
