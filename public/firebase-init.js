@@ -61,7 +61,11 @@ function updateUI(user) {
   const cfg = window.snackConfig;
   if (!cfg) return;
   document.title = cfg.identity.name;
-
+// On change la description SEO dynamiquement
+const metaDescription = document.querySelector('meta[name="description"]');
+if (metaDescription && cfg.identity.description) {
+    metaDescription.setAttribute("content", cfg.identity.description);
+}
   // ==========================================
   // 1. Navbar et Hero (Identité & Logo)
   // ==========================================

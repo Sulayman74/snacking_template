@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Snack Favoris</title> 
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mon Snack Favoris</title>
     <!-- <meta http-equiv="Content-Security-Policy" content="
         default-src 'self'; 
         script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://www.gstatic.com https://unpkg.com; 
@@ -12,189 +12,422 @@
         font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; 
         connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com;
     "> -->
-<meta name="description" content="Découvrez notre menu digital. Commandez vos plats préférés et gagnez des récompenses grâce à notre programme de fidélité !">
-    <meta property="og:title" content="Team Fusion - Le Menu Digital">
-    <meta property="og:description" content="Découvrez notre menu, commandez et gagnez des récompenses !">
-    <meta property="og:image" content="https://snacking-template.web.app/public/assets/icon-512.webp">
-    <meta property="og:url" content="https://snacking-template.web.app/">
-    <meta property="og:type" content="restaurant">
+    <meta
+      name="description"
+      content="Découvrez notre menu digital. Commandez vos plats préférés et gagnez des récompenses grâce à notre programme de fidélité !"
+    />
+    <meta property="og:title" content="Team Fusion - Le Menu Digital" />
+    <meta
+      property="og:description"
+      content="Découvrez notre menu, commandez et gagnez des récompenses !"
+    />
+    <meta
+      property="og:image"
+      content="https://snacking-template.web.app/public/assets/icon-512.webp"
+    />
+    <meta property="og:url" content="https://snacking-template.web.app/" />
+    <meta property="og:type" content="restaurant" />
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#DC2626" id="theme-color-meta">
-    <link rel="icon" type="image/webp" sizes="192x192" href="assets/icon-192.webp">
-    <link rel="icon" type="image/webp" sizes="512x512" href="assets/icon-512.webp">
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#DC2626" id="theme-color-meta" />
+    <link
+      rel="icon"
+      type="image/webp"
+      sizes="192x192"
+      href="assets/icon-192.webp"
+    />
+    <link
+      rel="icon"
+      type="image/webp"
+      sizes="512x512"
+      href="assets/icon-512.webp"
+    />
 
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="assets/icon-192.webp">
-    <link rel="shortcut icon" href="favicon.ico">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-</head>
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <link rel="apple-touch-icon" href="assets/icon-192.webp" />
+    <link rel="shortcut icon" href="favicon.ico" />
 
-<body class="bg-gray-50 text-gray-800">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
 
-    <div id="splash-screen" class="fixed inset-0 z-[9999] bg-gray-900 flex flex-col items-center justify-center transition-opacity duration-500">
-        <img src="assets/icon-192.webp" alt="O'Tacos Fusion" class="w-32 h-32 animate-pulse mb-8 rounded-3xl shadow-[0_0_40px_rgba(220,38,38,0.4)]">
-        
-        <div class="relative w-14 h-14">
-            <div class="absolute inset-0 border-4 border-gray-700 rounded-full"></div>
-            <div class="absolute inset-0 border-4 border-red-600 rounded-full border-t-transparent animate-spin"></div>
-        </div>
-        
-        <h2 class="text-white mt-6 font-bold tracking-widest uppercase text-lg animate-pulse">Tout est prêt...</h2>
+  <body class="bg-gray-50 text-gray-800">
+    <div
+      id="splash-screen"
+      class="fixed inset-0 z-[9999] bg-gray-900 flex flex-col items-center justify-center transition-opacity duration-500"
+    >
+      <img
+        src="assets/icon-192.webp"
+        alt="O'Tacos Fusion"
+        class="w-32 h-32 animate-pulse mb-8 rounded-3xl shadow-[0_0_40px_rgba(220,38,38,0.4)]"
+      />
+
+      <div class="relative w-14 h-14">
+        <div
+          class="absolute inset-0 border-4 border-gray-700 rounded-full"
+        ></div>
+        <div
+          class="absolute inset-0 border-4 border-red-600 rounded-full border-t-transparent animate-spin"
+        ></div>
+      </div>
+
+      <h2
+        class="text-white mt-6 font-bold tracking-widest uppercase text-lg animate-pulse"
+      >
+        Tout est prêt...
+      </h2>
     </div>
 
-    <nav id="navbar" class="fixed w-full z-50 top-0 transition-all duration-300 bg-gradient-to-b backdrop-blur-sm from-black/90 to-transparent">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <a href="#" class="flex items-center gap-2">
-                <img id="nav-logo" src="" alt="Logo" class="h-10 w-10 object-contain rounded-xl hidden">
-                <span id="nav-name" class="text-xl font-bold uppercase tracking-wider text-white drop-shadow-md"></span>
-            </a>
-            
-            <button id="mobile-menu-btn" class="md:hidden text-2xl text-white focus:outline-none transition-transform duration-300 drop-shadow-md">
-                <i class="fas fa-bars"></i>
-            </button>
+    <nav
+      id="navbar"
+      class="fixed w-full z-50 top-0 transition-all duration-300 bg-gradient-to-b backdrop-blur-sm from-black/90 to-transparent"
+    >
+      <div
+        class="container mx-auto px-4 py-3 flex justify-between items-center"
+      >
+        <a href="#" class="flex items-center gap-2">
+          <img
+            id="nav-logo"
+            src=""
+            alt="Logo"
+            class="h-10 w-10 object-contain rounded-xl hidden"
+          />
+          <span
+            id="nav-name"
+            class="text-xl font-bold uppercase tracking-wider text-white drop-shadow-md"
+          ></span>
+        </a>
 
-            <div class="hidden md:flex items-center gap-4">
-                <a href="#" onclick="switchView('menu'); return false;" class="text-white hover:text-red-400 font-medium transition drop-shadow-md">La Carte</a>
-                <a href="#loyalty" id="nav-loyalty-link" class="hidden text-white hover:text-red-400 font-medium transition drop-shadow-md">Fidélité</a>
-                <a href="#infos" class="text-white hover:text-red-400 font-medium transition drop-shadow-md">Infos</a>
-                <a href="#" id="cta-nav" class="ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition">
-                    Commander
-                </a>
-                <button id="nav-logout-btn" onclick="logoutUser()" class="hidden bg-white/10 backdrop-blur-sm text-white hover:bg-red-600 px-4 py-2 rounded-full font-bold transition flex items-center gap-2">
-                    <i class="fas fa-sign-out-alt"></i> Quitter
-                </button>
-            </div>
-        </div>
+        <button
+          id="mobile-menu-btn"
+          class="md:hidden text-2xl text-white focus:outline-none transition-transform duration-300 drop-shadow-md"
+        >
+          <i class="fas fa-bars"></i>
+        </button>
 
-        <div id="mobile-menu-overlay" class="fixed h-screen inset-0 z-40 bg-gray-900 hidden flex-col items-center justify-center space-y-10 opacity-0 transition-opacity duration-300">
-            <a href="#" onclick="switchView('menu'); return false;" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">La Carte</a>
-            <a href="#loyalty" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110 hidden" id="mobile-link-loyalty">Fidélité</a>
-            <a href="#infos" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Infos</a>
-            <a href="#contact" class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110">Contact</a>
-            <a href="#" id="mobile-logout-btn" onclick="logoutUser(); return false;" class="hidden mobile-link text-xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110 mt-8">
-                Déconnexion
-            </a>
+        <div class="hidden md:flex items-center gap-4">
+          <a
+            href="#"
+            onclick="
+              switchView('menu');
+              return false;
+            "
+            class="text-white hover:text-red-400 font-medium transition drop-shadow-md"
+            >La Carte</a
+          >
+          <a
+            href="#loyalty"
+            id="nav-loyalty-link"
+            class="hidden text-white hover:text-red-400 font-medium transition drop-shadow-md"
+            >Fidélité</a
+          >
+          <a
+            href="#infos"
+            class="text-white hover:text-red-400 font-medium transition drop-shadow-md"
+            >Infos</a
+          >
+          <a
+            href="#"
+            id="cta-nav"
+            class="ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition"
+          >
+            Commander
+          </a>
+          <button
+            id="nav-logout-btn"
+            onclick="logoutUser()"
+            class="hidden bg-white/10 backdrop-blur-sm text-white hover:bg-red-600 px-4 py-2 rounded-full font-bold transition flex items-center gap-2"
+          >
+            <i class="fas fa-sign-out-alt"></i> Quitter
+          </button>
         </div>
+      </div>
+
+      <div
+        id="mobile-menu-overlay"
+        class="fixed h-screen inset-0 z-40 bg-gray-900 hidden flex-col items-center justify-center space-y-10 opacity-0 transition-opacity duration-300"
+      >
+        <a
+          href="#"
+          onclick="
+            switchView('menu');
+            return false;
+          "
+          class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110"
+          >La Carte</a
+        >
+        <a
+          href="#loyalty"
+          class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110 hidden"
+          id="mobile-link-loyalty"
+          >Fidélité</a
+        >
+        <a
+          href="#infos"
+          class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110"
+          >Infos</a
+        >
+        <a
+          href="#contact"
+          class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110"
+          >Contact</a
+        >
+        <a
+          href="#"
+          id="mobile-logout-btn"
+          onclick="
+            logoutUser();
+            return false;
+          "
+          class="hidden mobile-link text-xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110 mt-8"
+        >
+          Déconnexion
+        </a>
+      </div>
     </nav>
 
-    <header id="hero" class="relative h-[80vh] flex items-center justify-center bg-cover bg-center">
-        <div class="absolute inset-0 bg-black/50"></div> 
-        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto text-white">
-            <span id="hero-status" class="inline-block px-3 py-1 mb-4 text-sm font-bold uppercase tracking-widest border border-white/30 rounded-full backdrop-blur-sm"></span>
-            <h1 id="hero-title" class="text-5xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg"></h1>
-            <p id="hero-desc" class="text-xl md:text-2xl mb-8 font-light text-gray-200 drop-shadow-md"></p>
-        </div>
+    <header
+      id="hero"
+      class="relative h-[80vh] flex items-center justify-center bg-cover bg-center"
+    >
+      <div class="absolute inset-0 bg-black/50"></div>
+      <div class="relative z-10 text-center px-4 max-w-4xl mx-auto text-white">
+        <span
+          id="hero-status"
+          class="inline-block px-3 py-1 mb-4 text-sm font-bold uppercase tracking-widest border border-white/30 rounded-full backdrop-blur-sm"
+        ></span>
+        <h1
+          id="hero-title"
+          class="text-5xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg"
+        ></h1>
+        <p
+          id="hero-desc"
+          class="text-xl md:text-2xl mb-8 font-light text-gray-200 drop-shadow-md"
+        ></p>
+      </div>
     </header>
 
     <section id="bestsellers" class="py-16 bg-gray-50">
-        <div class="container mx-auto px-4">
-            <div class="text-center mb-10">
-                <h2 class="text-4xl text-black uppercase font-bold mb-3 tracking-tight">Nos Stars</h2>
-                <p class="text-gray-500 text-lg">Les favoris du moment, validés par la team.</p>
-            </div>
-            
-            <div id="bestsellers-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 max-w-6xl mx-auto">
-            </div>
-
-            <div class="text-center">
-                <button onclick="switchView('menu')" class="bg-gray-800 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300">
-                    Voir toute la carte <i class="fas fa-arrow-right ml-2 text-red-500"></i>
-                </button>
-            </div>
+      <div class="container mx-auto px-4">
+        <div class="text-center mb-10">
+          <h2
+            class="text-4xl text-black uppercase font-bold mb-3 tracking-tight"
+          >
+            Nos Stars
+          </h2>
+          <p class="text-gray-500 text-lg">
+            Les favoris du moment, validés par la team.
+          </p>
         </div>
+
+        <div
+          id="bestsellers-container"
+          class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 max-w-6xl mx-auto"
+        ></div>
+
+        <div class="text-center">
+          <button
+            onclick="switchView('menu')"
+            class="bg-gray-800 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300"
+          >
+            Voir toute la carte
+            <i class="fas fa-arrow-right ml-2 text-red-500"></i>
+          </button>
+        </div>
+      </div>
     </section>
 
-    <section id="full-menu" class="hidden h-full bg-gray-50 fixed inset-0 z-[60] overflow-y-auto">
-<div id="ptr-indicator" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md z-[70]">
-            <i class="fas fa-arrow-down text-gray-400 text-xl transition-transform" id="ptr-icon"></i>
+    <section
+      id="full-menu"
+      class="hidden h-full bg-gray-50 fixed inset-0 z-[60] overflow-y-auto"
+    >
+      <div
+        id="ptr-indicator"
+        class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md z-[70]"
+      >
+        <i
+          class="fas fa-arrow-down text-gray-400 text-xl transition-transform"
+          id="ptr-icon"
+        ></i>
+      </div>
+      <div class="container mx-auto px-4 max-w-7xl">
+        <div
+          class="flex justify-between items-center mb-6 bg-gray-50/95 backdrop-blur py-4 z-10 sticky top-0 border-b border-gray-200 shadow-sm -mx-4 px-4 md:mx-0 md:px-0"
+        >
+          <!-- <h2 class="text-4xl font-black text-gray-900 tracking-tight">La Carte</h2> -->
+          <p></p>
+          <button
+            onclick="switchView('home')"
+            class="text-gray-600 bg-white shadow-sm border border-red-200 w-12 h-12 rounded-full hover:bg-gray-100 hover:text-red-600 transition flex items-center justify-center"
+          >
+            <i class="fas fa-times text-xl"></i>
+          </button>
         </div>
-        <div class="container mx-auto px-4 max-w-7xl">
-            <div class="flex justify-between items-center mb-6 bg-gray-50/95 backdrop-blur py-4 z-10 sticky top-0 border-b border-gray-200 shadow-sm -mx-4 px-4 md:mx-0 md:px-0">
-                <!-- <h2 class="text-4xl font-black text-gray-900 tracking-tight">La Carte</h2> -->
-                 <p></p>
-                <button onclick="switchView('home')" class="text-gray-600 bg-white shadow-sm border border-red-200 w-12 h-12 rounded-full hover:bg-gray-100 hover:text-red-600 transition flex items-center justify-center">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
 
-            <div id="full-menu-container" class="pb-24 md:pb-12">
-            </div>
+        <div id="full-menu-container" class="pb-24 md:pb-12"></div>
 
-            <div id="infinite-scroll-trigger" class="h-24 w-full flex items-center justify-center">
-                <div id="loading-spinner" class="hidden animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-            </div>
+        <div
+          id="infinite-scroll-trigger"
+          class="h-24 w-full flex items-center justify-center"
+        >
+          <div
+            id="loading-spinner"
+            class="hidden animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"
+          ></div>
         </div>
+      </div>
     </section>
 
     <section id="loyalty" class="py-20 hidden bg-white">
-        <div class="container mx-auto px-4">
-            <div id="loyalty-card" class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-black border-green-600 border-2 shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]">
-                <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-green-600/60 blur-3xl"></div>
-                
-                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                    <div class="text-center md:text-left flex-1">
-                        <h3 class="text-4xl font-bold text-black mb-4 tracking-tight" id="loyalty-title">Club Fidélité</h3>
-                        <p class="mb-8 text-lg opacity-90 font-light" id="loyalty-desc">Gagnez des points à chaque commande !</p>
-                        <div class="flex gap-4 justify-center md:justify-start">
-                            <button id="loyalty-main-btn" onclick="toggleAuthModal()" class="bg-white text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1">
-                                Connexion
-                            </button>
-                        </div>
-                    </div>
-                    <div class="text-8xl md:text-9xl opacity-90 drop-shadow-xl">
-                        <i class="fas fa-gift text-green-500 animate-bounce"></i>
-                    </div>
-                </div>
+      <div class="container mx-auto px-4">
+        <div
+          id="loyalty-card"
+          class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-black border-green-600 border-2 shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
+        >
+          <div
+            class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-green-600/60 blur-3xl"
+          ></div>
+
+          <div
+            class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8"
+          >
+            <div class="text-center md:text-left flex-1">
+              <h3
+                class="text-4xl font-bold text-black mb-4 tracking-tight"
+                id="loyalty-title"
+              >
+                Club Fidélité
+              </h3>
+              <p class="mb-8 text-lg opacity-90 font-light" id="loyalty-desc">
+                Gagnez des points à chaque commande !
+              </p>
+              <div class="flex gap-4 justify-center md:justify-start">
+                <button
+                  id="loyalty-main-btn"
+                  onclick="toggleAuthModal()"
+                  class="bg-white text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1"
+                >
+                  Connexion
+                </button>
+              </div>
             </div>
+            <div class="text-8xl md:text-9xl opacity-90 drop-shadow-xl">
+              <i class="fas fa-gift text-green-500 animate-bounce"></i>
+            </div>
+          </div>
         </div>
+      </div>
     </section>
 
     <section id="reviews" class="py-16 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="bg-gray-50 rounded-2xl p-8 text-center max-w-lg mx-auto border border-gray-100 shadow-sm">
-                <h3 class="text-xl text-black font-bold mb-4">Et vous, c'était comment ?</h3>
-                <div class="flex justify-center gap-3 text-4xl mb-6 cursor-pointer" id="interactive-stars">
-                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="1"></i>
-                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="2"></i>
-                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="3"></i>
-                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="4"></i>
-                    <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="5"></i>
-                </div>
-                <p id="rating-feedback" class="text-gray-600 font-medium min-h-[1.5rem]"></p>
-            </div>
+      <div class="container mx-auto px-4">
+        <div
+          class="bg-gray-50 rounded-2xl p-8 text-center max-w-lg mx-auto border border-gray-100 shadow-sm"
+        >
+          <h3 class="text-xl text-black font-bold mb-4">
+            Et vous, c'était comment ?
+          </h3>
+          <div
+            class="flex justify-center gap-3 text-4xl mb-6 cursor-pointer"
+            id="interactive-stars"
+          >
+            <i
+              class="far fa-star text-gray-300 hover:text-yellow-400 transition"
+              data-value="1"
+            ></i>
+            <i
+              class="far fa-star text-gray-300 hover:text-yellow-400 transition"
+              data-value="2"
+            ></i>
+            <i
+              class="far fa-star text-gray-300 hover:text-yellow-400 transition"
+              data-value="3"
+            ></i>
+            <i
+              class="far fa-star text-gray-300 hover:text-yellow-400 transition"
+              data-value="4"
+            ></i>
+            <i
+              class="far fa-star text-gray-300 hover:text-yellow-400 transition"
+              data-value="5"
+            ></i>
+          </div>
+          <p
+            id="rating-feedback"
+            class="text-gray-600 font-medium min-h-[1.5rem]"
+          ></p>
         </div>
+      </div>
     </section>
 
     <section id="contact" class="py-20 bg-gray-100">
-        <div class="container mx-auto px-4 max-w-2xl">
-            <div class="text-center mb-10">
-                <h2 id="form-title" class="text-4xl font-black text-gray-900 mb-4 tracking-tight">Une question ?</h2>
-                <p id="form-desc" class="text-gray-600 text-lg">Nous sommes là pour vous répondre.</p>
-            </div>
-            
-            <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-6 bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-gray-100">
-                <input type="hidden" name="source_avis" id="source-avis" value="contact_direct">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Email / Téléphone</label>
-                    <input type="text" name="contact" required class="w-full text-black px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Message</label>
-                    <textarea name="message" rows="4" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"></textarea>
-                </div>
-                <button type="submit" id="btn-submit-form" class="w-full py-4 rounded-xl font-bold text-white shadow-lg bg-gray-900 hover:bg-black transition transform hover:-translate-y-1">
-                    Envoyer le message
-                </button>
-            </form>
+      <div class="container mx-auto px-4 max-w-2xl">
+        <div class="text-center mb-10">
+          <h2
+            id="form-title"
+            class="text-4xl font-black text-gray-900 mb-4 tracking-tight"
+          >
+            Une question ?
+          </h2>
+          <p id="form-desc" class="text-gray-600 text-lg">
+            Nous sommes là pour vous répondre.
+          </p>
         </div>
+
+        <form
+          id="contact-form"
+          action="https://formspree.io/f/mykdrzlq"
+          method="POST"
+          class="space-y-6 bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-gray-100"
+        >
+          <input
+            type="hidden"
+            name="source_avis"
+            id="source-avis"
+            value="contact_direct"
+          />
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2"
+              >Email / Téléphone</label
+            >
+            <input
+              type="text"
+              name="contact"
+              required
+              class="w-full text-black px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2"
+              >Message</label
+            >
+            <textarea
+              name="message"
+              rows="4"
+              required
+              class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"
+            ></textarea>
+          </div>
+          <button
+            type="submit"
+            id="btn-submit-form"
+            class="w-full py-4 rounded-xl font-bold text-white shadow-lg bg-gray-900 hover:bg-black transition transform hover:-translate-y-1"
+          >
+            Envoyer le message
+          </button>
+        </form>
+      </div>
     </section>
 
     <!-- <section id="contact" class="py-20 bg-gray-100">
@@ -220,247 +453,522 @@
         </div>
     </section> -->
 
-    <footer id="infos" class="relative overflow-hidden bg-gray-900 text-white pt-20 pb-32 md:pb-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
-        <div class="liquid-blob absolute -top-24 -left-24 w-96 h-96 bg-red-600/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="liquid-blob absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none animation-delay-2000"></div>
+    <footer
+      id="infos"
+      class="relative overflow-hidden bg-gray-900 text-white pt-20 pb-32 md:pb-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]"
+    >
+      <div
+        class="liquid-blob absolute -top-24 -left-24 w-96 h-96 bg-red-600/20 rounded-full blur-3xl pointer-events-none"
+      ></div>
+      <div
+        class="liquid-blob absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none animation-delay-2000"
+      ></div>
 
-        <div class="relative z-10 container mx-auto px-4 grid md:grid-cols-3 gap-12 max-w-6xl">
-            <div class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50">
-                <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-map-marker-alt text-red-500"></i> Nous trouver</h4>
-                <p id="footer-address" class="text-lg mb-4 font-light text-gray-200"></p>
-                <p id="footer-phone" class="text-lg mb-6 font-bold text-white"></p>
-                <div id="socials-container" class="flex gap-4 text-2xl mt-4 pt-4 border-t border-gray-700/50"></div>
-            </div>
-            
-            <div class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50">
-                <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-clock text-red-500"></i> Horaires</h4>
-                <ul id="hours-list" class="space-y-3 font-light text-gray-300"></ul>
-            </div>
-            
-            <div class="text-center md:text-right flex flex-col justify-center items-center md:items-end">
-                <!-- <img id="footer-logo" src="" class="h-20 mb-4 hidden grayscale opacity-50"> -->
-                <!-- <h2 id="footer-brand" class="text-4xl font-black mb-4 tracking-tight drop-shadow-lg"></h2> -->
-                <p class="text-gray-400 text-sm font-light bg-gray-800/50 px-4 py-2 rounded-full backdrop-blur-sm border border-gray-700/50">
-                    Propulsé par <span class="text-white font-bold">CodeCrafters™</span>
-                </p>
-            </div>
+      <div
+        class="relative z-10 container mx-auto px-4 grid md:grid-cols-3 gap-12 max-w-6xl"
+      >
+        <div
+          class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50"
+        >
+          <h4
+            class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2"
+          >
+            <i class="fas fa-map-marker-alt text-red-500"></i> Nous trouver
+          </h4>
+          <p
+            id="footer-address"
+            class="text-lg mb-4 font-light text-gray-200"
+          ></p>
+          <p id="footer-phone" class="text-lg mb-6 font-bold text-white"></p>
+          <div
+            id="socials-container"
+            class="flex gap-4 text-2xl mt-4 pt-4 border-t border-gray-700/50"
+          ></div>
         </div>
+
+        <div
+          class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50"
+        >
+          <h4
+            class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2"
+          >
+            <i class="fas fa-clock text-red-500"></i> Horaires
+          </h4>
+          <ul id="hours-list" class="space-y-3 font-light text-gray-300"></ul>
+        </div>
+
+        <div
+          class="text-center md:text-right flex flex-col justify-center items-center md:items-end"
+        >
+          <!-- <img id="footer-logo" src="" class="h-20 mb-4 hidden grayscale opacity-50"> -->
+          <!-- <h2 id="footer-brand" class="text-4xl font-black mb-4 tracking-tight drop-shadow-lg"></h2> -->
+          <p
+            class="text-gray-400 text-sm font-light bg-gray-800/50 px-4 py-2 rounded-full backdrop-blur-sm border border-gray-700/50"
+          >
+            Propulsé par <span class="text-white font-bold">CodeCrafters™</span>
+          </p>
+        </div>
+      </div>
     </footer>
 
-    <div id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 z-50 px-6 pt-3 pb-safe-bottom flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
-        <a href="#hero" id="mobile-link-home" class="flex flex-col items-center text-gray-500 hover:text-red-600 transition cursor-pointer w-16">
-            <i class="fas fa-home text-2xl mb-1"></i>
-            <span class="text-[10px] uppercase font-bold tracking-wider">Accueil</span>
+    <div
+      id="mobile-nav"
+      class="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 z-50 px-6 pt-3 pb-safe-bottom flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.05)]"
+    >
+      <a
+        href="#hero"
+        id="mobile-link-home"
+        class="flex flex-col items-center text-gray-500 hover:text-red-600 transition cursor-pointer w-16"
+      >
+        <i class="fas fa-home text-2xl mb-1"></i>
+        <span class="text-[10px] uppercase font-bold tracking-wider"
+          >Accueil</span
+        >
+      </a>
+      <div class="relative -top-6">
+        <a
+          href="#"
+          id="mobile-cta-btn"
+          target="_blank"
+          class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(220,38,38,0.4)] transform active:scale-95 transition border-4 border-white"
+        >
+          <i id="mobile-cta-icon" class="fas fa-utensils text-2xl"></i>
         </a>
-        <div class="relative -top-6">
-            <a href="#" id="mobile-cta-btn" target="_blank" class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(220,38,38,0.4)] transform active:scale-95 transition border-4 border-white">
-                <i id="mobile-cta-icon" class="fas fa-utensils text-2xl"></i>
-            </a>
-        </div>
-        <a href="#" onclick="switchView('menu'); return false;" id="mobile-link-menu" class="flex flex-col items-center text-gray-500 hover:text-red-600 transition cursor-pointer w-16">
-            <i class="fas fa-hamburger text-2xl mb-1"></i>
-            <span class="text-[10px] uppercase font-bold tracking-wider">Carte</span>
-        </a>
+      </div>
+      <a
+        href="#"
+        onclick="
+          switchView('menu');
+          return false;
+        "
+        id="mobile-link-menu"
+        class="flex flex-col items-center text-gray-500 hover:text-red-600 transition cursor-pointer w-16"
+      >
+        <i class="fas fa-hamburger text-2xl mb-1"></i>
+        <span class="text-[10px] uppercase font-bold tracking-wider"
+          >Carte</span
+        >
+      </a>
     </div>
 
-<div id="product-modal-backdrop" onclick="closeProductModal()" class="fixed inset-0 bg-gray-900/70 z-[70] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
+    <div
+      id="product-modal-backdrop"
+      onclick="closeProductModal()"
+      class="fixed inset-0 bg-gray-900/70 z-[70] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"
+    ></div>
 
-    <div id="product-modal" class="fixed bottom-0 left-0 md:left-1/2 w-full md:max-w-2xl bg-white rounded-t-3xl md:rounded-3xl shadow-2xl z-[80] transform md:-translate-x-1/2 translate-y-full md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:pointer-events-none md:scale-95 md:h-auto md:bottom-auto transition-all duration-300 max-h-[90vh] overflow-y-auto">
-        <button onclick="closeProductModal()" class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg z-20 text-gray-800 hover:bg-gray-100 hover:scale-110 transition">
-            <i class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i>
+    <div
+      id="product-modal"
+      class="fixed bottom-0 left-0 md:left-1/2 w-full md:max-w-2xl bg-white rounded-t-3xl md:rounded-3xl shadow-2xl z-[80] transform md:-translate-x-1/2 translate-y-full md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:pointer-events-none md:scale-95 md:h-auto md:bottom-auto transition-all duration-300 max-h-[90vh] overflow-y-auto"
+    >
+      <button
+        onclick="closeProductModal()"
+        class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg z-20 text-gray-800 hover:bg-gray-100 hover:scale-110 transition"
+      >
+        <i
+          class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"
+        ></i>
+      </button>
+
+      <div class="relative flex flex-col md:flex-row">
+        <div class="h-64 md:h-auto md:w-2/5 relative">
+          <img
+            id="modal-img"
+            alt="image item"
+            loading="lazy"
+            src=""
+            class="w-full h-full object-cover rounded-t-3xl md:rounded-t-none md:rounded-l-3xl"
+          />
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent md:hidden"
+          ></div>
+        </div>
+
+        <div class="p-6 md:p-8 pb-24 md:pb-8 flex-1 flex flex-col">
+          <div class="flex justify-between items-start mb-4 gap-4">
+            <h3
+              id="modal-title"
+              class="text-3xl font-black text-gray-900 tracking-tight leading-none"
+            ></h3>
+            <div class="flex items-center gap-2">
+              <button
+                id="modal-share-btn"
+                class="hidden text-gray-400 hover:text-red-500 transition p-2 rounded-full hover:bg-red-50 active:scale-95"
+              >
+                <i class="fas fa-share-nodes text-xl"></i>
+              </button>
+              <span
+                id="modal-price"
+                class="text-2xl font-black text-red-600 bg-red-50 px-3 py-1 rounded-lg"
+              ></span>
+            </div>
+          </div>
+
+          <div id="modal-tags" class="flex gap-2 mb-6 flex-wrap"></div>
+
+          <p
+            id="modal-desc"
+            class="text-gray-600 text-lg mb-8 leading-relaxed flex-grow"
+          ></p>
+
+          <div
+            id="modal-allergens-container"
+            class="mb-8 p-4 bg-gray-50 border border-gray-100 rounded-xl hidden"
+          >
+            <h4
+              class="font-bold text-xs text-gray-400 uppercase tracking-widest mb-2"
+            >
+              <i class="fas fa-info-circle mr-1"></i> Infos & Allergènes
+            </h4>
+            <p
+              id="modal-allergens"
+              class="text-gray-700 text-sm font-medium"
+            ></p>
+          </div>
+
+          <a
+            href="#"
+            id="modal-cta"
+            class="w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2"
+          >
+            Commander
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="auth-modal"
+      class="fixed inset-0 bg-gray-900/80 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-md"
+    >
+      <div
+        class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95 md:scale-100"
+      >
+        <button
+          onclick="toggleAuthModal()"
+          class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full transition"
+        >
+          <i
+            class="fas fa-times text-xl w-5 h-5 flex justify-center items-center"
+          ></i>
         </button>
-
-        <div class="relative flex flex-col md:flex-row">
-            <div class="h-64 md:h-auto md:w-2/5 relative">
-                <img id="modal-img" alt="image item" loading="lazy" src="" class="w-full h-full object-cover rounded-t-3xl md:rounded-t-none md:rounded-l-3xl">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent md:hidden"></div>
-            </div>
-            
-            <div class="p-6 md:p-8 pb-24 md:pb-8 flex-1 flex flex-col"> 
-<div class="flex justify-between items-start mb-4 gap-4">
-                    <h3 id="modal-title" class="text-3xl font-black text-gray-900 tracking-tight leading-none"></h3>
-                    <div class="flex items-center gap-2">
-                        <button id="modal-share-btn" class="hidden text-gray-400 hover:text-red-500 transition p-2 rounded-full hover:bg-red-50 active:scale-95">
-                            <i class="fas fa-share-nodes text-xl"></i>
-                        </button>
-                        <span id="modal-price" class="text-2xl font-black text-red-600 bg-red-50 px-3 py-1 rounded-lg"></span>
-                    </div>
-                </div>
-                
-                <div id="modal-tags" class="flex gap-2 mb-6 flex-wrap"></div>
-                
-                <p id="modal-desc" class="text-gray-600 text-lg mb-8 leading-relaxed flex-grow"></p>
-                
-                <div id="modal-allergens-container" class="mb-8 p-4 bg-gray-50 border border-gray-100 rounded-xl hidden">
-                    <h4 class="font-bold text-xs text-gray-400 uppercase tracking-widest mb-2"><i class="fas fa-info-circle mr-1"></i> Infos & Allergènes</h4>
-                    <p id="modal-allergens" class="text-gray-700 text-sm font-medium"></p>
-                </div>
-                
-                <a href="#" id="modal-cta" class="w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2">
-                    Commander
-                </a>
-            </div>
+        <div class="text-center mb-8">
+          <h3
+            id="auth-title"
+            class="text-3xl font-black text-gray-900 tracking-tight"
+          >
+            Bienvenue !
+          </h3>
+          <p id="auth-subtitle" class="text-gray-500 mt-2">
+            Connectez-vous pour votre carte de fidélité.
+          </p>
         </div>
-    </div>
-
-    <div id="auth-modal" class="fixed inset-0 bg-gray-900/80 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95 md:scale-100">
-            <button onclick="toggleAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full transition">
-                <i class="fas fa-times text-xl w-5 h-5 flex justify-center items-center"></i>
-            </button>
-            <div class="text-center mb-8">
-                <h3 id="auth-title" class="text-3xl font-black text-gray-900 tracking-tight">Bienvenue !</h3>
-                <p id="auth-subtitle" class="text-gray-500 mt-2">Connectez-vous pour votre carte de fidélité.</p>
-            </div>
-            <form id="auth-form" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                    <input type="email" id="auth-email" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Mot de passe</label>
-                    <input type="password" id="auth-password" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black">
-                </div>
-                <button type="submit" id="auth-submit-btn" class="w-full py-4 bg-gray-900 text-white rounded-xl font-bold shadow-lg hover:bg-black transition transform hover:-translate-y-1 mt-2">
-                    Se connecter
-                </button>
-            </form>
-            <div class="mt-8 text-center text-sm bg-gray-50 p-4 rounded-xl">
-                <span id="auth-switch-text" class="text-gray-600">Pas encore de compte ?</span>
-                <button onclick="switchAuthMode()" id="auth-switch-btn" class="text-red-600 font-bold ml-1 hover:underline">S'inscrire</button>
-            </div>
+        <form id="auth-form" class="space-y-5">
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="auth-email"
+              required
+              class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2"
+              >Mot de passe</label
+            >
+            <input
+              type="password"
+              id="auth-password"
+              required
+              class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"
+            />
+          </div>
+          <button
+            type="submit"
+            id="auth-submit-btn"
+            class="w-full py-4 bg-gray-900 text-white rounded-xl font-bold shadow-lg hover:bg-black transition transform hover:-translate-y-1 mt-2"
+          >
+            Se connecter
+          </button>
+        </form>
+        <div class="mt-8 text-center text-sm bg-gray-50 p-4 rounded-xl">
+          <span id="auth-switch-text" class="text-gray-600"
+            >Pas encore de compte ?</span
+          >
+          <button
+            onclick="switchAuthMode()"
+            id="auth-switch-btn"
+            class="text-red-600 font-bold ml-1 hover:underline"
+          >
+            S'inscrire
+          </button>
         </div>
+      </div>
     </div>
 
-    <div id="snackbar" class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-full shadow-2xl z-[200] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 w-max max-w-[90vw]">
-        <i id="snackbar-icon" class="fas fa-check-circle text-green-400 text-2xl"></i>
-        <span id="snackbar-message" class="font-medium text-sm md:text-base">Message ici</span>
+    <div
+      id="snackbar"
+      class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-full shadow-2xl z-[200] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 w-max max-w-[90vw]"
+    >
+      <i
+        id="snackbar-icon"
+        class="fas fa-check-circle text-green-400 text-2xl"
+      ></i>
+      <span id="snackbar-message" class="font-medium text-sm md:text-base"
+        >Message ici</span
+      >
     </div>
 
-    <div id="client-card-modal" class="fixed inset-0 bg-gray-900/90 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300 opacity-0">
-        <div id="virtual-card" class="w-full max-w-sm rounded-3xl relative shadow-2xl overflow-hidden transform transition-transform scale-95 border border-white/20">
-            <div id="card-bg-gradient" class="absolute inset-0 bg-gradient-to-br from-red-500 to-orange-600 z-0"></div>
-            
-            <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/20 blur-3xl z-0 pointer-events-none"></div>
-            <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-black/20 blur-2xl z-0 pointer-events-none"></div>
+    <div
+      id="client-card-modal"
+      class="fixed inset-0 bg-gray-900/90 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300 opacity-0"
+    >
+      <div
+        id="virtual-card"
+        class="w-full max-w-sm rounded-3xl relative shadow-2xl overflow-hidden transform transition-transform scale-95 border border-white/20"
+      >
+        <div
+          id="card-bg-gradient"
+          class="absolute inset-0 bg-gradient-to-br from-red-500 to-orange-600 z-0"
+        ></div>
 
-            <div class="relative z-10 p-6 text-white flex flex-col h-full">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h3 id="card-program-name" class="text-xl font-black uppercase tracking-widest opacity-90 drop-shadow-md">Team Fusion</h3>
-                    </div>
-                    <i class="fas fa-wifi text-white/60 rotate-90 text-3xl"></i>
-                </div>
-                
-                <div class="flex items-center justify-between bg-white/10 rounded-2xl p-4 backdrop-blur-md mb-6 border border-white/20 shadow-inner">
-                    <div class="flex flex-col">
-                        <span class="text-xs uppercase tracking-widest opacity-80 mb-1">Fidélité</span>
-                        <div id="points-display-container" class="flex items-baseline gap-1 transition-colors duration-500">
-                            <span id="card-points" class="text-5xl font-black drop-shadow-lg">0</span>
-                            <span class="text-xl font-bold opacity-70">/10</span>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white p-2 rounded-xl shadow-lg w-24 h-24 flex items-center justify-center transform hover:scale-105 transition-transform bg-blend-lighten">
-                        <img id="card-qr-img" src="" alt="QR Code" class="w-full h-full object-contain">
-                    </div>
-                </div>
-                
-                <div class="w-full mt-2">
-                    <div class="flex justify-between text-xs font-bold mb-2">
-                        <span id="progress-text" class="text-white/90 uppercase tracking-wider">Encore 10 points...</span>
-                        <i class="fas fa-gift text-yellow-300 text-lg" id="gift-icon"></i>
-                    </div>
-                    <div class="w-full bg-black/30 rounded-full h-3 overflow-hidden shadow-inner border border-white/10">
-                        <div id="card-progress-bar" class="bg-gradient-to-r from-yellow-400 to-yellow-200 h-full rounded-full transition-all duration-1000 ease-out w-[0%]"></div>
-                    </div>
-                </div>
-                <div class="w-full mt-2">
-                    <button id="promo-notif-btn" onclick="demanderPermissionNotifs()" class="mt-4 w-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 border border-white/20 hidden backdrop-blur-sm">
-                        <i class="fas fa-bell animate-pulse"></i> Activer les notifications
-                    </button>
-                </div>
-                <p id="card-user-email" class="text-[10px] opacity-60 mt-4 text-center font-mono w-full truncate"></p>
-            </div>
-        </div>
+        <div
+          class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/20 blur-3xl z-0 pointer-events-none"
+        ></div>
+        <div
+          class="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-black/20 blur-2xl z-0 pointer-events-none"
+        ></div>
 
-        <button onclick="closeClientCard()" class="mt-8 text-white/70 hover:text-white flex flex-col items-center gap-2 transition-transform hover:scale-110">
-            <i class="fas fa-times-circle text-5xl drop-shadow-lg"></i>
-            <span class="uppercase tracking-widest text-xs font-bold drop-shadow-md">Fermer la carte</span>
-        </button>
-    </div>
-
-<div id="admin-scanner-modal" class="fixed inset-0 bg-gray-900/95 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
-        <div class="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] relative flex flex-col">
-            
-            <div class="p-5 bg-gray-900 text-white flex justify-between items-center z-10 shadow-md">
-                <h3 class="font-bold text-lg"><i class="fas fa-qrcode text-red-500 mr-2 animate-pulse"></i> Scanner Client</h3>
-                <button onclick="closeAdminScanner()" class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600">
-                    <i class="fas fa-times w-5 h-5 flex items-center justify-center"></i>
-                </button>
-            </div>
-
-            <div class="relative w-full bg-black aspect-square flex items-center justify-center overflow-hidden">
-                <div id="reader" class="w-full h-full absolute inset-0 object-cover"></div>
-                
-                <div class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
-                    <div class="w-64 h-64 border-4 border-red-500 rounded-3xl shadow-[0_0_0_4000px_rgba(0,0,0,0.6)]"></div>
-                </div>
-            </div>
-
-            <div class="p-6 bg-white text-center z-10">
-                <p class="text-gray-900 font-black text-xl mb-1 tracking-tight">Placez le QR Code dans le cadre</p>
-                <p class="text-sm text-gray-500 font-medium">La caméra s'active automatiquement.</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="pwa-install-banner" class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700">
-        <div class="flex items-center gap-3">
-            <img src="assets/icon-192.webp" class="w-12 h-12 rounded-xl shadow-md" alt="App Icon">
+        <div class="relative z-10 p-6 text-white flex flex-col h-full">
+          <div class="flex justify-between items-start mb-6">
             <div>
-                <p class="font-bold text-sm">Garde-nous dans ta poche !</p>
-                <p class="text-xs text-gray-400">Installe l'app pour tes points 🎁</p>
+              <h3
+                id="card-program-name"
+                class="text-xl font-black uppercase tracking-widest opacity-90 drop-shadow-md"
+              >
+                Team Fusion
+              </h3>
             </div>
+            <i class="fas fa-wifi text-white/60 rotate-90 text-3xl"></i>
+          </div>
+
+          <div
+            class="flex items-center justify-between bg-white/10 rounded-2xl p-4 backdrop-blur-md mb-6 border border-white/20 shadow-inner"
+          >
+            <div class="flex flex-col">
+              <span class="text-xs uppercase tracking-widest opacity-80 mb-1"
+                >Fidélité</span
+              >
+              <div
+                id="points-display-container"
+                class="flex items-baseline gap-1 transition-colors duration-500"
+              >
+                <span
+                  id="card-points"
+                  class="text-5xl font-black drop-shadow-lg"
+                  >0</span
+                >
+                <span class="text-xl font-bold opacity-70">/10</span>
+              </div>
+            </div>
+
+            <div
+              class="bg-white p-2 rounded-xl shadow-lg w-24 h-24 flex items-center justify-center transform hover:scale-105 transition-transform bg-blend-lighten"
+            >
+              <img
+                id="card-qr-img"
+                src=""
+                alt="QR Code"
+                class="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+
+          <div class="w-full mt-2">
+            <div class="flex justify-between text-xs font-bold mb-2">
+              <span
+                id="progress-text"
+                class="text-white/90 uppercase tracking-wider"
+                >Encore 10 points...</span
+              >
+              <i class="fas fa-gift text-yellow-300 text-lg" id="gift-icon"></i>
+            </div>
+            <div
+              class="w-full bg-black/30 rounded-full h-3 overflow-hidden shadow-inner border border-white/10"
+            >
+              <div
+                id="card-progress-bar"
+                class="bg-gradient-to-r from-yellow-400 to-yellow-200 h-full rounded-full transition-all duration-1000 ease-out w-[0%]"
+              ></div>
+            </div>
+          </div>
+          <div class="w-full mt-2">
+            <button
+              id="promo-notif-btn"
+              onclick="demanderPermissionNotifs()"
+              class="mt-4 w-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 border border-white/20 hidden backdrop-blur-sm"
+            >
+              <i class="fas fa-bell animate-pulse"></i> Activer les
+              notifications
+            </button>
+          </div>
+          <p
+            id="card-user-email"
+            class="text-[10px] opacity-60 mt-4 text-center font-mono w-full truncate"
+          ></p>
         </div>
-        <button id="pwa-install-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg">
-            Installer
-        </button>
-        <button id="pwa-close-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md">
-            <i class="fas fa-times"></i>
-        </button>
+      </div>
+
+      <button
+        onclick="closeClientCard()"
+        class="mt-8 text-white/70 hover:text-white flex flex-col items-center gap-2 transition-transform hover:scale-110"
+      >
+        <i class="fas fa-times-circle text-5xl drop-shadow-lg"></i>
+        <span class="uppercase tracking-widest text-xs font-bold drop-shadow-md"
+          >Fermer la carte</span
+        >
+      </button>
     </div>
 
-    <div id="app-review-modal" class="fixed inset-0 bg-gray-900/60 z-[200] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl transform transition-transform scale-95 border border-gray-100 relative overflow-hidden">
-            
-            <div class="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 rounded-full bg-red-500/10 blur-xl"></div>
-            
-            <img src="assets/icon-192.webp" alt="App Icon" class="w-16 h-16 mx-auto rounded-2xl shadow-md mb-4 relative z-10 border border-gray-100">
-            
-            <h3 class="text-xl font-black text-gray-900 mb-2 tracking-tight">Vous aimez manger chez nous ?</h3>
-            <p class="text-sm text-gray-500 mb-6 font-medium">Votre soutien nous aide à régaler encore plus de monde ! 🍔🚀</p>
-
-            <div class="flex flex-col gap-3 relative z-10">
-                <button id="btn-review-google" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_15px_rgba(220,38,38,0.3)] transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                    <i class="fab fa-google text-lg"></i> Laisser 5 étoiles
-                </button>
-                
-                <button id="btn-review-contact" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition">
-                    Faire une suggestion
-                </button>
-                
-                <button id="btn-review-later" class="w-full text-gray-400 hover:text-gray-600 font-bold py-2 text-sm mt-1 transition">
-                    Plus tard
-                </button>
-            </div>
+    <div
+      id="admin-scanner-modal"
+      class="fixed inset-0 bg-gray-900/95 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-md"
+    >
+      <div
+        class="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] relative flex flex-col"
+      >
+        <div
+          class="p-5 bg-gray-900 text-white flex justify-between items-center z-10 shadow-md"
+        >
+          <h3 class="font-bold text-lg">
+            <i class="fas fa-qrcode text-red-500 mr-2 animate-pulse"></i>
+            Scanner Client
+          </h3>
+          <button
+            onclick="closeAdminScanner()"
+            class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600"
+          >
+            <i
+              class="fas fa-times w-5 h-5 flex items-center justify-center"
+            ></i>
+          </button>
         </div>
+
+        <div
+          class="relative w-full bg-black aspect-square flex items-center justify-center overflow-hidden"
+        >
+          <div
+            id="reader"
+            class="w-full h-full absolute inset-0 object-cover"
+          ></div>
+
+          <div
+            class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"
+          >
+            <div
+              class="w-64 h-64 border-4 border-red-500 rounded-3xl shadow-[0_0_0_4000px_rgba(0,0,0,0.6)]"
+            ></div>
+          </div>
+        </div>
+
+        <div class="p-6 bg-white text-center z-10">
+          <p class="text-gray-900 font-black text-xl mb-1 tracking-tight">
+            Placez le QR Code dans le cadre
+          </p>
+          <p class="text-sm text-gray-500 font-medium">
+            La caméra s'active automatiquement.
+          </p>
+        </div>
+      </div>
     </div>
 
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="snack-config.js"></script> 
+    <div
+      id="pwa-install-banner"
+      class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700"
+    >
+      <div class="flex items-center gap-3">
+        <img
+          src="assets/icon-192.webp"
+          class="w-12 h-12 rounded-xl shadow-md"
+          alt="App Icon"
+        />
+        <div>
+          <p class="font-bold text-sm">Garde-nous dans ta poche !</p>
+          <p class="text-xs text-gray-400">Installe l'app pour tes points 🎁</p>
+        </div>
+      </div>
+      <button
+        id="pwa-install-btn"
+        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg"
+      >
+        Installer
+      </button>
+      <button
+        id="pwa-close-btn"
+        class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div
+      id="app-review-modal"
+      class="fixed inset-0 bg-gray-900/60 z-[200] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0"
+    >
+      <div
+        class="bg-white w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl transform transition-transform scale-95 border border-gray-100 relative overflow-hidden"
+      >
+        <div
+          class="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 rounded-full bg-red-500/10 blur-xl"
+        ></div>
+
+        <img
+          src="assets/icon-192.webp"
+          alt="App Icon"
+          class="w-16 h-16 mx-auto rounded-2xl shadow-md mb-4 relative z-10 border border-gray-100"
+        />
+
+        <h3 class="text-xl font-black text-gray-900 mb-2 tracking-tight">
+          Vous aimez manger chez nous ?
+        </h3>
+        <p class="text-sm text-gray-500 mb-6 font-medium">
+          Votre soutien nous aide à régaler encore plus de monde ! 🍔🚀
+        </p>
+
+        <div class="flex flex-col gap-3 relative z-10">
+          <button
+            id="btn-review-google"
+            class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_15px_rgba(220,38,38,0.3)] transform hover:-translate-y-1 flex items-center justify-center gap-2"
+          >
+            <i class="fab fa-google text-lg"></i> Laisser 5 étoiles
+          </button>
+
+          <button
+            id="btn-review-contact"
+            class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition"
+          >
+            Faire une suggestion
+          </button>
+
+          <button
+            id="btn-review-later"
+            class="w-full text-gray-400 hover:text-gray-600 font-bold py-2 text-sm mt-1 transition"
+          >
+            Plus tard
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="https://unpkg.com/html5-qrcode"
+      type="text/javascript"
+    ></script>
+    <script src="snack-config.js"></script>
     <script type="module" src="firebase-init.js"></script>
-    <script type="module" src="app.js"></script> 
-
-</body>
+    <script type="module" src="app.js"></script>
+  </body>
 </html>
