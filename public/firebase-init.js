@@ -139,7 +139,7 @@ if (metaDescription && cfg.identity.description) {
   if (footerPhone && cfg.contact.phone) {
     const phoneClean = cfg.contact.phone.replace(/\s/g, "");
     footerPhone.innerHTML = `
-        <a href="tel:${phoneClean}" class="flex items-center gap-2 hover:text-red-500 transition group">
+        <a href="tel:${phoneClean}" aria-label="Appeler le restaurant" class="flex items-center gap-2 hover:text-red-500 transition group">
             <i class="fas fa-phone text-red-600 group-hover:text-red-500"></i>
             <span>${cfg.contact.phone}</span>
         </a>`;
@@ -182,13 +182,13 @@ if (metaDescription && cfg.identity.description) {
     const s = cfg.contact.socials;
 
     if (s.instagram) {
-      socialsContainer.innerHTML += `<a href="https://instagram.com/${s.instagram.replace("@", "")}" target="_blank" class="hover:text-pink-500 transition"><i class="fab fa-instagram"></i></a>`;
+      socialsContainer.innerHTML += `<a href="https://instagram.com/${s.instagram.replace("@", "")}" aria-label="Visiter notre page Instagram (s'ouvre dans un nouvel onglet)" target="_blank" rel="noopener noreferrer" class="hover:text-pink-500 transition"><i class="fab fa-instagram"></i></a>`;
     }
     if (s.facebook) {
-      socialsContainer.innerHTML += `<a href="https://facebook.com/${s.facebook}" target="_blank" class="hover:text-blue-500 transition"><i class="fab fa-facebook"></i></a>`;
+      socialsContainer.innerHTML += `<a href="https://facebook.com/${s.facebook}" aria-label="Visiter notre page Facebook (s'ouvre dans un nouvel onglet)" target="_blank" rel="noopener noreferrer" class="hover:text-blue-500 transition"><i class="fab fa-facebook"></i></a>`;
     }
     if (s.tiktok) {
-      socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" target="_blank" class="hover:text-black transition"><i class="fab fa-tiktok"></i></a>`;
+      socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" aria-label="Visiter notre page TikTok (s'ouvre dans un nouvel onglet)" target="_blank" rel="noopener noreferrer" class="hover:text-black transition"><i class="fab fa-tiktok"></i></a>`;
     }
   }
 

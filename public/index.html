@@ -110,6 +110,7 @@
         </a>
 
         <button
+        aria-label="Bouton du Menu"
           id="mobile-menu-btn"
           class="md:hidden text-2xl text-white focus:outline-none transition-transform duration-300 drop-shadow-md"
         >
@@ -145,6 +146,8 @@
             Commander
           </a>
           <button
+          aria-label="Déconnexion"
+          type="button"
             id="nav-logout-btn"
             onclick="logoutUser()"
             class="hidden bg-white/10 backdrop-blur-sm text-white hover:bg-red-600 px-4 py-2 rounded-full font-bold transition flex items-center gap-2"
@@ -398,7 +401,7 @@
             value="contact_direct"
           />
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2"
+            <label class="block sr-only text-sm font-bold text-gray-700 mb-2"
               >Email / Téléphone</label
             >
             <input
@@ -409,7 +412,7 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2"
+            <label class="block sr-only text-sm font-bold text-gray-700 mb-2"
               >Message</label
             >
             <textarea
@@ -421,6 +424,7 @@
           </div>
           <button
             type="submit"
+            aria-label="Envoyer le message"
             id="btn-submit-form"
             class="w-full py-4 rounded-xl font-bold text-white shadow-lg bg-gray-900 hover:bg-black transition transform hover:-translate-y-1"
           >
@@ -563,6 +567,7 @@
     >
       <button
         onclick="closeProductModal()"
+        aria-label="Fermeture de la modal"
         class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg z-20 text-gray-800 hover:bg-gray-100 hover:scale-110 transition"
       >
         <i
@@ -593,6 +598,7 @@
             <div class="flex items-center gap-2">
               <button
                 id="modal-share-btn"
+                aria-label="Bouton de partage"
                 class="hidden text-gray-400 hover:text-red-500 transition p-2 rounded-full hover:bg-red-50 active:scale-95"
               >
                 <i class="fas fa-share-nodes text-xl"></i>
@@ -645,6 +651,7 @@
         class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95 md:scale-100"
       >
         <button
+        aria-label="Toggle authentification"
           onclick="toggleAuthModal()"
           class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full transition"
         >
@@ -687,6 +694,7 @@
             />
           </div>
           <button
+          aria-label="Connexion compte fidélité"
             type="submit"
             id="auth-submit-btn"
             class="w-full py-4 bg-gray-900 text-white rounded-xl font-bold shadow-lg hover:bg-black transition transform hover:-translate-y-1 mt-2"
@@ -699,6 +707,7 @@
             >Pas encore de compte ?</span
           >
           <button
+          aria-label="Bouton Inscription"
             onclick="switchAuthMode()"
             id="auth-switch-btn"
             class="text-red-600 font-bold ml-1 hover:underline"
@@ -808,6 +817,7 @@
           <div class="w-full mt-2">
             <button
               id="promo-notif-btn"
+              aria-label="Autorisation push notifications"
               onclick="demanderPermissionNotifs()"
               class="mt-4 w-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 border border-white/20 hidden backdrop-blur-sm"
             >
@@ -824,6 +834,7 @@
 
       <button
         onclick="closeClientCard()"
+        aria-label="Fermeture carte"
         class="mt-8 text-white/70 hover:text-white flex flex-col items-center gap-2 transition-transform hover:scale-110"
       >
         <i class="fas fa-times-circle text-5xl drop-shadow-lg"></i>
@@ -848,6 +859,7 @@
             Scanner Client
           </h3>
           <button
+          aria-label="Fermeture scanner"
             onclick="closeAdminScanner()"
             class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600"
           >
@@ -901,6 +913,7 @@
         </div>
       </div>
       <button
+      aria-label="bouton installation pwa"
         id="pwa-install-btn"
         class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg"
       >
@@ -908,6 +921,7 @@
       </button>
       <button
         id="pwa-close-btn"
+        aria-label="Fermeture modal"
         class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md"
       >
         <i class="fas fa-times"></i>
@@ -940,6 +954,7 @@
 
         <div class="flex flex-col gap-3 relative z-10">
           <button
+          aria-label="Laisser un avis"
             id="btn-review-google"
             class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_15px_rgba(220,38,38,0.3)] transform hover:-translate-y-1 flex items-center justify-center gap-2"
           >
@@ -947,6 +962,7 @@
           </button>
 
           <button
+          aria-label="Faire une suggestion"
             id="btn-review-contact"
             class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition"
           >
@@ -954,6 +970,7 @@
           </button>
 
           <button
+          aria-label="Donner son avis plus tard"
             id="btn-review-later"
             class="w-full text-gray-400 hover:text-gray-600 font-bold py-2 text-sm mt-1 transition"
           >

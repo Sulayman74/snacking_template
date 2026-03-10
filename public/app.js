@@ -319,7 +319,7 @@ window.openProductModal = function (itemId) {
   } 
   // 2. SI LE RESTO EST EN MODE VITRINE (Pack Starter : Pas de commande)
   else if (cfg.features && cfg.features.enableOnlineOrder === false) {
-    btn.innerHTML = `<i class="fas fa-times mr-2"></i> Fermer`;
+    btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
     btn.className = `w-full cursor-pointer py-4 rounded-xl font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 transition-all mt-auto flex justify-center items-center gap-2`;
     btn.removeAttribute("href");
     // Le bouton sert juste à fermer la modale
