@@ -43,28 +43,38 @@ window.loadSnackConfig = async (db, snackId) => {
         },
         // Gestion des fonctionnalités (SaaS)
         features: {
-          // Si la DB a une valeur on la prend, SINON on met "true" par défaut
           enableOnlineOrder:
             data.enableOnlineOrder !== undefined
               ? data.enableOnlineOrder
-              : true,
+              : false,
           enableDelivery:
             data.enableDelivery !== undefined ? data.enableDelivery : false,
           enableClickAndCollect:
             data.enableClickAndCollect !== undefined
               ? data.enableClickAndCollect
-              : true,
+              : false,
           enableLoyaltyCard:
             data.enableLoyaltyCard !== undefined
               ? data.enableLoyaltyCard
               : true,
           maintenanceMode:
             data.maintenanceMode !== undefined ? data.maintenanceMode : false,
+
+          // 🚀 NOUVEAUTÉS SAAS AJOUTÉES ICI :
+          enablePushNotifs:
+            data.enablePushNotifs !== undefined ? data.enablePushNotifs : false,
+          enableSmartReview:
+            data.enableSmartReview !== undefined
+              ? data.enableSmartReview
+              : false,
+          enableViralShare:
+            data.enableViralShare !== undefined ? data.enableViralShare : false,
         },
         // On récupère tes horaires Firestore
         hours: data.hours || [],
         reviews: {
-    googleMapsReviewLink: "https://g.page/r/TON_LIEN_DA_AVIS/review"},
+          googleMapsReviewLink: "https://g.page/r/TON_LIEN_DA_AVIS/review",
+        },
         loyalty: {
           programName: data.loyaltyProgramName || "Club Fidélité",
           cardDesign: {

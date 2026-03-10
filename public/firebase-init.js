@@ -385,7 +385,7 @@ onMessage(messaging, (payload) => {
 // ============================================================================
 // 💳 CLUB FIDÉLITÉ : GESTION DU QR CODE ET DES POINTS
 // ============================================================================
-let html5QrcodeScanner = null;
+
 let unsubscribeClientCard = null; 
 
 window.openClientCard = async () => {
@@ -414,13 +414,16 @@ window.openClientCard = async () => {
     }
   });
 
+  // 🛑 MODIFICATION ICI : On vérifie si le Pack Premium (Push) est actif
   const notifBtn = document.getElementById("promo-notif-btn");
-  if ("Notification" in window) {
-    if (Notification.permission === "default") {
+  if (notifBtn && window.snackConfig && window.snackConfig.features.enablePushNotifs) {
+    if ("Notification" in window && Notification.permission === "default") {
       notifBtn.classList.remove("hidden"); 
     } else {
       notifBtn.classList.add("hidden"); 
     }
+  } else if (notifBtn) {
+    notifBtn.classList.add("hidden"); // On cache pour les packs Starter/Pro
   }
 };
 
@@ -444,6 +447,7 @@ function animerCarteFidelite(points) {
     giftIcon.classList.add("animate-bounce", "text-green-300");
     pointsText.classList.add("scale-125", "transition-transform");
     window.showToast("Bravo ! Vous avez droit à votre Menu gratuit ! 🍔", "success");
+    if (typeof window.triggerVibration === "function") window.triggerVibration("jackpot");
   } else {
     pointsContainer.classList.remove("text-green-300");
     progressLabel.classList.remove("text-green-300", "animate-pulse");
@@ -467,16 +471,44 @@ window.closeClientCard = () => {
   }, 300);
 };
 
-window.openAdminScanner = () => {
+
+let html5Qrcode = null; 
+
+window.openAdminScanner = async () => {
   const modal = document.getElementById("admin-scanner-modal");
   modal.classList.remove("hidden");
-  html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-  html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+  // 1. On utilise Html5Qrcode (le moteur pur) au lieu de Html5QrcodeScanner (l'UI moche)
+  html5Qrcode = new Html5Qrcode("reader");
+
+  try {
+    // 2. On allume la caméra arrière automatiquement et silencieusement
+    await html5Qrcode.start(
+      { facingMode: "environment" }, // Force la caméra arrière du téléphone
+      { fps: 10, qrbox: { width: 250, height: 250 } }, // Vitesse et taille du scan
+      onScanSuccess, // Fonction appelée si succès
+      onScanFailure  // Fonction appelée si erreur (ignorée en boucle)
+    );
+  } catch (err) {
+    console.error("Erreur Caméra :", err);
+    window.showToast("Autorisez la caméra pour pouvoir scanner.", "error");
+  }
 };
 
-window.closeAdminScanner = () => {
+window.closeAdminScanner = async () => {
   document.getElementById("admin-scanner-modal").classList.add("hidden");
-  if (html5QrcodeScanner) html5QrcodeScanner.clear(); 
+  
+  if (html5Qrcode) {
+    try {
+      // 3. On éteint proprement la caméra si elle était allumée
+      if (html5Qrcode.isScanning) {
+        await html5Qrcode.stop();
+      }
+      html5Qrcode.clear();
+    } catch (error) {
+      console.error("Erreur à la fermeture de la caméra :", error);
+    }
+  }
 };
 
 async function onScanSuccess(decodedText, decodedResult) {
@@ -484,6 +516,7 @@ async function onScanSuccess(decodedText, decodedResult) {
   console.log(`📸 Scan réussi ! UID du client : ${decodedText}`);
 
   closeAdminScanner();
+  if (typeof window.triggerVibration === "function") window.triggerVibration("success");
   window.showToast("QR Code lu ! Vérification en cours...", "success");
 
   try {

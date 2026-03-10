@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chargement...</title> 
+    <title>Mon Snack Favoris</title> 
     <!-- <meta http-equiv="Content-Security-Policy" content="
         default-src 'self'; 
         script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://www.gstatic.com https://unpkg.com; 
@@ -12,12 +12,18 @@
         font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; 
         connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com;
     "> -->
-    <meta name="description" content="Découvrez O'Tacos Fusion, les meilleurs Tacos et Burgers de la ville...">
+<meta name="description" content="Découvrez notre menu digital. Commandez vos plats préférés et gagnez des récompenses grâce à notre programme de fidélité !">
+    <meta property="og:title" content="Team Fusion - Le Menu Digital">
+    <meta property="og:description" content="Découvrez notre menu, commandez et gagnez des récompenses !">
+    <meta property="og:image" content="https://snacking-template.web.app/public/assets/icon-512.webp">
+    <meta property="og:url" content="https://snacking-template.web.app/">
+    <meta property="og:type" content="restaurant">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#DC2626" id="theme-color-meta">
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.webp">
-    <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.webp">
+    <link rel="icon" type="image/webp" sizes="192x192" href="assets/icon-192.webp">
+    <link rel="icon" type="image/webp" sizes="512x512" href="assets/icon-512.webp">
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -107,6 +113,9 @@
     </section>
 
     <section id="full-menu" class="hidden h-full bg-gray-50 fixed inset-0 z-[60] overflow-y-auto">
+<div id="ptr-indicator" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md z-[70]">
+            <i class="fas fa-arrow-down text-gray-400 text-xl transition-transform" id="ptr-icon"></i>
+        </div>
         <div class="container mx-auto px-4 max-w-7xl">
             <div class="flex justify-between items-center mb-6 bg-gray-50/95 backdrop-blur py-4 z-10 sticky top-0 border-b border-gray-200 shadow-sm -mx-4 px-4 md:mx-0 md:px-0">
                 <!-- <h2 class="text-4xl font-black text-gray-900 tracking-tight">La Carte</h2> -->
@@ -268,9 +277,14 @@
             </div>
             
             <div class="p-6 md:p-8 pb-24 md:pb-8 flex-1 flex flex-col"> 
-                <div class="flex justify-between items-start mb-4 gap-4">
+<div class="flex justify-between items-start mb-4 gap-4">
                     <h3 id="modal-title" class="text-3xl font-black text-gray-900 tracking-tight leading-none"></h3>
-                    <span id="modal-price" class="text-2xl font-black text-red-600 bg-red-50 px-3 py-1 rounded-lg"></span>
+                    <div class="flex items-center gap-2">
+                        <button id="modal-share-btn" class="hidden text-gray-400 hover:text-red-500 transition p-2 rounded-full hover:bg-red-50 active:scale-95">
+                            <i class="fas fa-share-nodes text-xl"></i>
+                        </button>
+                        <span id="modal-price" class="text-2xl font-black text-red-600 bg-red-50 px-3 py-1 rounded-lg"></span>
+                    </div>
                 </div>
                 
                 <div id="modal-tags" class="flex gap-2 mb-6 flex-wrap"></div>
@@ -376,16 +390,71 @@
         </button>
     </div>
 
-    <div id="admin-scanner-modal" class="fixed inset-0 bg-gray-900/95 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl relative">
-            <div class="p-5 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
-                <h3 class="font-bold text-lg"><i class="fas fa-qrcode text-red-500 mr-2"></i> Scanner Client</h3>
-                <button onclick="closeAdminScanner()" class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full"><i class="fas fa-times"></i></button>
+<div id="admin-scanner-modal" class="fixed inset-0 bg-gray-900/95 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
+        <div class="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] relative flex flex-col">
+            
+            <div class="p-5 bg-gray-900 text-white flex justify-between items-center z-10 shadow-md">
+                <h3 class="font-bold text-lg"><i class="fas fa-qrcode text-red-500 mr-2 animate-pulse"></i> Scanner Client</h3>
+                <button onclick="closeAdminScanner()" class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600">
+                    <i class="fas fa-times w-5 h-5 flex items-center justify-center"></i>
+                </button>
             </div>
-            <div id="reader" class="w-full bg-black min-h-[300px] flex items-center justify-center">
+
+            <div class="relative w-full bg-black aspect-square flex items-center justify-center overflow-hidden">
+                <div id="reader" class="w-full h-full absolute inset-0 object-cover"></div>
+                
+                <div class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
+                    <div class="w-64 h-64 border-4 border-red-500 rounded-3xl shadow-[0_0_0_4000px_rgba(0,0,0,0.6)]"></div>
                 </div>
+            </div>
+
+            <div class="p-6 bg-white text-center z-10">
+                <p class="text-gray-900 font-black text-xl mb-1 tracking-tight">Placez le QR Code dans le cadre</p>
+                <p class="text-sm text-gray-500 font-medium">La caméra s'active automatiquement.</p>
+            </div>
         </div>
-        <p class="text-sm text-gray-400 mt-6 text-center max-w-sm">Si la caméra ne s'affiche pas, autorisez l'accès dans les paramètres de votre navigateur.</p>
+    </div>
+
+    <div id="pwa-install-banner" class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700">
+        <div class="flex items-center gap-3">
+            <img src="assets/icon-192.webp" class="w-12 h-12 rounded-xl shadow-md" alt="App Icon">
+            <div>
+                <p class="font-bold text-sm">Garde-nous dans ta poche !</p>
+                <p class="text-xs text-gray-400">Installe l'app pour tes points 🎁</p>
+            </div>
+        </div>
+        <button id="pwa-install-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg">
+            Installer
+        </button>
+        <button id="pwa-close-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div id="app-review-modal" class="fixed inset-0 bg-gray-900/60 z-[200] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl transform transition-transform scale-95 border border-gray-100 relative overflow-hidden">
+            
+            <div class="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 rounded-full bg-red-500/10 blur-xl"></div>
+            
+            <img src="assets/icon-192.webp" alt="App Icon" class="w-16 h-16 mx-auto rounded-2xl shadow-md mb-4 relative z-10 border border-gray-100">
+            
+            <h3 class="text-xl font-black text-gray-900 mb-2 tracking-tight">Vous aimez manger chez nous ?</h3>
+            <p class="text-sm text-gray-500 mb-6 font-medium">Votre soutien nous aide à régaler encore plus de monde ! 🍔🚀</p>
+
+            <div class="flex flex-col gap-3 relative z-10">
+                <button id="btn-review-google" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_15px_rgba(220,38,38,0.3)] transform hover:-translate-y-1 flex items-center justify-center gap-2">
+                    <i class="fab fa-google text-lg"></i> Laisser 5 étoiles
+                </button>
+                
+                <button id="btn-review-contact" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition">
+                    Faire une suggestion
+                </button>
+                
+                <button id="btn-review-later" class="w-full text-gray-400 hover:text-gray-600 font-bold py-2 text-sm mt-1 transition">
+                    Plus tard
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
