@@ -283,7 +283,8 @@ onAuthStateChanged(auth, async (user) => {
   const navLogoutBtn = document.getElementById("nav-logout-btn");
   const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
 
-  const DEFAULT_SNACK_ID = "Ym1YiO4Ue5Fb5UXlxr06";
+// On peut le récupérer depuis l'URL (ex: ?s=ID) ou depuis la config chargée
+  const currentAppSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
 
   try {
     if (user) {
@@ -294,7 +295,7 @@ onAuthStateChanged(auth, async (user) => {
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      let snackToLoad = DEFAULT_SNACK_ID;
+      let snackToLoad = currentAppSnackId;
       let role = "client";
       let points = 0;
 
@@ -310,7 +311,7 @@ onAuthStateChanged(auth, async (user) => {
       if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
 
 
-      if (role === "admin") {
+      if (role === "admin" || role ==="superadmin") {
         if (loyaltyDesc) loyaltyDesc.innerHTML = `<span class="text-red-400 font-bold"><i class="fas fa-crown"></i> Mode Admin</span>`;
         if (loyaltyBtn) {
           loyaltyBtn.innerHTML = '<i class="fas fa-camera"></i> Scanner un client';
@@ -338,7 +339,7 @@ onAuthStateChanged(auth, async (user) => {
         loyaltyBtn.className = "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
       }
 
-      await window.loadSnackConfig(db, DEFAULT_SNACK_ID);
+      await window.loadSnackConfig(db, currentAppSnackId);
       updateUI(null);
       if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
     }

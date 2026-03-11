@@ -150,10 +150,10 @@ window.chargerMenuComplet = async () => {
     if (fullMenuContainer) {
       fullMenuContainer.innerHTML = "";
       const menuCategories = [
-        { id: "tacos", title: "Nos Tacos", icon: "🌮", items: [] },
+        { id: "tacos", title: "Tacos", icon: "🌮", items: [] },
         { id: "burgers", title: "Burgers", icon: "🍔", items: [] },
         { id: "wraps", title: "Wraps & Sandwichs", icon: "🌯", items: [] },
-        { id: "sides", title: "A côté", icon: "🍟", items: [] },
+        { id: "sides", title: "Sides", icon: "🍟", items: [] },
         { id: "drinks", title: "Boissons & Douceurs", icon: "🥤", items: [] },
       ];
 
@@ -167,10 +167,10 @@ window.chargerMenuComplet = async () => {
         .forEach((cat, catIndex) => {
           let sectionHTML = `
                 <div class="mb-12 animate-fade-in-up" style="animation-fill-mode: both; animation-delay: ${catIndex * 200}ms;">
-                    <div class="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-md py-4 flex items-center gap-4 mb-6 shadow-sm -mx-4 px-4 md:mx-0 md:shadow-none md:bg-gray-800/90 md:backdrop-blur md:rounded-lg md:p-2">
-                        <span class="text-4xl shadow-sm bg-white dark:bg-gray-800 rounded-full p-2">${cat.icon}</span>
-                        <h3 class="text-3xl font-bold font-oswald text-gray-800 dark:text-white uppercase tracking-wider">${cat.title}</h3>
-                        <div class="flex-grow h-px bg-gray-200 dark:bg-gray-700 ml-4"></div>
+                    <div class="sticky top-0 z-30 bg-gray-200/95 backdrop-blur-md py-4 flex items-center mb-6 shadow-sm -mx-4 px-4 md:mx-0 md:shadow-none md:rounded-lg md:p-2">
+                        <span class="md:text-4xl text-lg text-black mr-1">${cat.icon}</span>
+                        <h3 class="text-xl md:text-3xl font-bold font-oswald text-gray-800 uppercase tracking-wider">${cat.title}</h3>
+                        <div class="flex-grow h-px bg-green-600 ml-4"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 `;

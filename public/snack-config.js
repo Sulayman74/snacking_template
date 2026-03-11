@@ -15,7 +15,7 @@ window.loadSnackConfig = async (db, snackId) => {
           name: data.nom || "Snack Sans Nom",
           description: data.description || "",
           logoUrl: data.logoUrl || "./assets/logo.webp",
-          heroImg: data.heroImg || "./assets/heroImg.webp",
+          heroImg: data.heroImg || "./assets/logo.webp",
           currency: data.currency || "€",
         },
         contact: {
