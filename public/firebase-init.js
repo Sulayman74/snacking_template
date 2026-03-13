@@ -3,6 +3,7 @@
 // ============================================================================
 
 import {
+  addDoc,
   collection,
   doc,
   getDoc,
@@ -13,6 +14,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   setDoc,
   startAfter,
   updateDoc,
@@ -560,7 +562,28 @@ async function onScanSuccess(decodedText, decodedResult) {
   }
 }
 
-function onScanFailure(error) {}
+function onScanFailure(error) {
+  // Html5Qrcode appelle cette fonction en boucle (plusieurs fois par seconde)
+  // tant qu'il n'y a pas de QR code lisible dans le viseur.
+  
+  // 1. On sécurise la lecture de l'erreur (ça peut être un objet ou une string)
+  const errorMessage = typeof error === 'string' ? error : (error?.message || '');
+
+  // 2. On filtre les erreurs "normales" de scan vide pour éviter de spammer la console
+  const isNormalNotFound = 
+    errorMessage.includes("NotFound") || 
+    errorMessage.includes("No MultiFormat Readers") ||
+    errorMessage.includes("not found");
+
+  if (isNormalNotFound) {
+    // C'est normal, la caméra cherche le QR Code... on ne fait rien silencieusement.
+    return;
+  }
+
+  // 3. S'il y a une VRAIE erreur inattendue (ex: perte d'accès caméra soudaine)
+  // On utilise console.warn au lieu de showToast pour ne pas gêner l'utilisateur
+  console.warn("⚠️ Avertissement Scanner (Non bloquant) :", errorMessage);
+}
 
 window.logoutUser = async () => {
   try {

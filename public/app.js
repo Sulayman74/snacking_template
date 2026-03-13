@@ -86,11 +86,11 @@ window.initAppVisuals = async () => {
     mobileOrderBtn.style.display = showOrder ? "flex" : "none";
 
   // 5. Retirer le Splash Screen
-  const splash = document.getElementById("splash-screen");
-  if (splash) {
-    splash.classList.add("opacity-0");
-    setTimeout(() => splash.remove(), 500);
-  }
+  // const splash = document.getElementById("splash-screen");
+  // if (splash) {
+  //   splash.classList.add("opacity-0");
+  //   setTimeout(() => splash.remove(), 500);
+  // }
 };
 
 // ============================================================================
@@ -272,136 +272,136 @@ window.switchView = function (viewName) {
 // ============================================================================
 // GESTION DU MODAL PRODUIT (Responsive Mobile & Desktop)
 // ============================================================================
-window.openProductModal = function (itemId) {
-  const cfg = window.snackConfig;
-  const item = menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
-  if (!item) return;
+// window.openProductModal = function (itemId) {
+//   const cfg = window.snackConfig;
+//   const item = menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
+//   if (!item) return;
 
-  const devise = item.devise || cfg.identity.currency || "€";
-  const prixAffiche = item.prix || item.price || 0;
-  const nomAffiche = item.nom || item.name;
+//   const devise = item.devise || cfg.identity.currency || "€";
+//   const prixAffiche = item.prix || item.price || 0;
+//   const nomAffiche = item.nom || item.name;
 
-  document.getElementById("modal-img").src = item.image;
-  document.getElementById("modal-title").innerText = nomAffiche;
-  document.getElementById("modal-price").innerText =
-    parseFloat(prixAffiche).toFixed(2) + devise;
-  document.getElementById("modal-desc").innerText = item.description || "";
+//   document.getElementById("modal-img").src = item.image;
+//   document.getElementById("modal-title").innerText = nomAffiche;
+//   document.getElementById("modal-price").innerText =
+//     parseFloat(prixAffiche).toFixed(2) + devise;
+//   document.getElementById("modal-desc").innerText = item.description || "";
 
-  const tagsContainer = document.getElementById("modal-tags");
-  tagsContainer.innerHTML = "";
-  if (item.tags) {
-    let tagText = Array.isArray(item.tags) ? item.tags[0] : item.tags;
-    if (tagText) {
-      tagsContainer.innerHTML = `<span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-bold shadow-sm">${tagText}</span>`;
-    }
-  }
+//   const tagsContainer = document.getElementById("modal-tags");
+//   tagsContainer.innerHTML = "";
+//   if (item.tags) {
+//     let tagText = Array.isArray(item.tags) ? item.tags[0] : item.tags;
+//     if (tagText) {
+//       tagsContainer.innerHTML = `<span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-bold shadow-sm">${tagText}</span>`;
+//     }
+//   }
 
-  const allergenContainer = document.getElementById(
-    "modal-allergens-container",
-  );
-  const allergenesList = item.allergenes || item.allergens;
-  if (allergenesList && allergenesList.length > 0) {
-    allergenContainer.classList.remove("hidden");
-    document.getElementById("modal-allergens").innerText =
-      allergenesList.join(", ");
-  } else {
-    allergenContainer.classList.add("hidden");
-  }
+//   const allergenContainer = document.getElementById(
+//     "modal-allergens-container",
+//   );
+//   const allergenesList = item.allergenes || item.allergens;
+//   if (allergenesList && allergenesList.length > 0) {
+//     allergenContainer.classList.remove("hidden");
+//     document.getElementById("modal-allergens").innerText =
+//       allergenesList.join(", ");
+//   } else {
+//     allergenContainer.classList.add("hidden");
+//   }
 
- const btn = document.getElementById("modal-cta");
+//  const btn = document.getElementById("modal-cta");
   
-  // 1. SI LE PRODUIT EST ÉPUISÉ (Priorité absolue)
-  if (item.isAvailable === false) {
-    btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
-    btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
-    btn.removeAttribute("href");
-    btn.onclick = null; // On bloque le clic
-  } 
-  // 2. SI LE RESTO EST EN MODE VITRINE (Pack Starter : Pas de commande)
-  else if (cfg.features && cfg.features.enableOnlineOrder === false) {
-    btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
-    btn.className = `w-full cursor-pointer py-4 rounded-xl font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 transition-all mt-auto flex justify-center items-center gap-2`;
-    btn.removeAttribute("href");
-    // Le bouton sert juste à fermer la modale
-    btn.onclick = (e) => {
-        e.preventDefault();
-        closeProductModal();
-    };
-  }
-  // 3. SI LE RESTO FAIT DE LA LIVRAISON EXTERNE (UberEats, Deliveroo...)
-  else if (cfg.features && cfg.features.enableDelivery === true) {
-    btn.href = cfg.deliveryUrl || "#"; // Lien vers sa page UberEats (à rajouter dans Firestore si besoin)
-    btn.setAttribute("target", "_blank"); // Ouvre dans un nouvel onglet
-    btn.innerHTML = `<i class="fas fa-motorcycle mr-2"></i> Commander en livraison`;
-    const primaryBg = cfg.theme?.colors?.primary?.split(" ")[0] || "bg-red-600";
-    btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg ${primaryBg} hover:opacity-90 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
-    btn.onclick = null;
-  } 
-  // 4. MODE PAR DÉFAUT : CLICK & COLLECT (Appel téléphonique)
-  else {
-    const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
-    btn.href = `tel:${phone}`;
-    btn.removeAttribute("target");
-    btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Commander `;
-    btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-green-600 hover:bg-green-700 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
-    btn.onclick = null;
-  }
+//   // 1. SI LE PRODUIT EST ÉPUISÉ (Priorité absolue)
+//   if (item.isAvailable === false) {
+//     btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
+//     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
+//     btn.removeAttribute("href");
+//     btn.onclick = null; // On bloque le clic
+//   } 
+//   // 2. SI LE RESTO EST EN MODE VITRINE (Pack Starter : Pas de commande)
+//   else if (cfg.features && cfg.features.enableOnlineOrder === false) {
+//     btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
+//     btn.className = `w-full cursor-pointer py-4 rounded-xl font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 transition-all mt-auto flex justify-center items-center gap-2`;
+//     btn.removeAttribute("href");
+//     // Le bouton sert juste à fermer la modale
+//     btn.onclick = (e) => {
+//         e.preventDefault();
+//         closeProductModal();
+//     };
+//   }
+//   // 3. SI LE RESTO FAIT DE LA LIVRAISON EXTERNE (UberEats, Deliveroo...)
+//   else if (cfg.features && cfg.features.enableDelivery === true) {
+//     btn.href = cfg.deliveryUrl || "#"; // Lien vers sa page UberEats (à rajouter dans Firestore si besoin)
+//     btn.setAttribute("target", "_blank"); // Ouvre dans un nouvel onglet
+//     btn.innerHTML = `<i class="fas fa-motorcycle mr-2"></i> Commander en livraison`;
+//     const primaryBg = cfg.theme?.colors?.primary?.split(" ")[0] || "bg-red-600";
+//     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg ${primaryBg} hover:opacity-90 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
+//     btn.onclick = null;
+//   } 
+//   // 4. MODE PAR DÉFAUT : CLICK & COLLECT (Appel téléphonique)
+//   else {
+//     const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
+//     btn.href = `tel:${phone}`;
+//     btn.removeAttribute("target");
+//     btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Commander `;
+//     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-green-600 hover:bg-green-700 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
+//     btn.onclick = null;
+//   }
 
-  const backdrop = document.getElementById("product-modal-backdrop");
-  const sheet = document.getElementById("product-modal");
+//   const backdrop = document.getElementById("product-modal-backdrop");
+//   const sheet = document.getElementById("product-modal");
 
-  backdrop.classList.remove("hidden");
+//   backdrop.classList.remove("hidden");
 
-  // ==========================================
-  // 🚀 LOGIQUE DE PARTAGE VIRAL (Web Share API)
-  // ==========================================
-  const shareBtn = document.getElementById("modal-share-btn");
+//   // ==========================================
+//   // 🚀 LOGIQUE DE PARTAGE VIRAL (Web Share API)
+//   // ==========================================
+//   const shareBtn = document.getElementById("modal-share-btn");
 
-  // On vérifie si le téléphone supporte le partage natif (95% des mobiles récents)
-  if (
-    shareBtn &&
-    cfg.features &&
-    cfg.features.enableViralShare &&
-    navigator.share
-  ) {
-    shareBtn.classList.remove("hidden"); // On affiche le bouton
+//   // On vérifie si le téléphone supporte le partage natif (95% des mobiles récents)
+//   if (
+//     shareBtn &&
+//     cfg.features &&
+//     cfg.features.enableViralShare &&
+//     navigator.share
+//   ) {
+//     shareBtn.classList.remove("hidden"); // On affiche le bouton
 
-    shareBtn.onclick = async () => {
-      try {
-        // 📳 Petit clic haptique pour la sensation d'app native !
-        if (typeof window.triggerVibration === "function")
-          window.triggerVibration("light");
+//     shareBtn.onclick = async () => {
+//       try {
+//         // 📳 Petit clic haptique pour la sensation d'app native !
+//         if (typeof window.triggerVibration === "function")
+//           window.triggerVibration("light");
 
-        await navigator.share({
-          title: `Découvre ${nomAffiche} chez ${cfg.identity.name} !`,
-          text: `Mec, regarde cette dinguerie : ${nomAffiche} à ${parseFloat(prixAffiche).toFixed(2)}${devise}. On teste ça quand ? 🤤🍔`,
-          url: window.location.href, // Envoie le lien de ton site
-        });
+//         await navigator.share({
+//           title: `Découvre ${nomAffiche} chez ${cfg.identity.name} !`,
+//           text: `Mec, regarde cette dinguerie : ${nomAffiche} à ${parseFloat(prixAffiche).toFixed(2)}${devise}. On teste ça quand ? 🤤🍔`,
+//           url: window.location.href, // Envoie le lien de ton site
+//         });
 
-        // 📳 Double vibration de succès si le partage a fonctionné
-        if (typeof window.triggerVibration === "function")
-          window.triggerVibration("success");
-      } catch (err) {
-        console.log("Le client a fermé le menu de partage ou erreur :", err);
-      }
-    };
-  } else if (shareBtn) {
-    // Si le navigateur (ex: un vieux PC) ne supporte pas le partage, on cache le bouton
-    shareBtn.classList.add("hidden");
-  }
+//         // 📳 Double vibration de succès si le partage a fonctionné
+//         if (typeof window.triggerVibration === "function")
+//           window.triggerVibration("success");
+//       } catch (err) {
+//         console.log("Le client a fermé le menu de partage ou erreur :", err);
+//       }
+//     };
+//   } else if (shareBtn) {
+//     // Si le navigateur (ex: un vieux PC) ne supporte pas le partage, on cache le bouton
+//     shareBtn.classList.add("hidden");
+//   }
 
-  setTimeout(() => {
-    backdrop.classList.remove("opacity-0");
-    sheet.classList.remove("translate-y-full"); // Mobile
-    sheet.classList.remove(
-      "md:opacity-0",
-      "md:pointer-events-none",
-      "md:scale-95",
-    ); // PC
-  }, 10);
+//   setTimeout(() => {
+//     backdrop.classList.remove("opacity-0");
+//     sheet.classList.remove("translate-y-full"); // Mobile
+//     sheet.classList.remove(
+//       "md:opacity-0",
+//       "md:pointer-events-none",
+//       "md:scale-95",
+//     ); // PC
+//   }, 10);
 
-  document.body.style.overflow = "hidden";
-};
+//   document.body.style.overflow = "hidden";
+// };
 
 window.closeProductModal = function () {
   const backdrop = document.getElementById("product-modal-backdrop");
@@ -856,3 +856,317 @@ function setupSmartReviewPrompt() {
     });
   }
 }
+
+
+// ====================================================================
+// 🚀 MOTEUR E-COMMERCE (PANIER & CHECKOUT)
+// ====================================================================
+
+// --- 1. VARIABLES D'ÉTAT ---
+let cart = JSON.parse(localStorage.getItem('snackCart')) || [];
+let currentProduct = null;
+
+
+// Au chargement de la page, on met à jour la bulle rouge
+document.addEventListener('DOMContentLoaded', updateCartUI);
+
+
+// --- 2. GESTION DU PRODUIT (Modale Choix) ---
+// ============================================================================
+// 🍔 GESTION DE LA MODALE PRODUIT (Unifiée & Feature Flags)
+// ============================================================================
+
+
+window.openProductModal = function (itemId) {
+  const cfg = window.snackConfig;
+  const item = menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
+  if (!item) return;
+
+  // 1. Définition du produit (pour le panier)
+  currentProduct = { 
+      id: item.id, 
+      nom: item.nom || item.name, 
+      prixBase: item.prix || item.price || 0, 
+      prixMenu: item.menuPriceAdd || 2.50, // Supplément menu (à ajuster si besoin)
+      image: item.image 
+  };
+
+  const devise = cfg.identity.currency || "€";
+
+  // 2. Remplir la Modale
+  document.getElementById("modal-img").src = currentProduct.image;
+  document.getElementById("modal-title").innerText = currentProduct.nom;
+  document.getElementById("modal-desc").innerText = item.description || "";
+
+  // 3. Gérer les allergènes
+  const allergenContainer = document.getElementById("modal-allergens-container");
+  const allergenesList = item.allergenes || item.allergens;
+  if (allergenesList && allergenesList.length > 0) {
+    allergenContainer.classList.remove("hidden");
+    document.getElementById("modal-allergens").innerText = allergenesList.join(", ");
+  } else {
+    allergenContainer.classList.add("hidden");
+  }
+// ==========================================
+  // 🥤 FABRICATION DES BOUTONS DE BOISSONS
+  // ==========================================
+  const drinksContainer = document.getElementById('drinks-container');
+  
+  if (drinksContainer) {
+      drinksContainer.innerHTML = BOISSONS_DISPO.map((boisson, index) => `
+          <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
+              <input type="radio" name="boisson" value="${boisson}" ${index === 0 ? 'checked' : ''} class="w-5 h-5 text-red-600 focus:ring-red-500">
+              <span class="text-sm font-bold text-gray-700">${boisson}</span>
+          </label>
+      `).join('');
+  }
+  // ==========================================
+  // 🚦 L'AIGUILLAGE MAGIQUE DES FEATURE FLAGS
+  // ==========================================
+  const btn = document.getElementById("modal-cta");
+  const optionsContainer = document.getElementById("modal-options-container");
+  
+  // Si le boss a payé pour le Click & Collect OU la commande en ligne
+  const isEcommerceActive = cfg.features && (cfg.features.enableClickAndCollect === true || cfg.features.enableOnlineOrder === true);
+
+  if (item.isAvailable === false) {
+      // 🚫 PRODUIT ÉPUISÉ
+      if (optionsContainer) optionsContainer.classList.add("hidden");
+      btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
+      btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
+      btn.removeAttribute("href");
+      btn.onclick = null;
+  } 
+  else if (isEcommerceActive) {
+      // 🛒 FEATURE FLAG TRUE : MODE PANIER (Click & Collect actif)
+      if (optionsContainer) optionsContainer.classList.remove("hidden");
+      
+      // On affiche les prix dans les options Seul/Menu
+      document.getElementById('modal-price-seul').textContent = `${currentProduct.prixBase.toFixed(2)} ${devise}`;
+      document.getElementById('modal-price-menu').textContent = `+ ${currentProduct.prixMenu.toFixed(2)} ${devise}`;
+      document.querySelector('input[name="formule"][value="seul"]').checked = true;
+      
+      // On désactive le lien (ce n'est plus un bouton d'appel)
+      btn.removeAttribute("href");
+      btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
+      
+      // C'est ce clic qui ajoute au panier !
+      btn.onclick = confirmAddToCart; 
+      toggleDrinkSection(); // Met à jour le texte du bouton avec le prix
+  } 
+  else {
+      // ☎️ FEATURE FLAG FALSE : MODE VITRINE (Téléphone par défaut)
+      if (optionsContainer) optionsContainer.classList.add("hidden");
+      
+      const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
+      btn.href = `tel:${phone}`;
+      btn.removeAttribute("target");
+      btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
+      btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-green-600 hover:bg-green-700 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
+      btn.onclick = null;
+  }
+
+  // 4. Affichage de la Modale
+  const backdrop = document.getElementById("product-modal-backdrop");
+  const sheet = document.getElementById("product-modal");
+  backdrop.classList.remove("hidden");
+  
+  setTimeout(() => {
+    backdrop.classList.remove("opacity-0");
+    sheet.classList.remove("translate-y-full", "md:opacity-0", "md:pointer-events-none", "md:scale-95");
+  }, 10);
+  
+  document.body.style.overflow = "hidden";
+};
+
+// Vérifie bien que tu as aussi cette fonction pour mettre à jour le bouton selon le choix (Seul ou Menu)
+const BOISSONS_DISPO = ["Coca-Cola", "Coca Zéro", "Ice Tea Pêche", "Oasis Tropical", "Eau Minérale"];
+window.toggleDrinkSection = function() {
+    const isMenu = document.querySelector('input[name="formule"]:checked').value === 'menu';
+    const drinkSection = document.getElementById('drink-section');
+    const btn = document.getElementById('modal-cta');
+    const devise = window.snackConfig.identity.currency || "€";
+    
+    if (isMenu) {
+        drinkSection.classList.remove('hidden');
+        setTimeout(() => drinkSection.classList.remove('opacity-0'), 10);
+        btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
+    } else {
+        drinkSection.classList.add('opacity-0');
+        setTimeout(() => drinkSection.classList.add('hidden'), 300);
+        btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+    }
+};
+
+// Fermeture de la modale unifiée
+window.closeProductModal = function () {
+  const backdrop = document.getElementById("product-modal-backdrop");
+  const sheet = document.getElementById("product-modal");
+
+  sheet.classList.add("translate-y-full", "md:opacity-0", "md:pointer-events-none", "md:scale-95");
+  backdrop.classList.add("opacity-0");
+
+  setTimeout(() => {
+    backdrop.classList.add("hidden");
+    document.body.style.overflow = "";
+  }, 300);
+};
+
+
+window.confirmAddToCart = function() {
+    const isMenu = document.querySelector('input[name="formule"]:checked').value === 'menu';
+    let nomFinal = currentProduct.nom;
+    let prixFinal = currentProduct.prixBase;
+
+    if (isMenu) {
+        // 1. On cherche l'élément HTML (sans lire sa valeur tout de suite)
+        const boissonInput = document.querySelector('input[name="boisson"]:checked');
+        
+        // 🚨 2. LE BOUCLIER ANTI-CRASH 🚨
+        if (!boissonInput) {
+            alert("🥤 Oups ! Veuillez choisir une boisson.");
+            return; // On arrête l'exécution de la fonction ici, pas de crash !
+        }
+        
+        // 3. Si tout va bien, on lit la valeur
+        const boisson = boissonInput.value;
+        nomFinal = `Menu ${currentProduct.nom} (+ ${boisson})`;
+        prixFinal += currentProduct.prixMenu;
+    }
+
+    const uniqueId = isMenu ? `${currentProduct.id}-menu-${Date.now()}` : `${currentProduct.id}-seul`;
+    addToCart(uniqueId, nomFinal, prixFinal, currentProduct.image);
+    closeProductModal();
+};
+
+
+// --- 3. GESTION DU PANIER (Logique) ---
+function addToCart(productId, nom, prix, image) {
+    const existingItem = cart.find(item => item.id === productId);
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ id: productId, nom: nom, prix: parseFloat(prix), image: image, quantity: 1 });
+    }
+    saveCart();
+    updateCartUI();
+    alert(`${nom} ajouté au panier ! 🍔`); // Un petit retour visuel simple
+}
+
+function saveCart() { localStorage.setItem('snackCart', JSON.stringify(cart)); }
+function getCartTotal() { return cart.reduce((total, item) => total + (item.prix * item.quantity), 0); }
+
+function updateCartUI() {
+    const badge = document.getElementById('cart-badge');
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    if (totalItems > 0) {
+        badge.textContent = totalItems;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+
+// --- 4. AFFICHAGE DU PANIER (Modale Panier) ---
+window.openCartModal = function() {
+    renderCartItems();
+    document.getElementById('cart-backdrop').classList.remove('opacity-0', 'pointer-events-none');
+    document.getElementById('cart-modal').classList.remove('translate-y-full');
+};
+
+window.closeCartModal = function() {
+    document.getElementById('cart-backdrop').classList.add('opacity-0', 'pointer-events-none');
+    document.getElementById('cart-modal').classList.add('translate-y-full');
+};
+
+function renderCartItems() {
+    const container = document.getElementById('cart-items-container');
+    container.innerHTML = ''; 
+
+    if (cart.length === 0) {
+        container.innerHTML = `<p class="text-center py-10 text-gray-500">Votre panier est vide.</p>`;
+        document.getElementById('checkout-btn').disabled = true;
+        document.getElementById('checkout-btn').classList.add('opacity-50');
+    } else {
+        document.getElementById('checkout-btn').disabled = false;
+        document.getElementById('checkout-btn').classList.remove('opacity-50');
+        
+        cart.forEach(item => {
+            container.innerHTML += `
+                <div class="flex items-center gap-4 bg-white p-3 rounded-xl border">
+                    <img src="${item.image}" class="w-16 h-16 rounded-lg object-cover">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-900">${item.nom}</h4>
+                        <p class="text-red-600 font-bold">${(item.prix * item.quantity).toFixed(2)} €</p>
+                    </div>
+                    <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
+                        <button onclick="updateQuantity('${item.id}', -1)" class="w-8 h-8 text-gray-600"><i class="fas fa-minus text-xs"></i></button>
+                        <span class="font-bold w-4 text-center text-sm">${item.quantity}</span>
+                        <button onclick="updateQuantity('${item.id}', 1)" class="w-8 h-8 text-gray-600"><i class="fas fa-plus text-xs"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    document.getElementById('cart-total-price').textContent = `${getCartTotal().toFixed(2)} €`;
+}
+
+window.updateQuantity = function(productId, delta) {
+    const item = cart.find(i => i.id === productId);
+    if (item) {
+        item.quantity += delta;
+        if (item.quantity <= 0) cart = cart.filter(i => i.id !== productId);
+        saveCart();
+        updateCartUI();
+        renderCartItems();
+    }
+};
+
+
+// --- 5. L'ENVOI FINAL (Firebase Checkout) ---
+window.processCheckout = async function() {
+    if (cart.length === 0) return;
+    
+    const clientName = prompt("Votre prénom pour la commande ? (ex: Thomas)");
+    if (!clientName || clientName.trim() === "") return;
+
+    const btn = document.getElementById('checkout-btn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Envoi en cuisine...';
+    btn.disabled = true;
+
+    try {
+        const orderData = {
+            snackId: window.CURRENT_SNACK_ID || "bonneville_01",
+            clientNom: clientName,
+            items: cart,
+            total: getCartTotal(),
+            statut: "nouvelle", 
+            date: serverTimestamp(),
+            methodePaiement: "sur_place"
+        };
+
+        await addDoc(collection(db, "commandes"), orderData);
+
+        btn.innerHTML = '<i class="fas fa-check mr-2"></i> Commande validée !';
+        btn.classList.replace('bg-red-600', 'bg-green-600');
+        
+        cart = []; // On vide le panier après succès
+        saveCart();
+        updateCartUI();
+        
+        setTimeout(() => {
+            closeCartModal();
+            alert(`Merci ${clientName} ! Votre commande est envoyée en cuisine. 🎉`);
+            btn.innerHTML = 'Valider ma commande';
+            btn.classList.replace('bg-green-600', 'bg-red-600');
+            btn.disabled = false;
+        }, 2000);
+
+    } catch (error) {
+        console.error("Erreur de commande :", error);
+        alert("Erreur de connexion. Veuillez réessayer.");
+        btn.innerHTML = 'Réessayer';
+        btn.disabled = false;
+    }
+};
