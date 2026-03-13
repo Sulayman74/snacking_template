@@ -267,24 +267,27 @@
 
     <header
       id="hero"
-      class="relative h-[80vh] flex items-center justify-center bg-cover bg-center"
+      class="relative h-[80vh] flex items-center justify-center bg-gray-800 bg-cover bg-center transition-all duration-700"
     >
       <div class="absolute inset-0 bg-black/50"></div>
-      <div class="relative z-10 text-center px-4 max-w-4xl mx-auto text-white">
+      <div class="relative z-10 text-center px-4 max-w-4xl w-full mx-auto text-white flex flex-col items-center">
+        <!-- L'attribut empty: va créer des blocs gris clignotants automatiquement si la balise est vide ! -->
         <span
           id="hero-status"
-          class="inline-block px-3 py-1 mb-4 text-sm font-bold uppercase tracking-widest border border-white/30 rounded-full backdrop-blur-sm"
+          class="inline-block px-3 py-1 mb-4 text-sm font-bold uppercase tracking-widest border border-white/30 rounded-full backdrop-blur-sm empty:bg-white/20 empty:block empty:w-32 empty:h-8 empty:animate-pulse empty:border-transparent"
         ></span>
         <h1
           id="hero-title"
-          class="text-5xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg"
+          class="text-5xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg empty:bg-white/20 empty:block empty:mx-auto empty:rounded-2xl empty:w-3/4 empty:h-16 md:empty:h-24 empty:animate-pulse"
         ></h1>
         <p
           id="hero-desc"
-          class="text-xl md:text-2xl mb-8 font-light text-gray-200 drop-shadow-md"
+          class="text-xl md:text-2xl mb-8 font-light text-gray-200 drop-shadow-md empty:bg-white/20 empty:block empty:mx-auto empty:rounded-xl empty:w-1/2 empty:h-8 empty:animate-pulse"
         ></p>
       </div>
     </header>
+
+    <section id="bestsellers" class="py-16 bg-gray-50">
 
     <section id="bestsellers" class="py-16 bg-gray-50">
       <div class="container mx-auto px-4">

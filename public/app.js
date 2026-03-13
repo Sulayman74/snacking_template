@@ -113,6 +113,7 @@ window.chargerMenuComplet = async () => {
       collection(db, "produits"),
       where("snackId", "==", snackId),
     );
+    // On attend la réponse de Firebase (Pendant ce temps, les Skeletons HTML sont visibles)
     const snapshot = await getDocs(q);
 
     let tousLesProduits = [];
@@ -128,6 +129,7 @@ window.chargerMenuComplet = async () => {
 
     // 🏆 AFFICHER LES BEST SELLERS
     if (bestSellersContainer) {
+      // Efface les Skeletons gris et prépare l'injection des vraies données
       bestSellersContainer.innerHTML = "";
       const top3 = [...tousLesProduits]
         .sort((a, b) => (b.ventes || 0) - (a.ventes || 0))
@@ -236,10 +238,27 @@ function createProductCard(item, cfg) {
   const prixAffiche = item.prix || item.price || 0;
   const nomAffiche = item.nom || item.name;
 
+  // Création du Fallback minimaliste avec icône + gestion des images cassées (onerror)
+  const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
+  
+  // Le bloc HTML de remplacement (juste une icône centrée, pas de texte lourd)
+  const fallbackHtml = `
+      <div class="absolute inset-0 flex items-center justify-center bg-gray-50 z-0 transition duration-700 ${imageOpacity}">
+          <i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i>
+      </div>`;
+
+  // Astuce : onerror affiche le div fallback caché juste en dessous si l'image est cassée en BDD
+  const imageHtml = imageUrl 
+    ? `<img src="${imageUrl}" alt="${nomAffiche}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full object-cover transition duration-700 ${imageOpacity} z-0">
+       <div style="display: none;" class="absolute inset-0 items-center justify-center bg-gray-50 z-0 transition duration-700 ${imageOpacity}">
+           <i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i>
+       </div>`
+    : fallbackHtml;
+
   return `
     <div class="${cardBg} rounded-2xl overflow-hidden group ${cardOpacity} transition-all duration-300 hover:shadow-2xl" ${clickAction}>
-        <div class="h-48 relative overflow-hidden">
-            <img src="${item.image}" alt="${nomAffiche}" loading="lazy" class="w-full h-full object-cover transition duration-700 ${imageOpacity}">
+        <div class="h-48 relative overflow-hidden bg-gray-50">
+            ${imageHtml}
             ${tagHtml}
         </div>
         <div class="p-5 flex flex-col justify-between h-[calc(100%-12rem)]">
@@ -893,8 +912,41 @@ window.openProductModal = function (itemId) {
 
   const devise = cfg.identity.currency || "€";
 
-  // 2. Remplir la Modale
-  document.getElementById("modal-img").src = currentProduct.image;
+  // ==========================================
+  // 2. REMPLIR LA MODALE & GÉRER L'IMAGE (FALLBACK)
+  // ==========================================
+  const modalImg = document.getElementById("modal-img");
+  const imgContainer = modalImg.parentElement;
+  
+  // On nettoie un éventuel ancien fallback d'un clic précédent
+  const oldFallback = document.getElementById("modal-img-fallback");
+  if (oldFallback) oldFallback.remove();
+
+  const imageUrl = currentProduct.image && currentProduct.image.trim() !== "" ? currentProduct.image : null;
+  
+  // Le bloc HTML de secours (identique à la grille)
+  const fallbackHTML = `
+      <div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0">
+          <i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i>
+      </div>
+  `;
+
+  if (imageUrl) {
+      modalImg.style.display = "block"; // On réaffiche l'image
+      modalImg.src = imageUrl;
+      // Si l'image charge mais que le lien est cassé (Erreur 404) :
+      modalImg.onerror = function() {
+          this.style.display = "none";
+          if (!document.getElementById("modal-img-fallback")) {
+              imgContainer.insertAdjacentHTML("beforeend", fallbackHTML);
+          }
+      };
+  } else {
+      // S'il n'y a pas d'URL d'image du tout en base de données :
+      modalImg.style.display = "none";
+      imgContainer.insertAdjacentHTML("beforeend", fallbackHTML);
+  }
+
   document.getElementById("modal-title").innerText = currentProduct.nom;
   document.getElementById("modal-desc").innerText = item.description || "";
 
@@ -907,12 +959,13 @@ window.openProductModal = function (itemId) {
   } else {
     allergenContainer.classList.add("hidden");
   }
-// ==========================================
+
+  // ==========================================
   // 🥤 FABRICATION DES BOUTONS DE BOISSONS
   // ==========================================
   const drinksContainer = document.getElementById('drinks-container');
-  
-  if (drinksContainer) {
+  // Assure-toi que BOISSONS_DISPO est bien défini plus haut dans ton code
+  if (drinksContainer && typeof BOISSONS_DISPO !== 'undefined') {
       drinksContainer.innerHTML = BOISSONS_DISPO.map((boisson, index) => `
           <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
               <input type="radio" name="boisson" value="${boisson}" ${index === 0 ? 'checked' : ''} class="w-5 h-5 text-red-600 focus:ring-red-500">
@@ -920,6 +973,7 @@ window.openProductModal = function (itemId) {
           </label>
       `).join('');
   }
+
   // ==========================================
   // 🚦 L'AIGUILLAGE MAGIQUE DES FEATURE FLAGS
   // ==========================================
@@ -951,8 +1005,8 @@ window.openProductModal = function (itemId) {
       btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
       
       // C'est ce clic qui ajoute au panier !
-      btn.onclick = confirmAddToCart; 
-      toggleDrinkSection(); // Met à jour le texte du bouton avec le prix
+      btn.onclick = window.confirmAddToCart; // Assure-toi que cette fonction existe
+      if(typeof window.toggleDrinkSection === 'function') window.toggleDrinkSection(); 
   } 
   else {
       // ☎️ FEATURE FLAG FALSE : MODE VITRINE (Téléphone par défaut)
