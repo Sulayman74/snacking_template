@@ -207,7 +207,7 @@ if (metaDescription && cfg.identity.description) {
       const isToday = index === todayMap;
       const li = document.createElement("li");
 
-      const textColor = isToday ? "text-red-500 font-bold" : "text-gray-200";
+      const textColor = isToday ? "text-green-500 font-bold" : "text-gray-200";
       li.className = textColor;
       li.innerHTML = `<span class="inline-block w-24">${h.day}</span> ${h.closed ? "Fermé" : h.open + " - " + h.close}`;
       hoursList.appendChild(li);
@@ -220,6 +220,80 @@ if (metaDescription && cfg.identity.description) {
       }
     });
   }
+
+  // ==========================================
+  // 🚀 SEO LOCAL : INJECTION DU SCHEMA.ORG
+  // ==========================================
+  const existingScript = document.getElementById('seo-schema');
+  if (existingScript) existingScript.remove(); // On nettoie l'ancien si besoin
+
+  function buildOpeningHours(hoursArray) {
+
+  const dayMap = {
+    "Lundi": "Monday",
+    "Mardi": "Tuesday",
+    "Mercredi": "Wednesday",
+    "Jeudi": "Thursday",
+    "Vendredi": "Friday",
+    "Samedi": "Saturday",
+    "Dimanche": "Sunday"
+  };
+
+  return hoursArray
+    .filter(h => !h.closed)
+    .map(h => ({
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": dayMap[h.day],
+      "opens": h.open,
+      "closes": h.close
+    }));
+}
+
+  const a = cfg.contact.address;
+const openingHoursSpecification = buildOpeningHours(cfg.hours);
+
+const schemaData = {
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "@id": window.location.origin + "#restaurant",
+  "name": cfg.identity.name,
+  "image": cfg.identity.heroImg,
+  "url": window.location.origin,
+  "telephone": cfg.contact.phone,
+  "hasMenu": window.location.href + "#menu",
+
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": a.street,
+    "addressLocality": a.city,
+    "postalCode": a.zip,
+    "addressCountry": "FR"
+  },
+
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "46.0780",
+    "longitude": "6.4074"
+  },
+
+  "sameAs": [
+  "https://instagram.com/tonresto",
+  "https://facebook.com/tonresto"
+],
+
+  "servesCuisine": "Fast Food, Tacos, Burgers",
+  "priceRange": "€",
+
+  "openingHoursSpecification": openingHoursSpecification
+};
+
+  const script = document.createElement('script');
+  script.id = 'seo-schema';
+  script.type = 'application/ld+json';
+  script.textContent = JSON.stringify(schemaData);
+  document.head.appendChild(script);
+
+
 }
 
 // ============================================================================

@@ -1311,7 +1311,7 @@ window.processCheckout = async function() {
 
     try {
         const orderData = {
-            snackId: window.CURRENT_SNACK_ID || "bonneville_01",
+            snackId: window.snackConfig?.identity?.id|| "bonneville_01",
             clientNom: clientName,
             items: cart,
             total: getCartTotal(),
