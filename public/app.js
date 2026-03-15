@@ -85,6 +85,17 @@ window.initAppVisuals = async () => {
   if (mobileOrderBtn)
     mobileOrderBtn.style.display = showOrder ? "flex" : "none";
 
+  const floatingCartContainer = document.getElementById("floating-cart-container");
+const isCartActive = features && features.enableClickAndCollect === true;
+
+  if (floatingCartContainer) {
+    if (isCartActive) {
+      floatingCartContainer.classList.remove("hidden"); // On affiche le panier
+    } else {
+      floatingCartContainer.classList.add("hidden"); // On cache le panier
+    }
+  }
+
   // 5. Retirer le Splash Screen
   // const splash = document.getElementById("splash-screen");
   // if (splash) {
@@ -279,17 +290,61 @@ function createProductCard(item, cfg) {
 
 window.switchView = function (viewName) {
   const fullMenu = document.getElementById("full-menu");
+  const mobileOverlay = document.getElementById("mobile-menu-overlay");
+  const mobileBtnIcon = document.querySelector("#mobile-menu-btn i");
+  
+  // L'indicateur translucide et les boutons
+  const navIndicator = document.getElementById("nav-indicator");
+  const btnHome = document.getElementById("nav-btn-home");
+  const btnMenu = document.getElementById("nav-btn-menu");
+
   if (viewName === "menu") {
+    // 1. Déplace la pilule à droite
+    if (navIndicator) navIndicator.style.transform = "translateX(200%)";
+    
+    // 2. Allume "Menu", grise "Accueil"
+    if (btnHome) { btnHome.classList.remove("text-white"); btnHome.classList.add("text-gray-400"); }
+    if (btnMenu) { btnMenu.classList.remove("text-gray-400"); btnMenu.classList.add("text-white"); }
+
     fullMenu.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = "hidden"; 
+    
+    // Fermeture du menu burger si ouvert
+    if (mobileOverlay && !mobileOverlay.classList.contains("hidden")) {
+        mobileOverlay.classList.add("opacity-0");
+        setTimeout(() => {
+            mobileOverlay.classList.remove("flex");
+            mobileOverlay.classList.add("hidden");
+        }, 300);
+        if (mobileBtnIcon) {
+            mobileBtnIcon.classList.remove("fa-times");
+            mobileBtnIcon.classList.add("fa-bars");
+        }
+    }
   } else {
+    // 1. Déplace la pilule à gauche
+    if (navIndicator) navIndicator.style.transform = "translateX(0%)";
+    
+    // 2. Allume "Accueil", grise "Menu"
+    if (btnHome) { btnHome.classList.remove("text-gray-400"); btnHome.classList.add("text-white"); }
+    if (btnMenu) { btnMenu.classList.remove("text-white"); btnMenu.classList.add("text-gray-400"); }
+
     fullMenu.classList.add("hidden");
-    document.body.style.overflow = "";
+    document.body.style.overflow = ""; 
+    
+    // Scroll vers le haut si retour accueil
+    if (viewName === "home") {
+      const heroSection = document.getElementById("hero");
+      if (heroSection) {
+        setTimeout(() => {
+          heroSection.scrollIntoView({ behavior: 'smooth' });
+        }, 10);
+      }
+    }
   }
 };
 
-// ============================================================================
-// GESTION DU MODAL PRODUIT (Responsive Mobile & Desktop)
+
 // ============================================================================
 // window.openProductModal = function (itemId) {
 //   const cfg = window.snackConfig;
@@ -980,36 +1035,33 @@ window.openProductModal = function (itemId) {
   const btn = document.getElementById("modal-cta");
   const optionsContainer = document.getElementById("modal-options-container");
   
-  // Si le boss a payé pour le Click & Collect OU la commande en ligne
-  const isEcommerceActive = cfg.features && (cfg.features.enableClickAndCollect === true || cfg.features.enableOnlineOrder === true);
+  const isClickAndCollect = cfg.features && cfg.features.enableClickAndCollect === true;
+  const isPhoneOrder = cfg.features && cfg.features.enableOnlineOrder === true;
 
   if (item.isAvailable === false) {
-      // 🚫 PRODUIT ÉPUISÉ
+      // 🚫 1. PRODUIT ÉPUISÉ (Priorité absolue)
       if (optionsContainer) optionsContainer.classList.add("hidden");
       btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
       btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
       btn.removeAttribute("href");
       btn.onclick = null;
   } 
-  else if (isEcommerceActive) {
-      // 🛒 FEATURE FLAG TRUE : MODE PANIER (Click & Collect actif)
+  else if (isClickAndCollect) {
+      // 🛒 2. MODE PANIER (Click & Collect = true) -> E-commerce pur
       if (optionsContainer) optionsContainer.classList.remove("hidden");
       
-      // On affiche les prix dans les options Seul/Menu
       document.getElementById('modal-price-seul').textContent = `${currentProduct.prixBase.toFixed(2)} ${devise}`;
       document.getElementById('modal-price-menu').textContent = `+ ${currentProduct.prixMenu.toFixed(2)} ${devise}`;
       document.querySelector('input[name="formule"][value="seul"]').checked = true;
       
-      // On désactive le lien (ce n'est plus un bouton d'appel)
       btn.removeAttribute("href");
       btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
+      btn.onclick = window.confirmAddToCart; 
       
-      // C'est ce clic qui ajoute au panier !
-      btn.onclick = window.confirmAddToCart; // Assure-toi que cette fonction existe
       if(typeof window.toggleDrinkSection === 'function') window.toggleDrinkSection(); 
   } 
-  else {
-      // ☎️ FEATURE FLAG FALSE : MODE VITRINE (Téléphone par défaut)
+  else if (isPhoneOrder) {
+      // ☎️ 3. MODE APPEL (OnlineOrder = true, ClickAndCollect = false) -> Commande par téléphone
       if (optionsContainer) optionsContainer.classList.add("hidden");
       
       const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
@@ -1018,6 +1070,74 @@ window.openProductModal = function (itemId) {
       btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
       btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-green-600 hover:bg-green-700 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
       btn.onclick = null;
+  }
+  else {
+      // 🛑 4. MODE VITRINE PUR (Les deux sont false) -> Juste consulter le menu
+      if (optionsContainer) optionsContainer.classList.add("hidden");
+      btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
+      btn.className = `w-full cursor-pointer py-4 rounded-xl font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 transition-all mt-auto flex justify-center items-center gap-2`;
+      btn.removeAttribute("href");
+      btn.onclick = (e) => {
+          e.preventDefault();
+          closeProductModal();
+      };
+  }
+  // ==========================================
+  // 🚀 LOGIQUE DE PARTAGE VIRAL (Mobile & Desktop)
+  // ==========================================
+  const shareBtn = document.getElementById("modal-share-btn");
+
+  if (shareBtn && cfg.features && cfg.features.enableViralShare) {
+    shareBtn.classList.remove("hidden"); // On affiche le bouton
+
+    shareBtn.onclick = async () => {
+      // 📳 Petit clic haptique
+      if (typeof window.triggerVibration === "function") {
+        window.triggerVibration("light");
+      }
+
+      const shareTitle = `Découvre ${currentProduct.nom} chez ${cfg.identity?.name || "nous"} !`;
+      const shareText = `Mec, regarde cette dinguerie : ${currentProduct.nom} à ${currentProduct.prixBase.toFixed(2)}${devise}. On teste ça quand ? 🤤🍔`;
+      const shareUrl = window.location.href;
+
+      // 1. Tente le partage natif (Parfait pour iOS/Android et PC récents)
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: shareTitle,
+            text: shareText,
+            url: shareUrl,
+          });
+          if (typeof window.triggerVibration === "function") {
+            window.triggerVibration("success");
+          }
+        } catch (err) {
+          console.log("Partage annulé ou fermé :", err);
+        }
+      } 
+      // 2. FALLBACK DESKTOP : Copie dans le presse-papier si pas de partage natif
+      else if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(`${shareTitle}\n${shareText}\nLien : ${shareUrl}`);
+          
+          // Utilise ta fonction showToast existante pour rassurer le client sur PC
+          if (typeof window.showToast === "function") {
+             window.showToast("Lien copié dans le presse-papier ! 📋", "success");
+          } else {
+             alert("Lien copié dans le presse-papier ! 📋");
+          }
+          
+          if (typeof window.triggerVibration === "function") {
+            window.triggerVibration("success");
+          }
+        } catch (err) {
+          console.error("Erreur de copie :", err);
+        }
+      }
+    };
+  } else if (shareBtn) {
+    // On cache le bouton si la feature est désactivée en BDD
+    shareBtn.classList.add("hidden");
   }
 
   // 4. Affichage de la Modale

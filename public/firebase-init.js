@@ -461,7 +461,7 @@ function animerCarteFidelite(points) {
     giftIcon.classList.remove("animate-bounce", "text-green-300");
     pointsText.classList.remove("scale-125");
     const restants = maxPoints - points;
-    progressLabel.innerText = `Encore ${restants} point${restants > 1 ? "s" : ""}...`;
+    progressLabel.innerText = `Encore ${restants} point${restants > 1 ? "s" : ""} avant ta récompense`;
   }
 }
 
@@ -474,7 +474,6 @@ window.closeClientCard = () => {
 
   setTimeout(() => {
     modal.classList.add("hidden");
-    modal.classList.remove("flex");
   }, 300);
 };
 
@@ -527,6 +526,7 @@ async function onScanSuccess(decodedText, decodedResult) {
   window.showToast("QR Code lu ! Vérification en cours...", "success");
 
   try {
+
     const clientRef = doc(db, "users", decodedText);
     const clientDoc = await getDoc(clientRef);
 
@@ -582,7 +582,7 @@ function onScanFailure(error) {
 
   // 3. S'il y a une VRAIE erreur inattendue (ex: perte d'accès caméra soudaine)
   // On utilise console.warn au lieu de showToast pour ne pas gêner l'utilisateur
-  console.warn("⚠️ Avertissement Scanner (Non bloquant) :", errorMessage);
+  // console.warn("⚠️ Avertissement Scanner (Non bloquant) :", errorMessage);
 }
 
 window.logoutUser = async () => {

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>O'Tacos Fusion Bonneville | Les Meilleurs Tacos & Burgers en Click & Collect à proximité</title>
+    <title>O'Tacos Fusion Bonneville | Les Meilleurs Tacos & Burgers en Click & Collect de la ville et à proximité</title>
     <!-- <meta http-equiv="Content-Security-Policy" content="
         default-src 'self'; 
         script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://www.gstatic.com https://unpkg.com; 
@@ -17,7 +17,7 @@
       content="Découvrez le menu digital de O'Tacos Fusion Bonneville. Commandez en ligne vos Tacos, Burgers et snacks en Click & Collect ou Livraison. Gagnez des récompenses !"
     />
     <meta name="keywords" content="tacos, burgers, fast-food, click and collect, livraison de repas, snack, restauration rapide, commander en ligne, proximité, Bonneville" />
-    <meta property="og:title" content="O'Tacos Fusion | Commander en ligne" />
+    <meta property="og:title" content="O'Tacos Fusion Bonneville | en ville, rapide. Commander en ligne" />
     <meta
       property="og:description"
       content="Commandez vos plats préférés : Tacos, Burgers, Frites. Click & Collect rapide et programme de fidélité !"
@@ -113,7 +113,7 @@
   </head>
 
   <body class="bg-gray-50 text-gray-800">
-    <!-- <div
+    <div
       id="splash-screen"
       class="fixed inset-0 z-[9999] bg-gray-900 flex flex-col items-center justify-center transition-opacity duration-500"
     >
@@ -137,10 +137,10 @@
       >
         Tout est prêt...
       </h2>
-    </div> -->
+    </div> 
 
     <!-- SCRIPT DE TRANSITION APP SHELL -->
-    <!-- <script>
+    <script>
       // Dès que le DOM est lu, on masque le splash screen très vite (300ms)
       // pour révéler l'App Shell (le site avec les Skeleton Loaders) pendant que Firebase charge.
       window.addEventListener('DOMContentLoaded', () => {
@@ -152,7 +152,7 @@
             }, 300);
         }
       });
-    </script> -->
+    </script>
 
     <nav
       id="navbar"
@@ -644,11 +644,16 @@
 
          <div id="mobile-nav-grid" class="relative z-10 grid grid-cols-3 h-[3.5rem] gap-1 transition-all duration-300">
           
+          <div 
+            id="nav-indicator" 
+            class="absolute top-0 bottom-0 left-0 w-[calc(100%/3)] bg-white/20 backdrop-blur-md border border-white/10 shadow-[0_4px_15px_rgba(255,255,255,0.05)] rounded-3xl transition-transform duration-300 ease-out pointer-events-none z-0"
+          ></div>
+
          <a
-            href="#hero"
-            onclick="switchView('home'); return false;"
+            onclick="switchView('home')"
+            id="nav-btn-home"
             aria-label="Retour à l'accueil"
-            class="flex flex-col items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95 rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:bg-white/10 group"
+            class="relative z-10 flex flex-col items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95 rounded-3xl group"
           >
             <i class="fas fa-home text-xl mb-0.5 transition-transform group-hover:-translate-y-1" aria-hidden="true"></i>
             <span class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-1">Accueil</span>
@@ -839,7 +844,7 @@
               <span
                 id="progress-text"
                 class="text-white/90 uppercase tracking-wider"
-                >Encore 10 points...</span
+                >Encore 10 points avant ta récompense</span
               >
               <i class="fas fa-gift text-yellow-300 text-lg" id="gift-icon"></i>
             </div>
@@ -1018,12 +1023,12 @@
       </div>
     </div>
 
-    <div class="fixed bottom-14 left-1/2 transform -translate-x-1/2 z-50">
+    <div id="floating-cart-container" class="hidden fixed bottom-14 left-1/2 transform -translate-x-1/2 z-50">
     <button onclick="openCartModal()" class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 shadow-red-600/30 border-white relative hover:scale-105 transition">
         <i class="fas fa-shopping-bag text-2xl"></i>
         <span id="cart-badge" class="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
     </button>
-</div>
+    </div>
 
 <div id="product-modal-backdrop" onclick="closeProductModal()" class="fixed inset-0 bg-gray-900/70 z-[70] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
 
@@ -1075,7 +1080,16 @@
               </div>
           </div>
 
-          <button id="modal-cta" class="w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg transition-all mt-auto flex justify-center items-center gap-2"></button>
+         <button id="modal-cta" class="w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg transition-all mt-auto flex justify-center items-center gap-2"></button>
+          
+          <button 
+            id="modal-share-btn" 
+            aria-label="Partager ce produit"
+            class="hidden w-full py-3 mt-3 rounded-xl font-bold text-gray-700 bg-gray-100 border border-gray-200 hover:bg-gray-200 active:scale-95 transition-all flex justify-center items-center gap-2"
+          >
+            <i class="fas fa-share-nodes text-red-500"></i> Partager à un pote
+          </button>
+
         </div>
       </div>
     </div>
