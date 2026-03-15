@@ -34,6 +34,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 
 // 2. CONFIGURATION
@@ -53,11 +54,13 @@ const analytics = getAnalytics(app);
 const messaging = getMessaging(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
+window.storage = storage;
 window.auth = auth;
 window.db = db;
 window.messaging = messaging;
-window.fs = { doc, getDoc, setDoc, updateDoc, increment, onSnapshot, query, collection, where, orderBy, limit, startAfter, getDocs };
+window.fs = { doc, getDoc, setDoc, updateDoc, increment, onSnapshot, query, collection, where, orderBy, limit, startAfter, getDocs,getStorage };
 
 function updateUI(user) {
   const cfg = window.snackConfig;
