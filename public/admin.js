@@ -1,6 +1,6 @@
 import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getDownloadURL, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // ==========================================
 // VARIABLES GLOBALES
@@ -16,26 +16,82 @@ const bell = document.getElementById('kitchen-bell');
 // ==========================================
 // 1. SÉCURITÉ ET DÉMARRAGE
 // ==========================================
+// ==========================================
+// 🔐 GESTION DE LA CONNEXION ADMIN
+// ==========================================
+
+// 1. Écouteur d'état de connexion (Le videur à l'entrée)
 setTimeout(() => {
     onAuthStateChanged(window.auth, async (user) => {
+        const loginSection = document.getElementById('admin-login-section');
+        const startBtn = document.getElementById('start-shift-btn');
+        const startupIcon = document.getElementById('startup-icon');
+        const startupTitle = document.getElementById('startup-title');
+        const startupDesc = document.getElementById('startup-desc');
+
         if (user) {
+            // L'utilisateur est connecté, on vérifie ses droits
             const userDoc = await getDoc(doc(window.db, "users", user.uid));
+            
             if (userDoc.exists() && (userDoc.data().role === "admin" || userDoc.data().role === "superadmin")) {
+                // ✅ SUCCÈS : C'EST UN VRAI PATRON
                 currentAdminSnackId = userDoc.data().snackId;
-                document.getElementById('admin-email').innerText = user.email;
+                if(document.getElementById('admin-email')) document.getElementById('admin-email').innerText = user.email;
                 
-                document.getElementById('startup-icon').className = "fas fa-check-circle text-6xl mb-6 text-green-500";
-                document.getElementById('startup-title').innerText = "Accès Autorisé";
-                document.getElementById('startup-desc').innerText = "Cliquez ci-dessous pour activer les alertes sonores.";
-                document.getElementById('start-shift-btn').classList.remove('hidden');
+                // On met à jour l'UI
+                loginSection.classList.add('hidden'); // On cache le formulaire
+                startupIcon.className = "fas fa-check-circle text-6xl mb-6 text-green-500 animate-bounce";
+                startupTitle.innerText = "Accès Autorisé";
+                startupDesc.innerText = "Cliquez ci-dessous pour activer le radar de cuisine.";
+                startBtn.classList.remove('hidden'); // On affiche le bouton "Démarrer"
+                
             } else {
-                refuseAccess("Vous n'avez pas les droits d'administrateur.");
+                // ❌ ÉCHEC : C'EST UN CLIENT QUI A TROUVÉ LA PAGE
+                window.auth.signOut(); // On le déconnecte de force de cette page
+                refuseAccess("Accès refusé. Vous n'avez pas les droits d'administration.");
             }
         } else {
-            refuseAccess("Veuillez vous connecter sur le site public d'abord.");
+            // 👤 UTILISATEUR NON CONNECTÉ : On affiche le formulaire !
+            startupIcon.className = "fas fa-lock text-6xl mb-6 text-gray-300";
+            startupTitle.innerText = "Espace Sécurisé";
+            startupDesc.innerText = "Veuillez vous identifier pour accéder au terminal.";
+            startBtn.classList.add('hidden');
+            loginSection.classList.remove('hidden'); // On affiche le formulaire
+            loginSection.classList.add('flex');
         }
     });
 }, 500);
+
+// 2. Écouteur du formulaire de connexion
+const adminLoginForm = document.getElementById('admin-login-form');
+if (adminLoginForm) {
+    adminLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('admin-email-input').value;
+        const password = document.getElementById('admin-password-input').value;
+        const btn = document.getElementById('admin-login-btn');
+        const errorMsg = document.getElementById('admin-login-error');
+        
+        // UX: On fait tourner le bouton
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Vérification...`;
+        btn.disabled = true;
+        errorMsg.classList.add('hidden');
+
+        try {
+            // On lance la connexion Firebase
+            await signInWithEmailAndPassword(window.auth, email, password);
+            
+        } catch (error) {
+            console.error("Erreur de connexion:", error);
+            errorMsg.innerText = "Identifiants incorrects. Veuillez réessayer.";
+            errorMsg.classList.remove('hidden');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+}
 
 function refuseAccess(message) {
     document.getElementById('startup-icon').className = "fas fa-ban text-6xl mb-6 text-red-500";

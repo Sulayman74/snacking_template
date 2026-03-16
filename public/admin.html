@@ -48,6 +48,18 @@
         class="hidden mt-6 text-red-400 hover:text-red-300 underline"
         >Retour au site public</a
       >
+      <div id="admin-login-section" class="hidden w-full max-w-sm mx-auto flex-col items-center mt-6">
+    <h2 class="text-2xl text-gray-300 mb-6">Accès Équipe</h2>
+    <form id="admin-login-form" class="w-full flex flex-col gap-4">
+        <input type="email" id="admin-email-input" placeholder="Email professionnel" class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition" required>
+        <input type="password" id="admin-password-input" placeholder="Mot de passe" class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition" required>
+        
+        <button type="submit" id="admin-login-btn" class="w-full bg-gray-700 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition transform hover:scale-[1.02] active:scale-95 flex justify-center items-center gap-2">
+            <span class="text-blue-700">Connexion</span>
+        </button>
+    </form>
+    <p id="admin-login-error" class="text-red-500 text-sm mt-4 font-bold hidden text-center"></p>
+</div>
     </div>
 
     <header class="bg-gray-900 text-white shadow-lg z-50 sticky top-0">
