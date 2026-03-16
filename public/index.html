@@ -1101,6 +1101,41 @@
             </button>
         </div>
     </div>
+    <button id="order-tracking-badge" onclick="openTrackingModal()" class="hidden fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black flex items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce">
+        <i class="fas fa-bell animate-pulse"></i>
+        <span id="badge-text">Commande en cours</span>
+    </button>
+
+    <div id="order-tracking-modal" class="fixed inset-0 bg-gray-900/80 z-[100] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 relative shadow-2xl transform transition-transform scale-95">
+            <button onclick="closeTrackingModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full transition w-10 h-10 flex items-center justify-center z-10">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-6 mt-4">
+                <div id="tracking-icon-container" class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500">
+                    <i id="tracking-icon" class="fas fa-fire text-5xl text-yellow-500 transition-transform duration-500"></i>
+                </div>
+                <h2 class="text-3xl font-black text-gray-900 tracking-tight" id="tracking-title">En cuisine !</h2>
+                <p class="text-gray-500 font-bold mt-2" id="tracking-subtitle">Le chef prépare votre commande.</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100 mb-6">
+                <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-3">
+                    <span class="text-gray-500 font-bold text-sm uppercase tracking-wider">N° de Ticket</span>
+                    <span class="font-black text-gray-900 font-mono text-lg" id="tracking-order-id">#...</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500 font-bold text-sm uppercase tracking-wider">Service</span>
+                    <span class="font-black text-green-600 bg-green-100 px-3 py-1 rounded-lg">Click & Collect</span>
+                </div>
+            </div>
+
+            <button onclick="closeTrackingModal()" class="w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95">
+                Super, j'attends !
+            </button>
+        </div>
+    </div>
 
     <script
       src="https://unpkg.com/html5-qrcode"

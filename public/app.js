@@ -1015,16 +1015,25 @@ window.openProductModal = function (itemId) {
     allergenContainer.classList.add("hidden");
   }
 
-  // ==========================================
-  // 🥤 FABRICATION DES BOUTONS DE BOISSONS
+// ==========================================
+  // 🥤 FABRICATION DES BOUTONS DE BOISSONS (100% DYNAMIQUE)
   // ==========================================
   const drinksContainer = document.getElementById('drinks-container');
-  // Assure-toi que BOISSONS_DISPO est bien défini plus haut dans ton code
-  if (drinksContainer && typeof BOISSONS_DISPO !== 'undefined') {
-      drinksContainer.innerHTML = BOISSONS_DISPO.map((boisson, index) => `
+  
+  if (drinksContainer) {
+      // 1. On filtre menuGlobal pour ne garder QUE les boissons disponibles de ce snack
+      const boissonsDispo = menuGlobal.filter(item => item.categorieId === "drinks" && item.isAvailable !== false);
+      
+      // 2. Sécurité absolue : S'il n'y a aucune boisson en base, on met un Fallback pour ne pas casser la modale
+      const listeBoissons = boissonsDispo.length > 0 
+          ? boissonsDispo 
+          : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
+
+      // 3. On injecte le HTML
+      drinksContainer.innerHTML = listeBoissons.map((boisson, index) => `
           <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
-              <input type="radio" name="boisson" value="${boisson}" ${index === 0 ? 'checked' : ''} class="w-5 h-5 text-red-600 focus:ring-red-500">
-              <span class="text-sm font-bold text-gray-700">${boisson}</span>
+              <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? 'checked' : ''} class="w-5 h-5 text-red-600 focus:ring-red-500">
+              <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
           </label>
       `).join('');
   }
@@ -1153,8 +1162,6 @@ window.openProductModal = function (itemId) {
   document.body.style.overflow = "hidden";
 };
 
-// Vérifie bien que tu as aussi cette fonction pour mettre à jour le bouton selon le choix (Seul ou Menu)
-const BOISSONS_DISPO = ["Coca-Cola", "Coca Zéro", "Ice Tea Pêche", "Oasis Tropical", "Eau Minérale"];
 window.toggleDrinkSection = function() {
     const isMenu = document.querySelector('input[name="formule"]:checked').value === 'menu';
     const drinkSection = document.getElementById('drink-section');
@@ -1299,48 +1306,215 @@ window.updateQuantity = function(productId, delta) {
 
 
 // --- 5. L'ENVOI FINAL (Firebase Checkout) ---
-window.processCheckout = async function() {
-    if (cart.length === 0) return;
-    
-    const clientName = prompt("Votre prénom pour la commande ? (ex: Thomas)");
-    if (!clientName || clientName.trim() === "") return;
 
-    const btn = document.getElementById('checkout-btn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Envoi en cuisine...';
+// ==========================================
+// 💳 PROCESSUS DE COMMANDE & CLICK&COLLECT
+// ==========================================
+window.processCheckout = async () => {
+    if (cart.length === 0) return window.showToast("Votre panier est vide", "error");
+
+    const btn = document.getElementById("checkout-btn");
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Envoi en cuisine...`;
     btn.disabled = true;
 
     try {
-        const orderData = {
-            snackId: window.snackConfig?.identity?.id|| "bonneville_01",
-            clientNom: clientName,
-            items: cart,
-            total: getCartTotal(),
-            statut: "nouvelle", 
+        const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
+        const currentUser = window.auth?.currentUser;
+        
+        // Sécurité : On force la connexion pour commander (ou on gère les invités)
+        if (!currentUser) {
+            window.showToast("Veuillez vous connecter pour commander", "error");
+            window.toggleAuthModal();
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        // 1. Formatage du Panier pour Firestore (Le schéma officiel)
+        const orderItems = cart.map(item => ({
+            id: item.id,
+            nom: item.nom,
+            image: item.image || "",
+            type: item.type || "seul", // menu ou seul
+            boissonNom: item.boisson || null,
+            prixBase: item.prixBase || item.prix,
+            prixMenuAdd: item.prixMenuAdd || 0,
+            prixTotalLigne: (item.prixBase + (item.prixMenuAdd || 0)) * item.quantity,
+            quantity: item.quantity
+        }));
+
+        // 2. Création du Document Commande
+        const newOrder = {
+            snackId: currentSnackId,
+            userId: currentUser.uid,
+            clientNom: currentUser.displayName || currentUser.email.split('@')[0],
+            clientEmail: currentUser.email,
             date: serverTimestamp(),
-            methodePaiement: "sur_place"
+            statut: "nouvelle",
+            items: orderItems,
+            total: window.getCartTotal(),
+            paiement: {
+                methode: "sur_place",
+                statut: "en_attente",
+                stripeSessionId: null
+            }
         };
 
-        await addDoc(collection(db, "commandes"), orderData);
-
-        btn.innerHTML = '<i class="fas fa-check mr-2"></i> Commande validée !';
-        btn.classList.replace('bg-red-600', 'bg-green-600');
+        // 3. Envoi dans le Cloud Firebase
+        const docRef = await addDoc(collection(window.db, "commandes"), newOrder);
         
-        cart = []; // On vide le panier après succès
-        saveCart();
+        // 4. Vider le panier
+        cart = [];
         updateCartUI();
+        window.toggleCartModal();
         
-        setTimeout(() => {
-            closeCartModal();
-            alert(`Merci ${clientName} ! Votre commande est envoyée en cuisine. 🎉`);
-            btn.innerHTML = 'Valider ma commande';
-            btn.classList.replace('bg-green-600', 'bg-red-600');
-            btn.disabled = false;
-        }, 2000);
+        window.showToast("🎉 Commande envoyée en cuisine !", "success");
+
+        // 5. 🎯 LA MAGIE CLICK & COLLECT : On mémorise la commande !
+        if (window.snackConfig?.features?.enableClickAndCollect) {
+            localStorage.setItem("activeOrderId", docRef.id);
+            startOrderTracking(docRef.id);
+        }
 
     } catch (error) {
-        console.error("Erreur de commande :", error);
-        alert("Erreur de connexion. Veuillez réessayer.");
-        btn.innerHTML = 'Réessayer';
+        console.error("❌ Erreur Checkout :", error);
+        window.showToast("Erreur lors de la commande.", "error");
+    } finally {
+        btn.innerHTML = originalText;
         btn.disabled = false;
     }
 };
+
+// ==========================================
+// 🎟️ GESTION DE L'UI DE LA MODALE TRACKING
+// ==========================================
+window.openTrackingModal = () => {
+    const modal = document.getElementById("order-tracking-modal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    setTimeout(() => {
+        modal.classList.remove("opacity-0");
+        modal.querySelector('.bg-white').classList.remove("scale-95");
+    }, 10);
+};
+
+window.closeTrackingModal = () => {
+    const modal = document.getElementById("order-tracking-modal");
+    modal.classList.add("opacity-0");
+    modal.querySelector('.bg-white').classList.add("scale-95");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }, 300);
+};
+
+// ==========================================
+// 📡 LE RADAR DU CLIENT (MISE À JOUR AVEC L'UI)
+// ==========================================
+let unsubscribeClientRadar = null;
+
+window.startOrderTracking = (orderId) => {
+    const trackingBadge = document.getElementById("order-tracking-badge");
+    const badgeText = document.getElementById("badge-text");
+    
+    // Éléments de la Modale
+    const orderIdText = document.getElementById("tracking-order-id");
+    const iconContainer = document.getElementById("tracking-icon-container");
+    const icon = document.getElementById("tracking-icon");
+    const title = document.getElementById("tracking-title");
+    const subtitle = document.getElementById("tracking-subtitle");
+
+    // 1. On affiche le badge et l'ID de commande (les 4 derniers caractères pour faire "Ticket")
+    if(trackingBadge) trackingBadge.classList.remove("hidden");
+    if(orderIdText) orderIdText.innerText = "#" + orderId.slice(-4).toUpperCase();
+
+    if (unsubscribeClientRadar) unsubscribeClientRadar();
+    console.log("🟢 Radar Client ACTIVÉ :", orderId);
+
+    // 2. Écoute Firebase
+    unsubscribeClientRadar = window.fs.onSnapshot(window.fs.doc(window.db, "commandes", orderId), (docSnap) => {
+        if (docSnap.exists()) {
+            const commande = docSnap.data();
+            
+            // 🟡 STATUT : NOUVELLE (En préparation)
+            if (commande.statut === "nouvelle") {
+                trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
+                badgeText.innerText = "Commande en cours";
+                
+                iconContainer.className = "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+                icon.className = "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
+                title.innerText = "En cuisine !";
+                title.className = "text-3xl font-black text-gray-900 tracking-tight";
+                subtitle.innerText = "Le chef prépare votre commande.";
+            }
+            
+            // 🟢 STATUT : PRÊTE
+            else if (commande.statut === "prete") {
+                // Le badge devient Vert et vibre !
+                trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
+                badgeText.innerText = "C'EST PRÊT !";
+                
+                // La modale passe au vert
+                iconContainer.className = "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
+                icon.className = "fas fa-check text-5xl text-green-600 transition-transform duration-500";
+                title.innerText = "C'est prêt !";
+                title.className = "text-4xl font-black text-green-600 tracking-tight";
+                subtitle.innerText = "Présentez-vous au comptoir pour la récupérer.";
+                
+                // Alertes système
+                window.showToast("🔔 DING ! Votre commande est PRÊTE !", "success");
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                
+                // On ouvre la modale automatiquement pour être sûr qu'il le voie !
+                openTrackingModal(); 
+            }
+            
+            // ⚪ STATUT : TERMINÉE
+            else if (commande.statut === "terminee") {
+                window.showToast("Bon appétit !", "success");
+                localStorage.removeItem("activeOrderId"); 
+                if(trackingBadge) trackingBadge.classList.add("hidden"); 
+                closeTrackingModal();
+                
+                if (unsubscribeClientRadar) {
+                    unsubscribeClientRadar();
+                    unsubscribeClientRadar = null;
+                }
+            }
+        }
+    });
+};
+
+// ==========================================
+// 🔄 AUTOMATISATION : PAUSE / REPRISE DU RADAR
+// ==========================================
+document.addEventListener("visibilitychange", () => {
+    const activeOrderId = localStorage.getItem("activeOrderId");
+    
+    // Si Le client n'a pas de commande en cours, on ne fait rien
+    if (!activeOrderId) return; 
+
+    if (document.hidden) {
+        // 🛑 Le client a quitté l'onglet ou verrouillé son téléphone : On coupe Firestore !
+        if (unsubscribeClientRadar) {
+            unsubscribeClientRadar();
+            unsubscribeClientRadar = null;
+            console.log("🔴 Radar Client EN PAUSE (Économie de requêtes).");
+        }
+    } else {
+        // 🟢 Le client rouvre l'onglet pour vérifier où en est son Tacos : On rallume Firestore !
+        if (window.snackConfig?.features?.enableClickAndCollect) {
+            console.log("📡 Reprise du tracking pour la commande :", activeOrderId);
+            startOrderTracking(activeOrderId);
+        }
+    }
+});
+
+// À l'ouverture initiale de l'application
+document.addEventListener("DOMContentLoaded", () => {
+    const activeOrderId = localStorage.getItem("activeOrderId");
+    if (activeOrderId && window.snackConfig?.features?.enableClickAndCollect) {
+        startOrderTracking(activeOrderId);
+    }
+});

@@ -316,42 +316,48 @@ window.switchAuthMode = () => {
   document.getElementById("auth-switch-text").innerText = isSignUpMode ? "Déjà un compte ?" : "Pas encore de compte ?";
 };
 
-document.getElementById("auth-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("auth-email").value;
-  const password = document.getElementById("auth-password").value;
+const authForm = document.getElementById("auth-form");
 
-  try {
-    if (isSignUpMode) {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
-      
-      try {
-        await setDoc(doc(db, "users", user.uid), {
-          email: user.email,
-          role: "client",
-          points: 0,
-          snackId: currentSnackId,
-          createdAt: new Date().toISOString(),
-        });
-        window.showToast(`Bienvenue ${user.email} ! 🎉`, "success");
-      } catch (dbError) {
-        console.error("❌ ERREUR FIRESTORE CRITIQUE :", dbError);
+// Le bouclier : On n'écoute le bouton "submit" QUE si le formulaire existe sur la page
+if (authForm) {
+  authForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById("auth-email").value;
+    const password = document.getElementById("auth-password").value;
+
+    try {
+      if (isSignUpMode) {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
+        
+        try {
+          await setDoc(doc(db, "users", user.uid), {
+            email: user.email,
+            role: "client",
+            points: 0,
+            snackId: currentSnackId,
+            createdAt: new Date().toISOString(),
+          });
+          window.showToast(`Bienvenue ${user.email} ! 🎉`, "success");
+        } catch (dbError) {
+          console.error("❌ ERREUR FIRESTORE CRITIQUE :", dbError);
+        }
+      } else {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        window.showToast(`Ravi de vous revoir ${user.email} ! 👋`, "success");
       }
-    } else {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      window.showToast(`Ravi de vous revoir ${user.email} ! 👋`, "success");
-    }
 
-    window.toggleAuthModal();
-    if (typeof window.switchView === "function") window.switchView("home");
-    window.scrollTo({ top: 0, behavior: "smooth" }); 
-  } catch (error) {
-    window.showToast("Erreur : " + error.message, "error");
-  }
-});
+      window.toggleAuthModal();
+      if (typeof window.switchView === "function") window.switchView("home");
+      window.scrollTo({ top: 0, behavior: "smooth" }); 
+    } catch (error) {
+      window.showToast("Erreur : " + error.message, "error");
+    }
+  });
+}
 
 // ============================================================================
 // ÉCOUTEUR D'ÉTAT (LE VIGILE AMÉLIORÉ 🕵️‍♂️)

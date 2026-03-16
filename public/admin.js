@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getDownloadURL, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
@@ -9,6 +9,8 @@ let currentAdminSnackId = null;
 let isFirstLoad = true;
 let adminProducts = []; 
 let currentEditingProductId = null; 
+let unsubscribeKitchenRadar = null;
+let currentAdminTab = 'cuisine'; // Pour savoir sur quel onglet on est
 const bell = document.getElementById('kitchen-bell');
 
 // ==========================================
@@ -58,6 +60,7 @@ document.getElementById('start-shift-btn').addEventListener('click', () => {
 // 2. RADAR FIREBASE (COMMANDES TEMPS RÉEL)
 // ==========================================
 function startKitchenRadar() {
+    if (unsubscribeKitchenRadar) unsubscribeKitchenRadar();
     const q = query(
         collection(window.db, "commandes"), 
         where("snackId", "==", currentAdminSnackId), 
@@ -65,7 +68,8 @@ function startKitchenRadar() {
         orderBy("date", "desc")
     );
 
-    onSnapshot(q, (snapshot) => {
+    // On stocke le "tuyau" dans notre variable
+    unsubscribeKitchenRadar = onSnapshot(q, (snapshot) => {
         const newOrdersContainer = document.getElementById('orders-new');
         const readyOrdersContainer = document.getElementById('orders-ready');
         
@@ -122,7 +126,30 @@ function startKitchenRadar() {
         document.getElementById('count-ready').innerText = countReady;
         isFirstLoad = false;
     });
+    console.log("🟢 Radar Cuisine ACTIVÉ.");
 }
+// 3. Crée cette nouvelle fonction pour couper le robinet :
+function stopKitchenRadar() {
+    if (unsubscribeKitchenRadar) {
+        unsubscribeKitchenRadar(); // Coupe la connexion Firestore
+        unsubscribeKitchenRadar = null;
+        console.log("🔴 Radar Cuisine DÉSACTIVÉ (Économie de requêtes).");
+    }
+}
+
+// 4. L'AUTOMATISATION (Le vrai hack)
+// On écoute si le cuistot change de page ou éteint l'écran de la tablette
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        // L'écran est éteint ou onglet masqué -> On coupe Firebase !
+        stopKitchenRadar();
+    } else {
+        // L'écran se rallume -> On relance Firebase (si on est sur le bon onglet)
+        if (currentAdminTab === 'cuisine' && currentAdminSnackId) {
+            startKitchenRadar();
+        }
+    }
+});
 
 window.updateOrderStatus = async (commandeId, newStatus) => {
     try { 
@@ -136,6 +163,7 @@ window.updateOrderStatus = async (commandeId, newStatus) => {
 // 3. ONGLETS ET GESTION MENU (PIM)
 // ==========================================
 window.switchAdminTab = (tabName) => {
+    currentAdminTab = tabName;
     const btnCuisine = document.getElementById('tab-cuisine');
     const btnMenu = document.getElementById('tab-menu');
     const viewCuisine = document.getElementById('view-cuisine');
@@ -147,12 +175,15 @@ window.switchAdminTab = (tabName) => {
         viewCuisine.classList.remove('hidden'); 
         viewCuisine.classList.add('flex');
         viewMenu.classList.add('hidden');
+        startKitchenRadar(); // On relance
     } else {
         btnMenu.className = "bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none";
         btnCuisine.className = "text-gray-400 hover:text-white hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition flex-1 md:flex-none";
         viewCuisine.classList.add('hidden'); 
         viewCuisine.classList.remove('flex');
         viewMenu.classList.remove('hidden');
+        stopKitchenRadar(); // On coupe pendant qu'il gère ses stocks !
+        loadAdminProducts();
         loadAdminProducts();
     }
 };
