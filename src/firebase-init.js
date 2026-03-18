@@ -60,15 +60,90 @@ window.db = db;
 window.messaging = messaging;
 window.fs = { doc, getDoc, setDoc, updateDoc, increment, onSnapshot, query, collection, where, orderBy, limit, startAfter, getDocs,getStorage };
 
+// ============================================================================
+// 🎨 LE PEINTRE GLOBAL (Application dynamique du Thème SaaS)
+// ============================================================================
+// ============================================================================
+// 🎨 LE PEINTRE GLOBAL (Application dynamique du Thème SaaS)
+// ============================================================================
+window.applySaaSThemeToHTML = () => {
+    const cfg = window.snackConfig;
+    if (!cfg || !cfg.theme) return;
+    
+    const { primary, accent, textOnPrimary } = cfg.theme.colors;
+
+    // 1. CHANGER LA COULEUR DES BOUTONS FIXES (Panier, Modales, Auth)
+    const primaryButtons = [
+        'auth-submit-btn', 'pwa-install-btn', 'btn-review-google', 'checkout-btn'
+    ];
+    
+    primaryButtons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.className = btn.className.replace(/bg-[a-z]+-\d+/g, '').replace(/text-[a-z]+-\d+/g, '').replace('text-white', '').replace('text-black', '');
+            btn.className += ` ${primary} ${textOnPrimary}`;
+        }
+    });
+
+    // 2. CHANGER LE PANIER FLOTTANT
+    const floatingCartBtn = document.querySelector('#floating-cart-container button');
+    if (floatingCartBtn) {
+        floatingCartBtn.className = floatingCartBtn.className.replace(/bg-[a-z]+-\d+/g, '').replace(/shadow-[a-z]+-\d+\/\d+/g, '');
+        floatingCartBtn.className += ` ${primary} shadow-[0_8px_20px_rgba(0,0,0,0.3)]`;
+    }
+    
+    // Le petit badge de quantité sur le panier
+    const cartBadge = document.getElementById('cart-badge');
+    if (cartBadge) {
+        cartBadge.className = cartBadge.className.replace(/text-[a-z]+-\d+/g, textOnPrimary);
+    }
+
+    // 3. LA SECTION FIDÉLITÉ (Bordures et Icônes)
+    const loyaltyCard = document.getElementById('loyalty-card');
+    if (loyaltyCard) {
+        // On extrait la couleur (ex: "bg-blue-600" devient "blue-600") pour l'appliquer à la bordure
+        const colorName = primary.replace('bg-', ''); 
+        loyaltyCard.className = loyaltyCard.className.replace(/border-[a-z]+-\d+/g, `border-${colorName}`);
+    }
+    
+    const loyaltyIcon = document.querySelector('#loyalty .fa-gift');
+    if (loyaltyIcon) {
+        loyaltyIcon.className = loyaltyIcon.className.replace(/text-[a-z]+-\d+/g, accent);
+    }
+
+    // 4. LES PETITS DÉTAILS D'ACCENTUATION (Flèches, Spinners)
+    // La flèche "Voir toute la carte"
+    const arrowIcons = document.querySelectorAll('.fa-arrow-right.text-red-500');
+    arrowIcons.forEach(icon => {
+        icon.className = icon.className.replace('text-red-500', accent);
+    });
+
+    // Le spinner de rechargement (Pull to refresh)
+    const ptrIcon = document.getElementById('ptr-icon'); 
+    if (ptrIcon && ptrIcon.classList.contains('text-red-600')) {
+        ptrIcon.className = ptrIcon.className.replace('text-red-600', accent);
+    }
+    
+    // L'icône de scan de la modal scanner admin
+    const scanIcon = document.querySelector('.fa-qrcode.text-red-500');
+    if (scanIcon) scanIcon.className = scanIcon.className.replace('text-red-500', accent);
+};
 function updateUI(user) {
   const cfg = window.snackConfig;
   if (!cfg) return;
+  
   document.title = cfg.identity.name;
-// On change la description SEO dynamiquement
-const metaDescription = document.querySelector('meta[name="description"]');
-if (metaDescription && cfg.identity.description) {
-    metaDescription.setAttribute("content", cfg.identity.description);
-}
+  
+  const metaDescription = document.querySelector('meta[name="description"]');
+  if (metaDescription && cfg.identity.description) {
+      metaDescription.setAttribute("content", cfg.identity.description);
+  }
+
+  // 🎨 EXTRACTION DES COULEURS DU THÈME
+  const primaryBg = cfg.theme.colors.primary;
+  const textOnPrimary = cfg.theme.colors.textOnPrimary;
+  const accentText = cfg.theme.colors.accent;
+
   // ==========================================
   // 1. Navbar et Hero (Identité & Logo)
   // ==========================================
@@ -101,49 +176,52 @@ if (metaDescription && cfg.identity.description) {
 
   if (cfg.features) {
     const isDelivery = cfg.features.enableDelivery === true;
-    const primaryBg = cfg.theme?.colors?.primary?.split(" ")[0] || "bg-red-600";
     const phoneClean = cfg.contact?.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
 
     if (mobileCtaBtn && mobileCtaIcon) {
+      // Nettoyage des anciennes classes de couleurs potentielles
+      mobileCtaBtn.className = mobileCtaBtn.className.replace(/bg-\w+-\d+/g, '').replace(/text-\w+-\d+/g, '').replace('text-white', '').replace('text-black', '');
+      
       if (isDelivery) {
         mobileCtaBtn.href = cfg.deliveryUrl || "#";
         mobileCtaBtn.setAttribute("target", "_blank");
-        mobileCtaBtn.classList.remove("bg-green-600");
-        mobileCtaBtn.classList.add(primaryBg);
+        mobileCtaBtn.classList.add(primaryBg.split(" ")[0], textOnPrimary);
         mobileCtaIcon.className = "fas fa-motorcycle text-2xl";
       } else {
         mobileCtaBtn.href = `tel:${phoneClean}`;
         mobileCtaBtn.removeAttribute("target");
-        mobileCtaBtn.classList.remove(primaryBg);
-        mobileCtaBtn.classList.add("bg-green-600");
+        // Le bouton d'appel reste vert classique, c'est une convention UI universelle
+        mobileCtaBtn.classList.add("bg-green-600", "text-white");
         mobileCtaIcon.className = "fas fa-phone text-2xl animate-pulse";
       }
     }
 
     if (desktopCtaBtn) {
+      desktopCtaBtn.className = desktopCtaBtn.className.replace(/bg-\w+-\d+/g, '').replace(/text-\w+-\d+/g, '').replace('text-white', '').replace('text-black', '');
+
       if (isDelivery) {
         desktopCtaBtn.href = cfg.deliveryUrl || "#";
         desktopCtaBtn.setAttribute("target", "_blank");
         desktopCtaBtn.innerHTML = '<i class="fas fa-motorcycle mr-2"></i> Commander en livraison';
-        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition text-white ${primaryBg}`;
+        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition ${primaryBg} ${textOnPrimary}`;
       } else {
         desktopCtaBtn.href = `tel:${phoneClean}`;
         desktopCtaBtn.removeAttribute("target");
         desktopCtaBtn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> ${cfg.contact.phone || "Appeler"}`;
-        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition text-white bg-green-600`;
+        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-green-600 text-white`;
       }
     }
   }
 
   // ==========================================
-  // 📍 MISE À JOUR DU FOOTER (Adresse & Tél)
+  // 📍 MISE À JOUR DU FOOTER (Adresse & Tél avec Accent Color)
   // ==========================================
   const footerPhone = document.getElementById("footer-phone");
   if (footerPhone && cfg.contact.phone) {
     const phoneClean = cfg.contact.phone.replace(/\s/g, "");
     footerPhone.innerHTML = `
-        <a href="tel:${phoneClean}" aria-label="Appeler le restaurant" class="flex items-center gap-2 hover:text-red-500 transition group">
-            <i class="fas fa-phone text-red-600 group-hover:text-red-500"></i>
+        <a href="tel:${phoneClean}" aria-label="Appeler le restaurant" class="flex items-center gap-2 hover:opacity-80 transition group">
+            <i class="fas fa-phone ${accentText}"></i>
             <span>${cfg.contact.phone}</span>
         </a>`;
   } else if (footerPhone) {
@@ -167,8 +245,8 @@ if (metaDescription && cfg.identity.description) {
       const iconClass = isApple ? "fa-map" : "fa-location-dot";
 
       footerAddr.innerHTML = `
-          <a href="${mapLink}" target="_blank" class="flex items-start gap-2 hover:text-red-500 transition group">
-              <i class="fas ${iconClass} mt-1 text-red-600 group-hover:text-red-500"></i>
+          <a href="${mapLink}" target="_blank" class="flex items-start gap-2 hover:opacity-80 transition group">
+              <i class="fas ${iconClass} mt-1 ${accentText}"></i>
               <span>${a.street}<br>${a.zip || ""} ${a.city || ""}</span>
           </a>`;
     } else {
@@ -180,18 +258,18 @@ if (metaDescription && cfg.identity.description) {
   // 3. Réseaux Sociaux & Horaires
   // ==========================================
   const socialsContainer = document.getElementById("socials-container");
+  const s = cfg.contact.socials;
   if (socialsContainer && cfg.contact.socials) {
     socialsContainer.innerHTML = "";
-    const s = cfg.contact.socials;
 
     if (s.instagram) {
-      socialsContainer.innerHTML += `<a href="https://instagram.com/${s.instagram.replace("@", "")}" aria-label="Visiter notre page Instagram (s'ouvre dans un nouvel onglet)" target="_blank" rel="noopener noreferrer" class="hover:text-pink-500 transition"><i class="fab fa-instagram"></i></a>`;
+      socialsContainer.innerHTML += `<a href="https://instagram.com/${s.instagram.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:${accentText} transition"><i class="fab fa-instagram"></i></a>`;
     }
     if (s.facebook) {
-      socialsContainer.innerHTML += `<a href="https://facebook.com/${s.facebook}" aria-label="Visiter notre page Facebook (s'ouvre dans un nouvel onglet)" target="_blank" rel="noopener noreferrer" class="hover:text-blue-500 transition"><i class="fab fa-facebook"></i></a>`;
+      socialsContainer.innerHTML += `<a href="https://facebook.com/${s.facebook}" target="_blank" rel="noopener noreferrer" class="hover:${accentText} transition"><i class="fab fa-facebook"></i></a>`;
     }
     if (s.tiktok) {
-      socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" aria-label="Visiter notre page TikTok (s'ouvre dans un nouvel onglet)" target="_blank" rel="noopener noreferrer" class="hover:text-black transition"><i class="fab fa-tiktok"></i></a>`;
+      socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:${accentText} transition"><i class="fab fa-tiktok"></i></a>`;
     }
   }
 
@@ -200,7 +278,6 @@ if (metaDescription && cfg.identity.description) {
 
   if (hoursList && cfg.hours && cfg.hours.length > 0) {
     hoursList.innerHTML = "";
-
     const todayIndex = new Date().getDay();
     const todayMap = todayIndex === 0 ? 6 : todayIndex - 1; 
 
@@ -226,75 +303,56 @@ if (metaDescription && cfg.identity.description) {
   // 🚀 SEO LOCAL : INJECTION DU SCHEMA.ORG
   // ==========================================
   const existingScript = document.getElementById('seo-schema');
-  if (existingScript) existingScript.remove(); // On nettoie l'ancien si besoin
+  if (existingScript) existingScript.remove(); 
 
   function buildOpeningHours(hoursArray) {
-
-  const dayMap = {
-    "Lundi": "Monday",
-    "Mardi": "Tuesday",
-    "Mercredi": "Wednesday",
-    "Jeudi": "Thursday",
-    "Vendredi": "Friday",
-    "Samedi": "Saturday",
-    "Dimanche": "Sunday"
-  };
-
-  return hoursArray
-    .filter(h => !h.closed)
-    .map(h => ({
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": dayMap[h.day],
-      "opens": h.open,
-      "closes": h.close
-    }));
-}
+      const dayMap = {
+        "lundi": "Monday", "mardi": "Tuesday", "mercredi": "Wednesday",
+        "jeudi": "Thursday", "vendredi": "Friday", "samedi": "Saturday", "dimanche": "Sunday"
+      };
+      return hoursArray.filter(h => !h.closed).map(h => ({
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": dayMap[h.day.toLowerCase()],
+          "opens": h.open,
+          "closes": h.close
+      }));
+  }
 
   const a = cfg.contact.address;
-const openingHoursSpecification = buildOpeningHours(cfg.hours);
+  const openingHoursSpecification = buildOpeningHours(cfg.hours);
 
-const schemaData = {
-  "@context": "https://schema.org",
-  "@type": "Restaurant",
-  "@id": window.location.origin + "#restaurant",
-  "name": cfg.identity.name,
-  "image": cfg.identity.heroImg,
-  "url": window.location.origin,
-  "telephone": cfg.contact.phone,
-  "hasMenu": window.location.href + "#menu",
-
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": a.street,
-    "addressLocality": a.city,
-    "postalCode": a.zip,
-    "addressCountry": "FR"
-  },
-
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": "46.0780",
-    "longitude": "6.4074"
-  },
-
-  "sameAs": [
-  "https://instagram.com/tonresto",
-  "https://facebook.com/tonresto"
-],
-
-  "servesCuisine": "Fast Food, Tacos, Burgers",
-  "priceRange": "€",
-
-  "openingHoursSpecification": openingHoursSpecification
-};
+  const schemaData = {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "@id": window.location.origin + "#restaurant",
+      "name": cfg.identity.name,
+      "image": cfg.identity.heroImg,
+      "url": window.location.origin,
+      "telephone": cfg.contact.phone,
+      "hasMenu": window.location.href + "#menu",
+      "address": {
+          "@type": "PostalAddress",
+          "streetAddress": a.street,
+          "addressLocality": a.city,
+          "postalCode": a.zip,
+          "addressCountry": "FR"
+      },
+      "geo": { "@type": "GeoCoordinates", "latitude": "46.0780", "longitude": "6.4074" },
+      "sameAs": [
+          s?.instagram ? `https://instagram.com/${s.instagram}` : "",
+          s?.facebook ? `https://facebook.com/${s.facebook}` : ""
+      ].filter(Boolean),
+      "servesCuisine": "Fast Food",
+      "priceRange": "€",
+      "openingHoursSpecification": openingHoursSpecification
+  };
 
   const script = document.createElement('script');
   script.id = 'seo-schema';
   script.type = 'application/ld+json';
   script.textContent = JSON.stringify(schemaData);
   document.head.appendChild(script);
-
-
+  window.applySaaSThemeToHTML();
 }
 
 // ============================================================================

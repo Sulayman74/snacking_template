@@ -186,7 +186,7 @@ window.chargerMenuComplet = async () => {
                     <div class="sticky top-0 z-30 bg-gray-200/95 backdrop-blur-md py-4 flex items-center mb-6 shadow-sm -mx-4 px-4 md:mx-0 md:shadow-none md:rounded-lg md:p-2">
                         <span class="md:text-4xl text-lg text-black mr-1">${cat.icon}</span>
                         <h3 class="text-xl md:text-3xl font-bold font-oswald text-gray-800 uppercase tracking-wider">${cat.title}</h3>
-                        <div class="flex-grow h-px bg-green-600 ml-4"></div>
+                        <div class="flex-grow h-px ${cfg.theme.colors.primary} ml-4 opacity-50"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 `;
@@ -284,7 +284,7 @@ function createProductCard(item, cfg) {
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 line-clamp-2">${item.description || ""}</p>
             </div>
             
-            <button class="w-full py-3 mt-auto rounded-xl border border-gray-300 dark:border-gray-600 ${textColor} hover:${isAvailable ? cfg.theme.colors.primary || "bg-red-600" : ""} hover:border-transparent hover:text-white transition-all font-bold flex items-center justify-center gap-2">
+            <button class="w-full py-3 mt-auto rounded-xl border border-gray-300 dark:border-gray-600 ${textColor} hover:${isAvailable ? cfg.theme.colors.primary : ""} hover:border-transparent hover:text-white transition-all font-bold flex items-center justify-center gap-2">
                 ${isAvailable ? '<i class="fas fa-eye"></i> Détails' : '<i class="fas fa-ban"></i> Indisponible'}
             </button>
         </div>
@@ -1099,31 +1099,8 @@ window.openProductModal = function (itemId) {
     allergenContainer.classList.add("hidden");
   }
 
-// ==========================================
-  // 🥤 FABRICATION DES BOUTONS DE BOISSONS (100% DYNAMIQUE)
   // ==========================================
-  const drinksContainer = document.getElementById('drinks-container');
-  
-  if (drinksContainer) {
-      // 1. On filtre menuGlobal pour ne garder QUE les boissons disponibles de ce snack
-      const boissonsDispo = menuGlobal.filter(item => item.categorieId === "drinks" && item.isAvailable !== false);
-      
-      // 2. Sécurité absolue : S'il n'y a aucune boisson en base, on met un Fallback pour ne pas casser la modale
-      const listeBoissons = boissonsDispo.length > 0 
-          ? boissonsDispo 
-          : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
-
-      // 3. On injecte le HTML
-      drinksContainer.innerHTML = listeBoissons.map((boisson, index) => `
-          <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
-              <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? 'checked' : ''} class="w-5 h-5 text-red-600 focus:ring-red-500">
-              <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
-          </label>
-      `).join('');
-  }
-
-  // ==========================================
-  // 🚦 L'AIGUILLAGE MAGIQUE DES FEATURE FLAGS
+  // 🚦 L'AIGUILLAGE MAGIQUE DES FEATURE FLAGS ET THÈMES
   // ==========================================
   const btn = document.getElementById("modal-cta");
   const optionsContainer = document.getElementById("modal-options-container");
@@ -1141,11 +1118,58 @@ window.openProductModal = function (itemId) {
   } 
   else if (isClickAndCollect) {
       // 🛒 2. MODE PANIER (Click & Collect = true) -> E-commerce pur
-      if (optionsContainer) optionsContainer.classList.remove("hidden");
-      
-      document.getElementById('modal-price-seul').textContent = `${currentProduct.prixBase.toFixed(2)} ${devise}`;
-      document.getElementById('modal-price-menu').textContent = `+ ${currentProduct.prixMenu.toFixed(2)} ${devise}`;
-      document.querySelector('input[name="formule"][value="seul"]').checked = true;
+      if (optionsContainer) {
+          optionsContainer.classList.remove("hidden");
+          
+          // 🎨 APPLICATION DU THÈME AUX BOUTONS RADIO (Formule) ET TEXTES
+          const accentColor = cfg.theme.colors.accent; // ex: 'text-blue-600'
+          const lightBgColor = cfg.theme.colors.lightBg || 'bg-gray-50'; // ex: 'bg-blue-50'
+          const bgFocusColor = accentColor.replace('text-', 'focus:ring-'); // ex: 'focus:ring-blue-600'
+
+          // 🥤 FABRICATION DES BOUTONS DE BOISSONS (100% DYNAMIQUE)
+          const boissonsDispo = menuGlobal.filter(item => item.categorieId === "drinks" && item.isAvailable !== false);
+          const listeBoissons = boissonsDispo.length > 0 
+              ? boissonsDispo 
+              : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
+
+          const drinksHTML = listeBoissons.map((boisson, index) => `
+              <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
+                  <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? 'checked' : ''} class="w-5 h-5 ${accentColor} ${bgFocusColor}">
+                  <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
+              </label>
+          `).join('');
+
+          // INJECTION DU HTML GLOBAL DE LA MODALE OPTIONS
+          optionsContainer.innerHTML = `
+              <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h4>
+              <div class="space-y-2 mb-4">
+                  <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                      <div class="flex items-center gap-3">
+                          <input type="radio" name="formule" value="seul" checked onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
+                          <span class="font-medium text-gray-900 text-sm">Seul</span>
+                      </div>
+                      <span id="modal-price-seul" class="text-gray-500 font-bold text-sm">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
+                  </label>
+                  <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:${lightBgColor} transition">
+                      <div class="flex items-center gap-3">
+                          <input type="radio" name="formule" value="menu" onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
+                          <div>
+                              <span class="font-medium text-gray-900 text-sm block">En Menu</span>
+                              <span class="text-[10px] ${accentColor} uppercase font-bold">Frites + Boisson</span>
+                          </div>
+                      </div>
+                      <span id="modal-price-menu" class="font-bold text-sm ${accentColor}">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
+                  </label>
+              </div>
+
+              <div id="drink-section" class="hidden opacity-0 transition-opacity duration-300">
+                  <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">2. Choix de la boisson</h4>
+                  <div class="grid grid-cols-2 gap-2" id="drinks-container">
+                      ${drinksHTML}
+                  </div>
+              </div>
+          `;
+      }
       
       btn.removeAttribute("href");
       btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
@@ -1175,6 +1199,7 @@ window.openProductModal = function (itemId) {
           closeProductModal();
       };
   }
+
   // ==========================================
   // 🚀 LOGIQUE DE PARTAGE VIRAL (Mobile & Desktop)
   // ==========================================
