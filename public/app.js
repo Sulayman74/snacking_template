@@ -1248,9 +1248,9 @@ function updateCartUI() {
         badge.classList.add('hidden');
     }
     try {
-        if (window.AppBridge) {
-            window.AppBridge.sendToNative("update_cart_badge", { count: totalItems });
-        }
+        if (window.AppBridge && typeof window.AppBridge.sendToNative === 'function') {
+        window.AppBridge.sendToNative("update_cart_badge", { count: totalItems });
+    }
     } catch (e) {
         console.error("Bridge non disponible", e);
     }
