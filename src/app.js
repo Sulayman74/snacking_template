@@ -1,3 +1,6 @@
+import './bridge.js';
+import './snack-config.js';
+import './firebase-init.js';
 // ============================================================================
 // GESTION DU SERVICE WORKER (PWA) & MODE DEV
 // ============================================================================
