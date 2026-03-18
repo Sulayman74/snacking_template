@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snack-app-v18'; 
+const CACHE_NAME = 'snack-app-v19'; 
 
 // 🚨 ATTENTION : Ne laisse ici QUE les fichiers qui existent encore vraiment dans ton dossier !
 const ASSETS_TO_CACHE = [

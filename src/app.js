@@ -291,6 +291,87 @@ function createProductCard(item, cfg) {
     </div>`;
 }
 
+// ============================================================================
+// 🔍 4.5 MOTEUR DE RECHERCHE EN MÉMOIRE (0 FIRESTORE)
+// ============================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('menu-search-input');
+    const clearSearchBtn = document.getElementById('clear-search-btn');
+    const fullMenuContainer = document.getElementById("full-menu-container");
+    const bestSellersContainer = document.getElementById("bestsellers-container");
+    
+    // On crée dynamiquement le conteneur des résultats juste avant le menu complet
+    let searchResultsContainer = document.getElementById("search-results-container");
+    if (!searchResultsContainer && fullMenuContainer) {
+        searchResultsContainer = document.createElement('div');
+        searchResultsContainer.id = "search-results-container";
+        searchResultsContainer.className = "hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12";
+        fullMenuContainer.parentNode.insertBefore(searchResultsContainer, fullMenuContainer);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const cfg = window.snackConfig;
+            
+            // Si on tape quelque chose
+            if (searchTerm.length > 0) {
+                clearSearchBtn.classList.remove('hidden');
+                
+                // 1. On cache les best-sellers et le menu normal
+                if(fullMenuContainer) fullMenuContainer.classList.add('hidden');
+                if(bestSellersContainer && bestSellersContainer.parentElement) {
+                    bestSellersContainer.parentElement.classList.add('hidden');
+                }
+                
+                // 2. On affiche le conteneur de résultats
+                searchResultsContainer.classList.remove('hidden');
+
+                // 3. Le Filtre Magique (On cherche dans le tableau menuGlobal)
+                const resultats = menuGlobal.filter(produit => {
+                    const nom = produit.nom ? produit.nom.toLowerCase() : "";
+                    const desc = produit.description ? produit.description.toLowerCase() : "";
+                    const tags = produit.tags ? (Array.isArray(produit.tags) ? produit.tags.join(" ") : produit.tags).toLowerCase() : "";
+                    
+                    return nom.includes(searchTerm) || desc.includes(searchTerm) || tags.includes(searchTerm);
+                });
+
+                // 4. On affiche les cartes produits (en réutilisant TA fonction !)
+                if (resultats.length === 0) {
+                    searchResultsContainer.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <div class="text-6xl mb-4">🕵️‍♂️</div>
+                            <h3 class="text-xl font-black text-gray-800">Aucun résultat</h3>
+                            <p class="text-gray-500 mt-2">Nous n'avons rien trouvé pour "${e.target.value}"</p>
+                        </div>
+                    `;
+                } else {
+                    // C'est ici la magie : on génère les cartes avec ton thème actuel !
+                    searchResultsContainer.innerHTML = resultats.map(item => createProductCard(item, cfg)).join('');
+                }
+
+            } else {
+                // Si la barre de recherche est VIDE : On remet tout à la normale !
+                clearSearchBtn.classList.add('hidden');
+                if(fullMenuContainer) fullMenuContainer.classList.remove('hidden');
+                if(bestSellersContainer && bestSellersContainer.parentElement) {
+                    bestSellersContainer.parentElement.classList.remove('hidden');
+                }
+                searchResultsContainer.classList.add('hidden');
+                searchResultsContainer.innerHTML = "";
+            }
+        });
+
+        // Bouton "X" pour vider la recherche
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            // On déclenche manuellement l'événement 'input' pour simuler une recherche vide
+            searchInput.dispatchEvent(new Event('input')); 
+            searchInput.focus();
+        });
+    }
+});
+
 window.switchView = function (viewName) {
   const fullMenu = document.getElementById("full-menu");
   const mobileOverlay = document.getElementById("mobile-menu-overlay");
