@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snack-app-v15'; 
+const CACHE_NAME = 'snack-app-v16'; 
 
 // 🚨 ATTENTION : Ne laisse ici QUE les fichiers qui existent encore vraiment dans ton dossier !
 const ASSETS_TO_CACHE = [
@@ -6,6 +6,7 @@ const ASSETS_TO_CACHE = [
   './index.html',
   './styles.css',
   './snack-config.js',
+  './bridge.js',
   './app.js',
   './firebase-init.js',
   './assets/icon-192.webp',

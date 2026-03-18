@@ -1213,10 +1213,11 @@ window.confirmAddToCart = function() {
         const boisson = boissonInput.value;
         nomFinal = `Menu ${currentProduct.nom} (+ ${boisson})`;
         prixFinal += currentProduct.prixMenu;
-    }
 
+    }
     const uniqueId = isMenu ? `${currentProduct.id}-menu-${Date.now()}` : `${currentProduct.id}-seul`;
     addToCart(uniqueId, nomFinal, prixFinal, currentProduct.image);
+    window.AppBridge.sendToNative("haptic_success");
     closeProductModal();
 };
 
@@ -1245,6 +1246,13 @@ function updateCartUI() {
         badge.classList.remove('hidden');
     } else {
         badge.classList.add('hidden');
+    }
+    try {
+        if (window.AppBridge) {
+            window.AppBridge.sendToNative("update_cart_badge", { count: totalItems });
+        }
+    } catch (e) {
+        console.error("Bridge non disponible", e);
     }
 }
 
