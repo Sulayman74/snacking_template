@@ -10,7 +10,23 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      
+      # 1. On installe Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 2. On installe les paquets (Vite, Tailwind...)
+      - name: Install Dependencies
+        run: npm install
+
+      # 3. On compile le projet (Création du dossier dist/)
+      - name: Build Project
+        run: npm run build
+
+      # 4. On envoie le dossier dist/ chez Firebase
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
