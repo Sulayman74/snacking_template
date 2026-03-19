@@ -410,10 +410,11 @@
       <div class="container mx-auto px-4">
         <div
           id="loyalty-card"
-          class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-black border-green-600 border-2 shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
+          class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-black border-2 shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
         >
           <div
-            class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-green-600/60 blur-3xl"
+          id="loyalty-blur"
+            class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full  blur-3xl"
           ></div>
 
           <div
@@ -442,7 +443,7 @@
               </div>
             </div>
             <div class="text-8xl md:text-9xl opacity-90 drop-shadow-xl">
-              <i class="fas fa-gift text-green-500 animate-bounce"></i>
+              <i class="fas fa-gift  animate-bounce"></i>
             </div>
           </div>
         </div>
@@ -566,7 +567,7 @@
         
         <div class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50">
           <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2">
-            <i class="fas fa-map-marker-alt text-red-500"></i> Nous trouver
+            <i id="find-us" class="fas fa-map-marker-alt"></i> Nous trouver
           </h4>
           <p id="footer-address" class="text-lg mb-4 font-light text-gray-200"></p>
           <p id="footer-phone" class="text-lg mb-6 font-bold text-white"></p>
@@ -575,7 +576,7 @@
 
         <div class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50">
           <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2">
-            <i class="fas fa-clock text-red-500"></i> Horaires
+            <i id="o-clock" class="fas fa-clock"></i> Horaires
           </h4>
           <ul id="hours-list" class="space-y-3 font-light text-gray-300"></ul>
         </div>

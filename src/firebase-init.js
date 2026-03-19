@@ -63,14 +63,11 @@ window.fs = { doc, getDoc, setDoc, updateDoc, increment, onSnapshot, query, coll
 // ============================================================================
 // 🎨 LE PEINTRE GLOBAL (Application dynamique du Thème SaaS)
 // ============================================================================
-// ============================================================================
-// 🎨 LE PEINTRE GLOBAL (Application dynamique du Thème SaaS)
-// ============================================================================
 window.applySaaSThemeToHTML = () => {
     const cfg = window.snackConfig;
     if (!cfg || !cfg.theme) return;
     
-    const { primary, accent, textOnPrimary } = cfg.theme.colors;
+    const { primary, accent, textOnPrimary,border, blurBg  } = cfg.theme.colors;
 
     // 1. CHANGER LA COULEUR DES BOUTONS FIXES (Panier, Modales, Auth)
     const primaryButtons = [
@@ -98,17 +95,33 @@ window.applySaaSThemeToHTML = () => {
         cartBadge.className = cartBadge.className.replace(/text-[a-z]+-\d+/g, textOnPrimary);
     }
 
-    // 3. LA SECTION FIDÉLITÉ (Bordures et Icônes)
+// ==========================================
+    // 3. LA SECTION FIDÉLITÉ (Bordures, Icônes et Halo lumineux)
+    // ==========================================
     const loyaltyCard = document.getElementById('loyalty-card');
-    if (loyaltyCard) {
-        // On extrait la couleur (ex: "bg-blue-600" devient "blue-600") pour l'appliquer à la bordure
-        const colorName = primary.replace('bg-', ''); 
-        loyaltyCard.className = loyaltyCard.className.replace(/border-[a-z]+-\d+/g, `border-${colorName}`);
+    const loyaltyBlur = document.getElementById('loyalty-blur'); 
+    const loyaltyIcon = document.querySelector('#loyalty .fa-gift');
+    const loyaltyBtn = document.getElementById('loyalty-main-btn');
+
+    if (loyaltyCard && border) {
+        // ✅ 1. On ajoute la bordure à la carte (Sans le "=" !)
+        loyaltyCard.classList.add(border);
+        
+        if (loyaltyBlur && blurBg) {
+            // ✅ 2. Comme ton HTML n'a pas de fond par défaut, on a juste à l'ajouter
+            // (blurBg vaut par exemple "bg-blue-600/60")
+            loyaltyBlur.classList.add(blurBg);
+        }
+    }
+
+    if (loyaltyBtn && border) {
+        // ✅ 3. On ajoute la couleur de la bordure ET son épaisseur (border-2)
+        loyaltyBtn.classList.add("border-2", border);
     }
     
-    const loyaltyIcon = document.querySelector('#loyalty .fa-gift');
-    if (loyaltyIcon) {
-        loyaltyIcon.className = loyaltyIcon.className.replace(/text-[a-z]+-\d+/g, accent);
+    if (loyaltyIcon && accent) {
+        // ✅ 4. Le cadeau n'a plus de couleur de base, on ajoute la nouvelle direct
+        loyaltyIcon.classList.add(accent);
     }
 
     // 4. LES PETITS DÉTAILS D'ACCENTUATION (Flèches, Spinners)
@@ -216,11 +229,18 @@ function updateUI(user) {
   // ==========================================
   // 📍 MISE À JOUR DU FOOTER (Adresse & Tél avec Accent Color)
   // ==========================================
+
+  const findUs = document.getElementById("find-us");
+  const oClock = document.getElementById("o-clock");
+
+  findUs.classList.add(accentText);
+  oClock.classList.add(accentText);
+
   const footerPhone = document.getElementById("footer-phone");
   if (footerPhone && cfg.contact.phone) {
     const phoneClean = cfg.contact.phone.replace(/\s/g, "");
     footerPhone.innerHTML = `
-        <a href="tel:${phoneClean}" aria-label="Appeler le restaurant" class="flex items-center gap-2 hover:opacity-80 transition group">
+        <a href="tel:${phoneClean}" aria-label="Appeler le restaurant" class="flex items-center gap-2">
             <i class="fas fa-phone ${accentText}"></i>
             <span>${cfg.contact.phone}</span>
         </a>`;
@@ -245,7 +265,7 @@ function updateUI(user) {
       const iconClass = isApple ? "fa-map" : "fa-location-dot";
 
       footerAddr.innerHTML = `
-          <a href="${mapLink}" target="_blank" class="flex items-start gap-2 hover:opacity-80 transition group">
+          <a href="${mapLink}" target="_blank" class="flex items-start gap-2">
               <i class="fas ${iconClass} mt-1 ${accentText}"></i>
               <span>${a.street}<br>${a.zip || ""} ${a.city || ""}</span>
           </a>`;
@@ -254,22 +274,40 @@ function updateUI(user) {
     }
   }
 
-  // ==========================================
-  // 3. Réseaux Sociaux & Horaires
+// ==========================================
+  // 3. Réseaux Sociaux & Horaires (Couleurs Officielles)
   // ==========================================
   const socialsContainer = document.getElementById("socials-container");
   const s = cfg.contact.socials;
+  
   if (socialsContainer && cfg.contact.socials) {
     socialsContainer.innerHTML = "";
+    
+    // On s'assure que le conteneur a de l'espace et que les icônes sont grandes
+    socialsContainer.className = "flex gap-5 text-3xl mt-4 pt-4 border-t border-gray-700/50";
 
     if (s.instagram) {
-      socialsContainer.innerHTML += `<a href="https://instagram.com/${s.instagram.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:${accentText} transition"><i class="fab fa-instagram"></i></a>`;
+      // 📸 INSTAGRAM : Le fameux dégradé Jaune -> Rouge -> Violet
+      socialsContainer.innerHTML += `
+        <a href="https://instagram.com/${s.instagram.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
+            <i class="fab fa-instagram bg-linear-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-transparent bg-clip-text"></i>
+        </a>`;
     }
+    
     if (s.facebook) {
-      socialsContainer.innerHTML += `<a href="https://facebook.com/${s.facebook}" target="_blank" rel="noopener noreferrer" class="hover:${accentText} transition"><i class="fab fa-facebook"></i></a>`;
+      // 📘 FACEBOOK : Le bleu officiel (#1877F2)
+      socialsContainer.innerHTML += `
+        <a href="https://facebook.com/${s.facebook}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
+            <i class="fab fa-facebook text-[#1877F2]"></i>
+        </a>`;
     }
+    
     if (s.tiktok) {
-      socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:${accentText} transition"><i class="fab fa-tiktok"></i></a>`;
+      // 🎵 TIKTOK : Blanc par défaut (car le footer est sombre), mais avec une ombre portée "Glitch" rose fluo au survol !
+      socialsContainer.innerHTML += `
+        <a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300 group">
+            <i class="fab fa-tiktok text-white group-hover:drop-shadow-[2px_2px_0_#ff0050] transition-all"></i>
+        </a>`;
     }
   }
 
@@ -285,7 +323,7 @@ function updateUI(user) {
       const isToday = index === todayMap;
       const li = document.createElement("li");
 
-      const textColor = isToday ? "text-green-500 font-bold" : "text-gray-200";
+      const textColor = isToday ? `${accentText} font-bold hover:-translate-y-1 transition-transform duration-300` : "text-gray-200";
       li.className = textColor;
       li.innerHTML = `<span class="inline-block w-24">${h.day}</span> ${h.closed ? "Fermé" : h.open + " - " + h.close}`;
       hoursList.appendChild(li);

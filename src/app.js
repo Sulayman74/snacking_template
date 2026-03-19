@@ -45,11 +45,14 @@ window.initAppVisuals = async () => {
 
   // 1. Appliquer le thème global
   const body = document.body;
-  if (cfg.theme.templateId === "neon-vibes") {
+  if (cfg.theme.templateId === "classic") {
     body.classList.add("bg-gray-900", "text-white");
   } else {
     body.classList.add("bg-gray-50", "text-gray-900");
   }
+
+  const fontClass = cfg.theme.fontFamily || "font-sans";
+  body.classList.add(fontClass);
 
   // 2. Menu Burger, Étoiles & Formulaire
   if (typeof setupMobileMenu === "function") setupMobileMenu();
@@ -211,16 +214,17 @@ window.chargerMenuComplet = async () => {
 // ============================================================================
 function createProductCard(item, cfg) {
   const cardBg =
-    cfg.theme.templateId === "neon-vibes"
+    cfg.theme.templateId === "classic"
       ? "bg-gray-800"
       : "bg-white shadow-lg border text-black border-gray-100";
   const textColor =
-    cfg.theme.templateId === "neon-vibes" ? "text-white" : "text-gray-900";
+    cfg.theme.templateId === "classic" ? "text-white" : "text-gray-900";
   const secondaryBg =
-    cfg.theme.colors && cfg.theme.colors.secondary
-      ? cfg.theme.colors.secondary
+    cfg.theme.colors && cfg.theme.colors.lightBg
+      ? cfg.theme.colors.lightBg
       : "bg-yellow-400";
-  const priceColor = secondaryBg.replace("bg-", "text-");
+  const priceColor = cfg.theme.colors.accent
+  const textOnPrimary = cfg.theme.colors.textOnPrimary || "bg-gray-500";
 
   const isAvailable = item.isAvailable !== false;
   const imageOpacity = isAvailable
@@ -244,7 +248,7 @@ function createProductCard(item, cfg) {
       tagText = item.tags;
     }
     if (tagText) {
-      tagHtml = `<span class="absolute top-3 right-3 z-10 ${secondaryBg} text-black text-xs font-bold px-3 py-1.5 rounded-full uppercase shadow-lg tracking-wider">${tagText}</span>`;
+      tagHtml = `<span class="absolute top-3 right-3 z-10 ${cardBg} ${textColor} text-xs font-bold px-3 py-1.5 rounded-full uppercase shadow-lg tracking-wider">${tagText}</span>`;
     }
   }
 
@@ -257,21 +261,21 @@ function createProductCard(item, cfg) {
   
   // Le bloc HTML de remplacement (juste une icône centrée, pas de texte lourd)
   const fallbackHtml = `
-      <div class="absolute inset-0 flex items-center justify-center bg-gray-50 z-0 transition duration-700 ${imageOpacity}">
-          <i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i>
+      <div class="absolute inset-0 flex items-center justify-center ${secondaryBg} z-0 transition duration-700 ${imageOpacity}">
+          <i class="fas fa-hamburger text-6xl ${textOnPrimary} opacity-50"></i>
       </div>`;
 
   // Astuce : onerror affiche le div fallback caché juste en dessous si l'image est cassée en BDD
   const imageHtml = imageUrl 
     ? `<img src="${imageUrl}" alt="${nomAffiche}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full object-cover transition duration-700 ${imageOpacity} z-0">
-       <div style="display: none;" class="absolute inset-0 items-center justify-center bg-gray-50 z-0 transition duration-700 ${imageOpacity}">
-           <i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i>
+       <div style="display: none;" class="absolute inset-0 items-center justify-center ${secondaryBg} z-0 transition duration-700 ${imageOpacity}">
+           <i class="fas fa-hamburger text-6xl ${textOnPrimary} opacity-50"></i>
        </div>`
     : fallbackHtml;
 
   return `
     <div class="${cardBg} rounded-2xl overflow-hidden group ${cardOpacity} transition-all duration-300 hover:shadow-2xl" ${clickAction}>
-        <div class="h-48 relative overflow-hidden bg-gray-50">
+        <div class="h-48 relative overflow-hidden ${secondaryBg}">
             ${imageHtml}
             ${tagHtml}
         </div>
@@ -1146,15 +1150,15 @@ window.openProductModal = function (itemId) {
                   <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
                       <div class="flex items-center gap-3">
                           <input type="radio" name="formule" value="seul" checked onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
-                          <span class="font-medium text-gray-900 text-sm">Seul</span>
+                          <span class="font-medium text-black text-sm">Seul</span>
                       </div>
-                      <span id="modal-price-seul" class="text-gray-500 font-bold text-sm">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
+                      <span id="modal-price-seul" class="text-black font-bold text-sm">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
                   </label>
                   <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:${lightBgColor} transition">
                       <div class="flex items-center gap-3">
                           <input type="radio" name="formule" value="menu" onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
                           <div>
-                              <span class="font-medium text-gray-900 text-sm block">En Menu</span>
+                              <span class="font-medium text-black text-sm block">En Menu</span>
                               <span class="text-[10px] ${accentColor} uppercase font-bold">Frites + Boisson</span>
                           </div>
                       </div>
