@@ -1,6 +1,9 @@
 // ============================================================================
 // 🚀 SUPERADMIN DASHBOARD - MYSAAS HQ
 // ============================================================================
+import './bridge.js';
+import './snack-config.js';
+import './firebase-init.js';
 
 const { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, serverTimestamp } = window.fs;
 const { onAuthStateChanged, signOut } = window.authTools;
