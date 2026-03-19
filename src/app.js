@@ -43,6 +43,25 @@ window.initAppVisuals = async () => {
 
   console.log("🚀 Initialisation du Dashboard SaaS...");
 
+  // =======================================================================
+  // 🛑 LE COUPE-CIRCUIT (MODE MAINTENANCE)
+  // =======================================================================
+  if (cfg.features && cfg.features.maintenanceMode === true) {
+      console.log("🛑 Site en maintenance ! Arrêt du chargement visuel.");
+      
+      // On efface littéralement tout le contenu de la page et on met un écran de blocage
+      document.body.innerHTML = `
+          <div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white px-4 text-center">
+              <i class="fas fa-tools text-6xl text-red-500 mb-6 animate-pulse"></i>
+              <h1 class="text-4xl font-black tracking-widest uppercase mb-4">${cfg.identity.name}</h1>
+              <p class="text-gray-400 text-lg max-w-md">Notre site est actuellement en cours de mise à jour. Nous revenons très vite pour prendre vos commandes !</p>
+          </div>
+      `;
+      // On stoppe l'exécution de TOUT le reste de la fonction (Pas de chargement de menu, etc.)
+      return; 
+  }
+  // =======================================================================
+
   // 1. Appliquer le thème global
   const body = document.body;
   if (cfg.theme.templateId === "classic") {

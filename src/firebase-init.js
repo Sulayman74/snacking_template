@@ -170,10 +170,104 @@ function updateUI(user) {
   const accentText = cfg.theme.colors.accent;
 
   // ==========================================
+  // 0. SPLASH SCREEN (Logo et Ombre Dynamique)
+  // ==========================================
+  const splashLogo = document.getElementById("splash-logo");
+  if (splashLogo && cfg.identity) {
+      // 1. On remplace l'image et le texte alternatif
+      if (cfg.identity.logoUrl){
+        splashLogo.src = cfg.identity.logoUrl;
+        splashLogo.classList.remove("hidden");
+      } 
+      if (cfg.identity.name) splashLogo.alt = cfg.identity.name;
+
+      // 🎨 BONUS SÉNIOR : On adapte l'ombre colorée au thème du client !
+      // Ton ombre rouge codée en dur n'ira pas du tout si le thème du client est Bleu Océan...
+      if (cfg.theme && cfg.theme.colors && cfg.theme.colors.primary) {
+          // On retire ton ombre rouge par défaut
+          splashLogo.className = splashLogo.className.replace(/shadow-\[0_0_40px_rgba\(\d+,\d+,\d+,[\d.]+\)\]/g, '');
+          
+          // On crée une ombre dynamique basée sur la couleur primaire (ex: transforme "bg-blue-600" en "shadow-blue-600")
+          const shadowColor = cfg.theme.colors.primary.replace('bg-', 'shadow-'); 
+          splashLogo.classList.add('shadow-2xl', shadowColor);
+      }
+  }
+  // ==========================================
+  // 🎭 MODALES : Remplacement des logos génériques
+  // ==========================================
+  const pwaIcon = document.getElementById("pwa-banner-icon");
+  const reviewIcon = document.getElementById("review-modal-icon");
+
+  if (cfg.identity && cfg.identity.logoUrl) {
+      // On remplace le logo dans la bannière d'installation
+      if (pwaIcon) pwaIcon.src = cfg.identity.logoUrl;
+      
+      // On remplace le logo dans la modale d'avis
+      if (reviewIcon) reviewIcon.src = cfg.identity.logoUrl;
+  }
+
+  // ==========================================
   // 1. Navbar et Hero (Identité & Logo)
   // ==========================================
   const navName = document.getElementById("nav-name");
   if (navName) navName.innerText = cfg.identity.name;
+
+  if (cfg.identity.logoUrl) {
+      // Change l'icône de l'onglet du navigateur
+      let favicon = document.querySelector('link[rel="icon"]');
+      if (favicon) favicon.href = cfg.identity.logoUrl;
+
+      // Change l'icône pour les iPhone/iPad
+      let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+      if (appleIcon) appleIcon.href = cfg.identity.logoUrl;
+  }
+
+// ==========================================
+  // 📱 GÉNÉRATEUR DE PWA DYNAMIQUE (MARQUE BLANCHE)
+  // ==========================================
+  if (cfg.identity.logoUrl) {
+      
+      // 🛠️ 1. Traducteur Tailwind -> Hexadécimal (Pour que le téléphone comprenne les couleurs)
+      const twToHex = {
+          "bg-red-600": "#dc2626", "bg-red-100": "#fee2e2",
+          "bg-blue-600": "#2563eb", "bg-blue-100": "#dbeafe",
+          "bg-green-600": "#16a34a", "bg-green-100": "#dcfce7",
+          "bg-purple-500": "#a855f7", "bg-purple-100": "#f3e8ff",
+          "bg-yellow-400": "#facc15", "bg-yellow-100": "#fef9c3"
+      };
+
+      // On trouve la vraie couleur, ou on met noir/blanc par défaut
+      const themeHex = twToHex[cfg.theme?.colors?.primary] || "#000000";
+      const bgHex = twToHex[cfg.theme?.colors?.lightBg] || "#ffffff";
+
+      // 2. On fabrique le manifeste sur mesure
+      const dynamicManifest = {
+          "name": cfg.identity.name,
+          "short_name": cfg.identity.name,
+          "start_url": window.location.origin + "/", // ✅ URL Absolue pour éviter le bug du Blob !
+          "display": "standalone",
+          "background_color": bgHex, // ✅ Vrai code Hexadécimal
+          "theme_color": themeHex,   // ✅ Vrai code Hexadécimal
+          "icons": [
+              {
+                  "src": cfg.identity.logoUrl, 
+                  "sizes": "512x512",
+                  "type": "image/webp",
+                  "purpose": "any maskable"
+              }
+          ]
+      };
+
+      // 3. On transforme ce texte en un "faux" fichier virtuel
+      const blob = new Blob([JSON.stringify(dynamicManifest)], { type: 'application/json' });
+      const manifestURL = URL.createObjectURL(blob);
+
+      // 4. On remplace le lien du manifest dans le HTML par notre fichier virtuel
+      let manifestLink = document.querySelector('link[rel="manifest"]');
+      if (manifestLink) {
+          manifestLink.setAttribute('href', manifestURL);
+      }
+  }
 
   const navLogo = document.getElementById("nav-logo");
   if (navLogo && cfg.identity.logoUrl) {
@@ -475,7 +569,35 @@ onAuthStateChanged(auth, async (user) => {
   const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
 
 // On peut le récupérer depuis l'URL (ex: ?s=ID) ou depuis la config chargée
-  const currentAppSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
+// ====================================================================
+  // 🧭 LE ROUTEUR MAGIQUE SAAS (HYBRIDE : PREVIEW + PRODUCTION)
+  // ====================================================================
+  const urlParams = new URLSearchParams(window.location.search);
+  const forcedSnackId = urlParams.get('s'); // Cherche ?s=... dans l'URL
+  const hostname = window.location.hostname;
+
+  let snackIdToLoad = "Ym1YiO4Ue5Fb5UXlxr06";
+
+  try {
+      if (forcedSnackId) {
+          console.log("🔍 Mode Aperçu activé pour le Snack :", forcedSnackId);
+          snackIdToLoad = forcedSnackId; // ✅ On utilise l'ID de l'URL !
+      } else if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.includes("snacking-template.web.app")) {
+          console.log("🌍 Mode Domaine activé : Recherche de", hostname);
+          const { collection, query, where, getDocs } = window.fs;
+          const q = query(collection(window.db, "snacks"), where("domain", "==", hostname));
+          const snapshot = await getDocs(q);
+          
+          if (!snapshot.empty) {
+              snackIdToLoad = snapshot.docs[0].id;
+          } else {
+              console.error("❌ Domaine inconnu ! Chargement de la démo par défaut.");
+          }
+      }
+  } catch (e) {
+      console.error("Erreur du Routeur SaaS :", e);
+  }
+  // ====================================================================
 
   try {
     if (user) {
@@ -486,21 +608,25 @@ onAuthStateChanged(auth, async (user) => {
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      let snackToLoad = currentAppSnackId;
       let role = "client";
       let points = 0;
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        if (userData.snackId) snackToLoad = userData.snackId;
+        
+        // Sécurité : Si c'est un Admin de resto, on le force sur SON resto
+        if (userData.snackId && userData.role === 'admin') {
+            snackIdToLoad = userData.snackId;
+        }
+        
         role = userData.role || "client";
         points = userData.points || 0;
       }
 
-      await window.loadSnackConfig(db, snackToLoad);
+      // 🎯 ON INJECTE LE BON ID ICI !
+      await window.loadSnackConfig(db, snackIdToLoad);
       updateUI(user);
       if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
-
 
       if (role === "admin" || role ==="superadmin") {
         if (loyaltyDesc) loyaltyDesc.innerHTML = `<span class="text-red-400 font-bold"><i class="fas fa-crown"></i> Mode Admin</span>`;
@@ -522,7 +648,6 @@ onAuthStateChanged(auth, async (user) => {
       if (navLogoutBtn) navLogoutBtn.classList.add("hidden");
       if (mobileLogoutBtn) mobileLogoutBtn.classList.add("hidden");
 
-      // 🚨 FIX : Les bordures vertes sont bien présentes ici aussi !
       if (loyaltyDesc) loyaltyDesc.innerText = "Gagnez des points à chaque commande !";
       if (loyaltyBtn) {
         loyaltyBtn.innerHTML = "Connexion";
@@ -530,7 +655,8 @@ onAuthStateChanged(auth, async (user) => {
         loyaltyBtn.className = "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
       }
 
-      await window.loadSnackConfig(db, currentAppSnackId);
+      // 🎯 ET ON INJECTE LE BON ID ICI AUSSI !
+      await window.loadSnackConfig(db, snackIdToLoad);
       updateUI(null);
       if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
     }

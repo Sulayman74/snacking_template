@@ -90,9 +90,171 @@ async function loadDashboardData() {
 
         console.log(`✅ ${allSnacks.length} locataires chargés.`);
         
-        // renderSnacksTable(); // <- On créera cette fonction juste après !
+        renderSnacksTable(); // <- On créera cette fonction juste après !
 
     } catch (error) {
         console.error("Erreur lors du chargement des locataires :", error);
     }
+}
+
+// ============================================================================
+// 🏢 3. AFFICHAGE DES RESTAURANTS (TABLEAU)
+// ============================================================================
+function renderSnacksTable() {
+    const tbody = document.getElementById("snacks-table-body");
+    tbody.innerHTML = "";
+
+    if (allSnacks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">Aucun client pour le moment.</td></tr>`;
+        return;
+    }
+
+    allSnacks.forEach(snack => {
+        // Le badge de statut
+        const statusBadge = snack.maintenanceMode 
+            ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i class="fas fa-tools mr-1"></i> Maintenance</span>`
+            : `<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i class="fas fa-globe mr-1"></i> En Ligne</span>`;
+
+        // Petits badges visuels pour les modules activés
+        let featuresHtml = '';
+        if(snack.enableClickAndCollect) featuresHtml += `<i class="fas fa-shopping-bag text-indigo-500 mx-1" title="Click & Collect"></i>`;
+        if(snack.enableLoyaltyCard) featuresHtml += `<i class="fas fa-gift text-pink-500 mx-1" title="Fidélité"></i>`;
+        if(snack.enableViralShare) featuresHtml += `<i class="fas fa-share-nodes text-blue-500 mx-1" title="Partage Viral"></i>`;
+
+        tbody.innerHTML += `
+            <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
+                <td class="p-4">
+                    <div class="font-bold text-gray-900 text-lg">${snack.nom || "Sans Nom"}</div>
+                    <div class="text-xs text-gray-500 uppercase tracking-widest mt-1">
+                        Palette : <span class="font-bold text-gray-700">${snack.colorPalette || "Par défaut"}</span>
+                    </div>
+                </td>
+                <td class="p-4 text-center">${statusBadge}</td>
+                <td class="p-4 text-center text-lg">${featuresHtml || '<span class="text-gray-400 text-xs uppercase tracking-widest">Aucun module</span>'}</td>
+                <td class="p-4 text-right">
+                    <a href="index.html?s=${snack.id}" target="_blank" class="text-indigo-600 hover:text-indigo-900 font-bold text-sm bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition mr-2">
+                        <i class="fas fa-external-link-alt"></i> Voir
+                    </a>
+                    <button onclick="toggleMaintenance('${snack.id}', ${snack.maintenanceMode})" class="text-gray-500 hover:text-gray-900 font-bold text-sm bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg transition" title="Gérer le statut">
+                        <i class="fas fa-power-off"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+
+// Fonction globale pour le bouton ON/OFF
+window.toggleMaintenance = async (snackId, currentStatus) => {
+    const action = currentStatus ? "mettre EN LIGNE" : "mettre EN MAINTENANCE";
+    if(confirm(`Voulez-vous ${action} ce restaurant ?`)) {
+        await updateDoc(doc(db, "snacks", snackId), { maintenanceMode: !currentStatus });
+        loadDashboardData(); // Recharge le tableau avec les nouvelles données
+    }
+};
+
+// ============================================================================
+// 🪄 4. CRÉATION D'UN NOUVEAU CLIENT (MODALE)
+// ============================================================================
+const modalNewSnack = document.getElementById("modal-new-snack");
+const btnOpenModal = document.getElementById("btn-open-new-snack");
+const btnCloseModal = document.getElementById("btn-close-modal");
+const formNewSnack = document.getElementById("form-new-snack");
+
+if (btnOpenModal && modalNewSnack) {
+    btnOpenModal.addEventListener("click", () => {
+        modalNewSnack.classList.remove("hidden");
+        modalNewSnack.classList.add("flex");
+    });
+
+    btnCloseModal.addEventListener("click", () => {
+        modalNewSnack.classList.add("hidden");
+        modalNewSnack.classList.remove("flex");
+    });
+
+    formNewSnack.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const btnSubmit = document.getElementById("btn-submit-snack");
+        const originalText = btnSubmit.innerHTML;
+        btnSubmit.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Création du locataire...`;
+        btnSubmit.disabled = true;
+
+        const nom = document.getElementById("input-snack-name").value;
+        const type = document.getElementById("input-snack-type").value;
+        const theme = document.getElementById("input-snack-theme").value;
+        const domaine = document.getElementById("input-snack-domain").value.toLowerCase().trim();
+
+        try {
+// 🏭 L'USINE À RESTAURANTS : Clonage complet du modèle de base
+            const newSnackRef = await addDoc(collection(db, "snacks"), {
+                nom: nom,
+                domaine:domaine,
+                typeCuisine: type,
+                colorPalette: theme, // Le moteur de thème !
+                description: `Découvrez le menu digital de ${nom}. Commandez en ligne vos spécialités en Click & Collect ou Livraison. Gagnez des récompenses !`,
+                currency: "€",
+                
+                // Coordonnées (Vides par défaut, le client les remplira plus tard)
+                city: "",
+                street: "",
+                zipcode: "",
+                lat: 0,
+                long: 0,
+                phoneNumber: "",
+                
+                // Réseaux Sociaux
+                facebook: "",
+                instagram: "",
+                tiktok: "",
+                
+                // Images par défaut (On évite de mettre les URL du O'Tacos pour les autres clients !)
+                logoUrl: "./assets/logo.webp", 
+                heroImg: "./assets/heroImg.webp", 
+                
+                // Paramètres du SaaS (Feature Flags)
+                maintenanceMode: true, // 🛑 TOUJOURS en maintenance à la création !
+                enableClickAndCollect: false,
+                enableDelivery: false,
+                enableOnlineOrder: false,
+                enableLoyaltyCard: true, 
+                enablePushNotifs: false,
+                enableSmartReview: false,
+                enableViralShare: false,
+                maxPoints: 10,
+                
+                // 🕒 HORAIRES PAR DÉFAUT (Le gros morceau !)
+                hours: [
+                    { day: "lundi", open: "11:00", close: "22:00", closed: false },
+                    { day: "mardi", open: "11:00", close: "22:00", closed: false },
+                    { day: "mercredi", open: "11:00", close: "22:00", closed: false },
+                    { day: "jeudi", open: "11:00", close: "22:00", closed: false },
+                    { day: "vendredi", open: "11:00", close: "23:00", closed: false },
+                    { day: "samedi", open: "11:00", close: "23:00", closed: false },
+                    { day: "dimanche", open: "14:00", close: "22:00", closed: false }
+                ],
+                
+                // Date de création pour ta compta
+                createdAt: serverTimestamp()
+            });
+
+            // Succès
+            formNewSnack.reset();
+            modalNewSnack.classList.add("hidden");
+            modalNewSnack.classList.remove("flex");
+            
+            alert(`🎉 Le restaurant "${nom}" a été généré avec succès !\nSon identifiant unique est : ${newSnackRef.id}`);
+            
+            // On met à jour le tableau des KPIs et la liste
+            loadDashboardData();
+
+        } catch (error) {
+            console.error("Erreur lors de la création :", error);
+            alert("Erreur lors de la création du client. Vérifiez la console.");
+        } finally {
+            btnSubmit.innerHTML = originalText;
+            btnSubmit.disabled = false;
+        }
+    });
 }

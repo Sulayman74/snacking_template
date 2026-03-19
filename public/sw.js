@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snack-app-v21'; 
+const CACHE_NAME = 'snack-app-v22'; 
 
 // 🚨 ATTENTION : Ne laisse ici QUE les fichiers qui existent encore vraiment dans ton dossier !
 const ASSETS_TO_CACHE = [
@@ -11,7 +11,8 @@ const ASSETS_TO_CACHE = [
   './firebase-init.js',
   './assets/icon-192.webp',
   './assets/icon-512.webp',
-  './assets/logo.webp'
+  './assets/logo.webp',
+  './assets/burgers.webp'
 ];
 
 // Installation
