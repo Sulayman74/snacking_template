@@ -2,25 +2,10 @@
 // 🚀 SUPERADMIN DASHBOARD - MYSAAS HQ
 // ============================================================================
 
-import { collection, doc, getDoc, getDocs, getFirestore, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-
-// 1. CONFIGURATION FIREBASE (La même que ton app)
-const firebaseConfig = {
-    apiKey: "AIzaSyBIgi4AKo5nzRTO27KuvX0D6nHKsJIDkW8",
-    authDomain: "snacking-template.firebaseapp.com",
-    projectId: "snacking-template",
-    storageBucket: "snacking-template.firebasestorage.app",
-    messagingSenderId: "472027657186",
-    appId: "1:472027657186:web:7c1621680d9863aa8dffbb",
-    measurementId: "G-XT2YH4NE9Q",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, serverTimestamp } = window.fs;
+const { onAuthStateChanged, signOut } = window.authTools;
+const auth = window.auth;
+const db = window.db;
 
 // Variables Globales
 let allSnacks = [];

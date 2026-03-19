@@ -1,8 +1,10 @@
 // ============================================================================
-// FIREBASE INITIALIZATION & AUTHENTICATION
+// FIREBASE INITIALIZATION & AUTHENTICATION (LE HUB CENTRAL)
 // ============================================================================
 
+// 1. LES IMPORTS (TOUJOURS TOUT EN HAUT !)
 import {
+  addDoc,
   collection,
   doc,
   getDoc,
@@ -13,26 +15,32 @@ import {
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   setDoc,
   startAfter,
   updateDoc,
-  where,
+  where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import {
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  signOut,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytes
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 import {
   getMessaging,
   getToken,
-  onMessage,
+  onMessage
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 
 // 2. CONFIGURATION
@@ -54,11 +62,15 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// 4. EXPORTATION SÉCURISÉE (LE HUB POUR VITE)
 window.storage = storage;
 window.auth = auth;
 window.db = db;
 window.messaging = messaging;
-window.fs = { doc, getDoc, setDoc, updateDoc, increment, onSnapshot, query, collection, where, orderBy, limit, startAfter, getDocs,getStorage };
+
+window.fs = { doc, getDoc, setDoc, updateDoc, increment, onSnapshot, query, collection, where, orderBy, limit, startAfter, getDocs, getStorage, addDoc, serverTimestamp };
+window.storageTools = { getDownloadURL, ref, uploadBytes };
+window.authTools = { onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword };
 
 // ============================================================================
 // 🎨 LE PEINTRE GLOBAL (Application dynamique du Thème SaaS)
@@ -233,8 +245,8 @@ function updateUI(user) {
   const findUs = document.getElementById("find-us");
   const oClock = document.getElementById("o-clock");
 
-  findUs.classList.add(accentText);
-  oClock.classList.add(accentText);
+  if (findUs) findUs.classList.add(accentText);
+  if (oClock) oClock.classList.add(accentText);
 
   const footerPhone = document.getElementById("footer-phone");
   if (footerPhone && cfg.contact.phone) {
