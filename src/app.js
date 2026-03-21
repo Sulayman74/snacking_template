@@ -1,6 +1,6 @@
-import './bridge.js';
-import './snack-config.js';
-import './firebase-init.js';
+import "./bridge.js";
+import "./snack-config.js";
+import "./firebase-init.js";
 // ============================================================================
 // GESTION DU SERVICE WORKER (PWA) & MODE DEV
 // ============================================================================
@@ -47,18 +47,18 @@ window.initAppVisuals = async () => {
   // 🛑 LE COUPE-CIRCUIT (MODE MAINTENANCE)
   // =======================================================================
   if (cfg.features && cfg.features.maintenanceMode === true) {
-      console.log("🛑 Site en maintenance ! Arrêt du chargement visuel.");
-      
-      // On efface littéralement tout le contenu de la page et on met un écran de blocage
-      document.body.innerHTML = `
+    console.log("🛑 Site en maintenance ! Arrêt du chargement visuel.");
+
+    // On efface littéralement tout le contenu de la page et on met un écran de blocage
+    document.body.innerHTML = `
           <div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white px-4 text-center">
               <i class="fas fa-tools text-6xl text-red-500 mb-6 animate-pulse"></i>
               <h1 class="text-4xl font-black tracking-widest uppercase mb-4">${cfg.identity.name}</h1>
               <p class="text-gray-400 text-lg max-w-md">Notre site est actuellement en cours de mise à jour. Nous revenons très vite pour prendre vos commandes !</p>
           </div>
       `;
-      // On stoppe l'exécution de TOUT le reste de la fonction (Pas de chargement de menu, etc.)
-      return; 
+    // On stoppe l'exécution de TOUT le reste de la fonction (Pas de chargement de menu, etc.)
+    return;
   }
   // =======================================================================
 
@@ -110,8 +110,10 @@ window.initAppVisuals = async () => {
   if (mobileOrderBtn)
     mobileOrderBtn.style.display = showOrder ? "flex" : "none";
 
-  const floatingCartContainer = document.getElementById("floating-cart-container");
-const isCartActive = features && features.enableClickAndCollect === true;
+  const floatingCartContainer = document.getElementById(
+    "floating-cart-container",
+  );
+  const isCartActive = features && features.enableClickAndCollect === true;
 
   if (floatingCartContainer) {
     if (isCartActive) {
@@ -163,26 +165,38 @@ window.chargerMenuComplet = async () => {
 
     const cfg = window.snackConfig;
 
-    // 🏆 AFFICHER LES BEST SELLERS
-    if (bestSellersContainer) {
-      // Efface les Skeletons gris et prépare l'injection des vraies données
-      bestSellersContainer.innerHTML = "";
-      const top3 = [...tousLesProduits]
-        .sort((a, b) => (b.ventes || 0) - (a.ventes || 0))
-        .slice(0, 3);
+// 🏆 AFFICHER LES BEST SELLERS (Méthode Hybride)
+        if (bestSellersContainer) {
+            bestSellersContainer.innerHTML = "";
+            
+            const top3 = [...tousLesProduits].sort((a, b) => {
+                // 1. On vérifie si les produits ont un tag "Star", "Populaire" ou "Best"
+                const aTags = Array.isArray(a.tags) ? a.tags.join(" ").toLowerCase() : (a.tags || "").toLowerCase();
+                const bTags = Array.isArray(b.tags) ? b.tags.join(" ").toLowerCase() : (b.tags || "").toLowerCase();
+                
+                const isAStar = aTags.includes("star") || aTags.includes("populaire") || aTags.includes("nouveau");
+                const isBStar = bTags.includes("star") || bTags.includes("populaire") || bTags.includes("nouveau");
 
-      if (top3.length > 0) {
-        top3.forEach((item, index) => {
-          bestSellersContainer.innerHTML += `
+                // 2. Priorité absolue au tag manuel !
+                if (isAStar && !isBStar) return -1; // A passe devant
+                if (!isAStar && isBStar) return 1;  // B passe devant
+
+                // 3. S'ils sont à égalité (tous les 2 tagués, ou aucun tagué), 
+                // l'algorithme tranche avec le nombre de ventes sur l'app.
+                return (b.ventes || 0) - (a.ventes || 0);
+            }).slice(0, 3);
+
+            if (top3.length > 0) {
+                top3.forEach((item, index) => {
+                    bestSellersContainer.innerHTML += `
                         <div class="animate-fade-in-up" style="animation-fill-mode: both; animation-delay: ${index * 150}ms;">
                             ${createProductCard(item, cfg)}
                         </div>`;
-        });
-      } else {
-        bestSellersContainer.innerHTML =
-          "<p class='text-gray-500'>Aucun best-seller.</p>";
-      }
-    }
+                });
+            } else {
+                bestSellersContainer.innerHTML = "<p class='text-gray-500'>Aucun best-seller.</p>";
+            }
+        }
 
     // 🌮 AFFICHER LE MENU PAR CATÉGORIES
     if (fullMenuContainer) {
@@ -192,7 +206,8 @@ window.chargerMenuComplet = async () => {
         { id: "burgers", title: "Burgers", icon: "🍔", items: [] },
         { id: "wraps", title: "Wraps & Sandwichs", icon: "🌯", items: [] },
         { id: "sides", title: "Sides", icon: "🍟", items: [] },
-        { id: "drinks", title: "Boissons & Douceurs", icon: "🥤", items: [] },
+        { id: "drinks", title: "Boissons", icon: "🥤", items: [] },
+        { id: "deserts", title: "Desserts", icon: "🍰", items: [] },
       ];
 
       tousLesProduits.forEach((produit) => {
@@ -242,7 +257,7 @@ function createProductCard(item, cfg) {
     cfg.theme.colors && cfg.theme.colors.lightBg
       ? cfg.theme.colors.lightBg
       : "bg-yellow-400";
-  const priceColor = cfg.theme.colors.accent
+  const priceColor = cfg.theme.colors.accent;
   const textOnPrimary = cfg.theme.colors.textOnPrimary || "bg-gray-500";
 
   const isAvailable = item.isAvailable !== false;
@@ -277,7 +292,7 @@ function createProductCard(item, cfg) {
 
   // Création du Fallback minimaliste avec icône + gestion des images cassées (onerror)
   const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
-  
+
   // Le bloc HTML de remplacement (juste une icône centrée, pas de texte lourd)
   const fallbackHtml = `
       <div class="absolute inset-0 flex items-center justify-center ${secondaryBg} z-0 transition duration-700 ${imageOpacity}">
@@ -285,7 +300,7 @@ function createProductCard(item, cfg) {
       </div>`;
 
   // Astuce : onerror affiche le div fallback caché juste en dessous si l'image est cassée en BDD
-  const imageHtml = imageUrl 
+  const imageHtml = imageUrl
     ? `<img src="${imageUrl}" alt="${nomAffiche}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full object-cover transition duration-700 ${imageOpacity} z-0">
        <div style="display: none;" class="absolute inset-0 items-center justify-center ${secondaryBg} z-0 transition duration-700 ${imageOpacity}">
            <i class="fas fa-hamburger text-6xl ${textOnPrimary} opacity-50"></i>
@@ -317,89 +332,107 @@ function createProductCard(item, cfg) {
 // ============================================================================
 // 🔍 4.5 MOTEUR DE RECHERCHE EN MÉMOIRE (0 FIRESTORE)
 // ============================================================================
-document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('menu-search-input');
-    const clearSearchBtn = document.getElementById('clear-search-btn');
-    const fullMenuContainer = document.getElementById("full-menu-container");
-    const bestSellersContainer = document.getElementById("bestsellers-container");
-    
-    // On crée dynamiquement le conteneur des résultats juste avant le menu complet
-    let searchResultsContainer = document.getElementById("search-results-container");
-    if (!searchResultsContainer && fullMenuContainer) {
-        searchResultsContainer = document.createElement('div');
-        searchResultsContainer.id = "search-results-container";
-        searchResultsContainer.className = "hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12";
-        fullMenuContainer.parentNode.insertBefore(searchResultsContainer, fullMenuContainer);
-    }
+document.addEventListener("DOMContentLoaded", () => {
+  const searchInput = document.getElementById("menu-search-input");
+  const clearSearchBtn = document.getElementById("clear-search-btn");
+  const fullMenuContainer = document.getElementById("full-menu-container");
+  const bestSellersContainer = document.getElementById("bestsellers-container");
 
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase().trim();
-            const cfg = window.snackConfig;
-            
-            // Si on tape quelque chose
-            if (searchTerm.length > 0) {
-                clearSearchBtn.classList.remove('hidden');
-                
-                // 1. On cache les best-sellers et le menu normal
-                if(fullMenuContainer) fullMenuContainer.classList.add('hidden');
-                if(bestSellersContainer && bestSellersContainer.parentElement) {
-                    bestSellersContainer.parentElement.classList.add('hidden');
-                }
-                
-                // 2. On affiche le conteneur de résultats
-                searchResultsContainer.classList.remove('hidden');
+  // On crée dynamiquement le conteneur des résultats juste avant le menu complet
+  let searchResultsContainer = document.getElementById(
+    "search-results-container",
+  );
+  if (!searchResultsContainer && fullMenuContainer) {
+    searchResultsContainer = document.createElement("div");
+    searchResultsContainer.id = "search-results-container";
+    searchResultsContainer.className =
+      "hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12";
+    fullMenuContainer.parentNode.insertBefore(
+      searchResultsContainer,
+      fullMenuContainer,
+    );
+  }
 
-                // 3. Le Filtre Magique (On cherche dans le tableau menuGlobal)
-                const resultats = menuGlobal.filter(produit => {
-                    const nom = produit.nom ? produit.nom.toLowerCase() : "";
-                    const desc = produit.description ? produit.description.toLowerCase() : "";
-                    const tags = produit.tags ? (Array.isArray(produit.tags) ? produit.tags.join(" ") : produit.tags).toLowerCase() : "";
-                    
-                    return nom.includes(searchTerm) || desc.includes(searchTerm) || tags.includes(searchTerm);
-                });
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      const cfg = window.snackConfig;
 
-                // 4. On affiche les cartes produits (en réutilisant TA fonction !)
-                if (resultats.length === 0) {
-                    searchResultsContainer.innerHTML = `
+      // Si on tape quelque chose
+      if (searchTerm.length > 0) {
+        clearSearchBtn.classList.remove("hidden");
+
+        // 1. On cache les best-sellers et le menu normal
+        if (fullMenuContainer) fullMenuContainer.classList.add("hidden");
+        if (bestSellersContainer && bestSellersContainer.parentElement) {
+          bestSellersContainer.parentElement.classList.add("hidden");
+        }
+
+        // 2. On affiche le conteneur de résultats
+        searchResultsContainer.classList.remove("hidden");
+
+        // 3. Le Filtre Magique (On cherche dans le tableau menuGlobal)
+        const resultats = menuGlobal.filter((produit) => {
+          const nom = produit.nom ? produit.nom.toLowerCase() : "";
+          const desc = produit.description
+            ? produit.description.toLowerCase()
+            : "";
+          const tags = produit.tags
+            ? (Array.isArray(produit.tags)
+                ? produit.tags.join(" ")
+                : produit.tags
+              ).toLowerCase()
+            : "";
+
+          return (
+            nom.includes(searchTerm) ||
+            desc.includes(searchTerm) ||
+            tags.includes(searchTerm)
+          );
+        });
+
+        // 4. On affiche les cartes produits (en réutilisant TA fonction !)
+        if (resultats.length === 0) {
+          searchResultsContainer.innerHTML = `
                         <div class="col-span-full text-center py-12">
                             <div class="text-6xl mb-4">🕵️‍♂️</div>
                             <h3 class="text-xl font-black text-gray-800">Aucun résultat</h3>
                             <p class="text-gray-500 mt-2">Nous n'avons rien trouvé pour "${e.target.value}"</p>
                         </div>
                     `;
-                } else {
-                    // C'est ici la magie : on génère les cartes avec ton thème actuel !
-                    searchResultsContainer.innerHTML = resultats.map(item => createProductCard(item, cfg)).join('');
-                }
+        } else {
+          // C'est ici la magie : on génère les cartes avec ton thème actuel !
+          searchResultsContainer.innerHTML = resultats
+            .map((item) => createProductCard(item, cfg))
+            .join("");
+        }
+      } else {
+        // Si la barre de recherche est VIDE : On remet tout à la normale !
+        clearSearchBtn.classList.add("hidden");
+        if (fullMenuContainer) fullMenuContainer.classList.remove("hidden");
+        if (bestSellersContainer && bestSellersContainer.parentElement) {
+          bestSellersContainer.parentElement.classList.remove("hidden");
+        }
+        searchResultsContainer.classList.add("hidden");
+        searchResultsContainer.innerHTML = "";
+      }
+    });
 
-            } else {
-                // Si la barre de recherche est VIDE : On remet tout à la normale !
-                clearSearchBtn.classList.add('hidden');
-                if(fullMenuContainer) fullMenuContainer.classList.remove('hidden');
-                if(bestSellersContainer && bestSellersContainer.parentElement) {
-                    bestSellersContainer.parentElement.classList.remove('hidden');
-                }
-                searchResultsContainer.classList.add('hidden');
-                searchResultsContainer.innerHTML = "";
-            }
-        });
-
-        // Bouton "X" pour vider la recherche
-        clearSearchBtn.addEventListener('click', () => {
-            searchInput.value = '';
-            // On déclenche manuellement l'événement 'input' pour simuler une recherche vide
-            searchInput.dispatchEvent(new Event('input')); 
-            searchInput.focus();
-        });
-    }
+    // Bouton "X" pour vider la recherche
+    clearSearchBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      // On déclenche manuellement l'événement 'input' pour simuler une recherche vide
+      searchInput.dispatchEvent(new Event("input"));
+      searchInput.focus();
+    });
+  }
 });
 
 window.switchView = function (viewName) {
   const fullMenu = document.getElementById("full-menu");
   const mobileOverlay = document.getElementById("mobile-menu-overlay");
   const mobileBtnIcon = document.querySelector("#mobile-menu-btn i");
-  
+
   // L'indicateur translucide et les boutons
   const navIndicator = document.getElementById("nav-indicator");
   const btnHome = document.getElementById("nav-btn-home");
@@ -408,49 +441,60 @@ window.switchView = function (viewName) {
   if (viewName === "menu") {
     // 1. Déplace la pilule à droite
     if (navIndicator) navIndicator.style.transform = "translateX(200%)";
-    
+
     // 2. Allume "Menu", grise "Accueil"
-    if (btnHome) { btnHome.classList.remove("text-white"); btnHome.classList.add("text-gray-400"); }
-    if (btnMenu) { btnMenu.classList.remove("text-gray-400"); btnMenu.classList.add("text-white"); }
+    if (btnHome) {
+      btnHome.classList.remove("text-white");
+      btnHome.classList.add("text-gray-400");
+    }
+    if (btnMenu) {
+      btnMenu.classList.remove("text-gray-400");
+      btnMenu.classList.add("text-white");
+    }
 
     fullMenu.classList.remove("hidden");
-    document.body.style.overflow = "hidden"; 
-    
+    document.body.style.overflow = "hidden";
+
     // Fermeture du menu burger si ouvert
     if (mobileOverlay && !mobileOverlay.classList.contains("hidden")) {
-        mobileOverlay.classList.add("opacity-0");
-        setTimeout(() => {
-            mobileOverlay.classList.remove("flex");
-            mobileOverlay.classList.add("hidden");
-        }, 300);
-        if (mobileBtnIcon) {
-            mobileBtnIcon.classList.remove("fa-times");
-            mobileBtnIcon.classList.add("fa-bars");
-        }
+      mobileOverlay.classList.add("opacity-0");
+      setTimeout(() => {
+        mobileOverlay.classList.remove("flex");
+        mobileOverlay.classList.add("hidden");
+      }, 300);
+      if (mobileBtnIcon) {
+        mobileBtnIcon.classList.remove("fa-times");
+        mobileBtnIcon.classList.add("fa-bars");
+      }
     }
   } else {
     // 1. Déplace la pilule à gauche
     if (navIndicator) navIndicator.style.transform = "translateX(0%)";
-    
+
     // 2. Allume "Accueil", grise "Menu"
-    if (btnHome) { btnHome.classList.remove("text-gray-400"); btnHome.classList.add("text-white"); }
-    if (btnMenu) { btnMenu.classList.remove("text-white"); btnMenu.classList.add("text-gray-400"); }
+    if (btnHome) {
+      btnHome.classList.remove("text-gray-400");
+      btnHome.classList.add("text-white");
+    }
+    if (btnMenu) {
+      btnMenu.classList.remove("text-white");
+      btnMenu.classList.add("text-gray-400");
+    }
 
     fullMenu.classList.add("hidden");
-    document.body.style.overflow = ""; 
-    
+    document.body.style.overflow = "";
+
     // Scroll vers le haut si retour accueil
     if (viewName === "home") {
       const heroSection = document.getElementById("hero");
       if (heroSection) {
         setTimeout(() => {
-          heroSection.scrollIntoView({ behavior: 'smooth' });
+          heroSection.scrollIntoView({ behavior: "smooth" });
         }, 10);
       }
     }
   }
 };
-
 
 // ============================================================================
 // window.openProductModal = function (itemId) {
@@ -490,14 +534,14 @@ window.switchView = function (viewName) {
 //   }
 
 //  const btn = document.getElementById("modal-cta");
-  
+
 //   // 1. SI LE PRODUIT EST ÉPUISÉ (Priorité absolue)
 //   if (item.isAvailable === false) {
 //     btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
 //     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
 //     btn.removeAttribute("href");
 //     btn.onclick = null; // On bloque le clic
-//   } 
+//   }
 //   // 2. SI LE RESTO EST EN MODE VITRINE (Pack Starter : Pas de commande)
 //   else if (cfg.features && cfg.features.enableOnlineOrder === false) {
 //     btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
@@ -517,7 +561,7 @@ window.switchView = function (viewName) {
 //     const primaryBg = cfg.theme?.colors?.primary?.split(" ")[0] || "bg-red-600";
 //     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg ${primaryBg} hover:opacity-90 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
 //     btn.onclick = null;
-//   } 
+//   }
 //   // 4. MODE PAR DÉFAUT : CLICK & COLLECT (Appel téléphonique)
 //   else {
 //     const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
@@ -1038,25 +1082,21 @@ function setupSmartReviewPrompt() {
   }
 }
 
-
 // ====================================================================
 // 🚀 MOTEUR E-COMMERCE (PANIER & CHECKOUT)
 // ====================================================================
 
 // --- 1. VARIABLES D'ÉTAT ---
-let cart = JSON.parse(localStorage.getItem('snackCart')) || [];
+let cart = JSON.parse(localStorage.getItem("snackCart")) || [];
 let currentProduct = null;
 
-
 // Au chargement de la page, on met à jour la bulle rouge
-document.addEventListener('DOMContentLoaded', updateCartUI);
-
+document.addEventListener("DOMContentLoaded", updateCartUI);
 
 // --- 2. GESTION DU PRODUIT (Modale Choix) ---
 // ============================================================================
 // 🍔 GESTION DE LA MODALE PRODUIT (Unifiée & Feature Flags)
 // ============================================================================
-
 
 window.openProductModal = function (itemId) {
   const cfg = window.snackConfig;
@@ -1064,12 +1104,12 @@ window.openProductModal = function (itemId) {
   if (!item) return;
 
   // 1. Définition du produit (pour le panier)
-  currentProduct = { 
-      id: item.id, 
-      nom: item.nom || item.name, 
-      prixBase: item.prix || item.price || 0, 
-      prixMenu: item.menuPriceAdd || 2.50, // Supplément menu (à ajuster si besoin)
-      image: item.image 
+  currentProduct = {
+    id: item.id,
+    nom: item.nom || item.name,
+    prixBase: item.prix || item.price || 0,
+    prixMenu: item.menuPriceAdd || 2.5, // Supplément menu (à ajuster si besoin)
+    image: item.image,
   };
 
   const devise = cfg.identity.currency || "€";
@@ -1079,13 +1119,16 @@ window.openProductModal = function (itemId) {
   // ==========================================
   const modalImg = document.getElementById("modal-img");
   const imgContainer = modalImg.parentElement;
-  
+
   // On nettoie un éventuel ancien fallback d'un clic précédent
   const oldFallback = document.getElementById("modal-img-fallback");
   if (oldFallback) oldFallback.remove();
 
-  const imageUrl = currentProduct.image && currentProduct.image.trim() !== "" ? currentProduct.image : null;
-  
+  const imageUrl =
+    currentProduct.image && currentProduct.image.trim() !== ""
+      ? currentProduct.image
+      : null;
+
   // Le bloc HTML de secours (identique à la grille)
   const fallbackHTML = `
       <div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0">
@@ -1094,30 +1137,33 @@ window.openProductModal = function (itemId) {
   `;
 
   if (imageUrl) {
-      modalImg.style.display = "block"; // On réaffiche l'image
-      modalImg.src = imageUrl;
-      // Si l'image charge mais que le lien est cassé (Erreur 404) :
-      modalImg.onerror = function() {
-          this.style.display = "none";
-          if (!document.getElementById("modal-img-fallback")) {
-              imgContainer.insertAdjacentHTML("beforeend", fallbackHTML);
-          }
-      };
+    modalImg.style.display = "block"; // On réaffiche l'image
+    modalImg.src = imageUrl;
+    // Si l'image charge mais que le lien est cassé (Erreur 404) :
+    modalImg.onerror = function () {
+      this.style.display = "none";
+      if (!document.getElementById("modal-img-fallback")) {
+        imgContainer.insertAdjacentHTML("beforeend", fallbackHTML);
+      }
+    };
   } else {
-      // S'il n'y a pas d'URL d'image du tout en base de données :
-      modalImg.style.display = "none";
-      imgContainer.insertAdjacentHTML("beforeend", fallbackHTML);
+    // S'il n'y a pas d'URL d'image du tout en base de données :
+    modalImg.style.display = "none";
+    imgContainer.insertAdjacentHTML("beforeend", fallbackHTML);
   }
 
   document.getElementById("modal-title").innerText = currentProduct.nom;
   document.getElementById("modal-desc").innerText = item.description || "";
 
   // 3. Gérer les allergènes
-  const allergenContainer = document.getElementById("modal-allergens-container");
+  const allergenContainer = document.getElementById(
+    "modal-allergens-container",
+  );
   const allergenesList = item.allergenes || item.allergens;
   if (allergenesList && allergenesList.length > 0) {
     allergenContainer.classList.remove("hidden");
-    document.getElementById("modal-allergens").innerText = allergenesList.join(", ");
+    document.getElementById("modal-allergens").innerText =
+      allergenesList.join(", ");
   } else {
     allergenContainer.classList.add("hidden");
   }
@@ -1127,43 +1173,50 @@ window.openProductModal = function (itemId) {
   // ==========================================
   const btn = document.getElementById("modal-cta");
   const optionsContainer = document.getElementById("modal-options-container");
-  
-  const isClickAndCollect = cfg.features && cfg.features.enableClickAndCollect === true;
+
+  const isClickAndCollect =
+    cfg.features && cfg.features.enableClickAndCollect === true;
   const isPhoneOrder = cfg.features && cfg.features.enableOnlineOrder === true;
 
   if (item.isAvailable === false) {
-      // 🚫 1. PRODUIT ÉPUISÉ (Priorité absolue)
-      if (optionsContainer) optionsContainer.classList.add("hidden");
-      btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
-      btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
-      btn.removeAttribute("href");
-      btn.onclick = null;
-  } 
-  else if (isClickAndCollect) {
-      // 🛒 2. MODE PANIER (Click & Collect = true) -> E-commerce pur
-      if (optionsContainer) {
-          optionsContainer.classList.remove("hidden");
-          
-          // 🎨 APPLICATION DU THÈME AUX BOUTONS RADIO (Formule) ET TEXTES
-          const accentColor = cfg.theme.colors.accent; // ex: 'text-blue-600'
-          const lightBgColor = cfg.theme.colors.lightBg || 'bg-gray-50'; // ex: 'bg-blue-50'
-          const bgFocusColor = accentColor.replace('text-', 'focus:ring-'); // ex: 'focus:ring-blue-600'
+    // 🚫 1. PRODUIT ÉPUISÉ (Priorité absolue)
+    if (optionsContainer) optionsContainer.classList.add("hidden");
+    btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
+    btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
+    btn.removeAttribute("href");
+    btn.onclick = null;
+  } else if (isClickAndCollect) {
+    // 🛒 2. MODE PANIER (Click & Collect = true) -> E-commerce pur
+    if (optionsContainer) {
+      optionsContainer.classList.remove("hidden");
 
-          // 🥤 FABRICATION DES BOUTONS DE BOISSONS (100% DYNAMIQUE)
-          const boissonsDispo = menuGlobal.filter(item => item.categorieId === "drinks" && item.isAvailable !== false);
-          const listeBoissons = boissonsDispo.length > 0 
-              ? boissonsDispo 
-              : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
+      // 🎨 APPLICATION DU THÈME AUX BOUTONS RADIO (Formule) ET TEXTES
+      const accentColor = cfg.theme.colors.accent; // ex: 'text-blue-600'
+      const lightBgColor = cfg.theme.colors.lightBg || "bg-gray-50"; // ex: 'bg-blue-50'
+      const bgFocusColor = accentColor.replace("text-", "focus:ring-"); // ex: 'focus:ring-blue-600'
 
-          const drinksHTML = listeBoissons.map((boisson, index) => `
+      // 🥤 FABRICATION DES BOUTONS DE BOISSONS (100% DYNAMIQUE)
+      const boissonsDispo = menuGlobal.filter(
+        (item) => item.categorieId === "drinks" && item.isAvailable !== false,
+      );
+      const listeBoissons =
+        boissonsDispo.length > 0
+          ? boissonsDispo
+          : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
+
+      const drinksHTML = listeBoissons
+        .map(
+          (boisson, index) => `
               <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
-                  <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? 'checked' : ''} class="w-5 h-5 ${accentColor} ${bgFocusColor}">
+                  <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="w-5 h-5 ${accentColor} ${bgFocusColor}">
                   <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
               </label>
-          `).join('');
+          `,
+        )
+        .join("");
 
-          // INJECTION DU HTML GLOBAL DE LA MODALE OPTIONS
-          optionsContainer.innerHTML = `
+      // INJECTION DU HTML GLOBAL DE LA MODALE OPTIONS
+      optionsContainer.innerHTML = `
               <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h4>
               <div class="space-y-2 mb-4">
                   <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
@@ -1192,35 +1245,34 @@ window.openProductModal = function (itemId) {
                   </div>
               </div>
           `;
-      }
-      
-      btn.removeAttribute("href");
-      btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
-      btn.onclick = window.confirmAddToCart; 
-      
-      if(typeof window.toggleDrinkSection === 'function') window.toggleDrinkSection(); 
-  } 
-  else if (isPhoneOrder) {
-      // ☎️ 3. MODE APPEL (OnlineOrder = true, ClickAndCollect = false) -> Commande par téléphone
-      if (optionsContainer) optionsContainer.classList.add("hidden");
-      
-      const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
-      btn.href = `tel:${phone}`;
-      btn.removeAttribute("target");
-      btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
-      btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-green-600 hover:bg-green-700 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
-      btn.onclick = null;
-  }
-  else {
-      // 🛑 4. MODE VITRINE PUR (Les deux sont false) -> Juste consulter le menu
-      if (optionsContainer) optionsContainer.classList.add("hidden");
-      btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
-      btn.className = `w-full cursor-pointer py-4 rounded-xl font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 transition-all mt-auto flex justify-center items-center gap-2`;
-      btn.removeAttribute("href");
-      btn.onclick = (e) => {
-          e.preventDefault();
-          closeProductModal();
-      };
+    }
+
+    btn.removeAttribute("href");
+    btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
+    btn.onclick = window.confirmAddToCart;
+
+    if (typeof window.toggleDrinkSection === "function")
+      window.toggleDrinkSection();
+  } else if (isPhoneOrder) {
+    // ☎️ 3. MODE APPEL (OnlineOrder = true, ClickAndCollect = false) -> Commande par téléphone
+    if (optionsContainer) optionsContainer.classList.add("hidden");
+
+    const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
+    btn.href = `tel:${phone}`;
+    btn.removeAttribute("target");
+    btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
+    btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-green-600 hover:bg-green-700 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
+    btn.onclick = null;
+  } else {
+    // 🛑 4. MODE VITRINE PUR (Les deux sont false) -> Juste consulter le menu
+    if (optionsContainer) optionsContainer.classList.add("hidden");
+    btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
+    btn.className = `w-full cursor-pointer py-4 rounded-xl font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 transition-all mt-auto flex justify-center items-center gap-2`;
+    btn.removeAttribute("href");
+    btn.onclick = (e) => {
+      e.preventDefault();
+      closeProductModal();
+    };
   }
 
   // ==========================================
@@ -1255,19 +1307,24 @@ window.openProductModal = function (itemId) {
         } catch (err) {
           console.log("Partage annulé ou fermé :", err);
         }
-      } 
+      }
       // 2. FALLBACK DESKTOP : Copie dans le presse-papier si pas de partage natif
       else if (navigator.clipboard) {
         try {
-          await navigator.clipboard.writeText(`${shareTitle}\n${shareText}\nLien : ${shareUrl}`);
-          
+          await navigator.clipboard.writeText(
+            `${shareTitle}\n${shareText}\nLien : ${shareUrl}`,
+          );
+
           // Utilise ta fonction showToast existante pour rassurer le client sur PC
           if (typeof window.showToast === "function") {
-             window.showToast("Lien copié dans le presse-papier ! 📋", "success");
+            window.showToast(
+              "Lien copié dans le presse-papier ! 📋",
+              "success",
+            );
           } else {
-             alert("Lien copié dans le presse-papier ! 📋");
+            alert("Lien copié dans le presse-papier ! 📋");
           }
-          
+
           if (typeof window.triggerVibration === "function") {
             window.triggerVibration("success");
           }
@@ -1285,30 +1342,36 @@ window.openProductModal = function (itemId) {
   const backdrop = document.getElementById("product-modal-backdrop");
   const sheet = document.getElementById("product-modal");
   backdrop.classList.remove("hidden");
-  
+
   setTimeout(() => {
     backdrop.classList.remove("opacity-0");
-    sheet.classList.remove("translate-y-full", "md:opacity-0", "md:pointer-events-none", "md:scale-95");
+    sheet.classList.remove(
+      "translate-y-full",
+      "md:opacity-0",
+      "md:pointer-events-none",
+      "md:scale-95",
+    );
   }, 10);
-  
+
   document.body.style.overflow = "hidden";
 };
 
-window.toggleDrinkSection = function() {
-    const isMenu = document.querySelector('input[name="formule"]:checked').value === 'menu';
-    const drinkSection = document.getElementById('drink-section');
-    const btn = document.getElementById('modal-cta');
-    const devise = window.snackConfig.identity.currency || "€";
-    
-    if (isMenu) {
-        drinkSection.classList.remove('hidden');
-        setTimeout(() => drinkSection.classList.remove('opacity-0'), 10);
-        btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
-    } else {
-        drinkSection.classList.add('opacity-0');
-        setTimeout(() => drinkSection.classList.add('hidden'), 300);
-        btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-    }
+window.toggleDrinkSection = function () {
+  const isMenu =
+    document.querySelector('input[name="formule"]:checked').value === "menu";
+  const drinkSection = document.getElementById("drink-section");
+  const btn = document.getElementById("modal-cta");
+  const devise = window.snackConfig.identity.currency || "€";
+
+  if (isMenu) {
+    drinkSection.classList.remove("hidden");
+    setTimeout(() => drinkSection.classList.remove("opacity-0"), 10);
+    btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
+  } else {
+    drinkSection.classList.add("opacity-0");
+    setTimeout(() => drinkSection.classList.add("hidden"), 300);
+    btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+  }
 };
 
 // Fermeture de la modale unifiée
@@ -1316,7 +1379,12 @@ window.closeProductModal = function () {
   const backdrop = document.getElementById("product-modal-backdrop");
   const sheet = document.getElementById("product-modal");
 
-  sheet.classList.add("translate-y-full", "md:opacity-0", "md:pointer-events-none", "md:scale-95");
+  sheet.classList.add(
+    "translate-y-full",
+    "md:opacity-0",
+    "md:pointer-events-none",
+    "md:scale-95",
+  );
   backdrop.classList.add("opacity-0");
 
   setTimeout(() => {
@@ -1325,125 +1393,187 @@ window.closeProductModal = function () {
   }, 300);
 };
 
+window.confirmAddToCart = function () {
+  const isMenu =
+    document.querySelector('input[name="formule"]:checked').value === "menu";
+  let nomFinal = currentProduct.nom;
+  let prixFinal = currentProduct.prixBase;
+  let boissonChoisie = null; // On prépare la variable
 
-window.confirmAddToCart = function() {
-    const isMenu = document.querySelector('input[name="formule"]:checked').value === 'menu';
-    let nomFinal = currentProduct.nom;
-    let prixFinal = currentProduct.prixBase;
-
-    if (isMenu) {
-        // 1. On cherche l'élément HTML (sans lire sa valeur tout de suite)
-        const boissonInput = document.querySelector('input[name="boisson"]:checked');
-        
-        // 🚨 2. LE BOUCLIER ANTI-CRASH 🚨
-        if (!boissonInput) {
-            alert("🥤 Oups ! Veuillez choisir une boisson.");
-            return; // On arrête l'exécution de la fonction ici, pas de crash !
-        }
-        
-        // 3. Si tout va bien, on lit la valeur
-        const boisson = boissonInput.value;
-        nomFinal = `Menu ${currentProduct.nom} (+ ${boisson})`;
-        prixFinal += currentProduct.prixMenu;
-
+  if (isMenu) {
+    const boissonInput = document.querySelector(
+      'input[name="boisson"]:checked',
+    );
+    if (!boissonInput) {
+      alert("🥤 Oups ! Veuillez choisir une boisson.");
+      return;
     }
-    const uniqueId = isMenu ? `${currentProduct.id}-menu-${Date.now()}` : `${currentProduct.id}-seul`;
-    addToCart(uniqueId, nomFinal, prixFinal, currentProduct.image);
-    window.AppBridge.sendToNative("haptic_success");
-    closeProductModal();
-};
+    boissonChoisie = boissonInput.value;
+    nomFinal = `Menu ${currentProduct.nom} (+ ${boissonChoisie})`;
+    prixFinal += currentProduct.prixMenu;
+  }
 
+  const uniqueId = isMenu
+    ? `${currentProduct.id}-menu-${Date.now()}`
+    : `${currentProduct.id}-seul`;
+
+  // 🛑 LE CORRECTIF EST ICI : On envoie TOUTES les infos au panier
+  addToCart({
+    id: uniqueId,
+    nom: nomFinal,
+    prix: prixFinal, // Prix total unitaire
+    image: currentProduct.image,
+    type: isMenu ? "menu" : "seul",
+    boisson: boissonChoisie,
+    prixBase: currentProduct.prixBase,
+    prixMenuAdd: isMenu ? currentProduct.prixMenu : 0,
+  });
+
+  if (window.AppBridge && typeof window.AppBridge.sendToNative === "function") {
+    window.AppBridge.sendToNative("haptic_success");
+  }
+  closeProductModal();
+};
 
 // --- 3. GESTION DU PANIER (Logique) ---
-function addToCart(productId, nom, prix, image) {
-    const existingItem = cart.find(item => item.id === productId);
-    if (existingItem) {
-        existingItem.quantity += 1;
-    } else {
-        cart.push({ id: productId, nom: nom, prix: parseFloat(prix), image: image, quantity: 1 });
-    }
-    saveCart();
-    updateCartUI();
-    alert(`${nom} ajouté au panier ! 🍔`); // Un petit retour visuel simple
+function addToCart(itemData) {
+  // Si on a bien reçu notre objet complet
+  const existingItem = cart.find((item) => item.id === itemData.id);
+
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    // On pousse tout l'objet dans le tableau du panier !
+    cart.push({
+      ...itemData,
+      quantity: 1,
+    });
+  }
+
+  saveCart();
+  updateCartUI();
+  window.showToast(`${itemData.nom} ajouté au panier ! 🍔`, "success");
 }
 
-function saveCart() { localStorage.setItem('snackCart', JSON.stringify(cart)); }
-function getCartTotal() { return cart.reduce((total, item) => total + (item.prix * item.quantity), 0); }
+function saveCart() {
+  localStorage.setItem("snackCart", JSON.stringify(cart));
+}
+function getCartTotal() {
+  return cart.reduce((total, item) => total + item.prix * item.quantity, 0);
+}
 
 function updateCartUI() {
-    const badge = document.getElementById('cart-badge');
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    if (totalItems > 0) {
-        badge.textContent = totalItems;
-        badge.classList.remove('hidden');
-    } else {
-        badge.classList.add('hidden');
+  const badge = document.getElementById("cart-badge");
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  if (totalItems > 0) {
+    badge.textContent = totalItems;
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+  }
+  try {
+    if (
+      window.AppBridge &&
+      typeof window.AppBridge.sendToNative === "function"
+    ) {
+      window.AppBridge.sendToNative("update_cart_badge", { count: totalItems });
     }
-    try {
-        if (window.AppBridge && typeof window.AppBridge.sendToNative === 'function') {
-        window.AppBridge.sendToNative("update_cart_badge", { count: totalItems });
-    }
-    } catch (e) {
-        console.error("Bridge non disponible", e);
-    }
+  } catch (e) {
+    console.error("Bridge non disponible", e);
+  }
 }
 
-
 // --- 4. AFFICHAGE DU PANIER (Modale Panier) ---
-window.openCartModal = function() {
-    renderCartItems();
-    document.getElementById('cart-backdrop').classList.remove('opacity-0', 'pointer-events-none');
-    document.getElementById('cart-modal').classList.remove('translate-y-full');
+window.openCartModal = function () {
+  renderCartItems();
+  document
+    .getElementById("cart-backdrop")
+    .classList.remove("opacity-0", "pointer-events-none");
+  document.getElementById("cart-modal").classList.remove("translate-y-full");
 };
 
-window.closeCartModal = function() {
-    document.getElementById('cart-backdrop').classList.add('opacity-0', 'pointer-events-none');
-    document.getElementById('cart-modal').classList.add('translate-y-full');
+window.closeCartModal = function () {
+  document
+    .getElementById("cart-backdrop")
+    .classList.add("opacity-0", "pointer-events-none");
+  document.getElementById("cart-modal").classList.add("translate-y-full");
 };
 
 function renderCartItems() {
-    const container = document.getElementById('cart-items-container');
-    container.innerHTML = ''; 
+  const container = document.getElementById("cart-items-container");
+  container.innerHTML = "";
 
-    if (cart.length === 0) {
-        container.innerHTML = `<p class="text-center py-10 text-gray-500">Votre panier est vide.</p>`;
-        document.getElementById('checkout-btn').disabled = true;
-        document.getElementById('checkout-btn').classList.add('opacity-50');
-    } else {
-        document.getElementById('checkout-btn').disabled = false;
-        document.getElementById('checkout-btn').classList.remove('opacity-50');
-        
-        cart.forEach(item => {
-            container.innerHTML += `
-                <div class="flex items-center gap-4 bg-white p-3 rounded-xl border">
-                    <img src="${item.image}" class="w-16 h-16 rounded-lg object-cover">
+  if (cart.length === 0) {
+    container.innerHTML = `<p class="text-center py-10 text-gray-500">Votre panier est vide.</p>`;
+    document.getElementById("checkout-btn").disabled = true;
+    document.getElementById("checkout-btn").classList.add("opacity-50");
+  } else {
+    document.getElementById("checkout-btn").disabled = false;
+    document.getElementById("checkout-btn").classList.remove("opacity-50");
+
+    cart.forEach((item) => {
+      // 1. GESTION DU FALLBACK IMAGE
+      const imageUrl =
+        item.image && item.image.trim() !== "" ? item.image : null;
+
+      const fallbackHtml = `
+                <div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
+                    <i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i>
+                </div>`;
+
+      // Si le lien casse (erreur 404), onerror cache l'image et affiche l'icône de secours
+      const imageHtml = imageUrl
+        ? `<div class="relative w-16 h-16 shrink-0">
+                       <img src="${imageUrl}" alt="${item.nom}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full rounded-lg object-cover z-10">
+                       <div style="display: none;" class="absolute inset-0 rounded-lg bg-gray-100 items-center justify-center border border-gray-200 z-0">
+                           <i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i>
+                       </div>
+                   </div>`
+        : fallbackHtml;
+
+      // 2. INJECTION HTML 100% ACCESSIBLE
+      container.innerHTML += `
+                <div class="flex items-center gap-4 bg-white p-3 rounded-xl border" role="group" aria-label="Article du panier : ${item.nom}">
+                    ${imageHtml}
                     <div class="flex-1">
                         <h4 class="font-bold text-gray-900">${item.nom}</h4>
-                        <p class="text-red-600 font-bold">${(item.prix * item.quantity).toFixed(2)} €</p>
+                        <p class="text-red-600 font-bold" aria-label="Prix total pour cet article : ${(item.prix * item.quantity).toFixed(2)} euros">
+                            ${(item.prix * item.quantity).toFixed(2)} €
+                        </p>
                     </div>
-                    <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
-                        <button onclick="updateQuantity('${item.id}', -1)" class="w-8 h-8 text-gray-600"><i class="fas fa-minus text-xs"></i></button>
-                        <span class="font-bold w-4 text-center text-sm">${item.quantity}</span>
-                        <button onclick="updateQuantity('${item.id}', 1)" class="w-8 h-8 text-gray-600"><i class="fas fa-plus text-xs"></i></button>
+                    <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1" aria-label="Gestion de la quantité">
+                        
+                        <button type="button" onclick="updateQuantity('${item.id}', -1)" aria-label="Retirer un exemplaire de ${item.nom}" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <i class="fas fa-minus text-xs" aria-hidden="true"></i>
+                        </button>
+                        
+                        <span class="font-bold w-4 text-black text-center text-sm" aria-label="Quantité : ${item.quantity}" aria-live="polite">
+                            ${item.quantity}
+                        </span>
+                        
+                        <button type="button" onclick="updateQuantity('${item.id}', 1)" aria-label="Ajouter un exemplaire de ${item.nom}" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                        </button>
+                        
                     </div>
                 </div>
             `;
-        });
-    }
-    document.getElementById('cart-total-price').textContent = `${getCartTotal().toFixed(2)} €`;
+    });
+  }
+  document.getElementById("cart-total-price").textContent =
+    `${getCartTotal().toFixed(2)} €`;
 }
 
-window.updateQuantity = function(productId, delta) {
-    const item = cart.find(i => i.id === productId);
-    if (item) {
-        item.quantity += delta;
-        if (item.quantity <= 0) cart = cart.filter(i => i.id !== productId);
-        saveCart();
-        updateCartUI();
-        renderCartItems();
-    }
+window.updateQuantity = function (productId, delta) {
+  const item = cart.find((i) => i.id === productId);
+  if (item) {
+    item.quantity += delta;
+    if (item.quantity <= 0) cart = cart.filter((i) => i.id !== productId);
+    saveCart();
+    updateCartUI();
+    renderCartItems();
+  }
 };
-
 
 // --- 5. L'ENVOI FINAL (Firebase Checkout) ---
 
@@ -1451,102 +1581,129 @@ window.updateQuantity = function(productId, delta) {
 // 💳 PROCESSUS DE COMMANDE & CLICK&COLLECT
 // ==========================================
 window.processCheckout = async () => {
-    if (cart.length === 0) return window.showToast("Votre panier est vide", "error");
+  if (cart.length === 0)
+    return window.showToast("Votre panier est vide", "error");
 
-    const btn = document.getElementById("checkout-btn");
-    const originalText = btn.innerHTML;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Envoi en cuisine...`;
-    btn.disabled = true;
+  const btn = document.getElementById("checkout-btn");
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Envoi en cuisine...`;
+  btn.disabled = true;
 
-    try {
-        const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
-        const currentUser = window.auth?.currentUser;
-        
-        // Sécurité : On force la connexion pour commander (ou on gère les invités)
-        if (!currentUser) {
-            window.showToast("Veuillez vous connecter pour commander", "error");
-            window.toggleAuthModal();
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            return;
-        }
+  try {
+    const currentSnackId =
+      window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
+    const currentUser = window.auth?.currentUser;
 
-        // 1. Formatage du Panier pour Firestore (Le schéma officiel)
-        const orderItems = cart.map(item => ({
-            id: item.id,
-            nom: item.nom,
-            image: item.image || "",
-            type: item.type || "seul", // menu ou seul
-            boissonNom: item.boisson || null,
-            prixBase: item.prixBase || item.prix,
-            prixMenuAdd: item.prixMenuAdd || 0,
-            prixTotalLigne: (item.prixBase + (item.prixMenuAdd || 0)) * item.quantity,
-            quantity: item.quantity
-        }));
-
-        // 2. Création du Document Commande
-        const newOrder = {
-            snackId: currentSnackId,
-            userId: currentUser.uid,
-            clientNom: currentUser.displayName || currentUser.email.split('@')[0],
-            clientEmail: currentUser.email,
-            date: serverTimestamp(),
-            statut: "nouvelle",
-            items: orderItems,
-            total: window.getCartTotal(),
-            paiement: {
-                methode: "sur_place",
-                statut: "en_attente",
-                stripeSessionId: null
-            }
-        };
-
-        // 3. Envoi dans le Cloud Firebase
-        const docRef = await addDoc(collection(window.db, "commandes"), newOrder);
-        
-        // 4. Vider le panier
-        cart = [];
-        updateCartUI();
-        window.toggleCartModal();
-        
-        window.showToast("🎉 Commande envoyée en cuisine !", "success");
-
-        // 5. 🎯 LA MAGIE CLICK & COLLECT : On mémorise la commande !
-        if (window.snackConfig?.features?.enableClickAndCollect) {
-            localStorage.setItem("activeOrderId", docRef.id);
-            startOrderTracking(docRef.id);
-        }
-
-    } catch (error) {
-        console.error("❌ Erreur Checkout :", error);
-        window.showToast("Erreur lors de la commande.", "error");
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+    // Sécurité : On force la connexion pour commander (ou on gère les invités)
+    if (!currentUser) {
+      window.showToast("Veuillez vous connecter pour commander", "error");
+      window.toggleAuthModal();
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      return;
     }
+
+    // 1. Formatage du Panier pour Firestore (Le schéma officiel)
+    const orderItems = cart.map((item) => {
+      const prixUnitaire = item.prix || 0; // Le prix de l'article (base + menu)
+
+      return {
+        id: item.id,
+        nom: item.nom,
+        image: item.image || "",
+        type: item.type || "seul",
+        boissonNom: item.boisson || null,
+        prixBase: item.prixBase || prixUnitaire,
+        prixMenuAdd: item.prixMenuAdd || 0,
+        prixTotalLigne: prixUnitaire * item.quantity,
+        quantity: item.quantity,
+      };
+    });
+
+    const { addDoc, collection, serverTimestamp } = window.fs;
+
+    // 2. Création du Document Commande
+    const newOrder = {
+      snackId: currentSnackId,
+      userId: currentUser.uid,
+      clientNom: currentUser.displayName || currentUser.email.split("@")[0],
+      clientEmail: currentUser.email,
+      date: serverTimestamp(),
+      statut: "en_attente_client",
+      items: orderItems,
+      total: getCartTotal(),
+      paiement: {
+        methode: "sur_place",
+        statut: "en_attente",
+        stripeSessionId: null,
+      },
+    };
+
+    // 3. Envoi dans le Cloud Firebase
+    const docRef = await addDoc(collection(window.db, "commandes"), newOrder);
+
+    // 4. Vider le panier
+    cart.length = 0; // 1. Vide la variable
+    if (typeof saveCart === "function") saveCart(); // 2. Vide le localStorage (très important !)
+    if (typeof updateCartUI === "function") updateCartUI(); // 3. Enlève le badge rouge
+
+    // Ferme la modale du panier
+    if (typeof window.closeCartModal === "function") {
+      window.closeCartModal();
+    } else if (typeof window.toggleCartModal === "function") {
+      window.toggleCartModal();
+    }
+
+    window.showToast("🎉 Commande envoyée en cuisine !", "success");
+
+    // 5. 🎯 LA MAGIE CLICK & COLLECT : On mémorise la commande !
+    if (window.snackConfig?.features?.enableClickAndCollect) {
+      localStorage.setItem("activeOrderId", docRef.id);
+      startOrderTracking(docRef.id);
+    }
+  } catch (error) {
+    console.error("❌ Erreur Checkout :", error);
+    window.showToast("Erreur lors de la commande.", "error");
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
 };
 
 // ==========================================
 // 🎟️ GESTION DE L'UI DE LA MODALE TRACKING
 // ==========================================
 window.openTrackingModal = () => {
-    const modal = document.getElementById("order-tracking-modal");
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-    setTimeout(() => {
-        modal.classList.remove("opacity-0");
-        modal.querySelector('.bg-white').classList.remove("scale-95");
-    }, 10);
+  const modal = document.getElementById("order-tracking-modal");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  setTimeout(() => {
+    modal.classList.remove("opacity-0");
+    modal.querySelector(".bg-white").classList.remove("scale-95");
+  }, 10);
 };
 
 window.closeTrackingModal = () => {
-    const modal = document.getElementById("order-tracking-modal");
-    modal.classList.add("opacity-0");
-    modal.querySelector('.bg-white').classList.add("scale-95");
-    setTimeout(() => {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-    }, 300);
+  const modal = document.getElementById("order-tracking-modal");
+  modal.classList.add("opacity-0");
+  modal.querySelector(".bg-white").classList.add("scale-95");
+  setTimeout(() => {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }, 300);
+};
+
+// La fameuse fonction "Toggle" (Ouvre si c'est fermé, ferme si c'est ouvert)
+window.toggleCartModal = () => {
+  const modal = document.getElementById("cart-modal");
+  if (modal) {
+    // Si le panier est caché en bas (translate-y-full), on l'ouvre
+    if (modal.classList.contains("translate-y-full")) {
+      window.openCartModal();
+    } else {
+      window.closeCartModal();
+    }
+  }
 };
 
 // ==========================================
@@ -1554,107 +1711,200 @@ window.closeTrackingModal = () => {
 // ==========================================
 let unsubscribeClientRadar = null;
 
-window.startOrderTracking = (orderId) => {
-    const trackingBadge = document.getElementById("order-tracking-badge");
-    const badgeText = document.getElementById("badge-text");
-    
-    // Éléments de la Modale
-    const orderIdText = document.getElementById("tracking-order-id");
-    const iconContainer = document.getElementById("tracking-icon-container");
-    const icon = document.getElementById("tracking-icon");
-    const title = document.getElementById("tracking-title");
-    const subtitle = document.getElementById("tracking-subtitle");
-
-    // 1. On affiche le badge et l'ID de commande (les 4 derniers caractères pour faire "Ticket")
-    if(trackingBadge) trackingBadge.classList.remove("hidden");
-    if(orderIdText) orderIdText.innerText = "#" + orderId.slice(-4).toUpperCase();
-
-    if (unsubscribeClientRadar) unsubscribeClientRadar();
-    console.log("🟢 Radar Client ACTIVÉ :", orderId);
-
-    // 2. Écoute Firebase
-    unsubscribeClientRadar = window.fs.onSnapshot(window.fs.doc(window.db, "commandes", orderId), (docSnap) => {
-        if (docSnap.exists()) {
-            const commande = docSnap.data();
-            
-            // 🟡 STATUT : NOUVELLE (En préparation)
-            if (commande.statut === "nouvelle") {
-                trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
-                badgeText.innerText = "Commande en cours";
-                
-                iconContainer.className = "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
-                icon.className = "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
-                title.innerText = "En cuisine !";
-                title.className = "text-3xl font-black text-gray-900 tracking-tight";
-                subtitle.innerText = "Le chef prépare votre commande.";
-            }
-            
-            // 🟢 STATUT : PRÊTE
-            else if (commande.statut === "prete") {
-                // Le badge devient Vert et vibre !
-                trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
-                badgeText.innerText = "C'EST PRÊT !";
-                
-                // La modale passe au vert
-                iconContainer.className = "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
-                icon.className = "fas fa-check text-5xl text-green-600 transition-transform duration-500";
-                title.innerText = "C'est prêt !";
-                title.className = "text-4xl font-black text-green-600 tracking-tight";
-                subtitle.innerText = "Présentez-vous au comptoir pour la récupérer.";
-                
-                // Alertes système
-                window.showToast("🔔 DING ! Votre commande est PRÊTE !", "success");
-                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                
-                // On ouvre la modale automatiquement pour être sûr qu'il le voie !
-                openTrackingModal(); 
-            }
-            
-            // ⚪ STATUT : TERMINÉE
-            else if (commande.statut === "terminee") {
-                window.showToast("Bon appétit !", "success");
-                localStorage.removeItem("activeOrderId"); 
-                if(trackingBadge) trackingBadge.classList.add("hidden"); 
-                closeTrackingModal();
-                
-                if (unsubscribeClientRadar) {
-                    unsubscribeClientRadar();
-                    unsubscribeClientRadar = null;
-                }
-            }
-        }
+window.notifyArrival = async (orderId) => {
+  try {
+    const btn = document.getElementById("tracking-action-btn");
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Préparation en cuisine...`;
+    // On bascule la commande en "nouvelle" pour alerter le chef !
+    await window.fs.updateDoc(window.fs.doc(window.db, "commandes", orderId), {
+      statut: "nouvelle",
     });
+    window.showToast("C'est noté ! Le chef lance la cuisson 🔥", "success");
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+window.startOrderTracking = (orderId) => {
+  const trackingBadge = document.getElementById("order-tracking-badge");
+  const badgeText = document.getElementById("badge-text");
+
+  // Éléments de la Modale
+  const orderIdText = document.getElementById("tracking-order-id");
+  const iconContainer = document.getElementById("tracking-icon-container");
+  const icon = document.getElementById("tracking-icon");
+  const title = document.getElementById("tracking-title");
+  const subtitle = document.getElementById("tracking-subtitle");
+  const actionBtn = document.getElementById("tracking-action-btn");
+
+  // 1. On affiche le badge et l'ID de commande (les 4 derniers caractères pour faire "Ticket")
+  if (trackingBadge) trackingBadge.classList.remove("hidden");
+  if (orderIdText)
+    orderIdText.innerText = "#" + orderId.slice(-4).toUpperCase();
+
+  if (unsubscribeClientRadar) unsubscribeClientRadar();
+  console.log("🟢 Radar Client ACTIVÉ :", orderId);
+
+  // 2. Écoute Firebase
+  unsubscribeClientRadar = window.fs.onSnapshot(
+    window.fs.doc(window.db, "commandes", orderId),
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const commande = docSnap.data();
+
+        // ⚪ STATUT 1 : EN ATTENTE DU CLIENT (Nouveau !)
+        if (commande.statut === "en_attente_client") {
+          trackingBadge.className =
+            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
+          badgeText.innerText = "En attente de votre arrivée";
+
+          iconContainer.className =
+            "w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+          icon.className =
+            "fas fa-car text-5xl text-gray-500 transition-transform duration-500 animate-pulse";
+          title.innerText = "Commande reçue !";
+          title.className = "text-3xl font-black text-gray-900 tracking-tight";
+          subtitle.innerHTML =
+            "Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.";
+
+          // On transforme le bouton pour l'action !
+          if (actionBtn) {
+            actionBtn.innerHTML =
+              "<i class='fas fa-car mr-2' aria-hidden='true'></i> Je suis à 5 min / Sur place";
+            actionBtn.className =
+              "w-full bg-blue-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
+
+            // 🤖 MISE À JOUR POUR LES ROBOTS
+            actionBtn.setAttribute(
+              "aria-label",
+              "Signaler mon arrivée au restaurant pour lancer la cuisson",
+            );
+            actionBtn.onclick = () => window.notifyArrival(orderId);
+          }
+        }
+        // 🟡 STATUT 2 : NOUVELLE (En préparation par le chef)
+        else if (commande.statut === "nouvelle") {
+          trackingBadge.className =
+            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
+          badgeText.innerText = "Commande en cours";
+
+          iconContainer.className =
+            "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+          icon.className =
+            "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
+          title.innerText = "En cuisine !";
+          title.className = "text-3xl font-black text-gray-900 tracking-tight";
+          subtitle.innerText = "Le chef prépare votre commande.";
+
+          // On remet le bouton en mode "Fermeture" normal
+          if (actionBtn) {
+            actionBtn.innerHTML = "Super, j'attends !";
+            actionBtn.className =
+              "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
+
+            // 🤖 ON REMET LE LABEL INITIAL POUR LES ROBOTS
+            actionBtn.setAttribute(
+              "aria-label",
+              "Fermer la fenêtre de suivi de commande",
+            );
+            actionBtn.onclick = window.closeTrackingModal;
+          }
+        }
+
+        // 🟢 STATUT : PRÊTE
+        else if (commande.statut === "prete") {
+          // Le badge devient Vert et vibre !
+          trackingBadge.className =
+            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
+          badgeText.innerText = "C'EST PRÊT !";
+
+          // La modale passe au vert
+          iconContainer.className =
+            "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
+          icon.className =
+            "fas fa-check text-5xl text-green-600 transition-transform duration-500";
+          title.innerText = "C'est prêt !";
+          title.className = "text-4xl font-black text-green-600 tracking-tight";
+          subtitle.innerText = "Présentez-vous au comptoir pour la récupérer.";
+
+          // 🪄 LE BOUTON FINAL !
+          if (actionBtn) {
+            actionBtn.innerHTML =
+              "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
+            actionBtn.className =
+              "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
+            actionBtn.setAttribute(
+              "aria-label",
+              "Fermer la fenêtre. Commande prête à être retirée.",
+            );
+            actionBtn.onclick = window.closeTrackingModal;
+          }
+
+          // Alertes système
+          window.showToast("🔔 DING ! Votre commande est PRÊTE !", "success");
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+          // On ouvre la modale automatiquement pour être sûr qu'il le voie !
+          openTrackingModal();
+        }
+
+        // ⚪ STATUT : TERMINÉE (L'archive)
+        else if (commande.statut === "terminee") {
+          window.showToast("Bon appétit ! À bientôt.", "success");
+
+          // 1. On oublie la commande en cours
+          localStorage.removeItem("activeOrderId");
+
+          // 2. On cache le bouton jaune qui flotte
+          if (trackingBadge) {
+            trackingBadge.className = "hidden";
+          }
+
+          // 3. ON FERME LA MODALE DE SUIVI
+          if (typeof window.closeTrackingModal === "function") {
+            window.closeTrackingModal();
+          }
+
+          // 4. On coupe l'écouteur Firebase pour ne pas facturer pour rien
+          if (unsubscribeClientRadar) {
+            unsubscribeClientRadar();
+            unsubscribeClientRadar = null;
+          }
+        }
+      }
+    },
+  );
 };
 
 // ==========================================
 // 🔄 AUTOMATISATION : PAUSE / REPRISE DU RADAR
 // ==========================================
 document.addEventListener("visibilitychange", () => {
-    const activeOrderId = localStorage.getItem("activeOrderId");
-    
-    // Si Le client n'a pas de commande en cours, on ne fait rien
-    if (!activeOrderId) return; 
+  const activeOrderId = localStorage.getItem("activeOrderId");
 
-    if (document.hidden) {
-        // 🛑 Le client a quitté l'onglet ou verrouillé son téléphone : On coupe Firestore !
-        if (unsubscribeClientRadar) {
-            unsubscribeClientRadar();
-            unsubscribeClientRadar = null;
-            console.log("🔴 Radar Client EN PAUSE (Économie de requêtes).");
-        }
-    } else {
-        // 🟢 Le client rouvre l'onglet pour vérifier où en est son Tacos : On rallume Firestore !
-        if (window.snackConfig?.features?.enableClickAndCollect) {
-            console.log("📡 Reprise du tracking pour la commande :", activeOrderId);
-            startOrderTracking(activeOrderId);
-        }
+  // Si Le client n'a pas de commande en cours, on ne fait rien
+  if (!activeOrderId) return;
+
+  if (document.hidden) {
+    // 🛑 Le client a quitté l'onglet ou verrouillé son téléphone : On coupe Firestore !
+    if (unsubscribeClientRadar) {
+      unsubscribeClientRadar();
+      unsubscribeClientRadar = null;
+      console.log("🔴 Radar Client EN PAUSE (Économie de requêtes).");
     }
+  } else {
+    // 🟢 Le client rouvre l'onglet pour vérifier où en est son Tacos : On rallume Firestore !
+    if (window.snackConfig?.features?.enableClickAndCollect) {
+      console.log("📡 Reprise du tracking pour la commande :", activeOrderId);
+      startOrderTracking(activeOrderId);
+    }
+  }
 });
 
 // À l'ouverture initiale de l'application
 document.addEventListener("DOMContentLoaded", () => {
-    const activeOrderId = localStorage.getItem("activeOrderId");
-    if (activeOrderId && window.snackConfig?.features?.enableClickAndCollect) {
-        startOrderTracking(activeOrderId);
-    }
+  const activeOrderId = localStorage.getItem("activeOrderId");
+  if (activeOrderId && window.snackConfig?.features?.enableClickAndCollect) {
+    startOrderTracking(activeOrderId);
+  }
 });
