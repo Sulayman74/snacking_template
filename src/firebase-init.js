@@ -157,100 +157,32 @@ function updateUI(user) {
   const cfg = window.snackConfig;
   if (!cfg) return;
   
-  document.title = cfg.identity.name;
-  
-  const metaDescription = document.querySelector('meta[name="description"]');
-  if (metaDescription && cfg.identity.description) {
-      metaDescription.setAttribute("content", cfg.identity.description);
-  }
-
   // 🎨 EXTRACTION DES COULEURS DU THÈME
   const primaryBg = cfg.theme.colors.primary;
   const textOnPrimary = cfg.theme.colors.textOnPrimary;
   const accentText = cfg.theme.colors.accent;
 
   // ==========================================
-  // 🎭 MODALES : Remplacement des logos génériques
+  // 🎭 MODALES : Remplacement des logos 
   // ==========================================
   const pwaIcon = document.getElementById("pwa-banner-icon");
   const reviewIcon = document.getElementById("review-modal-icon");
+  const navLogo = document.getElementById("nav-logo");
 
   if (cfg.identity && cfg.identity.logoUrl) {
-      // On remplace le logo dans la bannière d'installation
       if (pwaIcon) pwaIcon.src = cfg.identity.logoUrl;
-      
-      // On remplace le logo dans la modale d'avis
       if (reviewIcon) reviewIcon.src = cfg.identity.logoUrl;
-  }
-
-  // ==========================================
-  // 1. Navbar et Hero (Identité & Logo)
-  // ==========================================
-  const navName = document.getElementById("nav-name");
-  if (navName) navName.innerText = cfg.identity.name;
-
-  if (cfg.identity.logoUrl) {
-      // Change l'icône de l'onglet du navigateur
-      let favicon = document.querySelector('link[rel="icon"]');
-      if (favicon) favicon.href = cfg.identity.logoUrl;
-
-      // Change l'icône pour les iPhone/iPad
-      let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
-      if (appleIcon) appleIcon.href = cfg.identity.logoUrl;
-  }
-
-// ==========================================
-  // 📱 GÉNÉRATEUR DE PWA DYNAMIQUE (MARQUE BLANCHE)
-  // ==========================================
-  if (cfg.identity.logoUrl) {
-      
-      // 🛠️ 1. Traducteur Tailwind -> Hexadécimal (Pour que le téléphone comprenne les couleurs)
-      const twToHex = {
-          "bg-red-600": "#dc2626", "bg-red-100": "#fee2e2",
-          "bg-blue-600": "#2563eb", "bg-blue-100": "#dbeafe",
-          "bg-green-600": "#16a34a", "bg-green-100": "#dcfce7",
-          "bg-purple-500": "#a855f7", "bg-purple-100": "#f3e8ff",
-          "bg-yellow-400": "#facc15", "bg-yellow-100": "#fef9c3"
-      };
-
-      // On trouve la vraie couleur, ou on met noir/blanc par défaut
-      const themeHex = twToHex[cfg.theme?.colors?.primary] || "#000000";
-      const bgHex = twToHex[cfg.theme?.colors?.lightBg] || "#ffffff";
-
-      // 2. On fabrique le manifeste sur mesure
-      const dynamicManifest = {
-          "name": cfg.identity.name,
-          "short_name": cfg.identity.name,
-          "start_url": window.location.origin + "/", // ✅ URL Absolue pour éviter le bug du Blob !
-          "display": "standalone",
-          "background_color": bgHex, // ✅ Vrai code Hexadécimal
-          "theme_color": themeHex,   // ✅ Vrai code Hexadécimal
-          "icons": [
-              {
-                  "src": cfg.identity.logoUrl, 
-                  "sizes": "512x512",
-                  "type": "image/webp",
-                  "purpose": "any maskable"
-              }
-          ]
-      };
-
-      // 3. On transforme ce texte en un "faux" fichier virtuel
-      const blob = new Blob([JSON.stringify(dynamicManifest)], { type: 'application/json' });
-      const manifestURL = URL.createObjectURL(blob);
-
-      // 4. On remplace le lien du manifest dans le HTML par notre fichier virtuel
-      let manifestLink = document.querySelector('link[rel="manifest"]');
-      if (manifestLink) {
-          manifestLink.setAttribute('href', manifestURL);
+      if (navLogo) {
+          navLogo.src = cfg.identity.logoUrl;
+          navLogo.classList.remove("hidden"); 
       }
   }
 
-  const navLogo = document.getElementById("nav-logo");
-  if (navLogo && cfg.identity.logoUrl) {
-    navLogo.src = cfg.identity.logoUrl;
-    navLogo.classList.remove("hidden"); 
-  }
+  // ==========================================
+  // 1. Identité (Navbar & Hero)
+  // ==========================================
+  const navName = document.getElementById("nav-name");
+  if (navName) navName.innerText = cfg.identity.name;
 
   const heroTitle = document.getElementById("hero-title");
   if (heroTitle) heroTitle.innerText = cfg.identity.name;
@@ -259,7 +191,7 @@ function updateUI(user) {
   if (heroDesc) heroDesc.innerText = cfg.identity.description;
 
   const heroSection = document.getElementById("hero");
-  if (heroSection) {
+  if (heroSection && cfg.identity.heroImg) {
     heroSection.style.backgroundImage = `url('${cfg.identity.heroImg}')`;
   }
 
@@ -270,12 +202,12 @@ function updateUI(user) {
   const mobileCtaIcon = document.getElementById("mobile-cta-icon");
   const desktopCtaBtn = document.getElementById("cta-nav"); 
 
-  if (cfg.features) {
+  // On vérifie si la prise de commande est activée avant de calculer tout ça
+  if (cfg.features && cfg.features.enableOnlineOrder !== false) {
     const isDelivery = cfg.features.enableDelivery === true;
     const phoneClean = cfg.contact?.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
 
     if (mobileCtaBtn && mobileCtaIcon) {
-      // Nettoyage des anciennes classes de couleurs potentielles
       mobileCtaBtn.className = mobileCtaBtn.className.replace(/bg-\w+-\d+/g, '').replace(/text-\w+-\d+/g, '').replace('text-white', '').replace('text-black', '');
       
       if (isDelivery) {
@@ -286,7 +218,6 @@ function updateUI(user) {
       } else {
         mobileCtaBtn.href = `tel:${phoneClean}`;
         mobileCtaBtn.removeAttribute("target");
-        // Le bouton d'appel reste vert classique, c'est une convention UI universelle
         mobileCtaBtn.classList.add("bg-green-600", "text-white");
         mobileCtaIcon.className = "fas fa-phone text-2xl animate-pulse";
       }
@@ -312,7 +243,6 @@ function updateUI(user) {
   // ==========================================
   // 📍 MISE À JOUR DU FOOTER (Adresse & Tél avec Accent Color)
   // ==========================================
-
   const findUs = document.getElementById("find-us");
   const oClock = document.getElementById("o-clock");
 
@@ -340,9 +270,10 @@ function updateUI(user) {
       
       let mapLink = a.googleMapsUrl;
       if (!mapLink) {
+          // CORRECTION DU BUG LIEN GOOGLE MAPS ICI 👇
           mapLink = isApple 
             ? `https://maps.apple.com/?q=${encodeURIComponent(fullAddr)}` 
-            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}`;
+            : `https://maps.google.com/?q=${encodeURIComponent(fullAddr)}`; 
       }
 
       const iconClass = isApple ? "fa-map" : "fa-location-dot";
@@ -357,36 +288,29 @@ function updateUI(user) {
     }
   }
 
-// ==========================================
-  // 3. Réseaux Sociaux & Horaires (Couleurs Officielles)
+  // ==========================================
+  // 3. Réseaux Sociaux & Horaires
   // ==========================================
   const socialsContainer = document.getElementById("socials-container");
   const s = cfg.contact.socials;
   
   if (socialsContainer && cfg.contact.socials) {
     socialsContainer.innerHTML = "";
-    
-    // On s'assure que le conteneur a de l'espace et que les icônes sont grandes
     socialsContainer.className = "flex gap-5 text-3xl mt-4 pt-4 border-t border-gray-700/50";
 
     if (s.instagram) {
-      // 📸 INSTAGRAM : Le fameux dégradé Jaune -> Rouge -> Violet
       socialsContainer.innerHTML += `
         <a href="https://instagram.com/${s.instagram.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
             <i class="fab fa-instagram bg-linear-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-transparent bg-clip-text"></i>
         </a>`;
     }
-    
     if (s.facebook) {
-      // 📘 FACEBOOK : Le bleu officiel (#1877F2)
       socialsContainer.innerHTML += `
         <a href="https://facebook.com/${s.facebook}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
             <i class="fab fa-facebook text-[#1877F2]"></i>
         </a>`;
     }
-    
     if (s.tiktok) {
-      // 🎵 TIKTOK : Blanc par défaut (car le footer est sombre), mais avec une ombre portée "Glitch" rose fluo au survol !
       socialsContainer.innerHTML += `
         <a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300 group">
             <i class="fab fa-tiktok text-white group-hover:drop-shadow-[2px_2px_0_#ff0050] transition-all"></i>
@@ -458,10 +382,11 @@ function updateUI(user) {
           "postalCode": a.zip,
           "addressCountry": "FR"
       },
-      "geo": { "@type": "GeoCoordinates", "latitude": "46.0780", "longitude": "6.4074" },
+      // J'ai supprimé les coordonnées GPS "geo" statiques ici.
       "sameAs": [
-          s?.instagram ? `https://instagram.com/${s.instagram}` : "",
-          s?.facebook ? `https://facebook.com/${s.facebook}` : ""
+          s?.instagram ? `https://instagram.com/${s.instagram.replace("@", "")}` : "",
+          s?.facebook ? `https://facebook.com/${s.facebook}` : "",
+          s?.tiktok ? `https://tiktok.com/@${s.tiktok.replace("@", "")}` : ""
       ].filter(Boolean),
       "servesCuisine": "Fast Food",
       "priceRange": "€",
@@ -473,7 +398,10 @@ function updateUI(user) {
   script.type = 'application/ld+json';
   script.textContent = JSON.stringify(schemaData);
   document.head.appendChild(script);
-  window.applySaaSThemeToHTML();
+  
+  if (typeof window.applySaaSThemeToHTML === "function") {
+      window.applySaaSThemeToHTML();
+  }
 }
 
 // ============================================================================
@@ -553,7 +481,7 @@ onAuthStateChanged(auth, async (user) => {
   const forcedSnackId = urlParams.get('s'); // Cherche ?s=... dans l'URL
   const hostname = window.location.hostname;
 
-  let snackIdToLoad = "Ym1YiO4Ue5Fb5UXlxr06";
+  let snackIdToLoad = window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
 
   try {
       if (forcedSnackId) {

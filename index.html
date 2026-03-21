@@ -586,7 +586,7 @@
             <i class="fas fa-times text-xl"></i>
           </button>
         </div>
-        <div class="px-4 mt-6 mb-4 mx-auto">
+        <div class="mt-6 mb-4 mx-auto">
           <div class="relative mx-auto my-2">
             <input
               type="text"
@@ -942,7 +942,7 @@
             "
             id="nav-btn-menu"
             aria-label="Voir la carte du restaurant"
-            class="flex flex-col items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95 rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:bg-white/10 group"
+            class="relative z-10 flex flex-col items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95 rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:bg-white/10 group"
           >
             <i
               class="fas fa-hamburger text-xl mb-0.5 transition-transform group-hover:-translate-y-1"
@@ -959,7 +959,7 @@
 
     <div
       id="auth-modal"
-      class="fixed inset-0 bg-gray-900/80 z-[100] hidden flex flex-col items-center justify-center p-4 backdrop-blur-md"
+      class="fixed inset-0 bg-gray-900/80 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md"
     >
       <div
         class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95 md:scale-100"
@@ -1511,7 +1511,7 @@
         class="bg-white w-full max-w-md rounded-3xl p-6 relative shadow-2xl transform transition-transform scale-95"
       >
         <button
-        id="tracking-action-btn"
+        id="tracking-close-btn"
           onclick="closeTrackingModal()"
           class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full transition w-10 h-10 flex items-center justify-center z-10"
         >

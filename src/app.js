@@ -1,36 +1,6 @@
 import "./bridge.js";
 import "./snack-config.js";
 import "./firebase-init.js";
-// ============================================================================
-// GESTION DU SERVICE WORKER (PWA) & MODE DEV
-// ============================================================================
-const isLocalhost =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1";
-
-if ("serviceWorker" in navigator) {
-  if (!isLocalhost) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("./sw.js")
-        .then((registration) =>
-          console.log("✅ Service Worker enregistré.", registration.scope),
-        )
-        .catch((error) => console.error("❌ Erreur Service Worker", error));
-    });
-  } else {
-    console.log("🛠️ Mode Dev : Nettoyage des SW (Sauf Firebase)...");
-    navigator.serviceWorker.getRegistrations().then(function (registrations) {
-      for (let registration of registrations) {
-        const swUrl = registration.active?.scriptURL || "";
-        if (!swUrl.includes("firebase-messaging-sw")) {
-          registration.unregister();
-          console.log("🗑️ Ancien SW de cache supprimé.");
-        }
-      }
-    });
-  }
-}
 
 // ============================================================================
 // 2. INITIALISATION DYNAMIQUE
