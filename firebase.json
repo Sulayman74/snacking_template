@@ -5,12 +5,6 @@
       "public": "dist",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [ { "source": "**", "destination": "/index.html" } ]
-    },
-    {
-      "target": "burger_street",
-      "public": "dist",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [ { "source": "**", "destination": "/index.html" } ]
     }
   ],
   "functions": [
