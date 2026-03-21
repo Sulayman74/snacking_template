@@ -170,29 +170,6 @@ function updateUI(user) {
   const accentText = cfg.theme.colors.accent;
 
   // ==========================================
-  // 0. SPLASH SCREEN (Logo et Ombre Dynamique)
-  // ==========================================
-  const splashLogo = document.getElementById("splash-logo");
-  if (splashLogo && cfg.identity) {
-      // 1. On remplace l'image et le texte alternatif
-      if (cfg.identity.logoUrl){
-        splashLogo.src = cfg.identity.logoUrl;
-        splashLogo.classList.remove("hidden");
-      } 
-      if (cfg.identity.name) splashLogo.alt = cfg.identity.name;
-
-      // 🎨 BONUS SÉNIOR : On adapte l'ombre colorée au thème du client !
-      // Ton ombre rouge codée en dur n'ira pas du tout si le thème du client est Bleu Océan...
-      if (cfg.theme && cfg.theme.colors && cfg.theme.colors.primary) {
-          // On retire ton ombre rouge par défaut
-          splashLogo.className = splashLogo.className.replace(/shadow-\[0_0_40px_rgba\(\d+,\d+,\d+,[\d.]+\)\]/g, '');
-          
-          // On crée une ombre dynamique basée sur la couleur primaire (ex: transforme "bg-blue-600" en "shadow-blue-600")
-          const shadowColor = cfg.theme.colors.primary.replace('bg-', 'shadow-'); 
-          splashLogo.classList.add('shadow-2xl', shadowColor);
-      }
-  }
-  // ==========================================
   // 🎭 MODALES : Remplacement des logos génériques
   // ==========================================
   const pwaIcon = document.getElementById("pwa-banner-icon");
