@@ -6,6 +6,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
+    # 🎯 1. LA MATRICE : C'est ici que tu listes tes clients
+    # La CI va répéter tous les "steps" en dessous pour chaque snack de cette liste
+    strategy:
+      matrix:
+        snack_id: [otacos_bonneville, burger_street] # 👈 À remplacer par tes vrais ID de snacks
+
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
@@ -18,13 +25,18 @@ jobs:
       - name: 📦 Install dependencies
         run: npm install # Installe Vite, Tailwind et Firebase
 
-      - name: 🏗️ Build project
-        run: npm run build # Génère le dossier /dist optimisé
+      - name: 🏗️ Build project pour ${{ matrix.snack_id }}
+        # 💉 2. L'INJECTION : On glisse l'ID dans le terminal virtuel
+        env:
+          SNACK_ID: ${{ matrix.snack_id }}
+        run: npm run build # Vite va générer un /dist sur-mesure pour ce snack
 
-      - name: 🚀 Deploy to Firebase Hosting
+      - name: 🚀 Deploy to Firebase Hosting (${{ matrix.snack_id }})
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_SNACKING_TEMPLATE }}"
           channelId: live
           projectId: snacking-template
+          # 🎯 3. LA CIBLE : On dit à Firebase sur quel sous-domaine envoyer ce /dist
+          target: ${{ matrix.snack_id }}

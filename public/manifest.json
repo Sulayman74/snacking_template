@@ -6,7 +6,7 @@
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#000000", 
-  "theme_color": "#DC2626",
+  "theme_color": "#1E2938",
   "icons": [
     {
       "src": "assets/icon-192.webp",
