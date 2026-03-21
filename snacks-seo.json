@@ -1,0 +1,16 @@
+{
+  "otacos_bonneville": {
+    "title": "O'Tacos Fusion Bonneville | Click & Collect",
+    "desc": "Découvrez le menu digital : Burgers, Tacos, Sandwich",
+    "logoUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
+    "color": "#1E2938",
+    "shadowClass": "shadow-red-600/40"
+  },
+  "burger_street": {
+    "title": "Burger Street | Smash Burgers authentiques",
+    "desc": "Les meilleurs smash burgers.",
+    "color": "#FFA500",
+    "logoUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2FYm1YiO4Ue5Fb5UXlxr06%2F1773918382296_burgers.webp?alt=media&token=9a156b0e-abd6-4128-9d51-b7cfc820cda1",
+    "shadowClass": "shadow-yellow-500/40"
+  }
+}

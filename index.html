@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-      %VITE_SEO_TITLE%
+      {{SEO_TITLE}}
     </title>
     <!-- <meta http-equiv="Content-Security-Policy" content="
         default-src 'self'; 
@@ -14,8 +14,8 @@
         font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; 
         connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com;
     "> -->
-   <meta name="description" content="%VITE_SEO_DESC%" />
-<meta name="theme-color" content="%VITE_THEME_COLOR%" id="theme-color-meta" />
+   <meta name="description" content="{{SEO_DESC}}" />
+<meta name="theme-color" content="{{THEME_COLOR}}" id="theme-color-meta" />
     <meta
       property="og:title"
       content="Le snack du coin | en ville, rapide. Commander en ligne"
@@ -31,7 +31,6 @@
     <meta property="og:url" content="https://snacking-template.web.app/" />
     <meta property="og:type" content="restaurant" />
 
-    <link rel="manifest" href="/manifest.json" />
     <link
       rel="icon"
       type="image/webp"
@@ -283,21 +282,38 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin />
+    <link rel="preload" as="image" href="{{LOGO_URL}}" />
     <link rel="stylesheet" href="src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
 
   <body class="bg-gray-50 text-gray-800">
+        <!-- SCRIPT DE TRANSITION APP SHELL -->
+    <script>
+      window.CURRENT_SNACK_ID = "{{SNACK_ID}}"; 
+      // Dès que le DOM est lu, on masque le splash screen très vite (300ms)
+      // pour révéler l'App Shell (le site avec les Skeleton Loaders) pendant que Firebase charge.
+      window.addEventListener("DOMContentLoaded", () => {
+        const splash = document.getElementById("splash-screen");
+        if (splash) {
+          setTimeout(() => {
+            splash.style.opacity = "0";
+            setTimeout(() => (splash.style.display = "none"), 200);
+          }, 500);
+        }
+      });
+    </script>
     <div
       id="splash-screen"
       class="fixed inset-0 z-9999 bg-gray-900 flex flex-col items-center justify-center transition-opacity duration-500"
     >
       <img
         id="splash-logo"
-        src=""
-        alt="Logo du Snack"
-        class="hidden w-32 h-32 animate-pulse mb-8 rounded-3xl shadow-[0_0_40px_rgba(220,38,38,0.4)]"
+        src="{{LOGO_URL}}"
+        alt="{{SEO_TITLE}}"
+        class="hidden w-32 h-32 animate-pulse mb-8 rounded-3xl shadow-[0_0_40px_var(--tw-shadow-color)] {{SHADOW_CLASS}}"
       />
 
       <div class="relative w-14 h-14">
@@ -315,21 +331,6 @@
         Tout est prêt...
       </p>
     </div>
-
-    <!-- SCRIPT DE TRANSITION APP SHELL -->
-    <script>
-      // Dès que le DOM est lu, on masque le splash screen très vite (300ms)
-      // pour révéler l'App Shell (le site avec les Skeleton Loaders) pendant que Firebase charge.
-      window.addEventListener("DOMContentLoaded", () => {
-        const splash = document.getElementById("splash-screen");
-        if (splash) {
-          setTimeout(() => {
-            splash.style.opacity = "0";
-            setTimeout(() => (splash.style.display = "none"), 500);
-          }, 300);
-        }
-      });
-    </script>
 
     <nav
       id="navbar"
