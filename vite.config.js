@@ -10,7 +10,7 @@ if (fs.existsSync(seoPath)) {
   snacksSeo = JSON.parse(fs.readFileSync(seoPath, 'utf-8'));
 } else {
   snacksSeo = {
-    "otacos_bonneville": {
+    "Ym1YiO4Ue5Fb5UXlxr06": {
       "title": "O'Tacos Fusion",
       "desc": "Les meilleurs Tacos et Burgers de la ville en Click & Collect et Livraison.",
       "theme_color": "#1E2938",
@@ -21,8 +21,8 @@ if (fs.existsSync(seoPath)) {
 }
 
 export default defineConfig(() => {
-  const currentSnackId = process.env.SNACK_ID || 'otacos_bonneville'
-  const seoData = snacksSeo[currentSnackId] || snacksSeo["otacos_bonneville"];
+  const currentSnackId = process.env.SNACK_ID || 'Ym1YiO4Ue5Fb5UXlxr06'
+  const seoData = snacksSeo[currentSnackId] || snacksSeo["Ym1YiO4Ue5Fb5UXlxr06"];
 
   return {
     plugins: [

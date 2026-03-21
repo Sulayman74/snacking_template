@@ -1,7 +1,7 @@
 {
   "hosting": [
     {
-      "target": "otacos_bonneville",
+      "target": "Ym1YiO4Ue5Fb5UXlxr06",
       "public": "dist",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [ { "source": "**", "destination": "/index.html" } ]

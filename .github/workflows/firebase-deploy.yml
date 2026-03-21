@@ -11,7 +11,7 @@ jobs:
     # La CI va répéter tous les "steps" en dessous pour chaque snack de cette liste
     strategy:
       matrix:
-        snack_id: [otacos_bonneville, burger_street] # 👈 À remplacer par tes vrais ID de snacks
+        snack_id: [Ym1YiO4Ue5Fb5UXlxr06, burger_street] # 👈 À remplacer par tes vrais ID de snacks
 
     steps:
       - name: 📥 Checkout repository

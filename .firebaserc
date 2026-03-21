@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "snacking-template"
-  }
+  },
+  "targets": {
+    "snacking-template": {
+      "hosting": {
+        "Ym1YiO4Ue5Fb5UXlxr06": [
+          "Team-fusion"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
