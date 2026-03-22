@@ -135,38 +135,51 @@ window.chargerMenuComplet = async () => {
 
     const cfg = window.snackConfig;
 
-// 🏆 AFFICHER LES BEST SELLERS (Méthode Hybride)
-        if (bestSellersContainer) {
-            bestSellersContainer.innerHTML = "";
-            
-            const top3 = [...tousLesProduits].sort((a, b) => {
-                // 1. On vérifie si les produits ont un tag "Star", "Populaire" ou "Best"
-                const aTags = Array.isArray(a.tags) ? a.tags.join(" ").toLowerCase() : (a.tags || "").toLowerCase();
-                const bTags = Array.isArray(b.tags) ? b.tags.join(" ").toLowerCase() : (b.tags || "").toLowerCase();
-                
-                const isAStar = aTags.includes("star") || aTags.includes("populaire") || aTags.includes("nouveau");
-                const isBStar = bTags.includes("star") || bTags.includes("populaire") || bTags.includes("nouveau");
+    // 🏆 AFFICHER LES BEST SELLERS (Méthode Hybride)
+    if (bestSellersContainer) {
+      bestSellersContainer.innerHTML = "";
 
-                // 2. Priorité absolue au tag manuel !
-                if (isAStar && !isBStar) return -1; // A passe devant
-                if (!isAStar && isBStar) return 1;  // B passe devant
+      const top3 = [...tousLesProduits]
+        .sort((a, b) => {
+          // 1. On vérifie si les produits ont un tag "Star", "Populaire" ou "Best"
+          const aTags = Array.isArray(a.tags)
+            ? a.tags.join(" ").toLowerCase()
+            : (a.tags || "").toLowerCase();
+          const bTags = Array.isArray(b.tags)
+            ? b.tags.join(" ").toLowerCase()
+            : (b.tags || "").toLowerCase();
 
-                // 3. S'ils sont à égalité (tous les 2 tagués, ou aucun tagué), 
-                // l'algorithme tranche avec le nombre de ventes sur l'app.
-                return (b.ventes || 0) - (a.ventes || 0);
-            }).slice(0, 3);
+          const isAStar =
+            aTags.includes("star") ||
+            aTags.includes("populaire") ||
+            aTags.includes("nouveau");
+          const isBStar =
+            bTags.includes("star") ||
+            bTags.includes("populaire") ||
+            bTags.includes("nouveau");
 
-            if (top3.length > 0) {
-                top3.forEach((item, index) => {
-                    bestSellersContainer.innerHTML += `
+          // 2. Priorité absolue au tag manuel !
+          if (isAStar && !isBStar) return -1; // A passe devant
+          if (!isAStar && isBStar) return 1; // B passe devant
+
+          // 3. S'ils sont à égalité (tous les 2 tagués, ou aucun tagué),
+          // l'algorithme tranche avec le nombre de ventes sur l'app.
+          return (b.ventes || 0) - (a.ventes || 0);
+        })
+        .slice(0, 3);
+
+      if (top3.length > 0) {
+        top3.forEach((item, index) => {
+          bestSellersContainer.innerHTML += `
                         <div class="animate-fade-in-up" style="animation-fill-mode: both; animation-delay: ${index * 150}ms;">
                             ${createProductCard(item, cfg)}
                         </div>`;
-                });
-            } else {
-                bestSellersContainer.innerHTML = "<p class='text-gray-500'>Aucun best-seller.</p>";
-            }
-        }
+        });
+      } else {
+        bestSellersContainer.innerHTML =
+          "<p class='text-gray-500'>Aucun best-seller.</p>";
+      }
+    }
 
     // 🌮 AFFICHER LE MENU PAR CATÉGORIES
     if (fullMenuContainer) {
@@ -289,7 +302,7 @@ function createProductCard(item, cfg) {
                     <h4 class="text-lg font-bold ${textColor} leading-tight">${nomAffiche}</h4>
                     <span class="text-xl font-black ${priceColor} whitespace-nowrap">${parseFloat(prixAffiche).toFixed(2)}${devise}</span>
                 </div>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 line-clamp-2">${item.description || ""}</p>
+                <p class="text-sm text-gray-200 mb-6 line-clamp-2">${item.description || ""}</p>
             </div>
             
             <button class="w-full py-3 mt-auto rounded-xl border border-gray-300 dark:border-gray-600 ${textColor} hover:${isAvailable ? cfg.theme.colors.primary : ""} hover:border-transparent hover:text-white transition-all font-bold flex items-center justify-center gap-2">
@@ -417,7 +430,7 @@ window.switchView = function (viewName) {
     // 2. Gestion des états actifs (Couleurs + Animations)
     btnHome?.classList.replace("text-white", "text-gray-400");
     btnMenu?.classList.replace("text-gray-400", "text-white");
-    
+
     // Ajout d'une classe pour déclencher l'animation de rebond sur l'icône
     btnMenu?.classList.add("nav-active");
     btnHome?.classList.remove("nav-active");
@@ -440,7 +453,7 @@ window.switchView = function (viewName) {
 
     btnHome?.classList.replace("text-gray-400", "text-white");
     btnMenu?.classList.replace("text-white", "text-gray-400");
-    
+
     btnHome?.classList.add("nav-active");
     btnMenu?.classList.remove("nav-active");
 
@@ -451,7 +464,7 @@ window.switchView = function (viewName) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
-};  
+};
 
 // ============================================================================
 // window.openProductModal = function (itemId) {
@@ -1067,6 +1080,8 @@ window.openProductModal = function (itemId) {
     prixBase: item.prix || item.price || 0,
     prixMenu: item.menuPriceAdd || 2.5, // Supplément menu (à ajuster si besoin)
     image: item.image,
+    // 🎯 NOUVEAU : On lit la valeur de allowMenu (true par défaut si non spécifié)
+    allowMenu: item.allowMenu !== false 
   };
 
   const devise = cfg.identity.currency || "€";
@@ -1077,16 +1092,11 @@ window.openProductModal = function (itemId) {
   const modalImg = document.getElementById("modal-img");
   const imgContainer = modalImg.parentElement;
 
-  // On nettoie un éventuel ancien fallback d'un clic précédent
   const oldFallback = document.getElementById("modal-img-fallback");
   if (oldFallback) oldFallback.remove();
 
-  const imageUrl =
-    currentProduct.image && currentProduct.image.trim() !== ""
-      ? currentProduct.image
-      : null;
+  const imageUrl = currentProduct.image && currentProduct.image.trim() !== "" ? currentProduct.image : null;
 
-  // Le bloc HTML de secours (identique à la grille)
   const fallbackHTML = `
       <div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0">
           <i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i>
@@ -1094,9 +1104,8 @@ window.openProductModal = function (itemId) {
   `;
 
   if (imageUrl) {
-    modalImg.style.display = "block"; // On réaffiche l'image
+    modalImg.style.display = "block"; 
     modalImg.src = imageUrl;
-    // Si l'image charge mais que le lien est cassé (Erreur 404) :
     modalImg.onerror = function () {
       this.style.display = "none";
       if (!document.getElementById("modal-img-fallback")) {
@@ -1104,7 +1113,6 @@ window.openProductModal = function (itemId) {
       }
     };
   } else {
-    // S'il n'y a pas d'URL d'image du tout en base de données :
     modalImg.style.display = "none";
     imgContainer.insertAdjacentHTML("beforeend", fallbackHTML);
   }
@@ -1113,14 +1121,11 @@ window.openProductModal = function (itemId) {
   document.getElementById("modal-desc").innerText = item.description || "";
 
   // 3. Gérer les allergènes
-  const allergenContainer = document.getElementById(
-    "modal-allergens-container",
-  );
+  const allergenContainer = document.getElementById("modal-allergens-container");
   const allergenesList = item.allergenes || item.allergens;
   if (allergenesList && allergenesList.length > 0) {
     allergenContainer.classList.remove("hidden");
-    document.getElementById("modal-allergens").innerText =
-      allergenesList.join(", ");
+    document.getElementById("modal-allergens").innerText = allergenesList.join(", ");
   } else {
     allergenContainer.classList.add("hidden");
   }
@@ -1131,8 +1136,7 @@ window.openProductModal = function (itemId) {
   const btn = document.getElementById("modal-cta");
   const optionsContainer = document.getElementById("modal-options-container");
 
-  const isClickAndCollect =
-    cfg.features && cfg.features.enableClickAndCollect === true;
+  const isClickAndCollect = cfg.features && cfg.features.enableClickAndCollect === true;
   const isPhoneOrder = cfg.features && cfg.features.enableOnlineOrder === true;
 
   if (item.isAvailable === false) {
@@ -1142,76 +1146,82 @@ window.openProductModal = function (itemId) {
     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
     btn.removeAttribute("href");
     btn.onclick = null;
+    
   } else if (isClickAndCollect) {
     // 🛒 2. MODE PANIER (Click & Collect = true) -> E-commerce pur
+    
     if (optionsContainer) {
-      optionsContainer.classList.remove("hidden");
+      if (currentProduct.allowMenu) {
+          // ✅ MENU AUTORISÉ (Le client peut choisir Frites + Boisson)
+          optionsContainer.classList.remove("hidden");
 
-      // 🎨 APPLICATION DU THÈME AUX BOUTONS RADIO (Formule) ET TEXTES
-      const accentColor = cfg.theme.colors.accent; // ex: 'text-blue-600'
-      const lightBgColor = cfg.theme.colors.lightBg || "bg-gray-50"; // ex: 'bg-blue-50'
-      const bgFocusColor = accentColor.replace("text-", "focus:ring-"); // ex: 'focus:ring-blue-600'
+          // 🎨 Thème dynamique
+          const accentColor = cfg.theme.colors.accent || "text-red-600"; 
+          const lightBgColor = cfg.theme.colors.lightBg || "bg-gray-50"; 
+          const bgFocusColor = accentColor.replace("text-", "focus:ring-"); 
 
-      // 🥤 FABRICATION DES BOUTONS DE BOISSONS (100% DYNAMIQUE)
-      const boissonsDispo = menuGlobal.filter(
-        (item) => item.categorieId === "drinks" && item.isAvailable !== false,
-      );
-      const listeBoissons =
-        boissonsDispo.length > 0
-          ? boissonsDispo
-          : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
+          // 🥤 Récupère les vraies boissons depuis Firestore
+          const boissonsDispo = menuGlobal.filter(
+            (item) => item.categorieId === "drinks" && item.isAvailable !== false,
+          );
+          const listeBoissons = boissonsDispo.length > 0 ? boissonsDispo : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
 
-      const drinksHTML = listeBoissons
-        .map(
-          (boisson, index) => `
-              <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
-                  <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="w-5 h-5 ${accentColor} ${bgFocusColor}">
-                  <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
-              </label>
-          `,
-        )
-        .join("");
-
-      // INJECTION DU HTML GLOBAL DE LA MODALE OPTIONS
-      optionsContainer.innerHTML = `
-              <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h4>
-              <div class="space-y-2 mb-4">
-                  <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
-                      <div class="flex items-center gap-3">
-                          <input type="radio" name="formule" value="seul" checked onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
-                          <span class="font-medium text-black text-sm">Seul</span>
-                      </div>
-                      <span id="modal-price-seul" class="text-black font-bold text-sm">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
+          const drinksHTML = listeBoissons
+            .map((boisson, index) => `
+                  <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
+                      <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="w-5 h-5 ${accentColor} ${bgFocusColor}">
+                      <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
                   </label>
-                  <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:${lightBgColor} transition">
-                      <div class="flex items-center gap-3">
-                          <input type="radio" name="formule" value="menu" onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
-                          <div>
-                              <span class="font-medium text-black text-sm block">En Menu</span>
-                              <span class="text-[10px] ${accentColor} uppercase font-bold">Frites + Boisson</span>
+              `)
+            .join("");
+
+          // INJECTION DU HTML DANS LA MODALE
+          optionsContainer.innerHTML = `
+                  <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h4>
+                  <div class="space-y-2 mb-4">
+                      <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                          <div class="flex items-center gap-3">
+                              <input type="radio" name="formule" value="seul" checked onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
+                              <span class="font-medium text-black text-sm">Seul</span>
                           </div>
-                      </div>
-                      <span id="modal-price-menu" class="font-bold text-sm ${accentColor}">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
-                  </label>
-              </div>
-
-              <div id="drink-section" class="hidden opacity-0 transition-opacity duration-300">
-                  <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">2. Choix de la boisson</h4>
-                  <div class="grid grid-cols-2 gap-2" id="drinks-container">
-                      ${drinksHTML}
+                          <span id="modal-price-seul" class="text-black font-bold text-sm">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
+                      </label>
+                      <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:${lightBgColor} transition">
+                          <div class="flex items-center gap-3">
+                              <input type="radio" name="formule" value="menu" onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
+                              <div>
+                                  <span class="font-medium text-black text-sm block">En Menu</span>
+                                  <span class="text-[10px] ${accentColor} uppercase font-bold">Frites + Boisson</span>
+                              </div>
+                          </div>
+                          <span id="modal-price-menu" class="font-bold text-sm ${accentColor}">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
+                      </label>
                   </div>
-              </div>
-          `;
+
+                  <div id="drink-section" class="hidden opacity-0 transition-opacity duration-300">
+                      <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">2. Choix de la boisson</h4>
+                      <div class="grid grid-cols-2 gap-2" id="drinks-container">
+                          ${drinksHTML}
+                      </div>
+                  </div>
+              `;
+              
+          if (typeof window.toggleDrinkSection === "function") window.toggleDrinkSection();
+          
+      } else {
+          // 🚫 MENU NON AUTORISÉ (C'est un dessert, une boisson, etc.)
+          optionsContainer.classList.add("hidden");
+          optionsContainer.innerHTML = ""; // On nettoie pour éviter des bugs radio
+          btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+      }
     }
 
     btn.removeAttribute("href");
     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
     btn.onclick = window.confirmAddToCart;
 
-    if (typeof window.toggleDrinkSection === "function")
-      window.toggleDrinkSection();
   } else if (isPhoneOrder) {
-    // ☎️ 3. MODE APPEL (OnlineOrder = true, ClickAndCollect = false) -> Commande par téléphone
+    // ☎️ 3. MODE APPEL (ClickAndCollect = false) -> Commande par téléphone
     if (optionsContainer) optionsContainer.classList.add("hidden");
 
     const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
@@ -1221,7 +1231,7 @@ window.openProductModal = function (itemId) {
     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-green-600 hover:bg-green-700 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
     btn.onclick = null;
   } else {
-    // 🛑 4. MODE VITRINE PUR (Les deux sont false) -> Juste consulter le menu
+    // 🛑 4. MODE VITRINE PUR -> Juste consulter le menu
     if (optionsContainer) optionsContainer.classList.add("hidden");
     btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
     btn.className = `w-full cursor-pointer py-4 rounded-xl font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 transition-all mt-auto flex justify-center items-center gap-2`;
@@ -1233,84 +1243,68 @@ window.openProductModal = function (itemId) {
   }
 
   // ==========================================
-  // 🚀 LOGIQUE DE PARTAGE VIRAL (Mobile & Desktop)
+  // 🚀 LOGIQUE DE PARTAGE VIRAL (Web Share)
   // ==========================================
   const shareBtn = document.getElementById("modal-share-btn");
 
   if (shareBtn && cfg.features && cfg.features.enableViralShare) {
-    shareBtn.classList.remove("hidden"); // On affiche le bouton
-
+    shareBtn.classList.remove("hidden");
     shareBtn.onclick = async () => {
-      // 📳 Petit clic haptique
-      if (typeof window.triggerVibration === "function") {
-        window.triggerVibration("light");
-      }
-
+      if (typeof window.triggerVibration === "function") window.triggerVibration("light");
       const shareTitle = `Découvre ${currentProduct.nom} chez ${cfg.identity?.name || "nous"} !`;
       const shareText = `Mec, regarde cette dinguerie : ${currentProduct.nom} à ${currentProduct.prixBase.toFixed(2)}${devise}. On teste ça quand ? 🤤🍔`;
       const shareUrl = window.location.href;
 
-      // 1. Tente le partage natif (Parfait pour iOS/Android et PC récents)
       if (navigator.share) {
         try {
-          await navigator.share({
-            title: shareTitle,
-            text: shareText,
-            url: shareUrl,
-          });
-          if (typeof window.triggerVibration === "function") {
-            window.triggerVibration("success");
-          }
-        } catch (err) {
-          console.log("Partage annulé ou fermé :", err);
-        }
-      }
-      // 2. FALLBACK DESKTOP : Copie dans le presse-papier si pas de partage natif
-      else if (navigator.clipboard) {
+          await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+          if (typeof window.triggerVibration === "function") window.triggerVibration("success");
+        } catch (err) { console.log("Partage annulé ou fermé."); }
+      } else if (navigator.clipboard) {
         try {
-          await navigator.clipboard.writeText(
-            `${shareTitle}\n${shareText}\nLien : ${shareUrl}`,
-          );
-
-          // Utilise ta fonction showToast existante pour rassurer le client sur PC
-          if (typeof window.showToast === "function") {
-            window.showToast(
-              "Lien copié dans le presse-papier ! 📋",
-              "success",
-            );
-          } else {
-            alert("Lien copié dans le presse-papier ! 📋");
-          }
-
-          if (typeof window.triggerVibration === "function") {
-            window.triggerVibration("success");
-          }
-        } catch (err) {
-          console.error("Erreur de copie :", err);
-        }
+          await navigator.clipboard.writeText(`${shareTitle}\n${shareText}\nLien : ${shareUrl}`);
+          if (typeof window.showToast === "function") window.showToast("Lien copié dans le presse-papier ! 📋", "success");
+        } catch (err) { console.error("Erreur de copie"); }
       }
     };
   } else if (shareBtn) {
-    // On cache le bouton si la feature est désactivée en BDD
     shareBtn.classList.add("hidden");
   }
 
-  // 4. Affichage de la Modale
+  // Affichage de la Modale
   const backdrop = document.getElementById("product-modal-backdrop");
   const sheet = document.getElementById("product-modal");
   backdrop.classList.remove("hidden");
 
   setTimeout(() => {
     backdrop.classList.remove("opacity-0");
-    sheet.classList.remove(
-      "translate-y-full",
-      "md:opacity-0",
-      "md:pointer-events-none",
-      "md:scale-95",
-    );
+    sheet.classList.remove("translate-y-full", "md:opacity-0", "md:pointer-events-none", "md:scale-95");
   }, 10);
 
   document.body.style.overflow = "hidden";
+};
+
+// ============================================================================
+// 🍹 BASCULE AFFICHAGE BOISSONS (Si l'option Menu est cochée)
+// ============================================================================
+window.toggleDrinkSection = function () {
+  const formuleInput = document.querySelector('input[name="formule"]:checked');
+  if (!formuleInput) return; // Sécurité si "allowMenu" est false
+  
+  const isMenu = formuleInput.value === "menu";
+  const drinkSection = document.getElementById("drink-section");
+  const btn = document.getElementById("modal-cta");
+  const devise = window.snackConfig.identity.currency || "€";
+
+  if (isMenu) {
+    drinkSection.classList.remove("hidden");
+    setTimeout(() => drinkSection.classList.remove("opacity-0"), 10);
+    btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
+  } else {
+    drinkSection.classList.add("opacity-0");
+    setTimeout(() => drinkSection.classList.add("hidden"), 300);
+    btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+  }
 };
 
 window.toggleDrinkSection = function () {
@@ -1351,18 +1345,18 @@ window.closeProductModal = function () {
 };
 
 window.confirmAddToCart = function () {
-  const isMenu =
-    document.querySelector('input[name="formule"]:checked').value === "menu";
+  // 🛡️ SÉCURITÉ : On cherche le bouton radio. S'il n'existe pas (car allowMenu = false), isMenu devient automatiquement false !
+  const formuleInput = document.querySelector('input[name="formule"]:checked');
+  const isMenu = formuleInput ? formuleInput.value === "menu" : false;
+
   let nomFinal = currentProduct.nom;
   let prixFinal = currentProduct.prixBase;
-  let boissonChoisie = null; // On prépare la variable
+  let boissonChoisie = null;
 
   if (isMenu) {
-    const boissonInput = document.querySelector(
-      'input[name="boisson"]:checked',
-    );
+    const boissonInput = document.querySelector('input[name="boisson"]:checked');
     if (!boissonInput) {
-      alert("🥤 Oups ! Veuillez choisir une boisson.");
+      window.showToast("🥤 Oups ! Veuillez choisir une boisson.", "error");
       return;
     }
     boissonChoisie = boissonInput.value;
@@ -1374,11 +1368,11 @@ window.confirmAddToCart = function () {
     ? `${currentProduct.id}-menu-${Date.now()}`
     : `${currentProduct.id}-seul`;
 
-  // 🛑 LE CORRECTIF EST ICI : On envoie TOUTES les infos au panier
   addToCart({
-    id: uniqueId,
+    id: uniqueId, // ID unique pour que le panier ne mélange pas les items
+    productId: currentProduct.id, // 🎯 NOUVEAU : On garde le VRAI ID du produit pour les stats !
     nom: nomFinal,
-    prix: prixFinal, // Prix total unitaire
+    prix: prixFinal,
     image: currentProduct.image,
     type: isMenu ? "menu" : "seul",
     boisson: boissonChoisie,
@@ -1560,12 +1554,12 @@ window.processCheckout = async () => {
       return;
     }
 
-    // 1. Formatage du Panier pour Firestore (Le schéma officiel)
+// 1. Formatage du Panier pour Firestore
     const orderItems = cart.map((item) => {
-      const prixUnitaire = item.prix || 0; // Le prix de l'article (base + menu)
-
+      const prixUnitaire = item.prix || 0; 
       return {
         id: item.id,
+        productId: item.productId || item.id.split('-')[0], // 🎯 On l'envoie à Firebase
         nom: item.nom,
         image: item.image || "",
         type: item.type || "seul",

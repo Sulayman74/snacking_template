@@ -8,6 +8,7 @@ const {
   doc,
   getDoc,
   getDocs,
+  deleteDoc,
   onSnapshot,
   orderBy,
   query,
@@ -316,13 +317,55 @@ window.updatePaymentStatus = async (orderId, currentStatus) => {
   try {
     const newStatus = currentStatus === "paye" ? "en_attente" : "paye";
 
+    // 1. On met à jour le statut du paiement du ticket
     await window.fs.updateDoc(window.fs.doc(window.db, "commandes", orderId), {
       "paiement.statut": newStatus,
     });
     console.log(`💳 Paiement mis à jour : ${newStatus}`);
+
+    // 2. 📈 AUTOMATISATION DE L'ALGORITHME BEST-SELLER
+    if (newStatus === "paye") {
+      // On va chercher la commande complète pour voir ce que le client a mangé
+      const orderDoc = await window.fs.getDoc(
+        window.fs.doc(window.db, "commandes", orderId),
+      );
+
+      if (orderDoc.exists()) {
+        const items = orderDoc.data().items || [];
+
+        // On boucle sur chaque burger/tacos de la commande
+        for (const item of items) {
+          const realProductId = item.productId || item.id.split("-")[0];
+
+          if (realProductId) {
+            const productRef = window.fs.doc(
+              window.db,
+              "produits",
+              realProductId,
+            );
+
+            // 🪄 MAGIE FIREBASE : On ajoute la quantité vendue au produit.
+            // Si 'ventes' n'existe pas, Firebase le crée à 0 puis ajoute la quantité !
+            await window.fs
+              .updateDoc(productRef, {
+                ventes: window.fs.increment(item.quantity),
+              })
+              .catch((e) =>
+                console.log("Stat annulée : Produit peut-être supprimé", e),
+              );
+          }
+        }
+        window.showToast(
+          "Caisse enregistrée et Best-Sellers mis à jour ! 📈",
+          "success",
+        );
+      }
+    } else {
+      window.showToast("Paiement annulé.", "success");
+    }
   } catch (error) {
     console.error("Erreur lors de l'encaissement :", error);
-    alert("Impossible de mettre à jour le paiement.");
+    window.showToast("Impossible de mettre à jour le paiement.", "error");
   }
 };
 // ==========================================
@@ -353,7 +396,6 @@ window.switchAdminTab = (tabName) => {
     viewCuisine.classList.remove("flex");
     viewMenu.classList.remove("hidden");
     stopKitchenRadar(); // On coupe pendant qu'il gère ses stocks !
-    loadAdminProducts();
     loadAdminProducts();
   }
 };
@@ -410,6 +452,9 @@ async function loadAdminProducts() {
       const statusText = isAvailable
         ? "<span class='text-green-600'>En stock</span>"
         : "<span class='text-red-600 font-bold'>Épuisé</span>";
+      const prixBaseText = `${(item.prix || 0).toFixed(2)} €`;
+      const prixMenuText = item.allowMenu !== false ? `<span class="text-red-500 text-xs ml-1 bg-red-50 px-2 py-0.5 rounded-md">(Menu +${(item.menuPriceAdd || 2.5).toFixed(2)}€)</span>` 
+    : `<span class="text-gray-400 text-xs ml-1 italic">Solo</span>`;
 
       // 🖼️ 2. GESTION DU FALLBACK IMAGE (Comme sur l'app publique)
       const imageUrl =
@@ -435,23 +480,29 @@ async function loadAdminProducts() {
                                 ${imageHtml}
                                 <div class="flex-1">
                                     <h4 class="font-black text-gray-900 leading-tight">${item.nom}</h4>
-                                    <p class="text-gray-500 text-sm font-bold mt-1">${(item.prix || 0).toFixed(2)} € <span class="text-red-500 text-xs ml-1">(Menu +${(item.menuPriceAdd || 2.5).toFixed(2)}€)</span></p>
+                                    <p class="text-gray-500 text-sm font-bold mt-1">${prixBaseText} <span class="text-red-500 text-xs ml-1">${prixMenuText}</span></p>
                                 </div>
                             </div>
-                            <div class="p-4 bg-gray-50 flex justify-between items-center mt-auto">
-                                <div class="flex flex-col items-start gap-1">
-                                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Disponibilité</p>
-                                    <div class="flex items-center gap-3">
-                                        <button onclick="toggleProductStatus('${item.id}', ${isAvailable})" class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${toggleColor}">
-                                            <span class="inline-block h-5 w-5 transform rounded-full bg-white transition duration-300 shadow-md ${toggleTranslate}"></span>
-                                        </button>
-                                        <span class="text-sm font-bold">${statusText}</span>
-                                    </div>
-                                </div>
-                                <button onclick="openEditModal('${item.id}')" class="bg-white border border-gray-200 text-gray-900 hover:bg-gray-900 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm flex items-center gap-2">
-                                    <i class="fas fa-pen"></i> Modifier
-                                </button>
-                            </div>
+<div class="p-4 bg-gray-50 flex justify-between items-center mt-auto">
+    <div class="flex flex-col items-start gap-1">
+        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Disponibilité</p>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleProductStatus('${item.id}', ${isAvailable})" class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${toggleColor}">
+                <span class="inline-block h-5 w-5 transform rounded-full bg-white transition duration-300 shadow-md ${toggleTranslate}"></span>
+            </button>
+            <span class="text-sm font-bold">${statusText}</span>
+        </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+        <button onclick="openEditModal('${item.id}')" aria-label="Modifier" class="bg-white border border-gray-200 text-gray-900 hover:bg-gray-900 hover:text-white w-10 h-10 rounded-xl text-sm font-bold transition shadow-sm flex items-center justify-center">
+            <i class="fas fa-pen"></i>
+        </button>
+<button onclick="openDeleteModal('${item.id}')" aria-label="Supprimer" class="bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white w-10 h-10 rounded-xl text-sm font-bold transition shadow-sm flex items-center justify-center">
+    <i class="fas fa-trash"></i>
+</button>
+    </div>
+</div>
                         </div>`;
     });
   } catch (error) {
@@ -488,9 +539,27 @@ window.openEditModal = (productId) => {
     ? product.tags[0]
     : product.tags || "";
   document.getElementById("edit-tags").value = currentTag;
-  // NOUVEAU : Récupérer la catégorie
-    document.getElementById('edit-category').value = product.categorieId || 'burgers'; // Burgers par défaut si vide
+  document.getElementById("edit-category").value =
+    product.categorieId || "burgers"; // Burgers par défaut si vide
   document.getElementById("edit-img-file").value = "";
+  const checkbox = document.getElementById("edit-allow-menu");
+  const prixMenuContainer = document.getElementById("edit-prix-menu-container");
+
+  // Si allowMenu n'est pas défini, on considère par défaut que c'est un menu (sauf desserts/boissons)
+  let isMenuAllowed = true;
+  if (product.allowMenu !== undefined) {
+    isMenuAllowed = product.allowMenu;
+  } else if (
+    product.categorieId === "drinks" ||
+    product.categorieId === "deserts"
+  ) {
+    isMenuAllowed = false;
+  }
+
+  checkbox.checked = isMenuAllowed;
+
+  // On déclenche manuellement l'événement 'change' pour que notre petit script du point 1 affiche/cache le champ !
+  checkbox.dispatchEvent(new Event("change"));
 
   // 📸 Gestion de l'image et du Fallback
   const imgEl = document.getElementById("edit-preview-img");
@@ -540,65 +609,188 @@ window.closeEditModal = () => {
   currentEditingProductId = null;
 };
 
-document
-  .getElementById("edit-product-form")
-  .addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (!currentEditingProductId) return;
 
+// Variable globale pour mémoriser le produit à supprimer
+let productToDeleteId = null;
+
+// 1. OUVRE LA MODALE (Appelé par le bouton poubelle sur la carte du produit)
+window.openDeleteModal = (id) => {
+  productToDeleteId = id;
+  const modal = document.getElementById("delete-confirm-modal");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex"); // Nécessaire si on utilise flex-col
+  setTimeout(() => {
+    modal.classList.remove("opacity-0");
+    modal.querySelector(".bg-white").classList.remove("scale-95");
+  }, 10);
+};
+
+// 2. FERME LA MODALE
+window.closeDeleteModal = () => {
+  const modal = document.getElementById("delete-confirm-modal");
+  modal.classList.add("opacity-0");
+  modal.querySelector(".bg-white").classList.add("scale-95");
+  setTimeout(() => {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    productToDeleteId = null; // On nettoie la mémoire
+  }, 300);
+};
+
+// 3. LA VRAIE SUPPRESSION (Appelé par le gros bouton rouge de la modale)
+window.confirmDeleteProduct = async () => {
+  if (!productToDeleteId) return;
+
+  const btn = document.getElementById("confirm-delete-btn");
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Suppression...';
+  btn.disabled = true;
+
+  try {
+    await deleteDoc(doc(window.db, "produits", productToDeleteId));
+    window.showToast("Produit définitivement supprimé.", "success");
+    closeDeleteModal();
+    loadAdminProducts(); // On recharge la grille
+  } catch (error) {
+    console.error("Erreur de suppression:", error);
+    window.showToast("Erreur lors de la suppression.", "error");
+    btn.innerHTML = originalHtml;
+    btn.disabled = false;
+  }
+};
+
+// Fonction pour ouvrir la modale en mode "AJOUT"
+// 1. OUVIR LA MODALE D'AJOUT
+window.openAddProductModal = () => {
+  currentEditingProductId = null;
+
+  document.getElementById("edit-product-form").reset();
+  // CORRECTION ICI 👇 : C'est "edit-modal-title"
+  document.getElementById("edit-modal-title").innerText = "➕ Nouveau Produit";
+  document.getElementById("save-product-btn").innerHTML =
+    '<i class="fas fa-plus mr-2"></i> Créer le produit';
+  document.getElementById("edit-allow-menu").checked = true;
+
+  const modal = document.getElementById("edit-product-modal");
+  modal.classList.remove("hidden");
+  dispatchEvent(new Event("change"));
+  setTimeout(() => {
+    modal.classList.remove("opacity-0");
+    modal.querySelector(".bg-white").classList.remove("scale-95");
+  }, 10);
+};
+
+// ==========================================
+// 💾 SAUVEGARDE DU PRODUIT (UNIQUE ET SÉCURISÉ)
+// ==========================================
+document.getElementById("edit-product-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
     const btn = document.getElementById("save-product-btn");
     const originalBtnHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
     btn.disabled = true;
-    btn.classList.add("opacity-70", "cursor-not-allowed");
 
     try {
+      // 1. Récupération des données
+      const nom = document.getElementById("edit-nom").value;
       const desc = document.getElementById("edit-desc").value;
       const prix = parseFloat(document.getElementById("edit-prix").value);
-      const prixMenu = parseFloat(
-        document.getElementById("edit-prix-menu").value,
-      );
+      const prixMenu = parseFloat(document.getElementById("edit-prix-menu").value || 0);
       const fileInput = document.getElementById("edit-img-file");
-      const tagChoisi = document.getElementById('edit-tags').value;
-      const categorieChoisie = document.getElementById('edit-category').value;
+      const tagChoisi = document.getElementById("edit-tags").value;
+      const categorieChoisie = document.getElementById("edit-category").value;
+      
+      const allowMenuCheckbox = document.getElementById("edit-allow-menu");
+      const allowMenu = allowMenuCheckbox ? allowMenuCheckbox.checked : true;
 
+      // 2. Formatage de l'objet (On utilise updateData PARTOUT)
       let updateData = {
+        nom: nom,
         description: desc,
         prix: prix,
         menuPriceAdd: prixMenu,
         tags: tagChoisi ? [tagChoisi] : [],
-        categorieId: categorieChoisie
+        categorieId: categorieChoisie,
+        allowMenu: allowMenu,
+        updatedAt: serverTimestamp(),
       };
 
+      // 3. Gestion de l'image (si nouvelle image sélectionnée)
       if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-        const storageReference = ref(
-          window.storage,
-          `produits/${currentAdminSnackId}/${fileName}`,
-        );
+        const storageReference = ref(window.storage, `produits/${currentAdminSnackId}/${fileName}`);
         await uploadBytes(storageReference, file);
         updateData.image = await getDownloadURL(storageReference);
       }
 
-      await updateDoc(
-        doc(window.db, "produits", currentEditingProductId),
-        updateData,
-      );
-      closeEditModal();
-      loadAdminProducts();
+      // 4. Envoi à Firestore (Création ou Mise à jour)
+      if (currentEditingProductId) {
+        // 🔄 MISE À JOUR
+        await updateDoc(doc(window.db, "produits", currentEditingProductId), updateData);
+        window.showToast("Produit mis à jour avec succès !", "success");
+      } else {
+        // 🆕 CRÉATION
+        updateData.snackId = currentAdminSnackId;
+        updateData.createdAt = serverTimestamp();
+        updateData.isAvailable = true;
+
+        await addDoc(collection(window.db, "produits"), updateData);
+        window.showToast("Nouveau produit ajouté !", "success");
+      }
+
+      // 5. Nettoyage de l'UI
+      window.closeEditModal();
+      loadAdminProducts(); // Recharge la grille en direct
+
     } catch (error) {
-      console.error(error);
-      alert(
-        "Erreur de sauvegarde. Avez-vous configuré les règles Storage dans Firebase ?",
-      );
+      console.error("Erreur de sauvegarde :", error);
+      window.showToast("Erreur lors de la sauvegarde.", "error");
     } finally {
+      // On rend le bouton cliquable à nouveau
       btn.innerHTML = originalBtnHtml;
       btn.disabled = false;
-      btn.classList.remove("opacity-70", "cursor-not-allowed");
+    }
+});
+
+// ==========================================
+// 💡 BONUS UX : AFFICHER/CACHER LE PRIX DU MENU
+// ==========================================
+const allowMenuCheckbox = document.getElementById("edit-allow-menu");
+const prixMenuContainer = document.getElementById("edit-prix-menu-container");
+
+if (allowMenuCheckbox && prixMenuContainer) {
+  allowMenuCheckbox.addEventListener("change", (e) => {
+    if (e.target.checked) {
+      prixMenuContainer.classList.remove("hidden");
+      prixMenuContainer.classList.add("block");
+    } else {
+      prixMenuContainer.classList.add("hidden");
+      prixMenuContainer.classList.remove("block");
     }
   });
+}
 
+// ==========================================
+// 🍞 NOTIFICATIONS TOAST (ADMIN)
+// ==========================================
+window.showToast = function (message, type = "success") {
+  const snackbar = document.getElementById("admin-snackbar");
+  if (!snackbar) {
+      alert(message); // Sécurité si le HTML n'est pas encore là
+      return;
+  }
+  const msgEl = document.getElementById("admin-snackbar-message");
+  const iconEl = document.getElementById("admin-snackbar-icon");
+
+  msgEl.innerText = message;
+  iconEl.className = type === "error"
+      ? "fas fa-exclamation-circle text-red-500 text-xl"
+      : "fas fa-check-circle text-green-400 text-xl";
+
+  snackbar.classList.remove("translate-y-24", "opacity-0");
+  setTimeout(() => snackbar.classList.add("translate-y-24", "opacity-0"), 3000);
+};
 // ==========================================
 // 5. DÉCONNEXION
 // ==========================================

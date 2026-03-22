@@ -14,7 +14,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-        <link rel="stylesheet" href="src/styles.css"/>
+    <link rel="stylesheet" href="src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
@@ -50,18 +50,40 @@
         class="hidden mt-6 text-red-400 hover:text-red-300 underline"
         >Retour au site public</a
       >
-      <div id="admin-login-section" class="hidden w-full max-w-sm mx-auto flex-col items-center mt-6">
-    <h2 class="text-2xl text-gray-300 mb-6">Accès Équipe</h2>
-    <form id="admin-login-form" class="w-full flex flex-col gap-4">
-        <input type="email" id="admin-email-input" placeholder="Email professionnel" class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition" required>
-        <input type="password" id="admin-password-input" placeholder="Mot de passe" class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition" required>
-        
-        <button type="submit" id="admin-login-btn" class="w-full bg-gray-700 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition transform hover:scale-[1.02] active:scale-95 flex justify-center items-center gap-2">
+      <div
+        id="admin-login-section"
+        class="hidden w-full max-w-sm mx-auto flex-col items-center mt-6"
+      >
+        <h2 class="text-2xl text-gray-300 mb-6">Accès Équipe</h2>
+        <form id="admin-login-form" class="w-full flex flex-col gap-4">
+          <input
+            type="email"
+            id="admin-email-input"
+            placeholder="Email professionnel"
+            class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition"
+            required
+          />
+          <input
+            type="password"
+            id="admin-password-input"
+            placeholder="Mot de passe"
+            class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition"
+            required
+          />
+
+          <button
+            type="submit"
+            id="admin-login-btn"
+            class="w-full bg-gray-700 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition transform hover:scale-[1.02] active:scale-95 flex justify-center items-center gap-2"
+          >
             <span class="text-blue-700">Connexion</span>
-        </button>
-    </form>
-    <p id="admin-login-error" class="text-red-500 text-sm mt-4 font-bold hidden text-center"></p>
-</div>
+          </button>
+        </form>
+        <p
+          id="admin-login-error"
+          class="text-red-500 text-sm mt-4 font-bold hidden text-center"
+        ></p>
+      </div>
     </div>
 
     <header class="bg-gray-900 text-white shadow-lg z-50 sticky top-0">
@@ -109,18 +131,29 @@
       </div>
     </header>
 
-    <main
+    <section
       id="view-cuisine"
       class="flex-1 overflow-x-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)]"
     >
-    <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
-        <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
+      <div
+        class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300"
+      >
+        <div
+          class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3"
+        >
           <h2 class="text-xl font-black text-gray-600 uppercase">
             <i class="fas fa-car text-gray-500 mr-2"></i> Attente Client
           </h2>
-          <span id="count-waiting" class="bg-gray-500 text-white font-bold px-3 py-1 rounded-lg">0</span>
+          <span
+            id="count-waiting"
+            class="bg-gray-500 text-white font-bold px-3 py-1 rounded-lg"
+            >0</span
+          >
         </div>
-        <div id="orders-waiting" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
+        <div
+          id="orders-waiting"
+          class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"
+        ></div>
       </div>
       <div
         class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300"
@@ -162,14 +195,16 @@
           class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"
         ></div>
       </div>
-    </main>
+    </section>
 
-    <main
+    <section
       id="view-menu"
       class="hidden flex-1 overflow-y-auto p-4 md:p-6 bg-gray-100 h-[calc(100vh-140px)]"
     >
       <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-6">
+        <div
+          class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"
+        >
           <div>
             <h2 class="text-3xl font-black text-gray-900 tracking-tight">
               Votre Carte
@@ -178,6 +213,14 @@
               Gérez vos prix, ruptures de stocks et photos.
             </p>
           </div>
+
+          <button
+            type="button"
+            onclick="openAddProductModal()"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition-transform transform hover:-translate-y-1 active:scale-95 flex items-center gap-2"
+          >
+            <i class="fas fa-plus"></i> Nouveau Produit
+          </button>
         </div>
 
         <div
@@ -190,22 +233,20 @@
           </p>
         </div>
       </div>
-    </main>
+    </section>
 
     <div
       id="edit-product-modal"
-      class="fixed inset-0 bg-gray-900/80 z-[110] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0"
+      class="fixed inset-0 bg-gray-900/80 z-110 hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0"
     >
       <div
         class="bg-white w-full max-w-lg rounded-3xl p-6 relative shadow-2xl transform transition-transform scale-95 max-h-[90vh] overflow-y-auto"
       >
         <button
           onclick="closeEditModal()"
-          class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full transition z-10"
+          class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-gray-400/40 p-1 rounded-full transition z-10"
         >
-          <i
-            class="fas fa-times text-xl w-5 h-5 flex justify-center items-center"
-          ></i>
+          <i class="fas fa-times text-xl flex justify-center items-center"></i>
         </button>
 
         <h3
@@ -249,6 +290,18 @@
               />
             </div>
           </div>
+          <div class="mb-4">
+            <label class="block text-sm font-bold text-gray-700 mb-2"
+              >Nom du Produit</label
+            >
+            <input
+              type="text"
+              id="edit-nom"
+              required
+              placeholder="Ex: Tacos XL, Burger Bacon..."
+              class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition font-bold"
+            />
+          </div>
 
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-2"
@@ -262,12 +315,17 @@
           </div>
 
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">Mise en avant (Best-Sellers)</label>
-            <select id="edit-tags" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-medium">
-                <option value="">Standard (L'algorithme choisit)</option>
-                <option value="Star">⭐ Star (Forcer en Best-Seller)</option>
-                <option value="Nouveau">🆕 Nouveauté</option>
-                <option value="Végétarien">🥗 Végétarien</option>
+            <label class="block text-sm font-bold text-gray-700 mb-2"
+              >Mise en avant (Best-Sellers)</label
+            >
+            <select
+              id="edit-tags"
+              class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-medium"
+            >
+              <option value="">Standard (L'algorithme choisit)</option>
+              <option value="Star">⭐ Star (Forcer en Best-Seller)</option>
+              <option value="Nouveau">🆕 Nouveauté</option>
+              <option value="Végétarien">🥗 Végétarien</option>
             </select>
           </div>
 
@@ -284,7 +342,8 @@
                 class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-bold"
               />
             </div>
-            <div>
+
+            <div id="edit-prix-menu-container">
               <label class="block text-sm font-bold text-red-600 mb-2"
                 >Surplus Menu (€)</label
               >
@@ -298,18 +357,38 @@
             </div>
           </div>
 
+          <div
+            class="mb-4 flex items-center gap-3 bg-red-50 p-3 rounded-xl border border-red-100"
+          >
+            <input
+              type="checkbox"
+              id="edit-allow-menu"
+              checked
+              class="w-5 h-5 text-red-600 rounded focus:ring-red-500"
+            />
+            <label
+              class="font-bold text-red-800 text-sm cursor-pointer"
+              for="edit-allow-menu"
+              >Proposer ce produit "En Menu" (Frites + Boissons)</label
+            >
+          </div>
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">Catégorie du Menu</label>
-            <select id="edit-category" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-medium">
-                <option value="tacos">🌮 Tacos</option>
-                <option value="burgers">🍔 Burgers</option>
-                <option value="wraps">🌯 Wraps & Sandwichs</option>
-                <option value="sides">🍟 Sides (Frites...)</option>
-                <option value="drinks">🥤 Boissons</option>
-                <option value="deserts">🥤 Boissons</option>
+            <label class="block text-sm font-bold text-gray-700 mb-2"
+              >Catégorie du Menu</label
+            >
+            <select
+              id="edit-category"
+              required
+              class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-medium"
+            >
+              <option value="tacos">🌮 Tacos</option>
+              <option value="burgers">🍔 Burgers</option>
+              <option value="wraps">🌯 Wraps & Sandwichs</option>
+              <option value="sides">🍟 Sides (Frites...)</option>
+              <option value="drinks">🥤 Boissons</option>
+              <option value="deserts">🍰 Desserts</option>
             </select>
           </div>
-
           <button
             type="submit"
             id="save-product-btn"
@@ -320,6 +399,53 @@
         </form>
       </div>
     </div>
+    <div
+      id="delete-confirm-modal"
+      class="fixed inset-0 bg-gray-900/90 z-150 hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0"
+    >
+      <div
+        class="bg-white w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl transform transition-transform scale-95 border border-red-100 relative overflow-hidden"
+      >
+        <div
+          class="absolute top-0 left-1/2 transform -translate-x-1/2 -mt-10 w-32 h-32 rounded-full bg-red-500/20 blur-2xl z-0 pointer-events-none"
+        ></div>
+
+        <i
+          class="fas fa-exclamation-triangle text-6xl text-red-500 mb-4 relative z-10 animate-pulse"
+        ></i>
+
+        <h3
+          class="text-2xl font-black text-gray-900 mb-2 tracking-tight relative z-10"
+        >
+          Supprimer ce produit ?
+        </h3>
+        <p class="text-sm text-gray-500 mb-8 font-medium relative z-10">
+          Cette action est définitive. Le produit sera effacé de votre carte et
+          de la base de données.
+        </p>
+
+        <div class="flex flex-col gap-3 relative z-10">
+          <button
+            id="confirm-delete-btn"
+            onclick="confirmDeleteProduct()"
+            class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-all shadow-[0_4px_15px_rgba(220,38,38,0.3)] transform hover:-translate-y-1 flex items-center justify-center gap-2"
+          >
+            <i class="fas fa-trash"></i> Oui, supprimer définitivement
+          </button>
+
+          <button
+            onclick="closeDeleteModal()"
+            class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="admin-snackbar" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-full shadow-2xl z-[250] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 w-max max-w-[90vw]">
+  <i id="admin-snackbar-icon" class="fas fa-check-circle text-green-400 text-2xl"></i>
+  <span id="admin-snackbar-message" class="font-medium">Message</span>
+</div>
     <script type="module" src="src/admin.js"></script>
   </body>
 </html>

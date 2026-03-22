@@ -6,6 +6,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -68,7 +69,7 @@ window.auth = auth;
 window.db = db;
 window.messaging = messaging;
 
-window.fs = { doc, getDoc, setDoc, updateDoc, increment, onSnapshot, query, collection, where, orderBy, limit, startAfter, getDocs, getStorage, addDoc, serverTimestamp };
+window.fs = { doc, getDoc, setDoc, updateDoc, increment, onSnapshot, query, collection, where, orderBy, limit, startAfter, getDocs,deleteDoc, getStorage, addDoc, serverTimestamp };
 window.storageTools = { getDownloadURL, ref, uploadBytes };
 window.authTools = { onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword };
 
