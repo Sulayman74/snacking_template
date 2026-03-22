@@ -69,6 +69,7 @@ export default defineConfig(() => {
 
         // B. LA GESTION DU CACHE (WORKBOX)
         workbox: {
+          importScripts: ['/firebase-messaging-sw.js'],
           // Vite mettra automatiquement en cache tous tes HTML, JS et CSS du dossier /dist
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
           

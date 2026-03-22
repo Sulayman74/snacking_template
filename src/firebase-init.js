@@ -578,8 +578,9 @@ window.demanderPermissionNotifs = async () => {
   try {
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-      await navigator.serviceWorker.ready;
+      
+      // ✅ ON RÉCUPÈRE CELUI QUE VITE A DÉJÀ INSTALLÉ !
+      const registration = await navigator.serviceWorker.ready;
       
       const currentToken = await getToken(messaging, {
         vapidKey: "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098",
