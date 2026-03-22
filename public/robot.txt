@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# 🛑 On interdit à Google de référencer les espaces privés !
+Disallow: /admin.html
+Disallow: /superadmin.html
