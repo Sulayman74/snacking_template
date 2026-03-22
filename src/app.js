@@ -403,68 +403,55 @@ window.switchView = function (viewName) {
   const mobileOverlay = document.getElementById("mobile-menu-overlay");
   const mobileBtnIcon = document.querySelector("#mobile-menu-btn i");
 
-  // L'indicateur translucide et les boutons
   const navIndicator = document.getElementById("nav-indicator");
   const btnHome = document.getElementById("nav-btn-home");
   const btnMenu = document.getElementById("nav-btn-menu");
 
   if (viewName === "menu") {
-    // 1. Déplace la pilule à droite
-    if (navIndicator) navIndicator.style.transform = "translateX(200%)";
+    // 1. Déplacement de la pilule avec précision (calculé sur 3 colonnes)
+    if (navIndicator) {
+      // On utilise 200% car elle se décale de 2 fois sa largeur
+      navIndicator.style.transform = "translateX(200%)";
+    }
 
-    // 2. Allume "Menu", grise "Accueil"
-    if (btnHome) {
-      btnHome.classList.remove("text-white");
-      btnHome.classList.add("text-gray-400");
-    }
-    if (btnMenu) {
-      btnMenu.classList.remove("text-gray-400");
-      btnMenu.classList.add("text-white");
-    }
+    // 2. Gestion des états actifs (Couleurs + Animations)
+    btnHome?.classList.replace("text-white", "text-gray-400");
+    btnMenu?.classList.replace("text-gray-400", "text-white");
+    
+    // Ajout d'une classe pour déclencher l'animation de rebond sur l'icône
+    btnMenu?.classList.add("nav-active");
+    btnHome?.classList.remove("nav-active");
 
     fullMenu.classList.remove("hidden");
     document.body.style.overflow = "hidden";
 
-    // Fermeture du menu burger si ouvert
+    // Fermeture propre du menu burger
     if (mobileOverlay && !mobileOverlay.classList.contains("hidden")) {
-      mobileOverlay.classList.add("opacity-0");
+      mobileOverlay.classList.replace("opacity-100", "opacity-0");
       setTimeout(() => {
-        mobileOverlay.classList.remove("flex");
         mobileOverlay.classList.add("hidden");
+        mobileOverlay.classList.remove("flex");
       }, 300);
-      if (mobileBtnIcon) {
-        mobileBtnIcon.classList.remove("fa-times");
-        mobileBtnIcon.classList.add("fa-bars");
-      }
+      mobileBtnIcon?.classList.replace("fa-times", "fa-bars");
     }
   } else {
-    // 1. Déplace la pilule à gauche
+    // Retour à l'accueil
     if (navIndicator) navIndicator.style.transform = "translateX(0%)";
 
-    // 2. Allume "Accueil", grise "Menu"
-    if (btnHome) {
-      btnHome.classList.remove("text-gray-400");
-      btnHome.classList.add("text-white");
-    }
-    if (btnMenu) {
-      btnMenu.classList.remove("text-white");
-      btnMenu.classList.add("text-gray-400");
-    }
+    btnHome?.classList.replace("text-gray-400", "text-white");
+    btnMenu?.classList.replace("text-white", "text-gray-400");
+    
+    btnHome?.classList.add("nav-active");
+    btnMenu?.classList.remove("nav-active");
 
     fullMenu.classList.add("hidden");
     document.body.style.overflow = "";
 
-    // Scroll vers le haut si retour accueil
     if (viewName === "home") {
-      const heroSection = document.getElementById("hero");
-      if (heroSection) {
-        setTimeout(() => {
-          heroSection.scrollIntoView({ behavior: "smooth" });
-        }, 10);
-      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
-};
+};  
 
 // ============================================================================
 // window.openProductModal = function (itemId) {

@@ -569,7 +569,7 @@
         class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md z-[70]"
       >
         <i
-          class="fas fa-arrow-down text-gray-400 text-xl transition-transform"
+          class="fas fa-arrow-down text-gray-300 text-xl transition-transform"
           id="ptr-icon"
         ></i>
       </div>
@@ -596,12 +596,12 @@
               class="w-full mx-auto pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-black focus:bg-white outline-none shadow-sm transition-all text-gray-800 font-medium"
             />
             <i
-              class="fas fa-search absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"
+              class="fas fa-search absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-300 text-lg"
             ></i>
 
             <button
               id="clear-search-btn"
-              class="hidden absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition"
+              class="hidden absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-300 hover:text-black transition"
             >
               <i class="fas fa-times-circle text-xl"></i>
             </button>
@@ -857,7 +857,7 @@
               href="https://codecrafters.fr"
               target="_blank"
               rel="noopener noreferrer"
-              class="flex items-center gap-2 text-gray-400 text-xs font-light bg-gray-800/30 hover:bg-gray-800/60 px-4 py-2 rounded-full backdrop-blur-sm border border-gray-700/50 transition-all duration-300 hover:border-red-500/30"
+              class="flex items-center gap-2 text-gray-300 text-xs font-light bg-gray-800/30 hover:bg-gray-800/60 px-4 py-2 rounded-full backdrop-blur-sm border border-gray-700/50 transition-all duration-300 hover:border-red-500/30"
             >
               <span class="opacity-70">Propulsé par</span>
               <span
@@ -871,7 +871,7 @@
 
             <a
               href="admin.html"
-              class="text-xs text-gray-400 hover:text-gray-800 transition-colors duration-300"
+              class="text-xs text-gray-300 hover:text-gray-800 transition-colors duration-300"
             >
               Portail <span id="footer-resto-name">Partenaire</span>
             </a>
@@ -881,17 +881,17 @@
     </footer>
 
     <nav
-      id="mobile-nav-container web-navbar"
+      id="mobile-nav-container"
       aria-label="Navigation principale mobile"
-      class="md:hidden fixed bottom-8 inset-x-0 z-50 flex justify-center pointer-events-none"
+      class="md:hidden text-gray-300 fixed bottom-8 inset-x-0 z-50 flex justify-center pointer-events-none"
     >
       <div
         id="mobile-nav"
-        class="web-navbar w-full max-w-75 pointer-events-auto relative rounded-4xl p-1.5 transition-all duration-300"
+        class="w-full max-w-100 pointer-events-auto relative rounded-4xl p-1.5 transition-all duration-300"
       >
         <!-- EFFET LIQUID GLASS : Le fond flouté et semi-transparent avec une bordure subtile -->
         <div
-          class="absolute inset-0 bg-gray-900/60 backdrop-blur-2xl rounded-4xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] z-0"
+          class="absolute inset-0 bg-gray-900/60 backdrop-blur-xl rounded-4xl border border-gray-200/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] z-0"
         ></div>
 
         <div
@@ -900,14 +900,15 @@
         >
           <div
             id="nav-indicator"
-            class="absolute top-0 bottom-0 left-0 w-[calc(100%/3)] bg-white/20 backdrop-blur-md border border-white/10 shadow-[0_4px_15px_rgba(255,255,255,0.05)] rounded-3xl transition-transform duration-300 ease-out pointer-events-none z-0"
+            class="absolute top-0 bottom-0 left-0 w-[calc(100%/3)] bg-white/20 backdrop-blur-md border border-white/10 shadow-[0_4px_15px_rgba(255,255,255,0.05)] rounded-3xl transition-transform duration-300 pointer-events-none z-0"
+            style="transition-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);"
           ></div>
 
           <a
             onclick="switchView('home')"
             id="nav-btn-home"
             aria-label="Retour à l'accueil"
-            class="relative z-10 flex flex-col items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95 rounded-3xl group"
+            class="relative z-10 flex flex-col items-center justify-center text-gray-300 hover:text-white transition-all active:scale-95 rounded-3xl group"
           >
             <i
               class="fas fa-home text-xl mb-0.5 transition-transform group-hover:-translate-y-1"
@@ -925,7 +926,7 @@
               id="mobile-cta-btn"
               role="button"
               aria-label="Passer commande ou appeler"
-              class="absolute -top-6 bg-red-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-md shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 focus:outline-none focus:ring-4 focus:ring-red-500/50"
+              class="hidden absolute -top-6 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-md shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 focus:outline-none focus:ring-4 focus:ring-red-500/50"
             >
               <i
                 id="mobile-cta-icon"
@@ -943,7 +944,7 @@
             "
             id="nav-btn-menu"
             aria-label="Voir la carte du restaurant"
-            class="relative z-10 flex flex-col items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95 rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:bg-white/10 group"
+            class="relative z-10 flex flex-col items-center justify-center text-gray-300 hover:text-white transition-all active:scale-95 rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:bg-white/10 group"
           >
             <i
               class="fas fa-hamburger text-xl mb-0.5 transition-transform group-hover:-translate-y-1"
@@ -969,7 +970,7 @@
           aria-label="Toggle authentification"
           type="button"
           onclick="toggleAuthModal()"
-          class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full transition"
+          class="absolute top-4 right-4 text-gray-300 hover:text-black bg-gray-100 p-2 rounded-full transition"
         >
           <i
             class="fas fa-times text-xl w-5 h-5 flex justify-center items-center"
@@ -1177,7 +1178,7 @@
           <button
             aria-label="Fermeture scanner"
             onclick="closeAdminScanner()"
-            class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600"
+            class="text-gray-300 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600"
           >
             <i
               class="fas fa-times w-5 h-5 flex items-center justify-center"
@@ -1226,7 +1227,7 @@
         />
         <div>
           <p class="font-bold text-sm">Garde-nous dans ta poche !</p>
-          <p class="text-xs text-gray-400">Installe l'app pour tes points 🎁</p>
+          <p class="text-xs text-gray-300">Installe l'app pour tes points 🎁</p>
         </div>
       </div>
       <button
@@ -1290,7 +1291,7 @@
           <button
             aria-label="Donner son avis plus tard"
             id="btn-review-later"
-            class="w-full text-gray-400 hover:text-gray-600 font-bold py-2 text-sm mt-1 transition"
+            class="w-full text-gray-300 hover:text-gray-600 font-bold py-2 text-sm mt-1 transition"
           >
             Plus tard
           </button>
@@ -1361,7 +1362,7 @@
             class="mb-6 p-4 bg-gray-50 border border-gray-100 rounded-xl hidden"
           >
             <h4
-              class="font-bold text-xs text-gray-400 uppercase tracking-widest mb-2"
+              class="font-bold text-xs text-gray-300 uppercase tracking-widest mb-2"
             >
               <i class="fas fa-info-circle mr-1"></i> Infos & Allergènes
             </h4>
@@ -1514,7 +1515,7 @@
         <button
         id="tracking-close-btn"
           onclick="closeTrackingModal()"
-          class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full transition w-10 h-10 flex items-center justify-center z-10"
+          class="absolute top-4 right-4 text-gray-300 hover:text-black bg-gray-100 p-2 rounded-full transition w-10 h-10 flex items-center justify-center z-10"
         >
           <i class="fas fa-times text-xl"></i>
         </button>

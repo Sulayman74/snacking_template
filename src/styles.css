@@ -22,6 +22,22 @@
     }
 }
 
+/* Animation de "pop" pour l'icône quand elle devient active */
+/* 1. La pilule avec effet ressort */
+#nav-indicator {
+  transition: transform 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+}
+
+/* 2. L'icône qui "pop" quand elle est sélectionnée */
+.nav-active i {
+  animation: jumping-icon 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes jumping-icon {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.2); }
+  100% { transform: translateY(0) scale(1); }
+}
 /* La classe que tu vas utiliser dans ton HTML */
 .animate-fade-in-up {
     animation: fadeInUp 0.6s ease-out forwards;
