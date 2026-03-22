@@ -1,9 +1,0 @@
-User-agent: *
-Disallow: /
-
-# 🛑 On interdit à Google de référencer les espaces privés !
-Disallow: /admin.html
-Disallow: /superadmin.html
-
-# 🗺️ On lui donne le plan du site
-Sitemap: https://snacking-template.web.app/sitemap.xml
