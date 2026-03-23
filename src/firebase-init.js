@@ -507,6 +507,7 @@ onAuthStateChanged(auth, async (user) => {
   const urlParams = new URLSearchParams(window.location.search);
   const forcedSnackId = urlParams.get('s'); // Cherche ?s=... dans l'URL
   const hostname = window.location.hostname;
+  const pwaAction = urlParams.get('action');
 
   let snackIdToLoad = window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
 
@@ -514,7 +515,9 @@ onAuthStateChanged(auth, async (user) => {
       if (forcedSnackId) {
           console.log("🔍 Mode Aperçu activé pour le Snack :", forcedSnackId);
           snackIdToLoad = forcedSnackId; // ✅ On utilise l'ID de l'URL !
-      } else if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.includes("snacking-template.web.app")) {
+      }
+      
+      else if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.includes("snacking-template.web.app")) {
           console.log("🌍 Mode Domaine activé : Recherche de", hostname);
           const { collection, query, where, getDocs } = window.fs;
           const q = query(collection(window.db, "snacks"), where("domain", "==", hostname));
@@ -528,6 +531,25 @@ onAuthStateChanged(auth, async (user) => {
       }
   } catch (e) {
       console.error("Erreur du Routeur SaaS :", e);
+  }
+
+  // 🎯 ROUTEUR PWA SHORTCUTS (S'exécute un peu après le chargement)
+  if (pwaAction) {
+      setTimeout(() => {
+          if (pwaAction === 'menu') {
+              console.log("🚀 Lancement depuis le Shortcut : MENU");
+              if (typeof window.switchView === "function") window.switchView('menu');
+          } 
+          else if (pwaAction === 'loyalty') {
+              console.log("🚀 Lancement depuis le Shortcut : FIDÉLITÉ");
+              // Si connecté, on ouvre la carte. Sinon, on ouvre la modale de connexion !
+              if (window.auth.currentUser) {
+                  if (typeof window.openClientCard === "function") window.openClientCard();
+              } else {
+                  if (typeof window.toggleAuthModal === "function") window.toggleAuthModal();
+              }
+          }
+      }, 800); // Un léger délai pour laisser le temps au menu de charger depuis Firebase
   }
   // ====================================================================
 

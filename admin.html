@@ -128,6 +128,13 @@
         >
           <i class="fas fa-hamburger text-yellow-500 mr-2"></i> Menu & Stocks
         </button>
+        <button
+          onclick="switchAdminTab('marketing')"
+          id="tab-marketing"
+          class="hidden text-gray-400 hover:text-white hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition flex-1 md:flex-none"
+        >
+          <i class="fas fa-bullhorn text-blue-500 mr-2"></i> Marketing Push
+        </button>
       </div>
     </header>
 
@@ -232,6 +239,55 @@
             produits...
           </p>
         </div>
+      </div>
+    </section>
+
+    <section id="view-marketing" class="hidden flex-1 overflow-y-auto p-4 md:p-6 bg-gray-100 h-[calc(100vh-140px)]">
+      <div class="max-w-4xl mx-auto">
+        
+        <div class="mb-8">
+          <h2 class="text-3xl font-black text-gray-900 tracking-tight"><i class="fas fa-paper-plane text-blue-600 mr-2"></i> Campagnes Push</h2>
+          <p class="text-gray-500">Envoyez une notification directement sur le téléphone de vos clients pour booster vos ventes.</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-200">
+          <form id="push-campaign-form" class="space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-bold text-gray-700 mb-2">Titre de la notification</label>
+                  <input type="text" id="push-title" required placeholder="Ex: 🍔 Faim de loup ?" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition font-bold text-gray-900">
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-gray-700 mb-2">Cible de la campagne</label>
+                  <select id="push-target" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition font-medium text-gray-700">
+                      <option value="all">🌍 Tous les clients inscrits</option>
+                      <option value="active">🔥 Clients récents (venus ce mois-ci)</option>
+                      <option value="inactive">😴 Clients inactifs (pour les relancer)</option>
+                  </select>
+                </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Message (Court et percutant)</label>
+              <textarea id="push-message" rows="2" required placeholder="Ex: -20% ce soir sur tous les menus avec le code MENU20 ! Venez vite !" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition text-gray-800"></textarea>
+            </div>
+
+            <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-3">
+                <i class="fas fa-calendar-alt text-blue-500 mt-1"></i>
+                <div class="flex-1">
+                    <label class="block text-sm font-bold text-gray-900 mb-1">Planifier l'envoi (Optionnel)</label>
+                    <p class="text-xs text-gray-500 mb-2">Laissez vide pour un envoi immédiat.</p>
+                    <input type="datetime-local" id="push-date" class="w-full md:w-1/2 px-4 py-2 rounded-lg bg-white border border-gray-200 outline-none">
+                </div>
+            </div>
+
+            <button type="submit" id="btn-send-push" class="w-full py-4 bg-blue-600 text-white rounded-xl font-black shadow-[0_8px_20px_rgba(37,99,235,0.3)] hover:bg-blue-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 text-lg">
+                <i class="fas fa-rocket"></i> Lancer la Campagne
+            </button>
+          </form>
+        </div>
+
       </div>
     </section>
 

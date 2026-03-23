@@ -61,6 +61,9 @@ setTimeout(() => {
         if (document.getElementById("admin-email"))
           document.getElementById("admin-email").innerText = user.email;
 
+if (window.snackConfig && window.snackConfig.features && window.snackConfig.features.enablePushNotifs) {
+    document.getElementById('tab-marketing').classList.remove('hidden');
+}
         // On met à jour l'UI
         loginSection.classList.add("hidden"); // On cache le formulaire
         startupIcon.className =
@@ -372,32 +375,40 @@ window.updatePaymentStatus = async (orderId, currentStatus) => {
 // 3. ONGLETS ET GESTION MENU (PIM)
 // ==========================================
 window.switchAdminTab = (tabName) => {
-  currentAdminTab = tabName;
-  const btnCuisine = document.getElementById("tab-cuisine");
-  const btnMenu = document.getElementById("tab-menu");
-  const viewCuisine = document.getElementById("view-cuisine");
-  const viewMenu = document.getElementById("view-menu");
+    currentAdminTab = tabName;
+    const btnCuisine = document.getElementById('tab-cuisine');
+    const btnMenu = document.getElementById('tab-menu');
+    const btnMarketing = document.getElementById('tab-marketing'); // NOUVEAU
+    
+    const viewCuisine = document.getElementById('view-cuisine');
+    const viewMenu = document.getElementById('view-menu');
+    const viewMarketing = document.getElementById('view-marketing'); // NOUVEAU
 
-  if (tabName === "cuisine") {
-    btnCuisine.className =
-      "bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none";
-    btnMenu.className =
-      "text-gray-400 hover:text-white hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition flex-1 md:flex-none";
-    viewCuisine.classList.remove("hidden");
-    viewCuisine.classList.add("flex");
-    viewMenu.classList.add("hidden");
-    startKitchenRadar(); // On relance
-  } else {
-    btnMenu.className =
-      "bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none";
-    btnCuisine.className =
-      "text-gray-400 hover:text-white hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition flex-1 md:flex-none";
-    viewCuisine.classList.add("hidden");
-    viewCuisine.classList.remove("flex");
-    viewMenu.classList.remove("hidden");
-    stopKitchenRadar(); // On coupe pendant qu'il gère ses stocks !
-    loadAdminProducts();
-  }
+    // On réinitialise tous les boutons en mode "Inactif"
+    [btnCuisine, btnMenu, btnMarketing].forEach(btn => {
+        if(btn) btn.className = "text-gray-400 hover:text-white hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition flex-1 md:flex-none";
+    });
+    
+    // On cache toutes les vues
+    viewCuisine.classList.replace('flex', 'hidden');
+    viewMenu.classList.add('hidden');
+    if(viewMarketing) viewMarketing.classList.add('hidden');
+
+    // On active l'onglet demandé
+    if (tabName === 'cuisine') {
+        btnCuisine.className = "bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none";
+        viewCuisine.classList.replace('hidden', 'flex');
+        startKitchenRadar(); 
+    } else if (tabName === 'menu') {
+        btnMenu.className = "bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none";
+        viewMenu.classList.remove('hidden');
+        stopKitchenRadar(); 
+        loadAdminProducts();
+    } else if (tabName === 'marketing') {
+        btnMarketing.className = "bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none";
+        viewMarketing.classList.remove('hidden');
+        stopKitchenRadar();
+    }
 };
 
 // ==========================================
@@ -791,6 +802,60 @@ window.showToast = function (message, type = "success") {
   snackbar.classList.remove("translate-y-24", "opacity-0");
   setTimeout(() => snackbar.classList.add("translate-y-24", "opacity-0"), 3000);
 };
+
+// ==========================================
+// 🚀 GESTION DES CAMPAGNES PUSH MARKETING
+// ==========================================
+const pushForm = document.getElementById('push-campaign-form');
+if (pushForm) {
+    pushForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = document.getElementById('btn-send-push');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Préparation en cours...`;
+        btn.disabled = true;
+
+        try {
+            const titre = document.getElementById('push-title').value;
+            const message = document.getElementById('push-message').value;
+            const cible = document.getElementById('push-target').value;
+            const dateSaisie = document.getElementById('push-date').value;
+
+            // Déterminer la date d'envoi prévue (immédiate ou planifiée)
+            let dateEnvoi = null;
+            if (dateSaisie) {
+                dateEnvoi = new Date(dateSaisie);
+            } else {
+                dateEnvoi = new Date(); // Maintenant
+            }
+
+            const { addDoc, collection, serverTimestamp } = window.fs;
+
+            // 📥 On sauvegarde la demande de campagne dans la BDD
+            await addDoc(collection(window.db, "campagnes_push"), {
+                snackId: currentAdminSnackId,
+                titre: titre,
+                message: message,
+                cible: cible,
+                dateCreation: serverTimestamp(),
+                dateEnvoiPrevue: dateEnvoi,
+                statut: "en_attente", // Le serveur lira ce statut pour savoir s'il doit envoyer
+                stats: { envoye: 0, clics: 0 }
+            });
+
+            pushForm.reset();
+            alert("✅ Campagne programmée avec succès !");
+
+        } catch (error) {
+            console.error("Erreur Push :", error);
+            alert("Erreur lors de la programmation de la campagne.");
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    });
+}
 // ==========================================
 // 5. DÉCONNEXION
 // ==========================================

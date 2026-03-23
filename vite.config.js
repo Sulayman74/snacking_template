@@ -51,6 +51,8 @@ export default defineConfig(() => {
           description: seoData.desc,
           theme_color: seoData.color,
           background_color: '#ffffff',
+          orientation: 'portrait-primary', // 📱 BONUS : Bloque l'app en mode portrait !
+          categories: ['food', 'shopping'], // 📱 BONUS : Aide Android à classer ton app dans le tiroir d'applications
           display: 'standalone',
           icons: [
             {
@@ -63,6 +65,22 @@ export default defineConfig(() => {
               sizes: '512x512',
               type: 'image/webp',
               purpose: 'any maskable'
+            }
+          ],
+          shortcuts: [
+            {
+              name: "Voir la carte",
+              short_name: "Commander",
+              description: "Ouvrir le menu complet pour commander",
+              url: "/?action=menu", // L'URL magique qu'on va intercepter
+              icons: [{ src: "/assets/icon-192.webp", sizes: "192x192" }]
+            },
+            {
+              name: "Ma Carte Fidélité",
+              short_name: "Fidélité",
+              description: "Afficher mon QR Code",
+              url: "/?action=loyalty", // L'URL magique qu'on va intercepter
+              icons: [{ src: "/assets/icon-192.webp", sizes: "192x192" }]
             }
           ]
         },

@@ -43,3 +43,10 @@ firebase-debug.*.log*
 .eslintcache
 .node_repl_history
 *.tgz
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

@@ -4,11 +4,14 @@ const { initializeApp } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
 const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const { getStorage } = require("firebase-admin/storage");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const logger = require("firebase-functions/logger");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
 const sharp = require("sharp");
+const admin = require("firebase-admin");
+admin.initializeApp();
 
 // Force toutes les fonctions à être hébergées à Paris (europe-west9)
 setGlobalOptions({ region: "europe-west9" });
@@ -118,5 +121,88 @@ exports.optimizeImage = onObjectFinalized({ memory: "512MiB" }, async (event) =>
     } catch (error) {
         logger.error("❌ Erreur lors de l'optimisation :", error);
         return null;
+    }
+});
+
+// 🛠️ Fonction utilitaire pour découper un tableau en paquets (Chunks)
+function chunkArray(array, size) {
+    const chunked = [];
+    for (let i = 0; i < array.length; i += size) {
+        chunked.push(array.slice(i, i + size));
+    }
+    return chunked;
+}
+
+
+// 🤖 Ce robot se réveille toutes les 5 minutes
+exports.processPushCampaigns = onSchedule("every 5 minutes", async (event) => {
+    const now = admin.firestore.Timestamp.now();
+
+    try {
+        const snapshot = await db.collection("campagnes_push")
+            .where("statut", "==", "en_attente")
+            .where("dateEnvoiPrevue", "<=", now)
+            .get();
+
+        if (snapshot.empty) return null;
+
+        for (const doc of snapshot.docs) {
+            const campagne = doc.data();
+            
+            // 💸 OPTIMISATION FIRESTORE : On ne lit QUE les utilisateurs qui ont accepté les notifs
+            // Note : Firebase va te demander de créer un "Index Composite" la 1ère fois que ce code tournera.
+            const usersSnapshot = await db.collection("users")
+                .where("snackId", "==", campagne.snackId)
+                .where("fcmToken", "!=", null) 
+                .get();
+
+            const tokens = [];
+            usersSnapshot.forEach(user => tokens.push(user.data().fcmToken));
+
+            if (tokens.length === 0) {
+                await doc.ref.update({ statut: "annulee_sans_cible" });
+                continue;
+            }
+
+            // 📦 STRATÉGIE DE CHUNKS : On coupe en paquets de 500 (Limite stricte Google)
+            const tokenChunks = chunkArray(tokens, 500);
+            let totalSuccess = 0;
+            let totalErrors = 0;
+
+            const basePayload = {
+                notification: {
+                    title: campagne.titre,
+                    body: campagne.message,
+                }
+            };
+
+            // 🎢 ENVOI BATCH PAR BATCH
+            for (let i = 0; i < tokenChunks.length; i++) {
+                const payload = { ...basePayload, tokens: tokenChunks[i] };
+                
+                // On tire la salve de 500
+                const response = await messaging.sendEachForMulticast(payload);
+                totalSuccess += response.successCount;
+                totalErrors += response.failureCount;
+
+                // 🚦 LE JITTER (Lissage de charge)
+                // S'il reste des paquets à envoyer, on attend 1,5 secondes avant la prochaine salve
+                // Ça permet aux clients d'ouvrir l'app en "vagues" et protège tes quotas Firestore
+                if (i < tokenChunks.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                }
+            }
+
+            // ✅ Mise à jour finale de la campagne
+            await doc.ref.update({
+                statut: "envoyee",
+                dateEnvoiReelle: admin.firestore.FieldValue.serverTimestamp(),
+                stats: { envoye: totalSuccess, erreurs: totalErrors }
+            });
+
+            console.log(`✅ Campagne ${doc.id} terminée. Succès: ${totalSuccess} | Erreurs: ${totalErrors}`);
+        }
+    } catch (error) {
+        console.error("❌ Erreur critique Push :", error);
     }
 });

@@ -1,6 +1,53 @@
-import "./bridge.js";
+// import "./bridge.js";
 import "./snack-config.js";
 import "./firebase-init.js";
+
+// ============================================================================
+// 🛠️ OUTIL DE DEBUG MAC : SIMULATEUR DE VIBRATIONS
+// ============================================================================
+if (
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+) {
+  // On ne fait ça qu'en mode développement sur ton Mac !
+
+  // On sauvegarde la vraie fonction (s'il y en a une)
+  const originalVibrate = navigator.vibrate.bind(navigator);
+
+  // On remplace la fonction par notre simulateur console
+  navigator.vibrate = function (pattern) {
+    // 1. On affiche le log stylé dans la console du Mac
+    const texteLog = Array.isArray(pattern)
+      ? `Pattern [${pattern.join(", ")}ms]`
+      : `Secousse ${pattern}ms`;
+    console.log(
+      `%c📳 VIBRATION DÉTECTÉE : ${texteLog}`,
+      "background: #222; color: #ffeb3b; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
+    );
+
+    // 2. On essaie quand même d'exécuter la vraie fonction si on est sur mobile
+    try {
+      return originalVibrate(pattern);
+    } catch (e) {
+      return true; // Fait croire au code que ça a marché
+    }
+  };
+
+  // Si l'API n'existe pas du tout (ex: Safari Desktop), on la simule !
+  if (!("vibrate" in navigator)) {
+    navigator.vibrate = function (pattern) {
+      const texteLog = Array.isArray(pattern)
+        ? `Pattern [${pattern.join(", ")}ms]`
+        : `Secousse ${pattern}ms`;
+      console.log(
+        `%c📳 VIBRATION SIMULÉE (API Absente) : ${texteLog}`,
+        "background: #ff5722; color: #fff; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
+      );
+      return true;
+    };
+  }
+}
+// ============================================================================
 
 // ============================================================================
 // 2. INITIALISATION DYNAMIQUE
@@ -1079,7 +1126,7 @@ window.openProductModal = function (itemId) {
     prixMenu: item.menuPriceAdd || 2.5, // Supplément menu (à ajuster si besoin)
     image: item.image,
     // 🎯 NOUVEAU : On lit la valeur de allowMenu (true par défaut si non spécifié)
-    allowMenu: item.allowMenu !== false 
+    allowMenu: item.allowMenu !== false,
   };
 
   const devise = cfg.identity.currency || "€";
@@ -1093,7 +1140,10 @@ window.openProductModal = function (itemId) {
   const oldFallback = document.getElementById("modal-img-fallback");
   if (oldFallback) oldFallback.remove();
 
-  const imageUrl = currentProduct.image && currentProduct.image.trim() !== "" ? currentProduct.image : null;
+  const imageUrl =
+    currentProduct.image && currentProduct.image.trim() !== ""
+      ? currentProduct.image
+      : null;
 
   const fallbackHTML = `
       <div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0">
@@ -1102,7 +1152,7 @@ window.openProductModal = function (itemId) {
   `;
 
   if (imageUrl) {
-    modalImg.style.display = "block"; 
+    modalImg.style.display = "block";
     modalImg.src = imageUrl;
     modalImg.onerror = function () {
       this.style.display = "none";
@@ -1119,11 +1169,14 @@ window.openProductModal = function (itemId) {
   document.getElementById("modal-desc").innerText = item.description || "";
 
   // 3. Gérer les allergènes
-  const allergenContainer = document.getElementById("modal-allergens-container");
+  const allergenContainer = document.getElementById(
+    "modal-allergens-container",
+  );
   const allergenesList = item.allergenes || item.allergens;
   if (allergenesList && allergenesList.length > 0) {
     allergenContainer.classList.remove("hidden");
-    document.getElementById("modal-allergens").innerText = allergenesList.join(", ");
+    document.getElementById("modal-allergens").innerText =
+      allergenesList.join(", ");
   } else {
     allergenContainer.classList.add("hidden");
   }
@@ -1134,7 +1187,8 @@ window.openProductModal = function (itemId) {
   const btn = document.getElementById("modal-cta");
   const optionsContainer = document.getElementById("modal-options-container");
 
-  const isClickAndCollect = cfg.features && cfg.features.enableClickAndCollect === true;
+  const isClickAndCollect =
+    cfg.features && cfg.features.enableClickAndCollect === true;
   const isPhoneOrder = cfg.features && cfg.features.enableOnlineOrder === true;
 
   if (item.isAvailable === false) {
@@ -1144,37 +1198,41 @@ window.openProductModal = function (itemId) {
     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
     btn.removeAttribute("href");
     btn.onclick = null;
-    
   } else if (isClickAndCollect) {
     // 🛒 2. MODE PANIER (Click & Collect = true) -> E-commerce pur
-    
+
     if (optionsContainer) {
       if (currentProduct.allowMenu) {
-          // ✅ MENU AUTORISÉ (Le client peut choisir Frites + Boisson)
-          optionsContainer.classList.remove("hidden");
+        // ✅ MENU AUTORISÉ (Le client peut choisir Frites + Boisson)
+        optionsContainer.classList.remove("hidden");
 
-          // 🎨 Thème dynamique
-          const accentColor = cfg.theme.colors.accent || "text-red-600"; 
-          const lightBgColor = cfg.theme.colors.lightBg || "bg-gray-50"; 
-          const bgFocusColor = accentColor.replace("text-", "focus:ring-"); 
+        // 🎨 Thème dynamique
+        const accentColor = cfg.theme.colors.accent || "text-red-600";
+        const lightBgColor = cfg.theme.colors.lightBg || "bg-gray-50";
+        const bgFocusColor = accentColor.replace("text-", "focus:ring-");
 
-          // 🥤 Récupère les vraies boissons depuis Firestore
-          const boissonsDispo = menuGlobal.filter(
-            (item) => item.categorieId === "drinks" && item.isAvailable !== false,
-          );
-          const listeBoissons = boissonsDispo.length > 0 ? boissonsDispo : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
+        // 🥤 Récupère les vraies boissons depuis Firestore
+        const boissonsDispo = menuGlobal.filter(
+          (item) => item.categorieId === "drinks" && item.isAvailable !== false,
+        );
+        const listeBoissons =
+          boissonsDispo.length > 0
+            ? boissonsDispo
+            : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
 
-          const drinksHTML = listeBoissons
-            .map((boisson, index) => `
+        const drinksHTML = listeBoissons
+          .map(
+            (boisson, index) => `
                   <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
                       <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="w-5 h-5 ${accentColor} ${bgFocusColor}">
                       <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
                   </label>
-              `)
-            .join("");
+              `,
+          )
+          .join("");
 
-          // INJECTION DU HTML DANS LA MODALE
-          optionsContainer.innerHTML = `
+        // INJECTION DU HTML DANS LA MODALE
+        optionsContainer.innerHTML = `
                   <h3 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h3>
                   <div class="space-y-2 mb-4">
                       <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
@@ -1203,21 +1261,20 @@ window.openProductModal = function (itemId) {
                       </div>
                   </div>
               `;
-              
-          if (typeof window.toggleDrinkSection === "function") window.toggleDrinkSection();
-          
+
+        if (typeof window.toggleDrinkSection === "function")
+          window.toggleDrinkSection();
       } else {
-          // 🚫 MENU NON AUTORISÉ (C'est un dessert, une boisson, etc.)
-          optionsContainer.classList.add("hidden");
-          optionsContainer.innerHTML = ""; // On nettoie pour éviter des bugs radio
-          btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+        // 🚫 MENU NON AUTORISÉ (C'est un dessert, une boisson, etc.)
+        optionsContainer.classList.add("hidden");
+        optionsContainer.innerHTML = ""; // On nettoie pour éviter des bugs radio
+        btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
       }
     }
 
     btn.removeAttribute("href");
     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
     btn.onclick = window.confirmAddToCart;
-
   } else if (isPhoneOrder) {
     // ☎️ 3. MODE APPEL (ClickAndCollect = false) -> Commande par téléphone
     if (optionsContainer) optionsContainer.classList.add("hidden");
@@ -1248,21 +1305,37 @@ window.openProductModal = function (itemId) {
   if (shareBtn && cfg.features && cfg.features.enableViralShare) {
     shareBtn.classList.remove("hidden");
     shareBtn.onclick = async () => {
-      if (typeof window.triggerVibration === "function") window.triggerVibration("light");
+      if (typeof window.triggerVibration === "function")
+        window.triggerVibration("light");
       const shareTitle = `Découvre ${currentProduct.nom} chez ${cfg.identity?.name || "nous"} !`;
       const shareText = `Mec, regarde cette dinguerie : ${currentProduct.nom} à ${currentProduct.prixBase.toFixed(2)}${devise}. On teste ça quand ? 🤤🍔`;
       const shareUrl = window.location.href;
 
       if (navigator.share) {
         try {
-          await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-          if (typeof window.triggerVibration === "function") window.triggerVibration("success");
-        } catch (err) { console.log("Partage annulé ou fermé."); }
+          await navigator.share({
+            title: shareTitle,
+            text: shareText,
+            url: shareUrl,
+          });
+          if (typeof window.triggerVibration === "function")
+            window.triggerVibration("success");
+        } catch (err) {
+          console.log("Partage annulé ou fermé.");
+        }
       } else if (navigator.clipboard) {
         try {
-          await navigator.clipboard.writeText(`${shareTitle}\n${shareText}\nLien : ${shareUrl}`);
-          if (typeof window.showToast === "function") window.showToast("Lien copié dans le presse-papier ! 📋", "success");
-        } catch (err) { console.error("Erreur de copie"); }
+          await navigator.clipboard.writeText(
+            `${shareTitle}\n${shareText}\nLien : ${shareUrl}`,
+          );
+          if (typeof window.showToast === "function")
+            window.showToast(
+              "Lien copié dans le presse-papier ! 📋",
+              "success",
+            );
+        } catch (err) {
+          console.error("Erreur de copie");
+        }
       }
     };
   } else if (shareBtn) {
@@ -1276,7 +1349,12 @@ window.openProductModal = function (itemId) {
 
   setTimeout(() => {
     backdrop.classList.remove("opacity-0");
-    sheet.classList.remove("translate-y-full", "md:opacity-0", "md:pointer-events-none", "md:scale-95");
+    sheet.classList.remove(
+      "translate-y-full",
+      "md:opacity-0",
+      "md:pointer-events-none",
+      "md:scale-95",
+    );
   }, 10);
 
   document.body.style.overflow = "hidden";
@@ -1288,7 +1366,7 @@ window.openProductModal = function (itemId) {
 window.toggleDrinkSection = function () {
   const formuleInput = document.querySelector('input[name="formule"]:checked');
   if (!formuleInput) return; // Sécurité si "allowMenu" est false
-  
+
   const isMenu = formuleInput.value === "menu";
   const drinkSection = document.getElementById("drink-section");
   const btn = document.getElementById("modal-cta");
@@ -1352,7 +1430,9 @@ window.confirmAddToCart = function () {
   let boissonChoisie = null;
 
   if (isMenu) {
-    const boissonInput = document.querySelector('input[name="boisson"]:checked');
+    const boissonInput = document.querySelector(
+      'input[name="boisson"]:checked',
+    );
     if (!boissonInput) {
       window.showToast("🥤 Oups ! Veuillez choisir une boisson.", "error");
       return;
@@ -1378,9 +1458,16 @@ window.confirmAddToCart = function () {
     prixMenuAdd: isMenu ? currentProduct.prixMenu : 0,
   });
 
-  if (window.AppBridge && typeof window.AppBridge.sendToNative === "function") {
-    window.AppBridge.sendToNative("haptic_success");
+  // L'appel pour l'application Native (si tu en fais une un jour)
+  // if (window.AppBridge && typeof window.AppBridge.sendToNative === "function") {
+  //   window.AppBridge.sendToNative("haptic_success");
+  // }
+  // L'appel pour le Web Mobile (Ton Galaxy S10 sur Chrome !)
+  if (typeof window.triggerVibration === "function") {
+    window.triggerVibration("success");
   }
+
+  closeProductModal();
   closeProductModal();
 };
 
@@ -1397,6 +1484,9 @@ function addToCart(itemData) {
       ...itemData,
       quantity: 1,
     });
+  }
+  if (typeof window.triggerVibration === "function") {
+    window.triggerVibration("light");
   }
 
   saveCart();
@@ -1420,16 +1510,17 @@ function updateCartUI() {
   } else {
     badge.classList.add("hidden");
   }
-  try {
-    if (
-      window.AppBridge &&
-      typeof window.AppBridge.sendToNative === "function"
-    ) {
-      window.AppBridge.sendToNative("update_cart_badge", { count: totalItems });
-    }
-  } catch (e) {
-    console.error("Bridge non disponible", e);
-  }
+
+  // try {
+  //   if (
+  //     window.AppBridge &&
+  //     typeof window.AppBridge.sendToNative === "function"
+  //   ) {
+  //     window.AppBridge.sendToNative("update_cart_badge", { count: totalItems });
+  //   }
+  // } catch (e) {
+  //   console.error("Bridge non disponible", e);
+  // }
 }
 
 // --- 4. AFFICHAGE DU PANIER (Modale Panier) ---
@@ -1515,6 +1606,11 @@ function renderCartItems() {
 
 window.updateQuantity = function (productId, delta) {
   const item = cart.find((i) => i.id === productId);
+
+  if (typeof window.triggerVibration === "function") {
+    window.triggerVibration("light");
+  }
+  
   if (item) {
     item.quantity += delta;
     if (item.quantity <= 0) cart = cart.filter((i) => i.id !== productId);
@@ -1552,12 +1648,12 @@ window.processCheckout = async () => {
       return;
     }
 
-// 1. Formatage du Panier pour Firestore
+    // 1. Formatage du Panier pour Firestore
     const orderItems = cart.map((item) => {
-      const prixUnitaire = item.prix || 0; 
+      const prixUnitaire = item.prix || 0;
       return {
         id: item.id,
-        productId: item.productId || item.id.split('-')[0], // 🎯 On l'envoie à Firebase
+        productId: item.productId || item.id.split("-")[0], // 🎯 On l'envoie à Firebase
         nom: item.nom,
         image: item.image || "",
         type: item.type || "seul",
@@ -1603,6 +1699,9 @@ window.processCheckout = async () => {
       window.toggleCartModal();
     }
 
+    if (typeof window.triggerVibration === "function") {
+      window.triggerVibration("jackpot");
+    }
     window.showToast("🎉 Commande envoyée en cuisine !", "success");
 
     // 5. 🎯 LA MAGIE CLICK & COLLECT : On mémorise la commande !
