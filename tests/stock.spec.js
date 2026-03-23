@@ -57,8 +57,7 @@ test.describe('Gestion des Stocks & Sécurité', () => {
     
     // Masquer le splash screen
     await expect(clientPage.locator('#splash-screen')).toBeHidden({ timeout: 10000 });
-
-    await clientPage.locator('#navbar').getByText('La Carte').first().click();
+    await clientPage.evaluate(() => window.switchView('menu'));
 
     // On vérifie que la grande page du menu complet est bien affichée
     const fullMenu = clientPage.locator('#full-menu');

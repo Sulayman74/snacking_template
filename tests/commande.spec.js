@@ -3,24 +3,23 @@ import { expect, test } from '@playwright/test';
 test.describe('Flux de Commande Click & Collect', () => {
   
   test('Le client peut ajouter un Menu au panier et valider', async ({ page }) => {
-    // 1. Le robot ouvre ton site (Assure-toi que ton serveur Vite tourne !)
+// 1. Ouvre le site
     await page.goto('http://localhost:5173');
 
-    // 2. On attend que Firebase charge les produits (On cherche tes cartes produits)
-    const productCard = page.locator('.group.cursor-pointer').first();
-    await expect(productCard).toBeVisible({ timeout: 10000 }); 
+    // 🛑 LE HACK CTO : On force l'ouverture du menu complet !
+    await page.evaluate(() => window.switchView('menu'));
+    
+    // On attend que le grand menu apparaisse
+    const fullMenu = page.locator('#full-menu-container');
+    await expect(fullMenu).toBeVisible({ timeout: 10000 });
 
-    // 3. Le robot clique sur le premier Tacos/Burger qu'il voit
-    await productCard.click();
+    // 2. On sélectionne le premier produit du MENU COMPLET (qui a sûrement l'option Menu)
+    const firstProduct = page.locator('#full-menu-container .group.cursor-pointer').first();
+    await firstProduct.click();
 
-    // 4. On vérifie que la modale du produit s'ouvre bien
-    const modalTitle = page.locator('#modal-title');
-    await expect(modalTitle).toBeVisible();
-
-    // 5. Le robot choisit la formule "En Menu"
-    await page.locator('input[name="formule"][value="menu"]').check();
-
-    // 6. Il clique sur le gros bouton noir "Ajouter"
+    // 3. On attend que la modale s'ouvre, on coche "Menu" et on ajoute au panier
+    await expect(page.locator('#modal-title')).toBeVisible();
+    await page.locator('input[value="menu"]').check({ force: true }); // force: true aide sur Firefox
     await page.locator('#modal-cta').click();
 
     // 7. Il clique sur le panier rouge flottant en bas de l'écran

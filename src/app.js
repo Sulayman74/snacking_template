@@ -1458,16 +1458,6 @@ window.confirmAddToCart = function () {
     prixMenuAdd: isMenu ? currentProduct.prixMenu : 0,
   });
 
-  // L'appel pour l'application Native (si tu en fais une un jour)
-  // if (window.AppBridge && typeof window.AppBridge.sendToNative === "function") {
-  //   window.AppBridge.sendToNative("haptic_success");
-  // }
-  // L'appel pour le Web Mobile (Ton Galaxy S10 sur Chrome !)
-  if (typeof window.triggerVibration === "function") {
-    window.triggerVibration("success");
-  }
-
-  closeProductModal();
   closeProductModal();
 };
 

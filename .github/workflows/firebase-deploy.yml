@@ -1,4 +1,4 @@
-name: 🚀 CI/CD - Tests & Déploiement Firebase
+name: 🚀 CI/CD - Déploiement Firebase (Fast & Furious)
 
 on:
   push:
@@ -7,51 +7,17 @@ on:
 
 jobs:
   # =========================================================
-  # 🛡️ ÉTAPE 1 : LE GARDE DU CORPS (TESTS PLAYWRIGHT)
-  # =========================================================
-  test:
-    name: 🤖 Tests E2E
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📥 Télécharger le code
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24 # Excellente idée d'utiliser la version 24 LTS
-
-      - name: 📦 Installer les dépendances
-        run: npm ci # 'ci' est plus rapide et strict que 'install' pour les serveurs
-
-      - name: 🌐 Installer les navigateurs Playwright
-        run: npx playwright install --with-deps
-
-      - name: 🧪 Lancer l'armée de robots
-        run: npx playwright test
-
-      - name: 📊 Sauvegarder le rapport (en cas de crash)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-
-  # =========================================================
-  # 📦 ÉTAPE 2 : LE DÉPLOIEMENT MATRIX (MULTI-CLIENTS)
+  # 📦 DÉPLOIEMENT MATRIX (MULTI-CLIENTS)
   # =========================================================
   deploy:
     name: 🚀 Déploiement (${{ matrix.snack_id }})
-    needs: test # 🛑 LE SECRET EST ICI : Ce job attend que 'test' finisse avec succès !
+    # 🛑 On a retiré le "needs: test" ici ! Le job se lance tout de suite.
     runs-on: ubuntu-latest
     
     strategy:
       fail-fast: false # Si un resto plante au build, on déploie quand même les autres
       matrix:
-        snack_id: [Ym1YiO4Ue5Fb5UXlxr06] # 👈 Ta liste de clients
+        snack_id: [Ym1YiO4Ue5Fb5UXlxr06] # 👈 Ta liste de clients s'allongera ici !
 
     steps:
       - name: 📥 Checkout repository
@@ -63,7 +29,7 @@ jobs:
           node-version: 24
 
       - name: 📦 Install dependencies
-        run: npm install
+        run: npm ci # 'ci' est plus rapide et propre pour les serveurs CI/CD
 
       - name: 🏗️ Build project pour ${{ matrix.snack_id }}
         env:

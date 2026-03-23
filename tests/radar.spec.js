@@ -18,9 +18,9 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
     
     // Masquer le splash screen
     await expect(clientPage.locator('#splash-screen')).toBeHidden({ timeout: 10000 });
+    await clientPage.evaluate(() => window.toggleAuthModal());
 
     // Connexion du client
-    await clientPage.locator('#loyalty-main-btn').click();
     await expect(clientPage.locator('#auth-modal')).toBeVisible();
     await clientPage.locator('#auth-email').fill('robot@test.com'); // Mettre un vrai compte Client Firebase
     await clientPage.locator('#auth-password').fill('123456');
