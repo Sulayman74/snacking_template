@@ -281,8 +281,11 @@
 
     <link
       rel="stylesheet"
+      media="print" onload="this.media='all'"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+    <link rel="preload" as="image" href="https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/heroImg.webp?alt=media&token=a3de102d-b619-4a43-9601-cad75f7f82d2">
     <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin />
     <link rel="preload" as="image" href="{{LOGO_URL}}" />
     <link rel="stylesheet" href="src/styles.css" />
@@ -332,7 +335,7 @@
         Tout est prêt...
       </p>
     </div>
-
+<main>
     <nav
       id="navbar"
       class="fixed w-full z-50 top-0 transition-all duration-300 bg-linear-to-b backdrop-blur-sm from-black/90 to-transparent"
@@ -549,7 +552,6 @@
 
         <div class="text-center">
           <button
-            aria-label="Voir la carte complète"
             onclick="switchView('menu')"
             class="bg-gray-800 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300"
           >
@@ -577,7 +579,6 @@
         <div
           class="flex justify-between items-center mb-6 backdrop-blur py-4 z-10 border-b border-gray-200 shadow-sm -mx-4 px-4 md:mx-0 md:px-0"
         >
-          <!-- <h2 class="text-4xl font-black text-gray-900 tracking-tight">La Carte</h2> -->
           <p></p>
           <button
             aria-label="Retour sur la home page"
@@ -826,19 +827,19 @@
             >
               <a
                 href="legal.html"
-                class="text-gray-500 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4"
+                class="text-gray-300 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4"
               >
                 Mentions Légales
               </a>
               <a
                 href="legal.html#cgu"
-                class="text-gray-500 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4"
+                class="text-gray-300 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4"
               >
                 CGU & Ventes
               </a>
               <a
                 href="legal.html#rgpd"
-                class="text-gray-500 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4"
+                class="text-gray-300 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4"
               >
                 Confidentialité
               </a>
@@ -849,7 +850,7 @@
             class="text-center md:text-right flex flex-col justify-center items-center md:items-end group"
           >
             <p
-              class="text-gray-600 text-[10px] uppercase tracking-[0.2em] mb-2"
+              class="text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-2"
             >
               Architecture Digitale
             </p>
@@ -865,7 +866,7 @@
                 >CodeCrafters™</span
               >
             </a>
-            <p class="text-sm text-gray-500 mb-2">
+            <p class="text-sm text-gray-300 mb-2">
               © 2026 Tous droits réservés.
             </p>
 
@@ -879,7 +880,7 @@
         </div>
       </div>
     </footer>
-
+</main>
     <nav
       id="mobile-nav-container"
       aria-label="Navigation principale mobile"
@@ -1305,7 +1306,8 @@
     >
       <button
         onclick="openCartModal()"
-        class="bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 shadow-red-600/30 border-white relative hover:scale-105 transition"
+        aria-label="Ouvrir le panier"
+        class="text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 shadow-red-600/30 border-white relative hover:scale-105 transition"
       >
         <i class="fas fa-shopping-bag text-2xl"></i>
         <span
@@ -1328,6 +1330,7 @@
     >
       <button
         onclick="closeProductModal()"
+        aria-label="Fermer la modale"
         type="button"
         aria-label="Fermeture de la modal"
         class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg z-20 text-gray-800 hover:bg-gray-100 hover:scale-110 transition"
@@ -1580,10 +1583,6 @@
       </div>
     </div>
 
-    <script
-      src="https://unpkg.com/html5-qrcode"
-      type="text/javascript"
-    ></script>
     <script type="module" src="src/app.js"></script>
   </body>
 </html>

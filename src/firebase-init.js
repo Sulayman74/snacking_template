@@ -21,28 +21,28 @@ import {
   startAfter,
   updateDoc,
   where
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+} from "firebase/firestore";
 import {
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+} from "firebase/auth";
 import {
   getDownloadURL,
   getStorage,
   ref,
   uploadBytes
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+} from "firebase/storage";
 import {
   getMessaging,
   getToken,
   onMessage
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+} from "firebase/messaging";
 
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from "firebase/app";
 
 // 2. CONFIGURATION
 const firebaseConfig = {
@@ -57,11 +57,37 @@ const firebaseConfig = {
 
 // 3. INITIALISATION
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 const messaging = getMessaging(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+
+// ============================================================================
+// 🚀 OPTIMISATION : CHARGEMENT DIFFÉRÉ DE FIREBASE ANALYTICS
+// ============================================================================
+
+// On déclare la variable vide au départ
+export let analytics = null; 
+
+function initAnalytics() {
+  if (analytics) return; // Si c'est déjà chargé, on ne fait rien
+  
+  // On lance Analytics seulement maintenant !
+  analytics = getAnalytics(app);
+
+  // On nettoie les écouteurs d'événements
+  ['scroll', 'mousemove', 'touchstart', 'click'].forEach(event => {
+    window.removeEventListener(event, initAnalytics);
+  });
+}
+
+// 1. Déclenchement dès que le client interagit avec la page
+['scroll', 'mousemove', 'touchstart', 'click'].forEach(event => {
+  window.addEventListener(event, initAnalytics, { once: true, passive: true });
+});
+
+// 2. Sécurité : s'il ne bouge pas pendant 3,5 secondes, on charge quand même
+setTimeout(initAnalytics, 3500);
 
 // 4. EXPORTATION SÉCURISÉE (LE HUB POUR VITE)
 window.storage = storage;
@@ -301,19 +327,19 @@ function updateUI(user) {
 
     if (s.instagram) {
       socialsContainer.innerHTML += `
-        <a href="https://instagram.com/${s.instagram.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
+        <a href="https://instagram.com/${s.instagram.replace("@", "")}" target="_blank" aria-label="Notre page Instagram" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
             <i class="fab fa-instagram bg-linear-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-transparent bg-clip-text"></i>
         </a>`;
     }
     if (s.facebook) {
       socialsContainer.innerHTML += `
-        <a href="https://facebook.com/${s.facebook}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
+        <a href="https://facebook.com/${s.facebook}" target="_blank" aria-label="Notre page Facebook" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
             <i class="fab fa-facebook text-[#1877F2]"></i>
         </a>`;
     }
     if (s.tiktok) {
       socialsContainer.innerHTML += `
-        <a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300 group">
+        <a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" target="_blank" aria-label="Notre page Tiktok" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300 group">
             <i class="fab fa-tiktok text-white group-hover:drop-shadow-[2px_2px_0_#ff0050] transition-all"></i>
         </a>`;
     }
@@ -507,7 +533,6 @@ onAuthStateChanged(auth, async (user) => {
 
   try {
     if (user) {
-      console.log("🟢 Utilisateur connecté :", user.email);
       if (navLogoutBtn) navLogoutBtn.classList.remove("hidden");
       if (mobileLogoutBtn) mobileLogoutBtn.classList.remove("hidden");
 
@@ -550,7 +575,6 @@ onAuthStateChanged(auth, async (user) => {
         }
       }
     } else {
-      console.log("🔴 Utilisateur déconnecté (Mode Public).");
       if (navLogoutBtn) navLogoutBtn.classList.add("hidden");
       if (mobileLogoutBtn) mobileLogoutBtn.classList.add("hidden");
 
@@ -710,16 +734,23 @@ window.openAdminScanner = async () => {
   html5Qrcode = new Html5Qrcode("reader");
 
   try {
-    // 2. On allume la caméra arrière automatiquement et silencieusement
+
+    // Le navigateur télécharge le module uniquement à ce moment précis.
+    const { Html5Qrcode } = await import("html5-qrcode");
+
+    // 2. On utilise Html5Qrcode (le moteur pur)
+    html5Qrcode = new Html5Qrcode("reader");
+
+    // 3. On allume la caméra arrière
     await html5Qrcode.start(
-      { facingMode: "environment" }, // Force la caméra arrière du téléphone
-      { fps: 10, qrbox: { width: 250, height: 250 } }, // Vitesse et taille du scan
-      onScanSuccess, // Fonction appelée si succès
-      onScanFailure  // Fonction appelée si erreur (ignorée en boucle)
+      { facingMode: "environment" }, 
+      { fps: 10, qrbox: { width: 250, height: 250 } }, 
+      onScanSuccess, 
+      onScanFailure  
     );
   } catch (err) {
-    console.error("Erreur Caméra :", err);
-    window.showToast("Autorisez la caméra pour pouvoir scanner.", "error");
+    console.error("Erreur Caméra ou Chargement du module :", err);
+    window.showToast("Impossible de démarrer le scanner.", "error");
   }
 };
 

@@ -108,8 +108,20 @@ export default defineConfig(() => {
           main: resolve(__dirname, 'index.html'),
           admin: resolve(__dirname, 'admin.html'),
           superadmin: resolve(__dirname, 'superadmin.html')
+        }, 
+        output: {
+          manualChunks: {
+            firebase: [
+              'firebase/app', 
+              'firebase/firestore', 
+              'firebase/auth', 
+              'firebase/storage',
+              'firebase/analytics'
+            ],
+            qrcode: ['html5-qrcode']
+          }
         }
       }
     }
-  }
-})
+  } 
+}); 

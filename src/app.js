@@ -11,8 +11,6 @@ window.initAppVisuals = async () => {
   const cfg = window.snackConfig;
   if (!cfg) return;
 
-  console.log("🚀 Initialisation du Dashboard SaaS...");
-
   // =======================================================================
   // 🛑 LE COUPE-CIRCUIT (MODE MAINTENANCE)
   // =======================================================================

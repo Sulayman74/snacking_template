@@ -30,6 +30,8 @@
     "workbox-window": "^7.4.0"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.2.1"
+    "@tailwindcss/vite": "^4.2.1",
+    "firebase": "^12.11.0",
+    "html5-qrcode": "^2.3.8"
   }
 }
