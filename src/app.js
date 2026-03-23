@@ -297,7 +297,7 @@ function createProductCard(item, cfg) {
         <div class="p-5 flex flex-col justify-between h-[calc(100%-12rem)]">
             <div>
                 <div class="flex justify-between items-start mb-2 gap-2">
-                    <h4 class="text-lg font-bold ${textColor} leading-tight">${nomAffiche}</h4>
+                    <h2 class="text-lg font-bold ${textColor} leading-tight">${nomAffiche}</h2>
                     <span class="text-xl font-black ${priceColor} whitespace-nowrap">${parseFloat(prixAffiche).toFixed(2)}${devise}</span>
                 </div>
                 <p class="text-sm text-gray-200 mb-6 line-clamp-2">${item.description || ""}</p>
@@ -1175,7 +1175,7 @@ window.openProductModal = function (itemId) {
 
           // INJECTION DU HTML DANS LA MODALE
           optionsContainer.innerHTML = `
-                  <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h4>
+                  <h3 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h3>
                   <div class="space-y-2 mb-4">
                       <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
                           <div class="flex items-center gap-3">
@@ -1485,7 +1485,7 @@ function renderCartItems() {
                 <div class="flex items-center gap-4 bg-white p-3 rounded-xl border" role="group" aria-label="Article du panier : ${item.nom}">
                     ${imageHtml}
                     <div class="flex-1">
-                        <h4 class="font-bold text-gray-900">${item.nom}</h4>
+                        <h2 class="font-bold text-gray-900">${item.nom}</h2>
                         <p class="text-red-600 font-bold" aria-label="Prix total pour cet article : ${(item.prix * item.quantity).toFixed(2)} euros">
                             ${(item.prix * item.quantity).toFixed(2)} €
                         </p>
