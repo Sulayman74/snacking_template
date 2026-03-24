@@ -26,7 +26,7 @@ const SAAS_THEMES = {
       border: "border-green-600",    // NOUVEAU
       blurBg: "bg-green-600/60"
   },
-  "purple": {
+  "midnight": {
       primary: "bg-purple-500",
       textOnPrimary: "text-white",
       accent: "text-purple-400",

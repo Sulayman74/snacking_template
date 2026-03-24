@@ -1,4 +1,4 @@
-import "./bridge.js";
+// import "./bridge.js";
 import "./snack-config.js";
 import "./firebase-init.js";
 
@@ -194,18 +194,56 @@ function startKitchenRadar() {
             .toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
         : "";
 
-      let itemsHtml = commande.items
-        .map(
-          (item) =>
-            `<li class="flex justify-between items-start border-b border-gray-100/50 py-2 last:border-0">
-                    <div>
-                        <span class="font-black text-lg" aria-hidden="true">${item.quantity}x</span> 
-                        <span class="font-bold ml-1">${item.nom}</span>
-                        <span class="sr-only">${item.quantity} ${item.nom}</span>
-                    </div>
-                </li>`,
-        )
-        .join("");
+let itemsHtml = commande.items.map((item, index) => {
+
+
+    // 1. On prépare le conteneur des options
+    let optionsHTML = "";
+
+    // 🍕 1. Taille de la Pizza
+    if (item.tailleChoisie) {
+        optionsHTML += `
+        <div class="text-gray-800 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
+            <i class="fas fa-ruler-horizontal text-gray-500"></i> Taille : ${item.tailleChoisie}
+        </div>`;
+    }
+
+    // 🥤 2. Boisson
+    if (item.boissonNom) {
+        optionsHTML += `
+        <div class="text-blue-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
+            <i class="fas fa-glass-water"></i> ${item.boissonNom}
+        </div>`;
+    }
+
+    // 🥣 3. Sauces (Sécurité renforcée !)
+    if (item.sauces && Array.isArray(item.sauces) && item.sauces.length > 0) {
+        optionsHTML += `
+        <div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
+            <i class="fas fa-blender"></i> Sauces : ${item.sauces.join(' + ')}
+        </div>`;
+    }
+
+    // 🚫 4. Sans Crudités (Alerte Rouge - Sécurité renforcée !)
+    if (item.sansCrudites && Array.isArray(item.sansCrudites) && item.sansCrudites.length > 0) {
+        optionsHTML += `
+        <div class="mt-2 ml-6">
+            <span class="bg-red-600 text-white px-2 py-1 rounded-md font-black text-xs uppercase shadow-sm border border-red-800">
+                ⚠️ ${item.sansCrudites.join(', ')}
+            </span>
+        </div>`;
+    }
+
+    // 2. On assemble la ligne du ticket
+    return `
+        <li class="flex flex-col border-b border-gray-100/50 py-3 last:border-0">
+            <div class="flex items-start">
+                <span class="font-black text-lg text-red-600" aria-hidden="true">${item.quantity}x</span> 
+                <span class="font-bold ml-2 text-gray-900 text-lg">${item.nom}</span>
+            </div>
+            ${optionsHTML}
+        </li>`;
+}).join("");
 
       const isWaiting = commande.statut === "en_attente_client";
       const isNew = commande.statut === "nouvelle";

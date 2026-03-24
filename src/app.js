@@ -3,50 +3,40 @@ import "./snack-config.js";
 import "./firebase-init.js";
 
 // ============================================================================
-// 🛠️ OUTIL DE DEBUG MAC : SIMULATEUR DE VIBRATIONS
+// 🛠️ OUTIL DE DEBUG MAC : SIMULATEUR DE VIBRATIONS (CORRIGÉ SAFARI)
 // ============================================================================
 if (
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
 ) {
-  // On ne fait ça qu'en mode développement sur ton Mac !
-
-  // On sauvegarde la vraie fonction (s'il y en a une)
-  const originalVibrate = navigator.vibrate.bind(navigator);
-
-  // On remplace la fonction par notre simulateur console
-  navigator.vibrate = function (pattern) {
-    // 1. On affiche le log stylé dans la console du Mac
-    const texteLog = Array.isArray(pattern)
-      ? `Pattern [${pattern.join(", ")}ms]`
-      : `Secousse ${pattern}ms`;
-    console.log(
-      `%c📳 VIBRATION DÉTECTÉE : ${texteLog}`,
-      "background: #222; color: #ffeb3b; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
-    );
-
-    // 2. On essaie quand même d'exécuter la vraie fonction si on est sur mobile
-    try {
-      return originalVibrate(pattern);
-    } catch (e) {
-      return true; // Fait croire au code que ça a marché
-    }
-  };
-
-  // Si l'API n'existe pas du tout (ex: Safari Desktop), on la simule !
-  if (!("vibrate" in navigator)) {
+  // 🛡️ SÉCURITÉ : On vérifie si l'API existe AVANT d'essayer de la copier
+  if ("vibrate" in navigator && typeof navigator.vibrate === "function") {
+    const originalVibrate = navigator.vibrate.bind(navigator);
     navigator.vibrate = function (pattern) {
       const texteLog = Array.isArray(pattern)
         ? `Pattern [${pattern.join(", ")}ms]`
         : `Secousse ${pattern}ms`;
       console.log(
-        `%c📳 VIBRATION SIMULÉE (API Absente) : ${texteLog}`,
+        `%c📳 VIBRATION DÉTECTÉE : ${texteLog}`,
+        "background: #222; color: #ffeb3b; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
+      );
+      try { return originalVibrate(pattern); } catch (e) { return true; }
+    };
+  } else {
+    // 🍏 SPÉCIAL SAFARI / APPLE : L'API n'existe pas, on crée juste un Mock (faux)
+    navigator.vibrate = function (pattern) {
+      const texteLog = Array.isArray(pattern)
+        ? `Pattern [${pattern.join(", ")}ms]`
+        : `Secousse ${pattern}ms`;
+      console.log(
+        `%c📳 VIBRATION SIMULÉE (Safari) : ${texteLog}`,
         "background: #ff5722; color: #fff; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
       );
       return true;
     };
   }
 }
+// ============================================================================
 // ============================================================================
 
 // ============================================================================
@@ -226,23 +216,55 @@ window.chargerMenuComplet = async () => {
       }
     }
 
-    // 🌮 AFFICHER LE MENU PAR CATÉGORIES
+    // 🌮 AFFICHER LE MENU PAR CATÉGORIES (Version 100% Dynamique SaaS)
     if (fullMenuContainer) {
       fullMenuContainer.innerHTML = "";
-      const menuCategories = [
-        { id: "tacos", title: "Tacos", icon: "🌮", items: [] },
-        { id: "burgers", title: "Burgers", icon: "🍔", items: [] },
-        { id: "wraps", title: "Wraps & Sandwichs", icon: "🌯", items: [] },
-        { id: "sides", title: "Sides", icon: "🍟", items: [] },
-        { id: "drinks", title: "Boissons", icon: "🥤", items: [] },
-        { id: "deserts", title: "Desserts", icon: "🍰", items: [] },
-      ];
+
+      // 🛑 ON A SUPPRIMÉ LE TABLEAU EN DUR ICI !
+
+      // ✅ 1. ON SCANNE LES PRODUITS ET ON CRÉE LES CATÉGORIES À LA VOLÉE
+      const categoriesMap = new Map();
 
       tousLesProduits.forEach((produit) => {
-        const cat = menuCategories.find((c) => c.id === produit.categorieId);
-        if (cat) cat.items.push(produit);
+        if (!produit.categorieId) return; // Sécurité si un produit est mal configuré
+
+        // Si on découvre une nouvelle catégorie, on la crée dans notre dictionnaire
+        if (!categoriesMap.has(produit.categorieId)) {
+          categoriesMap.set(produit.categorieId, {
+            id: produit.categorieId,
+            title: produit.categorieTitre || produit.categorieId, // Titre du produit
+            icon: produit.icon || "🍽️", // Icône du produit (ou fallback)
+            items: [],
+          });
+        }
+
+        // 2. ON RANGE LE PRODUIT DANS SA CATÉGORIE
+        categoriesMap.get(produit.categorieId).items.push(produit);
       });
 
+      // 3. ON TRANSFORME LE DICTIONNAIRE EN TABLEAU
+      let menuCategories = Array.from(categoriesMap.values());
+
+      // 🎯 OPTIONNEL MAIS RECOMMANDÉ : FORCER L'ORDRE D'AFFICHAGE
+      // Même si c'est dynamique, tu veux sûrement que les Tacos s'affichent avant les Desserts.
+      const ordreVoulu = [
+        "tacos",
+        "burgers",
+        "wraps",
+        "pizzas",
+        "sides",
+        "drinks",
+        "deserts",
+      ];
+      menuCategories.sort((a, b) => {
+        let indexA = ordreVoulu.indexOf(a.id);
+        let indexB = ordreVoulu.indexOf(b.id);
+        if (indexA === -1) indexA = 999; // Si une nouvelle catégorie (ex: "sushis") apparaît, on la met à la fin
+        if (indexB === -1) indexB = 999;
+        return indexA - indexB;
+      });
+
+      // 4. ON AFFICHE LE HTML (Ton code existant ne change pas !)
       menuCategories
         .filter((c) => c.items.length > 0)
         .forEach((cat, catIndex) => {
@@ -1108,9 +1130,43 @@ let currentProduct = null;
 // Au chargement de la page, on met à jour la bulle rouge
 document.addEventListener("DOMContentLoaded", updateCartUI);
 
-// --- 2. GESTION DU PRODUIT (Modale Choix) ---
 // ============================================================================
-// 🍔 GESTION DE LA MODALE PRODUIT (Unifiée & Feature Flags)
+// 🍹 BASCULE AFFICHAGE BOISSONS (Sécurisée pour Pizzas & Burgers)
+// ============================================================================
+window.toggleDrinkSection = function () {
+  const formuleInput = document.querySelector('input[name="formule"]:checked');
+  const drinkSection = document.getElementById("drink-section");
+  const btn = document.getElementById("modal-cta");
+  const devise = window.snackConfig?.identity?.currency || "€";
+
+  // 🛑 LE BOUCLIER ANTI-CRASH : 
+  // S'il n'y a pas de bouton "formule" (Ex: c'est une Pizza), on cache les boissons et on s'arrête là !
+  if (!formuleInput) {
+    if (drinkSection) {
+        drinkSection.classList.add("opacity-0");
+        setTimeout(() => drinkSection.classList.add("hidden"), 300);
+    }
+    return; 
+  }
+
+  const isMenu = formuleInput.value === "menu";
+
+  if (isMenu) {
+    if (drinkSection) {
+        drinkSection.classList.remove("hidden");
+        setTimeout(() => drinkSection.classList.remove("opacity-0"), 10);
+    }
+    if (btn) btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
+  } else {
+    if (drinkSection) {
+        drinkSection.classList.add("opacity-0");
+        setTimeout(() => drinkSection.classList.add("hidden"), 300);
+    }
+    if (btn) btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+  }
+};
+// ============================================================================
+// 🍔 MOTEUR DE MODALE UNIVERSEL (Pizzas, Kebabs, Burgers, Boissons)
 // ============================================================================
 
 window.openProductModal = function (itemId) {
@@ -1118,287 +1174,270 @@ window.openProductModal = function (itemId) {
   const item = menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
   if (!item) return;
 
-  // 1. Définition du produit (pour le panier)
+  // 1. Initialisation du produit en mémoire
   currentProduct = {
     id: item.id,
     nom: item.nom || item.name,
     prixBase: item.prix || item.price || 0,
-    prixMenu: item.menuPriceAdd || 2.5, // Supplément menu (à ajuster si besoin)
+    prixMenu: item.menuPriceAdd || 2.5,
     image: item.image,
-    // 🎯 NOUVEAU : On lit la valeur de allowMenu (true par défaut si non spécifié)
     allowMenu: item.allowMenu !== false,
+    tailleChoisie: null // Sera rempli si c'est une pizza
   };
 
   const devise = cfg.identity.currency || "€";
 
-  // ==========================================
-  // 2. REMPLIR LA MODALE & GÉRER L'IMAGE (FALLBACK)
-  // ==========================================
+  // 2. Gestion de l'Image et des Textes
   const modalImg = document.getElementById("modal-img");
   const imgContainer = modalImg.parentElement;
-
   const oldFallback = document.getElementById("modal-img-fallback");
   if (oldFallback) oldFallback.remove();
 
-  const imageUrl =
-    currentProduct.image && currentProduct.image.trim() !== ""
-      ? currentProduct.image
-      : null;
-
-  const fallbackHTML = `
-      <div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0">
-          <i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i>
-      </div>
-  `;
-
-  if (imageUrl) {
+  if (currentProduct.image && currentProduct.image.trim() !== "") {
     modalImg.style.display = "block";
-    modalImg.src = imageUrl;
+    modalImg.src = currentProduct.image;
     modalImg.onerror = function () {
       this.style.display = "none";
       if (!document.getElementById("modal-img-fallback")) {
-        imgContainer.insertAdjacentHTML("beforeend", fallbackHTML);
+        imgContainer.insertAdjacentHTML("beforeend", `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i></div>`);
       }
     };
   } else {
     modalImg.style.display = "none";
-    imgContainer.insertAdjacentHTML("beforeend", fallbackHTML);
+    imgContainer.insertAdjacentHTML("beforeend", `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i></div>`);
   }
 
   document.getElementById("modal-title").innerText = currentProduct.nom;
   document.getElementById("modal-desc").innerText = item.description || "";
 
-  // 3. Gérer les allergènes
-  const allergenContainer = document.getElementById(
-    "modal-allergens-container",
-  );
-  const allergenesList = item.allergenes || item.allergens;
-  if (allergenesList && allergenesList.length > 0) {
+  // 3. Allergènes
+  const allergenContainer = document.getElementById("modal-allergens-container");
+  if (item.allergenes && item.allergenes.length > 0) {
     allergenContainer.classList.remove("hidden");
-    document.getElementById("modal-allergens").innerText =
-      allergenesList.join(", ");
+    document.getElementById("modal-allergens").innerText = item.allergenes.join(", ");
   } else {
     allergenContainer.classList.add("hidden");
   }
 
-  // ==========================================
-  // 🚦 L'AIGUILLAGE MAGIQUE DES FEATURE FLAGS ET THÈMES
-  // ==========================================
+  // 4. L'AIGUILLAGE MAGIQUE DES OPTIONS
   const btn = document.getElementById("modal-cta");
   const optionsContainer = document.getElementById("modal-options-container");
 
-  const isClickAndCollect =
-    cfg.features && cfg.features.enableClickAndCollect === true;
-  const isPhoneOrder = cfg.features && cfg.features.enableOnlineOrder === true;
-
   if (item.isAvailable === false) {
-    // 🚫 1. PRODUIT ÉPUISÉ (Priorité absolue)
     if (optionsContainer) optionsContainer.classList.add("hidden");
     btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
-    btn.removeAttribute("href");
     btn.onclick = null;
-  } else if (isClickAndCollect) {
-    // 🛒 2. MODE PANIER (Click & Collect = true) -> E-commerce pur
-
+  } 
+  else if (cfg.features?.enableClickAndCollect) {
+    // 🛒 C'est parti pour le E-Commerce !
     if (optionsContainer) {
-      if (currentProduct.allowMenu) {
-        // ✅ MENU AUTORISÉ (Le client peut choisir Frites + Boisson)
-        optionsContainer.classList.remove("hidden");
+      optionsContainer.classList.remove("hidden");
+      let allOptionsHTML = "";
+      const accentColor = cfg.theme.colors.accent || "text-red-600";
+      const bgFocusColor = accentColor.replace("text-", "focus:ring-");
 
-        // 🎨 Thème dynamique
-        const accentColor = cfg.theme.colors.accent || "text-red-600";
-        const lightBgColor = cfg.theme.colors.lightBg || "bg-gray-50";
-        const bgFocusColor = accentColor.replace("text-", "focus:ring-");
+      // --- MODULE 1 : PIZZAS (Tailles) ---
+      if (item.tailles && item.tailles.length > 0) {
+        currentProduct.allowMenu = false; // Une pizza n'a pas de menu frites par défaut
+        currentProduct.prixBase = item.tailles[0].prix;
+        currentProduct.tailleChoisie = item.tailles[0].nom;
 
-        // 🥤 Récupère les vraies boissons depuis Firestore
-        const boissonsDispo = menuGlobal.filter(
-          (item) => item.categorieId === "drinks" && item.isAvailable !== false,
-        );
-        const listeBoissons =
-          boissonsDispo.length > 0
-            ? boissonsDispo
-            : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
-
-        const drinksHTML = listeBoissons
-          .map(
-            (boisson, index) => `
-                  <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
-                      <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="w-5 h-5 ${accentColor} ${bgFocusColor}">
-                      <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
-                  </label>
-              `,
-          )
-          .join("");
-
-        // INJECTION DU HTML DANS LA MODALE
-        optionsContainer.innerHTML = `
-                  <h3 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h3>
-                  <div class="space-y-2 mb-4">
-                      <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
-                          <div class="flex items-center gap-3">
-                              <input type="radio" name="formule" value="seul" checked onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
-                              <span class="font-medium text-black text-sm">Seul</span>
-                          </div>
-                          <span id="modal-price-seul" class="text-black font-bold text-sm">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
-                      </label>
-                      <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:${lightBgColor} transition">
-                          <div class="flex items-center gap-3">
-                              <input type="radio" name="formule" value="menu" onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
-                              <div>
-                                  <span class="font-medium text-black text-sm block">En Menu</span>
-                                  <span class="text-[10px] ${accentColor} uppercase font-bold">Frites + Boisson</span>
-                              </div>
-                          </div>
-                          <span id="modal-price-menu" class="font-bold text-sm ${accentColor}">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
-                      </label>
+        allOptionsHTML += `
+          <h3 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez la taille</h3>
+          <div class="space-y-2 mb-4">
+            ${item.tailles.map((taille, index) => `
+              <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                  <div class="flex items-center gap-3">
+                      <input type="radio" name="taille_produit" value="${taille.nom}" data-prix="${taille.prix}" ${index === 0 ? "checked" : ""} onchange="updateProductSize(this)" class="w-5 h-5 ${accentColor} ${bgFocusColor}">
+                      <span class="font-bold text-gray-700 text-sm">${taille.nom}</span>
                   </div>
-
-                  <div id="drink-section" class="hidden opacity-0 transition-opacity duration-300">
-                      <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">2. Choix de la boisson</h4>
-                      <div class="grid grid-cols-2 gap-2" id="drinks-container">
-                          ${drinksHTML}
+                  <span class="font-bold ${accentColor} text-sm">${taille.prix.toFixed(2)} ${devise}</span>
+              </label>
+            `).join("")}
+          </div>
+          ${item.ingredients ? `<p class="text-xs text-gray-500 italic mb-4 mt-2">Ingrédients : ${item.ingredients.join(", ")}</p>` : ""}
+        `;
+      } 
+      // --- MODULE 2 : BURGERS / TACOS (Seul ou Menu) ---
+      else if (currentProduct.allowMenu) {
+        const boissonsDispo = menuGlobal.filter(i => i.categorieId === "drinks" && i.isAvailable !== false);
+        const listeBoissons = boissonsDispo.length > 0 ? boissonsDispo : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
+        
+        allOptionsHTML += `
+          <h3 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h3>
+          <div class="space-y-2 mb-4">
+              <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                  <div class="flex items-center gap-3">
+                      <input type="radio" name="formule" value="seul" checked onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
+                      <span class="font-medium text-black text-sm">Seul</span>
+                  </div>
+                  <span class="text-black font-bold text-sm">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
+              </label>
+              <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                  <div class="flex items-center gap-3">
+                      <input type="radio" name="formule" value="menu" onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
+                      <div>
+                          <span class="font-medium text-black text-sm block">En Menu</span>
+                          <span class="text-[10px] ${accentColor} uppercase font-bold">Frites + Boisson</span>
                       </div>
                   </div>
-              `;
+                  <span class="font-bold text-sm ${accentColor}">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
+              </label>
+          </div>
+          <div id="drink-section" class="hidden opacity-0 transition-opacity duration-300">
+              <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">2. Choix de la boisson</h4>
+              <div class="grid grid-cols-2 gap-2 mb-4">
+                  ${listeBoissons.map((boisson, index) => `
+                      <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
+                          <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="w-5 h-5 ${accentColor} ${bgFocusColor}">
+                          <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
+                      </label>
+                  `).join("")}
+              </div>
+          </div>
+        `;
+      }
 
-        if (typeof window.toggleDrinkSection === "function")
-          window.toggleDrinkSection();
-      } else {
-        // 🚫 MENU NON AUTORISÉ (C'est un dessert, une boisson, etc.)
+      // --- MODULE 3 : KEBABS (Crudités S-T-O) ---
+      if (item.hasCrudites) {
+        allOptionsHTML += `
+            <h4 class="font-bold text-sm text-gray-900 mt-4 mb-2 border-b pb-1">Garniture (Inclus)</h4>
+            <div class="flex flex-wrap gap-2 mb-4">
+                ${['Salade', 'Tomate', 'Oignon'].map(c => `
+                    <label class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition">
+                        <input type="checkbox" name="crudite" value="${c}" checked class="w-4 h-4 ${accentColor} ${bgFocusColor} rounded"> 
+                        <span class="text-sm font-medium text-gray-700">${c}</span>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+      }
+
+      // --- MODULE 4 : SAUCES ---
+      if (item.choixSauces) {
+        const sauces = item.choixSauces.liste || ["Blanche", "Algérienne", "Samouraï", "Mayonnaise"];
+        const maxSauces = item.choixSauces.max || 2;
+        allOptionsHTML += `
+            <h4 class="font-bold text-sm text-gray-900 mt-4 mb-2 border-b pb-1">Sauces (Choix : ${maxSauces} max)</h4>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                ${sauces.map(sauce => `
+                    <label class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition">
+                        <input type="checkbox" name="sauce" value="${sauce}" onchange="checkSauceLimit(event, ${maxSauces})" class="w-4 h-4 ${accentColor} ${bgFocusColor} rounded sauce-checkbox">
+                        <span class="text-sm font-medium text-gray-700">${sauce}</span>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+      }
+
+      // 💉 Injection Globale
+      if (allOptionsHTML === "") {
         optionsContainer.classList.add("hidden");
-        optionsContainer.innerHTML = ""; // On nettoie pour éviter des bugs radio
-        btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+      } else {
+        optionsContainer.innerHTML = allOptionsHTML;
+        if (typeof window.toggleDrinkSection === "function") window.toggleDrinkSection();
       }
     }
 
     btn.removeAttribute("href");
     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
+    btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
     btn.onclick = window.confirmAddToCart;
-  } else if (isPhoneOrder) {
-    // ☎️ 3. MODE APPEL (ClickAndCollect = false) -> Commande par téléphone
-    if (optionsContainer) optionsContainer.classList.add("hidden");
-
-    const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
-    btn.href = `tel:${phone}`;
-    btn.removeAttribute("target");
-    btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
-    btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-green-600 hover:bg-green-700 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
-    btn.onclick = null;
-  } else {
-    // 🛑 4. MODE VITRINE PUR -> Juste consulter le menu
-    if (optionsContainer) optionsContainer.classList.add("hidden");
-    btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
-    btn.className = `w-full cursor-pointer py-4 rounded-xl font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 transition-all mt-auto flex justify-center items-center gap-2`;
-    btn.removeAttribute("href");
-    btn.onclick = (e) => {
-      e.preventDefault();
-      closeProductModal();
-    };
   }
 
-  // ==========================================
-  // 🚀 LOGIQUE DE PARTAGE VIRAL (Web Share)
-  // ==========================================
-  const shareBtn = document.getElementById("modal-share-btn");
-
-  if (shareBtn && cfg.features && cfg.features.enableViralShare) {
-    shareBtn.classList.remove("hidden");
-    shareBtn.onclick = async () => {
-      if (typeof window.triggerVibration === "function")
-        window.triggerVibration("light");
-      const shareTitle = `Découvre ${currentProduct.nom} chez ${cfg.identity?.name || "nous"} !`;
-      const shareText = `Mec, regarde cette dinguerie : ${currentProduct.nom} à ${currentProduct.prixBase.toFixed(2)}${devise}. On teste ça quand ? 🤤🍔`;
-      const shareUrl = window.location.href;
-
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: shareTitle,
-            text: shareText,
-            url: shareUrl,
-          });
-          if (typeof window.triggerVibration === "function")
-            window.triggerVibration("success");
-        } catch (err) {
-          console.log("Partage annulé ou fermé.");
-        }
-      } else if (navigator.clipboard) {
-        try {
-          await navigator.clipboard.writeText(
-            `${shareTitle}\n${shareText}\nLien : ${shareUrl}`,
-          );
-          if (typeof window.showToast === "function")
-            window.showToast(
-              "Lien copié dans le presse-papier ! 📋",
-              "success",
-            );
-        } catch (err) {
-          console.error("Erreur de copie");
-        }
-      }
-    };
-  } else if (shareBtn) {
-    shareBtn.classList.add("hidden");
-  }
-
-  // Affichage de la Modale
+  // 5. Affichage final
   const backdrop = document.getElementById("product-modal-backdrop");
   const sheet = document.getElementById("product-modal");
   backdrop.classList.remove("hidden");
-
   setTimeout(() => {
     backdrop.classList.remove("opacity-0");
-    sheet.classList.remove(
-      "translate-y-full",
-      "md:opacity-0",
-      "md:pointer-events-none",
-      "md:scale-95",
-    );
+    sheet.classList.remove("translate-y-full", "md:opacity-0", "md:pointer-events-none", "md:scale-95");
   }, 10);
-
   document.body.style.overflow = "hidden";
 };
 
-// ============================================================================
-// 🍹 BASCULE AFFICHAGE BOISSONS (Si l'option Menu est cochée)
-// ============================================================================
-window.toggleDrinkSection = function () {
-  const formuleInput = document.querySelector('input[name="formule"]:checked');
-  if (!formuleInput) return; // Sécurité si "allowMenu" est false
+// ==========================================
+// 🛠️ LES PETITS SCRIPTS ASSISTANTS
+// ==========================================
 
-  const isMenu = formuleInput.value === "menu";
-  const drinkSection = document.getElementById("drink-section");
-  const btn = document.getElementById("modal-cta");
-  const devise = window.snackConfig.identity.currency || "€";
-
-  if (isMenu) {
-    drinkSection.classList.remove("hidden");
-    setTimeout(() => drinkSection.classList.remove("opacity-0"), 10);
-    btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
-  } else {
-    drinkSection.classList.add("opacity-0");
-    setTimeout(() => drinkSection.classList.add("hidden"), 300);
-    btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-  }
+// Helper 1 : Bloquer les sauces si le max est atteint
+window.checkSauceLimit = function(event, max) {
+    const checkedBoxes = document.querySelectorAll('.sauce-checkbox:checked');
+    if (checkedBoxes.length > max) {
+        event.target.checked = false;
+        window.showToast(`Maximum ${max} sauces autorisées !`, "error");
+        if (typeof window.triggerVibration === "function") window.triggerVibration("error");
+    }
 };
 
-window.toggleDrinkSection = function () {
-  const isMenu =
-    document.querySelector('input[name="formule"]:checked').value === "menu";
-  const drinkSection = document.getElementById("drink-section");
-  const btn = document.getElementById("modal-cta");
-  const devise = window.snackConfig.identity.currency || "€";
+// Helper 2 : Mettre à jour le prix de la pizza en direct
+window.updateProductSize = function(radioBtn) {
+    const nouveauPrix = parseFloat(radioBtn.getAttribute('data-prix'));
+    currentProduct.prixBase = nouveauPrix;
+    currentProduct.tailleChoisie = radioBtn.value;
+    
+    const devise = window.snackConfig.identity.currency || "€";
+    document.getElementById("modal-cta").innerHTML = `<span>Ajouter - ${nouveauPrix.toFixed(2)} ${devise}</span>`;
+};
 
-  if (isMenu) {
-    drinkSection.classList.remove("hidden");
-    setTimeout(() => drinkSection.classList.remove("opacity-0"), 10);
-    btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
-  } else {
-    drinkSection.classList.add("opacity-0");
-    setTimeout(() => drinkSection.classList.add("hidden"), 300);
-    btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+
+// ==========================================
+// 🛒 LA VALIDATION ET L'AJOUT AU PANIER
+// ==========================================
+window.confirmAddToCart = function () {
+  const formuleInput = document.querySelector('input[name="formule"]:checked');
+  const isMenu = formuleInput ? formuleInput.value === "menu" : false;
+
+  let nomFinal = currentProduct.nom;
+  let prixFinal = currentProduct.prixBase;
+  let boissonChoisie = null;
+
+  // 🍕 Gestion du nom de la Pizza
+  if (currentProduct.tailleChoisie) {
+      nomFinal += `${currentProduct.tailleChoisie}`;
   }
+
+  // 🍔 Gestion du Burger en Menu
+  if (isMenu) {
+    const boissonInput = document.querySelector('input[name="boisson"]:checked');
+    if (!boissonInput) return window.showToast("🥤 Veuillez choisir une boisson.", "error");
+    boissonChoisie = boissonInput.value;
+    nomFinal = `Menu ${currentProduct.nom}`; 
+    prixFinal += currentProduct.prixMenu;
+  }
+
+  // 🥣 Capture des Sauces
+  const saucesCheckboxes = document.querySelectorAll('.sauce-checkbox:checked');
+  const saucesChoisies = Array.from(saucesCheckboxes).map(cb => cb.value);
+
+  // 🚫 Capture des Crudités enlevées (S-T-O)
+  const cruditesCheckboxes = document.querySelectorAll('input[name="crudite"]');
+  const cruditesEnlevees = [];
+  cruditesCheckboxes.forEach(cb => {
+      if (!cb.checked) cruditesEnlevees.push(`Sans ${cb.value}`);
+  });
+
+  // 🧬 Génération d'un ID de panier unique pour ne pas mélanger 2 kebabs avec des sauces différentes
+  const optionsString = [...saucesChoisies, ...cruditesEnlevees, boissonChoisie, currentProduct.tailleChoisie].filter(Boolean).join('-');
+  const uniqueId = `${currentProduct.id}-${isMenu ? 'menu' : 'seul'}-${optionsString.replace(/[\s\(\)]/g, '')}`;
+
+  addToCart({
+    id: uniqueId, 
+    productId: currentProduct.id, 
+    nom: nomFinal,
+    prix: prixFinal,
+    image: currentProduct.image,
+    type: isMenu ? "menu" : "seul",
+    boisson: boissonChoisie,
+    sauces: saucesChoisies,
+    sansCrudites: cruditesEnlevees,
+    tailleChoisie: currentProduct.tailleChoisie,
+    prixBase: currentProduct.prixBase,
+    prixMenuAdd: isMenu ? currentProduct.prixMenu : 0,
+  });
+
+  closeProductModal();
 };
 
 // Fermeture de la modale unifiée
@@ -1420,46 +1459,7 @@ window.closeProductModal = function () {
   }, 300);
 };
 
-window.confirmAddToCart = function () {
-  // 🛡️ SÉCURITÉ : On cherche le bouton radio. S'il n'existe pas (car allowMenu = false), isMenu devient automatiquement false !
-  const formuleInput = document.querySelector('input[name="formule"]:checked');
-  const isMenu = formuleInput ? formuleInput.value === "menu" : false;
 
-  let nomFinal = currentProduct.nom;
-  let prixFinal = currentProduct.prixBase;
-  let boissonChoisie = null;
-
-  if (isMenu) {
-    const boissonInput = document.querySelector(
-      'input[name="boisson"]:checked',
-    );
-    if (!boissonInput) {
-      window.showToast("🥤 Oups ! Veuillez choisir une boisson.", "error");
-      return;
-    }
-    boissonChoisie = boissonInput.value;
-    nomFinal = `Menu ${currentProduct.nom} (+ ${boissonChoisie})`;
-    prixFinal += currentProduct.prixMenu;
-  }
-
-  const uniqueId = isMenu
-    ? `${currentProduct.id}-menu-${Date.now()}`
-    : `${currentProduct.id}-seul`;
-
-  addToCart({
-    id: uniqueId, // ID unique pour que le panier ne mélange pas les items
-    productId: currentProduct.id, // 🎯 NOUVEAU : On garde le VRAI ID du produit pour les stats !
-    nom: nomFinal,
-    prix: prixFinal,
-    image: currentProduct.image,
-    type: isMenu ? "menu" : "seul",
-    boisson: boissonChoisie,
-    prixBase: currentProduct.prixBase,
-    prixMenuAdd: isMenu ? currentProduct.prixMenu : 0,
-  });
-
-  closeProductModal();
-};
 
 // --- 3. GESTION DU PANIER (Logique) ---
 function addToCart(itemData) {
@@ -1542,56 +1542,41 @@ function renderCartItems() {
     document.getElementById("checkout-btn").classList.remove("opacity-50");
 
     cart.forEach((item) => {
-      // 1. GESTION DU FALLBACK IMAGE
-      const imageUrl =
-        item.image && item.image.trim() !== "" ? item.image : null;
+      // 🎯 LA MAGIE EST ICI : On crée le sous-titre dynamique
+      let detailsText = [];
+      if (item.boisson) detailsText.push(`🥤 ${item.boisson}`);
+      if (item.sauces && item.sauces.length > 0) detailsText.push(`🥣 ${item.sauces.join(", ")}`);
+      if (item.sansCrudites && item.sansCrudites.length > 0) {
+          detailsText.push(`<span class="text-red-600 font-black">⚠️ ${item.sansCrudites.join(", ")}</span>`);
+      }
+      
+      const detailsHTML = detailsText.length > 0 
+        ? `<div class="text-[11px] text-gray-500 mt-1 leading-snug flex flex-wrap gap-x-2 gap-y-1">${detailsText.join(" <span class='text-gray-300'>|</span> ")}</div>` 
+        : "";
 
-      const fallbackHtml = `
-                <div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
-                    <i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i>
-                </div>`;
-
-      // Si le lien casse (erreur 404), onerror cache l'image et affiche l'icône de secours
+      const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
+      const fallbackHtml = `<div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div>`;
       const imageHtml = imageUrl
-        ? `<div class="relative w-16 h-16 shrink-0">
-                       <img src="${imageUrl}" alt="${item.nom}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full rounded-lg object-cover z-10">
-                       <div style="display: none;" class="absolute inset-0 rounded-lg bg-gray-100 items-center justify-center border border-gray-200 z-0">
-                           <i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i>
-                       </div>
-                   </div>`
+        ? `<div class="relative w-16 h-16 shrink-0"><img src="${imageUrl}" alt="${item.nom}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full rounded-lg object-cover z-10"><div style="display: none;" class="absolute inset-0 rounded-lg bg-gray-100 items-center justify-center border border-gray-200 z-0"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div></div>`
         : fallbackHtml;
 
-      // 2. INJECTION HTML 100% ACCESSIBLE
       container.innerHTML += `
-                <div class="flex items-center gap-4 bg-white p-3 rounded-xl border" role="group" aria-label="Article du panier : ${item.nom}">
-                    ${imageHtml}
-                    <div class="flex-1">
-                        <h2 class="font-bold text-gray-900">${item.nom}</h2>
-                        <p class="text-red-600 font-bold" aria-label="Prix total pour cet article : ${(item.prix * item.quantity).toFixed(2)} euros">
-                            ${(item.prix * item.quantity).toFixed(2)} €
-                        </p>
-                    </div>
-                    <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1" aria-label="Gestion de la quantité">
-                        
-                        <button type="button" onclick="updateQuantity('${item.id}', -1)" aria-label="Retirer un exemplaire de ${item.nom}" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition focus:outline-none focus:ring-2 focus:ring-red-500">
-                            <i class="fas fa-minus text-xs" aria-hidden="true"></i>
-                        </button>
-                        
-                        <span class="font-bold w-4 text-black text-center text-sm" aria-label="Quantité : ${item.quantity}" aria-live="polite">
-                            ${item.quantity}
-                        </span>
-                        
-                        <button type="button" onclick="updateQuantity('${item.id}', 1)" aria-label="Ajouter un exemplaire de ${item.nom}" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition focus:outline-none focus:ring-2 focus:ring-red-500">
-                            <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                        </button>
-                        
-                    </div>
-                </div>
-            `;
+        <div class="flex items-center gap-4 bg-white p-3 rounded-xl border" role="group">
+            ${imageHtml}
+            <div class="flex-1 min-w-0">
+                <h2 class="font-bold text-gray-900 leading-tight truncate">${item.nom}</h2>
+                ${detailsHTML} <p class="text-red-600 font-bold mt-1">${(item.prix * item.quantity).toFixed(2)} €</p>
+            </div>
+            <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
+                <button type="button" onclick="updateQuantity('${item.id}', -1)" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition"><i class="fas fa-minus text-xs"></i></button>
+                <span class="font-bold w-4 text-black text-center text-sm">${item.quantity}</span>
+                <button type="button" onclick="updateQuantity('${item.id}', 1)" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition"><i class="fas fa-plus text-xs"></i></button>
+            </div>
+        </div>
+      `;
     });
   }
-  document.getElementById("cart-total-price").textContent =
-    `${getCartTotal().toFixed(2)} €`;
+  document.getElementById("cart-total-price").textContent = `${getCartTotal().toFixed(2)} €`;
 }
 
 window.updateQuantity = function (productId, delta) {
@@ -1600,7 +1585,7 @@ window.updateQuantity = function (productId, delta) {
   if (typeof window.triggerVibration === "function") {
     window.triggerVibration("light");
   }
-  
+
   if (item) {
     item.quantity += delta;
     if (item.quantity <= 0) cart = cart.filter((i) => i.id !== productId);
@@ -1643,11 +1628,14 @@ window.processCheckout = async () => {
       const prixUnitaire = item.prix || 0;
       return {
         id: item.id,
-        productId: item.productId || item.id.split("-")[0], // 🎯 On l'envoie à Firebase
+        productId: item.productId || item.id.split("-")[0],
         nom: item.nom,
         image: item.image || "",
         type: item.type || "seul",
         boissonNom: item.boisson || null,
+        sauces: item.sauces || [],               // 👈 VITAL : LES SAUCES
+        sansCrudites: item.sansCrudites || [],   // 👈 VITAL : LES CRUDITÉS (S-T-O)
+        tailleChoisie: item.tailleChoisie || null, // 👈 VITAL : POUR LES PIZZAS
         prixBase: item.prixBase || prixUnitaire,
         prixMenuAdd: item.prixMenuAdd || 0,
         prixTotalLigne: prixUnitaire * item.quantity,

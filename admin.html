@@ -61,14 +61,14 @@
             id="admin-email-input"
             placeholder="Email professionnel"
             class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition"
-            required
+            
           />
           <input
             type="password"
             id="admin-password-input"
             placeholder="Mot de passe"
             class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition"
-            required
+            
           />
 
           <button
@@ -256,7 +256,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label class="block text-sm font-bold text-gray-700 mb-2">Titre de la notification</label>
-                  <input type="text" id="push-title" required placeholder="Ex: 🍔 Faim de loup ?" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition font-bold text-gray-900">
+                  <input type="text" id="push-title"  placeholder="Ex: 🍔 Faim de loup ?" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition font-bold text-gray-900">
                 </div>
                 <div>
                   <label class="block text-sm font-bold text-gray-700 mb-2">Cible de la campagne</label>
@@ -270,7 +270,7 @@
 
             <div>
               <label class="block text-sm font-bold text-gray-700 mb-2">Message (Court et percutant)</label>
-              <textarea id="push-message" rows="2" required placeholder="Ex: -20% ce soir sur tous les menus avec le code MENU20 ! Venez vite !" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition text-gray-800"></textarea>
+              <textarea id="push-message" rows="2"  placeholder="Ex: -20% ce soir sur tous les menus avec le code MENU20 ! Venez vite !" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition text-gray-800"></textarea>
             </div>
 
             <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-3">
@@ -353,7 +353,7 @@
             <input
               type="text"
               id="edit-nom"
-              required
+              
               placeholder="Ex: Tacos XL, Burger Bacon..."
               class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition font-bold"
             />
@@ -394,7 +394,7 @@
                 type="number"
                 step="0.10"
                 id="edit-prix"
-                required
+                
                 class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-bold"
               />
             </div>
@@ -407,7 +407,7 @@
                 type="number"
                 step="0.10"
                 id="edit-prix-menu"
-                required
+                
                 class="w-full px-4 py-3 rounded-xl bg-red-50 border border-red-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-red-700 font-bold"
               />
             </div>
@@ -434,12 +434,13 @@
             >
             <select
               id="edit-category"
-              required
+              
               class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-medium"
             >
               <option value="tacos">🌮 Tacos</option>
               <option value="burgers">🍔 Burgers</option>
               <option value="wraps">🌯 Wraps & Sandwichs</option>
+              <option value="pizzas">🍕 Pizzas</option>
               <option value="sides">🍟 Sides (Frites...)</option>
               <option value="drinks">🥤 Boissons</option>
               <option value="deserts">🍰 Desserts</option>
