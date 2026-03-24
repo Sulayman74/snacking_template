@@ -1,12 +1,8 @@
 name: 🤖 Tests Automatiques (Playwright)
 
 on:
-  # 1. Le déclencheur Manuel : Un bouton direct sur GitHub pour lancer quand tu veux
+  # Uniquement le bouton manuel sur GitHub !
   workflow_dispatch:
-    
-  # 2. Le "Nightly Build" : S'exécute tous les jours à 03h00 du matin (Heure UTC)
-  schedule:
-    - cron: '0 3 * * *'
 
 jobs:
   test:
@@ -20,21 +16,23 @@ jobs:
     - name: 🟢 Installation de Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 24
+        node-version: 20 # Attention: la version 24 n'est pas encore stable, je vous conseille la 20 (LTS)
 
     - name: 📦 Installation des dépendances
-      run: npm ci # Plus rapide et strict que npm install
+      run: npm ci
 
     - name: 🌐 Installation des navigateurs Playwright
       run: npx playwright install --with-deps
 
     - name: 🧪 Lancement des tests E2E
+      # 💡 L'ASTUCE EST ICI : On injecte une variable d'environnement pour prévenir notre app
+      env:
+        VITE_E2E_TESTING: "true"
       run: npx playwright test
 
-    # 🚨 LA PREUVE EN CAS DE CRASH : Sauvegarde de la vidéo/capture d'écran
     - name: 📁 Sauvegarde du rapport Playwright
       uses: actions/upload-artifact@v4
-      if: always() # S'exécute toujours, même si le test a planté !
+      if: always()
       with:
         name: playwright-report
         path: playwright-report/

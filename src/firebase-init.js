@@ -71,8 +71,15 @@ export let analytics = null;
 
 function initAnalytics() {
   if (analytics) return; // Si c'est déjà chargé, on ne fait rien
-  
-  // On lance Analytics seulement maintenant !
+
+  // 🛑 LE BOUCLIER ANTI-ROBOTS
+  // Si Vite détecte qu'on est en plein test Playwright, on annule tout !
+  if (import.meta.env.VITE_E2E_TESTING === "true") {
+    console.warn("🤖 Test E2E Playwright détecté : Google Analytics est DÉSACTIVÉ.");
+    return; 
+  }
+
+    // On lance Analytics seulement maintenant !
   analytics = getAnalytics(app);
 
   // On nettoie les écouteurs d'événements
@@ -752,27 +759,41 @@ window.openAdminScanner = async () => {
   const modal = document.getElementById("admin-scanner-modal");
   modal.classList.remove("hidden");
 
-  // 1. On utilise Html5Qrcode (le moteur pur) au lieu de Html5QrcodeScanner (l'UI moche)
-  html5Qrcode = new Html5Qrcode("reader");
+  // On laisse la modale s'afficher correctement (taille 0x0)
+  await new Promise(resolve => setTimeout(resolve, 150));
 
   try {
+    // 💡 L'ARME SECRÈTE : On charge le script depuis le CDN à la volée !
+    if (!window.Html5Qrcode) {
+      window.showToast("Chargement de la caméra...", "info");
+      
+      await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://unpkg.com/html5-qrcode"; 
+        script.type = "text/javascript";
+        script.onload = resolve; // Quand le fichier est téléchargé, on continue !
+        script.onerror = () => reject("Impossible de charger le script QR Code");
+        document.body.appendChild(script);
+      });
+    }
 
-    // Le navigateur télécharge le module uniquement à ce moment précis.
-    const { Html5Qrcode } = await import("html5-qrcode");
+    // ✅ À ce stade, le script est téléchargé, la classe existe dans "window"
+    html5Qrcode = new window.Html5Qrcode("reader");
 
-    // 2. On utilise Html5Qrcode (le moteur pur)
-    html5Qrcode = new Html5Qrcode("reader");
-
-    // 3. On allume la caméra arrière
     await html5Qrcode.start(
-      { facingMode: "environment" }, 
-      { fps: 10, qrbox: { width: 250, height: 250 } }, 
+      { facingMode:  "environment" }, 
+      { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0 
+      }, 
       onScanSuccess, 
       onScanFailure  
     );
   } catch (err) {
-    console.error("Erreur Caméra ou Chargement du module :", err);
-    window.showToast("Impossible de démarrer le scanner.", "error");
+    alert("ERREUR CAMÉRA : " + (err.message || err));
+    console.error("Scanner erreur :", err);
+    window.showToast("Erreur d'accès à la caméra", "error");
   }
 };
 

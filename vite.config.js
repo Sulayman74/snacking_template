@@ -33,7 +33,7 @@ export default defineConfig(() => {
           return html
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)
             .replace(/\{\{SEO_DESC\}\}/g, seoData.desc)
-            .replace(/\{\{THEME_COLOR\}\}/g, seoData.color)
+            .replace(/\{\{THEME_COLOR\}\}/g, seoData.theme_color)
             .replace(/\{\{SNACK_ID\}\}/g, currentSnackId)
             .replace(/\{\{LOGO_URL\}\}/g, seoData.logoUrl)
             .replace(/\{\{SHADOW_CLASS\}\}/g, seoData.shadowClass)
