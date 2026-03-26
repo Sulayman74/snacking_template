@@ -588,8 +588,8 @@ window.openEditModal = (productId) => {
     ? product.tags[0]
     : product.tags || "";
   document.getElementById("edit-tags").value = currentTag;
-  document.getElementById("edit-category").value =
-    product.categorieId || "burgers"; // Burgers par défaut si vide
+  // On remplit le menu déroulant avec les catégories dynamiques
+  populateCategoryDropdown(product.categorieId);
   document.getElementById("edit-img-file").value = "";
   const checkbox = document.getElementById("edit-allow-menu");
   const prixMenuContainer = document.getElementById("edit-prix-menu-container");
@@ -609,6 +609,25 @@ window.openEditModal = (productId) => {
 
   // On déclenche manuellement l'événement 'change' pour que notre petit script du point 1 affiche/cache le champ !
   checkbox.dispatchEvent(new Event("change"));
+
+  // 🥗 Remplir les Crudités
+  const hasCrudites = !!product.hasCrudites;
+  document.getElementById("edit-has-crudites").checked = hasCrudites;
+  if (hasCrudites) {
+    document.getElementById("edit-crudites-list").value = Array.isArray(product.crudites) ? product.crudites.join(", ") : "Salade, Tomate, Oignon";
+  }
+
+  // 🥣 Remplir les Sauces
+  const hasSauces = !!product.choixSauces;
+  document.getElementById("edit-has-sauces").checked = hasSauces;
+  if (hasSauces && product.choixSauces) {
+    document.getElementById("edit-sauces-list").value = Array.isArray(product.choixSauces.liste) ? product.choixSauces.liste.join(", ") : "";
+    document.getElementById("edit-sauces-max").value = product.choixSauces.max || 2;
+  }
+
+  // On simule un clic pour afficher/cacher les bonnes cases visuellement
+  document.getElementById("edit-has-crudites").dispatchEvent(new Event("change"));
+  document.getElementById("edit-has-sauces").dispatchEvent(new Event("change"));
 
   // 📸 Gestion de l'image et du Fallback
   const imgEl = document.getElementById("edit-preview-img");
@@ -719,7 +738,13 @@ window.openAddProductModal = () => {
   document.getElementById("save-product-btn").innerHTML =
     '<i class="fas fa-plus mr-2"></i> Créer le produit';
   document.getElementById("edit-allow-menu").checked = true;
-
+  document.getElementById("edit-has-crudites").checked = false;
+  document.getElementById("edit-has-sauces").checked = false;
+  // Initialisation par défaut sur Burgers
+  populateCategoryDropdown("burgers");
+  // On déclenche les événements pour cacher les champs
+  dispatchEvent(new Event("change"));
+  
   const modal = document.getElementById("edit-product-modal");
   modal.classList.remove("hidden");
   dispatchEvent(new Event("change"));
@@ -748,9 +773,46 @@ document.getElementById("edit-product-form").addEventListener("submit", async (e
       const fileInput = document.getElementById("edit-img-file");
       const tagChoisi = document.getElementById("edit-tags").value;
       const categorieChoisie = document.getElementById("edit-category").value;
+      let categorieTitre = null;
+      // 🪄 Si le client a créé une nouvelle catégorie
+      if (categorieChoisie === "NEW") {
+          const newCatRaw = document.getElementById("edit-new-category").value.trim();
+          if (!newCatRaw) {
+              window.showToast("Veuillez saisir le nom de la catégorie", "error");
+              btn.innerHTML = originalBtnHtml;
+              btn.disabled = false;
+              return;
+          }
+          categorieTitre = newCatRaw; // "🥗 Salades Fraîches"
+          // On génère un ID technique propre (ex: "salades-fraiches")
+          categorieChoisie = newCatRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-");
+      }
       
       const allowMenuCheckbox = document.getElementById("edit-allow-menu");
       const allowMenu = allowMenuCheckbox ? allowMenuCheckbox.checked : true;
+
+    // 💡 GESTION INTELLIGENTE DES CRUDITÉS
+      const hasCrudites = document.getElementById("edit-has-crudites").checked;
+      let finalCrudites = null;
+      if (hasCrudites) {
+          const cruditesInput = document.getElementById("edit-crudites-list").value;
+          // Transforme "Salade, Tomate, Oignon" en ["Salade", "Tomate", "Oignon"]
+          finalCrudites = cruditesInput.split(',').map(s => s.trim()).filter(s => s !== "");
+          if (finalCrudites.length === 0) finalCrudites = ["Salade", "Tomate", "Oignon"];
+      }
+
+      // 💡 GESTION INTELLIGENTE DES SAUCES
+      const hasSauces = document.getElementById("edit-has-sauces").checked;
+      let finalSauces = null;
+      if (hasSauces) {
+          const saucesInput = document.getElementById("edit-sauces-list").value;
+          const maxSauces = parseInt(document.getElementById("edit-sauces-max").value) || 2;
+          const listeSauces = saucesInput.split(',').map(s => s.trim()).filter(s => s !== "");
+          
+          if (listeSauces.length > 0) {
+              finalSauces = { liste: listeSauces, max: maxSauces };
+          }
+      }
 
       // 2. Formatage de l'objet (On utilise updateData PARTOUT)
       let updateData = {
@@ -760,7 +822,11 @@ document.getElementById("edit-product-form").addEventListener("submit", async (e
         menuPriceAdd: prixMenu,
         tags: tagChoisi ? [tagChoisi] : [],
         categorieId: categorieChoisie,
+        ...(categorieTitre && { categorieTitre: categorieTitre }),
         allowMenu: allowMenu,
+        hasCrudites: hasCrudites,     
+        crudites: finalCrudites,      
+        choixSauces: finalSauces,     
         updatedAt: serverTimestamp(),
       };
 
@@ -817,6 +883,25 @@ if (allowMenuCheckbox && prixMenuContainer) {
       prixMenuContainer.classList.add("hidden");
       prixMenuContainer.classList.remove("block");
     }
+  });
+}
+
+// ==========================================
+// 💡 AFFICHER/CACHER LES OPTIONS AVANCÉES
+// ==========================================
+const cruditesCheckbox = document.getElementById("edit-has-crudites");
+const cruditesContainer = document.getElementById("edit-crudites-container");
+if (cruditesCheckbox && cruditesContainer) {
+  cruditesCheckbox.addEventListener("change", (e) => {
+    e.target.checked ? cruditesContainer.classList.remove("hidden") : cruditesContainer.classList.add("hidden");
+  });
+}
+
+const saucesCheckbox = document.getElementById("edit-has-sauces");
+const saucesContainer = document.getElementById("edit-sauces-container");
+if (saucesCheckbox && saucesContainer) {
+  saucesCheckbox.addEventListener("change", (e) => {
+    e.target.checked ? saucesContainer.classList.remove("hidden") : saucesContainer.classList.add("hidden");
   });
 }
 
@@ -894,6 +979,64 @@ if (pushForm) {
         }
     });
 }
+
+// ==========================================
+// 🗂️ GESTION DYNAMIQUE DES CATÉGORIES
+// ==========================================
+function populateCategoryDropdown(selectedCategory = "burgers") {
+    const select = document.getElementById("edit-category");
+    const newCatInput = document.getElementById("edit-new-category");
+    
+    // 1. On liste d'abord les catégories de base (Fallback)
+    const categoriesMap = new Map([
+        ["tacos", "🌮 Tacos"],
+        ["burgers", "🍔 Burgers"],
+        ["wraps", "🌯 Wraps & Sandwichs"],
+        ["pizzas", "🍕 Pizzas"],
+        ["sides", "🍟 Sides (Frites...)"],
+        ["drinks", "🥤 Boissons"],
+        ["deserts", "🍰 Desserts"]
+    ]);
+
+    // 2. On scanne la BDD pour ajouter les catégories personnalisées du client
+    adminProducts.forEach(p => {
+        if (p.categorieId && !categoriesMap.has(p.categorieId)) {
+            const title = p.categorieTitre || (p.categorieId.charAt(0).toUpperCase() + p.categorieId.slice(1));
+            categoriesMap.set(p.categorieId, title);
+        }
+    });
+
+    // 3. On construit le menu déroulant
+    select.innerHTML = "";
+    categoriesMap.forEach((titre, id) => {
+        select.innerHTML += `<option value="${id}">${titre}</option>`;
+    });
+    
+    // L'option magique !
+    select.innerHTML += `<option value="NEW" class="font-black text-blue-600">➕ Créer une nouvelle catégorie...</option>`;
+
+    // 4. On sélectionne la bonne valeur
+    if (categoriesMap.has(selectedCategory)) {
+        select.value = selectedCategory;
+        newCatInput.classList.add("hidden");
+    } else {
+        // Sécurité si la catégorie n'existe plus
+        select.value = "burgers";
+        newCatInput.classList.add("hidden");
+    }
+}
+
+// L'écouteur pour faire apparaître le champ texte
+document.getElementById("edit-category").addEventListener("change", (e) => {
+    const newCategoryInput = document.getElementById("edit-new-category");
+    if (e.target.value === "NEW") {
+        newCategoryInput.classList.remove("hidden");
+        newCategoryInput.value = "";
+        newCategoryInput.focus();
+    } else {
+        newCategoryInput.classList.add("hidden");
+    }
+});
 // ==========================================
 // 5. DÉCONNEXION
 // ==========================================

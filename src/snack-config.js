@@ -97,19 +97,21 @@ try {
           blurBg: selectedTheme.blurBg  
         },
       },
+     // 🚨 APPLICATION DU BOUCLIER SUR TOUS LES FEATURE FLAGS
       features: {
-        enableOnlineOrder: data.enableOnlineOrder !== undefined ? data.enableOnlineOrder : false,
-        enableDelivery: data.enableDelivery !== undefined ? data.enableDelivery : false,
-        enableClickAndCollect: data.enableClickAndCollect !== undefined ? data.enableClickAndCollect : false,
-        enableLoyaltyCard: data.enableLoyaltyCard !== undefined ? data.enableLoyaltyCard : true,
-        maintenanceMode: data.maintenanceMode !== undefined ? data.maintenanceMode : false,
-        enablePushNotifs: data.enablePushNotifs !== undefined ? data.enablePushNotifs : false,
-        enableSmartReview: data.enableSmartReview !== undefined ? data.enableSmartReview : false,
-        enableViralShare: data.enableViralShare !== undefined ? data.enableViralShare : false,
+        enableOnlineOrder: data.enableOnlineOrder,
+        enableDelivery: data.enableDelivery,
+        enableClickAndCollect: data.enableClickAndCollect,
+        enableLoyaltyCard: data.enableLoyaltyCard,
+        maintenanceMode: data.maintenanceMode,
+        enablePushNotifs: data.enablePushNotifs,
+        enableSmartReview: data.enableSmartReview,
+        enableViralShare: data.enableViralShare,
       },
+      deliveryUrl: data.deliveryUrl || "",
       hours: data.hours || [],
       reviews: {
-        googleMapsReviewLink: "https://g.page/r/TON_LIEN_DA_AVIS/review",
+        googleMapsReviewLink: data.googleMapsUrl || "https://g.page/r/TON_LIEN_DA_AVIS/review",
       },
       loyalty: {
         programName: data.loyaltyProgramName || "Club Fidélité",
@@ -119,7 +121,7 @@ try {
       },
     };
 
-    console.log(`✅ SaaS : Configuration de "${data.nom}" chargée avec le thème [${paletteKey}].`);
+    console.log(`✅ SaaS : Configuration de "${data.nom}" chargée...`);
     return window.snackConfig;
   } else {
     console.error("❌ Erreur : Snack ID inexistant dans Firestore.");

@@ -5,37 +5,37 @@ import "./firebase-init.js";
 // ============================================================================
 // 🛠️ OUTIL DE DEBUG MAC : SIMULATEUR DE VIBRATIONS (CORRIGÉ SAFARI)
 // ============================================================================
-if (
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-) {
-  // 🛡️ SÉCURITÉ : On vérifie si l'API existe AVANT d'essayer de la copier
-  if ("vibrate" in navigator && typeof navigator.vibrate === "function") {
-    const originalVibrate = navigator.vibrate.bind(navigator);
-    navigator.vibrate = function (pattern) {
-      const texteLog = Array.isArray(pattern)
-        ? `Pattern [${pattern.join(", ")}ms]`
-        : `Secousse ${pattern}ms`;
-      console.log(
-        `%c📳 VIBRATION DÉTECTÉE : ${texteLog}`,
-        "background: #222; color: #ffeb3b; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
-      );
-      try { return originalVibrate(pattern); } catch (e) { return true; }
-    };
-  } else {
-    // 🍏 SPÉCIAL SAFARI / APPLE : L'API n'existe pas, on crée juste un Mock (faux)
-    navigator.vibrate = function (pattern) {
-      const texteLog = Array.isArray(pattern)
-        ? `Pattern [${pattern.join(", ")}ms]`
-        : `Secousse ${pattern}ms`;
-      console.log(
-        `%c📳 VIBRATION SIMULÉE (Safari) : ${texteLog}`,
-        "background: #ff5722; color: #fff; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
-      );
-      return true;
-    };
-  }
-}
+// if (
+//   window.location.hostname === "localhost" ||
+//   window.location.hostname === "127.0.0.1"
+// ) {
+//   // 🛡️ SÉCURITÉ : On vérifie si l'API existe AVANT d'essayer de la copier
+//   if ("vibrate" in navigator && typeof navigator.vibrate === "function") {
+//     const originalVibrate = navigator.vibrate.bind(navigator);
+//     navigator.vibrate = function (pattern) {
+//       const texteLog = Array.isArray(pattern)
+//         ? `Pattern [${pattern.join(", ")}ms]`
+//         : `Secousse ${pattern}ms`;
+//       console.log(
+//         `%c📳 VIBRATION DÉTECTÉE : ${texteLog}`,
+//         "background: #222; color: #ffeb3b; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
+//       );
+//       try { return originalVibrate(pattern); } catch (e) { return true; }
+//     };
+//   } else {
+//     // 🍏 SPÉCIAL SAFARI / APPLE : L'API n'existe pas, on crée juste un Mock (faux)
+//     navigator.vibrate = function (pattern) {
+//       const texteLog = Array.isArray(pattern)
+//         ? `Pattern [${pattern.join(", ")}ms]`
+//         : `Secousse ${pattern}ms`;
+//       console.log(
+//         `%c📳 VIBRATION SIMULÉE (Safari) : ${texteLog}`,
+//         "background: #ff5722; color: #fff; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
+//       );
+//       return true;
+//     };
+//   }
+// }
 // ============================================================================
 // ============================================================================
 
@@ -270,7 +270,7 @@ window.chargerMenuComplet = async () => {
         .forEach((cat, catIndex) => {
           let sectionHTML = `
                 <div class="mb-12 animate-fade-in-up" style="animation-fill-mode: both; animation-delay: ${catIndex * 200}ms;">
-                    <div class="sticky top-0 z-30 bg-gray-200/95 backdrop-blur-md py-4 flex items-center mb-6 shadow-sm -mx-4 px-4 md:mx-0 md:shadow-none md:rounded-lg md:p-2">
+                    <div class="sticky top-0 z-30 bg-gray-300/80 backdrop-blur-md py-4 flex items-center mb-6 shadow-sm -mx-4 px-4 md:mx-1 md:shadow-none rounded-full md:p-2">
                         <span class="md:text-4xl text-lg text-black mr-1">${cat.icon}</span>
                         <h3 class="text-xl md:text-3xl font-bold font-oswald text-gray-800 uppercase tracking-wider">${cat.title}</h3>
                         <div class="flex-grow h-px ${cfg.theme.colors.primary} ml-4 opacity-50"></div>
@@ -346,30 +346,32 @@ function createProductCard(item, cfg) {
   // Le bloc HTML de remplacement (juste une icône centrée, pas de texte lourd)
   const fallbackHtml = `
       <div class="absolute inset-0 flex items-center justify-center ${secondaryBg} z-0 transition duration-700 ${imageOpacity}">
-          <i class="fas fa-hamburger text-6xl ${textOnPrimary} opacity-50"></i>
+          <i class="fas fa-hamburger text-6xl text-black opacity-50"></i>
       </div>`;
 
   // Astuce : onerror affiche le div fallback caché juste en dessous si l'image est cassée en BDD
   const imageHtml = imageUrl
     ? `<img src="${imageUrl}" alt="${nomAffiche}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full object-cover transition duration-700 ${imageOpacity} z-0">
        <div style="display: none;" class="absolute inset-0 items-center justify-center ${secondaryBg} z-0 transition duration-700 ${imageOpacity}">
-           <i class="fas fa-hamburger text-6xl ${textOnPrimary} opacity-50"></i>
+           <i class="fas fa-hamburger text-6xl text-black opacity-50"></i>
        </div>`
     : fallbackHtml;
 
   return `
-    <div class="${cardBg} rounded-2xl overflow-hidden group ${cardOpacity} transition-all duration-300 hover:shadow-2xl" ${clickAction}>
-        <div class="h-48 relative overflow-hidden ${secondaryBg}">
+    <div class="${cardBg} h-full flex flex-col rounded-2xl overflow-hidden group ${cardOpacity} transition-all duration-300 hover:shadow-2xl" ${clickAction}>
+        
+        <div class="h-48 shrink-0 relative overflow-hidden ${secondaryBg}">
             ${imageHtml}
             ${tagHtml}
         </div>
-        <div class="p-5 flex flex-col justify-between h-[calc(100%-12rem)]">
+        
+        <div class="p-5 flex-1 flex flex-col justify-between">
             <div>
                 <div class="flex justify-between items-start mb-2 gap-2">
                     <h2 class="text-lg font-bold ${textColor} leading-tight">${nomAffiche}</h2>
                     <span class="text-xl font-black ${priceColor} whitespace-nowrap">${parseFloat(prixAffiche).toFixed(2)}${devise}</span>
                 </div>
-                <p class="text-sm text-gray-200 mb-6 line-clamp-2">${item.description || ""}</p>
+                <p class="text-sm text-gray-400 mb-6 line-clamp-2">${item.description || ""}</p>
             </div>
             
             <button class="w-full py-3 mt-auto rounded-xl border border-gray-300 dark:border-gray-600 ${textColor} hover:${isAvailable ? cfg.theme.colors.primary : ""} hover:border-transparent hover:text-white transition-all font-bold flex items-center justify-center gap-2">
@@ -1139,30 +1141,32 @@ window.toggleDrinkSection = function () {
   const btn = document.getElementById("modal-cta");
   const devise = window.snackConfig?.identity?.currency || "€";
 
-  // 🛑 LE BOUCLIER ANTI-CRASH : 
+  // 🛑 LE BOUCLIER ANTI-CRASH :
   // S'il n'y a pas de bouton "formule" (Ex: c'est une Pizza), on cache les boissons et on s'arrête là !
   if (!formuleInput) {
     if (drinkSection) {
-        drinkSection.classList.add("opacity-0");
-        setTimeout(() => drinkSection.classList.add("hidden"), 300);
+      drinkSection.classList.add("opacity-0");
+      setTimeout(() => drinkSection.classList.add("hidden"), 300);
     }
-    return; 
+    return;
   }
 
   const isMenu = formuleInput.value === "menu";
 
   if (isMenu) {
     if (drinkSection) {
-        drinkSection.classList.remove("hidden");
-        setTimeout(() => drinkSection.classList.remove("opacity-0"), 10);
+      drinkSection.classList.remove("hidden");
+      setTimeout(() => drinkSection.classList.remove("opacity-0"), 10);
     }
-    if (btn) btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
+    if (btn)
+      btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
   } else {
     if (drinkSection) {
-        drinkSection.classList.add("opacity-0");
-        setTimeout(() => drinkSection.classList.add("hidden"), 300);
+      drinkSection.classList.add("opacity-0");
+      setTimeout(() => drinkSection.classList.add("hidden"), 300);
     }
-    if (btn) btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+    if (btn)
+      btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
   }
 };
 // ============================================================================
@@ -1174,6 +1178,24 @@ window.openProductModal = function (itemId) {
   const item = menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
   if (!item) return;
 
+  // 🎨 Extraction et création des couleurs dynamiques SaaS
+  const accentText = cfg.theme.colors.accent || "text-red-600";
+  const primaryBg = cfg.theme.colors.primary || "bg-blue-600";
+  const textOnPrimary = cfg.theme.colors.textOnPrimary || "bg-gray-500";
+  const primaryText = primaryBg.replace("bg-", "text-");
+  const accentBg = accentText.replace("text-", "bg-").replace("600", "500");
+  const accentLightBg = accentText.replace("text-", "bg-").replace("600", "50");
+  const accentBorder = accentText
+    .replace("text-", "border-")
+    .replace("600", "500");
+  const primaryBorder = accentText
+    .replace("text-", "border-")
+    .replace("600", "500");
+  const primaryRing = accentText
+    .replace("text-", "border-")
+    .replace("600", "500");
+  const accentRing = accentText.replace("text-", "ring-").replace("600", "500");
+
   // 1. Initialisation du produit en mémoire
   currentProduct = {
     id: item.id,
@@ -1182,7 +1204,7 @@ window.openProductModal = function (itemId) {
     prixMenu: item.menuPriceAdd || 2.5,
     image: item.image,
     allowMenu: item.allowMenu !== false,
-    tailleChoisie: null // Sera rempli si c'est une pizza
+    tailleChoisie: null, // Sera rempli si c'est une pizza
   };
 
   const devise = cfg.identity.currency || "€";
@@ -1199,22 +1221,31 @@ window.openProductModal = function (itemId) {
     modalImg.onerror = function () {
       this.style.display = "none";
       if (!document.getElementById("modal-img-fallback")) {
-        imgContainer.insertAdjacentHTML("beforeend", `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i></div>`);
+        imgContainer.insertAdjacentHTML(
+          "beforeend",
+          `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-black opacity-50"></i></div>`,
+        );
       }
     };
   } else {
     modalImg.style.display = "none";
-    imgContainer.insertAdjacentHTML("beforeend", `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-gray-300 opacity-50"></i></div>`);
+    imgContainer.insertAdjacentHTML(
+      "beforeend",
+      `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-black opacity-50"></i></div>`,
+    );
   }
 
   document.getElementById("modal-title").innerText = currentProduct.nom;
   document.getElementById("modal-desc").innerText = item.description || "";
 
   // 3. Allergènes
-  const allergenContainer = document.getElementById("modal-allergens-container");
+  const allergenContainer = document.getElementById(
+    "modal-allergens-container",
+  );
   if (item.allergenes && item.allergenes.length > 0) {
     allergenContainer.classList.remove("hidden");
-    document.getElementById("modal-allergens").innerText = item.allergenes.join(", ");
+    document.getElementById("modal-allergens").innerText =
+      item.allergenes.join(", ");
   } else {
     allergenContainer.classList.add("hidden");
   }
@@ -1223,127 +1254,215 @@ window.openProductModal = function (itemId) {
   const btn = document.getElementById("modal-cta");
   const optionsContainer = document.getElementById("modal-options-container");
 
-  if (item.isAvailable === false) {
+if (item.isAvailable === false) {
     if (optionsContainer) optionsContainer.classList.add("hidden");
     btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
     btn.onclick = null;
   } 
-  else if (cfg.features?.enableClickAndCollect) {
-    // 🛒 C'est parti pour le E-Commerce !
-    if (optionsContainer) {
-      optionsContainer.classList.remove("hidden");
-      let allOptionsHTML = "";
-      const accentColor = cfg.theme.colors.accent || "text-red-600";
-      const bgFocusColor = accentColor.replace("text-", "focus:ring-");
+  else {
+      // 🛒 SI CLICK & COLLECT EST ACTIVÉ : ON GÉNÈRE LES OPTIONS (SAUCES, TAILLES, ETC.)
+      if (cfg.features?.enableClickAndCollect) {
+          if (optionsContainer) {
+              optionsContainer.classList.remove("hidden");
+              let allOptionsHTML = "";
 
-      // --- MODULE 1 : PIZZAS (Tailles) ---
-      if (item.tailles && item.tailles.length > 0) {
-        currentProduct.allowMenu = false; // Une pizza n'a pas de menu frites par défaut
-        currentProduct.prixBase = item.tailles[0].prix;
-        currentProduct.tailleChoisie = item.tailles[0].nom;
+              // --- MODULE 1 : PIZZAS (Tailles) ---
+              if (item.tailles && item.tailles.length > 0) {
+                  currentProduct.allowMenu = false;
+                  currentProduct.prixBase = item.tailles[0].prix;
+                  currentProduct.tailleChoisie = item.tailles[0].nom;
 
-        allOptionsHTML += `
-          <h3 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez la taille</h3>
-          <div class="space-y-2 mb-4">
-            ${item.tailles.map((taille, index) => `
-              <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
-                  <div class="flex items-center gap-3">
-                      <input type="radio" name="taille_produit" value="${taille.nom}" data-prix="${taille.prix}" ${index === 0 ? "checked" : ""} onchange="updateProductSize(this)" class="w-5 h-5 ${accentColor} ${bgFocusColor}">
-                      <span class="font-bold text-gray-700 text-sm">${taille.nom}</span>
-                  </div>
-                  <span class="font-bold ${accentColor} text-sm">${taille.prix.toFixed(2)} ${devise}</span>
-              </label>
-            `).join("")}
-          </div>
-          ${item.ingredients ? `<p class="text-xs text-gray-500 italic mb-4 mt-2">Ingrédients : ${item.ingredients.join(", ")}</p>` : ""}
-        `;
-      } 
-      // --- MODULE 2 : BURGERS / TACOS (Seul ou Menu) ---
-      else if (currentProduct.allowMenu) {
-        const boissonsDispo = menuGlobal.filter(i => i.categorieId === "drinks" && i.isAvailable !== false);
-        const listeBoissons = boissonsDispo.length > 0 ? boissonsDispo : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
-        
-        allOptionsHTML += `
-          <h3 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">1. Choisissez votre formule</h3>
-          <div class="space-y-2 mb-4">
-              <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
-                  <div class="flex items-center gap-3">
-                      <input type="radio" name="formule" value="seul" checked onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
-                      <span class="font-medium text-black text-sm">Seul</span>
-                  </div>
-                  <span class="text-black font-bold text-sm">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
-              </label>
-              <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
-                  <div class="flex items-center gap-3">
-                      <input type="radio" name="formule" value="menu" onchange="toggleDrinkSection()" class="w-4 h-4 ${accentColor} ${bgFocusColor}">
-                      <div>
-                          <span class="font-medium text-black text-sm block">En Menu</span>
-                          <span class="text-[10px] ${accentColor} uppercase font-bold">Frites + Boisson</span>
+                  allOptionsHTML += `
+                  <fieldset class="mb-8">
+                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                      <span>1. Choisissez la taille</span>
+                      <span class="text-xs font-bold ${primaryBg} ${textOnPrimary} px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
+                      </legend>
+                      <div class="grid grid-cols-2 gap-3">
+                      ${item.tailles.map((taille, index) => `
+                          <label class="relative cursor-pointer group">
+                              <input type="radio" name="taille_produit" value="${taille.nom}" data-prix="${taille.prix}" ${index === 0 ? "checked" : ""} onchange="updateProductSize(this)" class="sr-only peer">
+                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex flex-col items-center justify-center text-center">
+                                  <span class="font-bold text-gray-900 mb-1">${taille.nom}</span>
+                                  <span class="font-black ${accentText} text-sm">${taille.prix.toFixed(2)} ${devise}</span>
+                              </div>
+                          </label>
+                      `).join("")}
                       </div>
-                  </div>
-                  <span class="font-bold text-sm ${accentColor}">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
-              </label>
-          </div>
-          <div id="drink-section" class="hidden opacity-0 transition-opacity duration-300">
-              <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">2. Choix de la boisson</h4>
-              <div class="grid grid-cols-2 gap-2 mb-4">
-                  ${listeBoissons.map((boisson, index) => `
-                      <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition shadow-sm bg-white">
-                          <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="w-5 h-5 ${accentColor} ${bgFocusColor}">
-                          <span class="text-sm font-bold text-gray-700">${boisson.nom}</span>
-                      </label>
-                  `).join("")}
-              </div>
-          </div>
-        `;
+                      ${item.ingredients ? `<p class="text-sm text-gray-500 font-medium mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100"><i class="fas fa-leaf mr-2 text-green-500"></i> ${item.ingredients.join(", ")}</p>` : ""}
+                  </fieldset>
+                  `;
+              }
+              // --- MODULE 2 : BURGERS / TACOS (Seul ou Menu) ---
+              else if (currentProduct.allowMenu) {
+                  const boissonsDispo = menuGlobal.filter((i) => i.categorieId === "drinks" && i.isAvailable !== false);
+                  const listeBoissons = boissonsDispo.length > 0 ? boissonsDispo : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
+
+                  allOptionsHTML += `
+                  <fieldset class="mb-8">
+                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                      <span>1. Formule</span>
+                      <span class="text-xs font-bold ${primaryBg} ${textOnPrimary} px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
+                      </legend>
+                      <div class="grid grid-cols-2 gap-3">
+                          <label class="relative cursor-pointer">
+                              <input type="radio" name="formule" value="seul" checked onchange="toggleDrinkSection()" class="sr-only peer">
+                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center">
+                                  <i class="fas fa-hamburger text-2xl text-gray-400 mb-2 peer-checked:${accentText}"></i>
+                                  <span class="font-bold text-gray-900">Seul</span>
+                                  <span class="font-black text-gray-500 mt-1">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
+                              </div>
+                          </label>
+
+                          <label class="relative cursor-pointer">
+                              <input type="radio" name="formule" value="menu" onchange="toggleDrinkSection()" class="sr-only peer">
+                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center relative overflow-hidden">
+                                  <div class="absolute -right-6 -top-6 w-16 h-16 ${accentBg} rounded-full opacity-10"></div>
+                                  <div class="flex gap-1 mb-2">
+                                      <i class="fas fa-hamburger text-xl text-gray-400 peer-checked:${accentText}"></i>
+                                      <i class="fas fa-plus text-xs text-gray-300 ml-2 mt-1 ${primaryText}"></i>
+                                      <i class="fas fa-fries text-xl text-gray-400 peer-checked:${accentText}"></i>
+                                  </div>
+                                  <span class="font-bold text-gray-900">En Menu</span>
+                                  <span class="font-black ${accentText} mt-1">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
+                              </div>
+                          </label>
+                      </div>
+                  </fieldset>
+
+                  <fieldset id="drink-section" class="mb-8 hidden opacity-0 transition-all duration-300 transform translate-y-4">
+                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                      <span>2. Votre Boisson</span>
+                      <span class="text-xs font-bold ${primaryBg} ${textOnPrimary} px-2 py-1 rounded uppercase tracking-wider shadow-sm">Choix requis</span>
+                      </legend>
+                      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          ${listeBoissons.map((boisson, index) => `
+                              <label class="relative cursor-pointer">
+                                  <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="sr-only peer">
+                                  <div class="p-3 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex items-center gap-3">
+                                      <div class="w-8 h-8 flex items-center justify-center peer-checked:${primaryBg} transition-colors">
+                                          <i class="fas fa-glass-water shadow-sm ${accentText}"></i>
+                                      </div>
+                                      <span class="font-bold text-gray-800 text-sm leading-tight">${boisson.nom}</span>
+                                  </div>
+                              </label>
+                          `).join("")}
+                      </div>
+                  </fieldset>
+                  `;
+              }
+
+              // --- MODULE 3 : KEBABS (Crudités) ---
+              if (item.hasCrudites) {
+                  const listeCrudites = Array.isArray(item.crudites) && item.crudites.length > 0 ? item.crudites : ["Salade", "Tomate", "Oignon"];
+                  allOptionsHTML += `
+                  <fieldset class="mb-8">
+                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                      <span>Garniture</span>
+                      <span class="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded uppercase tracking-wider">Inclus</span>
+                      </legend>
+                      <p class="text-sm text-gray-500 mb-3 font-medium">Décochez pour retirer un ingrédient.</p>
+                      <div class="flex flex-wrap gap-3">
+                          ${listeCrudites.map((c) => `
+                              <label class="relative cursor-pointer group">
+                                  <input type="checkbox" name="crudite" value="${c}" checked class="sr-only peer">
+                                  <div class="px-4 py-2 border-2 rounded-full font-bold text-sm transition-all border-red-200 bg-red-50 text-red-800 line-through opacity-70 hover:opacity-100 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-800 peer-checked:no-underline peer-checked:opacity-100 peer-checked:hover:bg-green-100">
+                                      <i class="fas fa-check mr-1 peer-checked:inline-block hidden"></i>
+                                      <i class="fas fa-times mr-1 peer-checked:hidden inline-block text-gray-400"></i>
+                                      ${c}
+                                  </div>
+                              </label>
+                          `).join("")}
+                      </div>
+                  </fieldset>
+                  `;
+              }
+              // --- MODULE 4 : SAUCES ---
+              if (item.choixSauces) {
+                  const sauces = item.choixSauces.liste || ["Blanche", "Algérienne", "Samouraï", "Mayonnaise"];
+                  const maxSauces = item.choixSauces.max || 2;
+                  allOptionsHTML += `
+                  <fieldset class="mb-8">
+                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                      <span>Sauces</span>
+                      <span class="text-xs font-bold bg-gray-900 text-white px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                          <span id="sauce-counter-ui">0</span> / ${maxSauces} max
+                      </span>
+                      </legend>
+                      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          ${sauces.map((sauce) => `
+                              <label class="relative cursor-pointer block">
+                                  <input type="checkbox" name="sauce" value="${sauce}" onchange="checkSauceLimit(event, ${maxSauces})" class="sr-only peer sauce-checkbox">
+                                  <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex items-center justify-center text-center">
+                                      <span class="font-bold text-gray-800 text-sm leading-tight">${sauce}</span>
+                                  </div>
+                              </label>
+                          `).join("")}
+                      </div>
+                  </fieldset>
+                  `;
+              }
+
+              if (allOptionsHTML === "") {
+                  optionsContainer.classList.add("hidden");
+              } else {
+                  optionsContainer.innerHTML = allOptionsHTML;
+                  if (typeof window.toggleDrinkSection === "function") window.toggleDrinkSection();
+              }
+          }
+      } 
+      // 🛑 SI PAS DE CLICK & COLLECT : ON CACHE TOUTES LES OPTIONS
+      else {
+          if (optionsContainer) optionsContainer.classList.add("hidden");
       }
 
-      // --- MODULE 3 : KEBABS (Crudités S-T-O) ---
-      if (item.hasCrudites) {
-        allOptionsHTML += `
-            <h4 class="font-bold text-sm text-gray-900 mt-4 mb-2 border-b pb-1">Garniture (Inclus)</h4>
-            <div class="flex flex-wrap gap-2 mb-4">
-                ${['Salade', 'Tomate', 'Oignon'].map(c => `
-                    <label class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition">
-                        <input type="checkbox" name="crudite" value="${c}" checked class="w-4 h-4 ${accentColor} ${bgFocusColor} rounded"> 
-                        <span class="text-sm font-medium text-gray-700">${c}</span>
-                    </label>
-                `).join('')}
-            </div>
-        `;
-      }
+      // ==========================================
+      // 🎯 L'AIGUILLAGE DU BOUTON PRINCIPAL (LE CTA)
+      // ==========================================
 
-      // --- MODULE 4 : SAUCES ---
-      if (item.choixSauces) {
-        const sauces = item.choixSauces.liste || ["Blanche", "Algérienne", "Samouraï", "Mayonnaise"];
-        const maxSauces = item.choixSauces.max || 2;
-        allOptionsHTML += `
-            <h4 class="font-bold text-sm text-gray-900 mt-4 mb-2 border-b pb-1">Sauces (Choix : ${maxSauces} max)</h4>
-            <div class="grid grid-cols-2 gap-2 mb-4">
-                ${sauces.map(sauce => `
-                    <label class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition">
-                        <input type="checkbox" name="sauce" value="${sauce}" onchange="checkSauceLimit(event, ${maxSauces})" class="w-4 h-4 ${accentColor} ${bgFocusColor} rounded sauce-checkbox">
-                        <span class="text-sm font-medium text-gray-700">${sauce}</span>
-                    </label>
-                `).join('')}
-            </div>
-        `;
+      // 🛒 SCÉNARIO 1 : MODE PANIER (CLICK & COLLECT)
+      if (cfg.features?.enableClickAndCollect) {
+          btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
+          btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+          btn.onclick = window.confirmAddToCart;
       }
-
-      // 💉 Injection Globale
-      if (allOptionsHTML === "") {
-        optionsContainer.classList.add("hidden");
-      } else {
-        optionsContainer.innerHTML = allOptionsHTML;
-        if (typeof window.toggleDrinkSection === "function") window.toggleDrinkSection();
+      
+      // 🏪 Scénario 2 : MODE VITRINE (Pas de commande en ligne du tout)
+      else if (!cfg.features?.enableOnlineOrder) {
+          btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true"></i> Fermer`;
+          btn.className = `w-full py-4 rounded-full font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 border ${accentBorder} hover:border-gray-400 transition-all flex justify-center items-center gap-2`;
+          btn.onclick = window.closeProductModal;
       }
-    }
-
-    btn.removeAttribute("href");
-    btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
-    btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-    btn.onclick = window.confirmAddToCart;
+      
+      // 🏍️ Scénario 3 : LIVRAISON EXTERNE (UberEats, Deliveroo...)
+      else if (cfg.features?.enableDelivery) {
+          btn.innerHTML = `<i class="fas fa-motorcycle mr-2"></i> Commander en livraison`;
+          btn.className = `w-full py-4 rounded-full font-bold ${textOnPrimary} text-center shadow-lg text-lg ${primaryBg} hover:opacity-90 hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
+          btn.onclick = () => {
+              if (cfg.deliveryUrl && cfg.deliveryUrl.trim() !== "" && cfg.deliveryUrl !== "#") {
+                  window.open(cfg.deliveryUrl, "_blank");
+              } else {
+                  window.showToast("Le lien de livraison n'est pas configuré.", "error");
+                  if (typeof window.triggerVibration === "function") window.triggerVibration("error");
+              }
+          };
+      }
+      
+      // 📞 Scénario 4 : PAR DÉFAUT (Lance l'appel téléphonique natif)
+      else {
+          const phone = cfg.contact?.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
+          btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
+          btn.className = `w-full py-4 rounded-full font-bold ${textOnPrimary} text-center shadow-lg text-lg ${primaryBg} hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
+          btn.onclick = () => {
+              if (phone) {
+                  window.location.href = `tel:${phone}`;
+              } else {
+                  window.showToast("Numéro non renseigné", "error");
+                  if (typeof window.triggerVibration === "function") window.triggerVibration("error");
+              }
+          };
+      }
   }
 
   // 5. Affichage final
@@ -1352,35 +1471,104 @@ window.openProductModal = function (itemId) {
   backdrop.classList.remove("hidden");
   setTimeout(() => {
     backdrop.classList.remove("opacity-0");
-    sheet.classList.remove("translate-y-full", "md:opacity-0", "md:pointer-events-none", "md:scale-95");
+    sheet.classList.remove(
+      "translate-y-full",
+      "md:opacity-0",
+      "md:pointer-events-none",
+      "md:scale-95",
+    );
   }, 10);
   document.body.style.overflow = "hidden";
 };
 
 // ==========================================
-// 🛠️ LES PETITS SCRIPTS ASSISTANTS
+// 🛠️ LES PETITS SCRIPTS ASSISTANTS (UX & A11y)
 // ==========================================
 
-// Helper 1 : Bloquer les sauces si le max est atteint
-window.checkSauceLimit = function(event, max) {
-    const checkedBoxes = document.querySelectorAll('.sauce-checkbox:checked');
-    if (checkedBoxes.length > max) {
-        event.target.checked = false;
-        window.showToast(`Maximum ${max} sauces autorisées !`, "error");
-        if (typeof window.triggerVibration === "function") window.triggerVibration("error");
+// Helper 1 : Gérer les sauces + Mettre à jour le compteur visuel
+window.checkSauceLimit = function (event, max) {
+  const checkedBoxes = document.querySelectorAll(".sauce-checkbox:checked");
+  const counterUI = document.getElementById("sauce-counter-ui");
+
+  // Mise à jour visuelle du compteur
+  if (counterUI) {
+    counterUI.innerText = checkedBoxes.length;
+    if (checkedBoxes.length === max) {
+      counterUI.parentElement.classList.replace("bg-gray-900", "bg-green-600");
+    } else {
+      counterUI.parentElement.classList.replace("bg-green-600", "bg-gray-900");
     }
+  }
+
+  // Blocage si on dépasse
+  if (checkedBoxes.length > max) {
+    event.target.checked = false;
+    if (counterUI) counterUI.innerText = max; // On remet au max visuellement
+    window.showToast(`Maximum ${max} sauces autorisées !`, "error");
+    if (typeof window.triggerVibration === "function")
+      window.triggerVibration("error");
+  } else {
+    if (typeof window.triggerVibration === "function")
+      window.triggerVibration("light");
+  }
 };
 
 // Helper 2 : Mettre à jour le prix de la pizza en direct
-window.updateProductSize = function(radioBtn) {
-    const nouveauPrix = parseFloat(radioBtn.getAttribute('data-prix'));
-    currentProduct.prixBase = nouveauPrix;
-    currentProduct.tailleChoisie = radioBtn.value;
-    
-    const devise = window.snackConfig.identity.currency || "€";
-    document.getElementById("modal-cta").innerHTML = `<span>Ajouter - ${nouveauPrix.toFixed(2)} ${devise}</span>`;
+window.updateProductSize = function (radioBtn) {
+  const nouveauPrix = parseFloat(radioBtn.getAttribute("data-prix"));
+  currentProduct.prixBase = nouveauPrix;
+  currentProduct.tailleChoisie = radioBtn.value;
+
+  const devise = window.snackConfig.identity.currency || "€";
+  document.getElementById("modal-cta").innerHTML =
+    `<span>Ajouter - ${nouveauPrix.toFixed(2)} ${devise}</span>`;
+  if (typeof window.triggerVibration === "function")
+    window.triggerVibration("light");
 };
 
+// ============================================================================
+// 🍹 BASCULE AFFICHAGE BOISSONS (Avec animations Tailwind)
+// ============================================================================
+window.toggleDrinkSection = function () {
+  const formuleInput = document.querySelector('input[name="formule"]:checked');
+  const drinkSection = document.getElementById("drink-section");
+  const btn = document.getElementById("modal-cta");
+  const devise = window.snackConfig?.identity?.currency || "€";
+
+  if (!formuleInput) {
+    if (drinkSection) {
+      drinkSection.classList.remove("translate-y-0", "opacity-100");
+      drinkSection.classList.add("translate-y-4", "opacity-0");
+      setTimeout(() => drinkSection.classList.add("hidden"), 300);
+    }
+    return;
+  }
+
+  const isMenu = formuleInput.value === "menu";
+  if (typeof window.triggerVibration === "function")
+    window.triggerVibration("light");
+
+  if (isMenu) {
+    if (drinkSection) {
+      drinkSection.classList.remove("hidden");
+      // L'animation a besoin d'un micro-délai pour que le display:block soit appliqué par le navigateur avant de transitionner l'opacité
+      setTimeout(() => {
+        drinkSection.classList.remove("translate-y-4", "opacity-0");
+        drinkSection.classList.add("translate-y-0", "opacity-100");
+      }, 20);
+    }
+    if (btn)
+      btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
+  } else {
+    if (drinkSection) {
+      drinkSection.classList.remove("translate-y-0", "opacity-100");
+      drinkSection.classList.add("translate-y-4", "opacity-0");
+      setTimeout(() => drinkSection.classList.add("hidden"), 300);
+    }
+    if (btn)
+      btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+  }
+};
 
 // ==========================================
 // 🛒 LA VALIDATION ET L'AJOUT AU PANIER
@@ -1395,36 +1583,46 @@ window.confirmAddToCart = function () {
 
   // 🍕 Gestion du nom de la Pizza
   if (currentProduct.tailleChoisie) {
-      nomFinal += `${currentProduct.tailleChoisie}`;
+    nomFinal += `${currentProduct.tailleChoisie}`;
   }
 
   // 🍔 Gestion du Burger en Menu
   if (isMenu) {
-    const boissonInput = document.querySelector('input[name="boisson"]:checked');
-    if (!boissonInput) return window.showToast("🥤 Veuillez choisir une boisson.", "error");
+    const boissonInput = document.querySelector(
+      'input[name="boisson"]:checked',
+    );
+    if (!boissonInput)
+      return window.showToast("🥤 Veuillez choisir une boisson.", "error");
     boissonChoisie = boissonInput.value;
-    nomFinal = `Menu ${currentProduct.nom}`; 
+    nomFinal = `Menu ${currentProduct.nom}`;
     prixFinal += currentProduct.prixMenu;
   }
 
   // 🥣 Capture des Sauces
-  const saucesCheckboxes = document.querySelectorAll('.sauce-checkbox:checked');
-  const saucesChoisies = Array.from(saucesCheckboxes).map(cb => cb.value);
+  const saucesCheckboxes = document.querySelectorAll(".sauce-checkbox:checked");
+  const saucesChoisies = Array.from(saucesCheckboxes).map((cb) => cb.value);
 
   // 🚫 Capture des Crudités enlevées (S-T-O)
   const cruditesCheckboxes = document.querySelectorAll('input[name="crudite"]');
   const cruditesEnlevees = [];
-  cruditesCheckboxes.forEach(cb => {
-      if (!cb.checked) cruditesEnlevees.push(`Sans ${cb.value}`);
+  cruditesCheckboxes.forEach((cb) => {
+    if (!cb.checked) cruditesEnlevees.push(`Sans ${cb.value}`);
   });
 
   // 🧬 Génération d'un ID de panier unique pour ne pas mélanger 2 kebabs avec des sauces différentes
-  const optionsString = [...saucesChoisies, ...cruditesEnlevees, boissonChoisie, currentProduct.tailleChoisie].filter(Boolean).join('-');
-  const uniqueId = `${currentProduct.id}-${isMenu ? 'menu' : 'seul'}-${optionsString.replace(/[\s\(\)]/g, '')}`;
+  const optionsString = [
+    ...saucesChoisies,
+    ...cruditesEnlevees,
+    boissonChoisie,
+    currentProduct.tailleChoisie,
+  ]
+    .filter(Boolean)
+    .join("-");
+  const uniqueId = `${currentProduct.id}-${isMenu ? "menu" : "seul"}-${optionsString.replace(/[\s\(\)]/g, "")}`;
 
   addToCart({
-    id: uniqueId, 
-    productId: currentProduct.id, 
+    id: uniqueId,
+    productId: currentProduct.id,
     nom: nomFinal,
     prix: prixFinal,
     image: currentProduct.image,
@@ -1458,8 +1656,6 @@ window.closeProductModal = function () {
     document.body.style.overflow = "";
   }, 300);
 };
-
-
 
 // --- 3. GESTION DU PANIER (Logique) ---
 function addToCart(itemData) {
@@ -1545,16 +1741,21 @@ function renderCartItems() {
       // 🎯 LA MAGIE EST ICI : On crée le sous-titre dynamique
       let detailsText = [];
       if (item.boisson) detailsText.push(`🥤 ${item.boisson}`);
-      if (item.sauces && item.sauces.length > 0) detailsText.push(`🥣 ${item.sauces.join(", ")}`);
+      if (item.sauces && item.sauces.length > 0)
+        detailsText.push(`🥣 ${item.sauces.join(", ")}`);
       if (item.sansCrudites && item.sansCrudites.length > 0) {
-          detailsText.push(`<span class="text-red-600 font-black">⚠️ ${item.sansCrudites.join(", ")}</span>`);
+        detailsText.push(
+          `<span class="text-red-600 font-black">⚠️ ${item.sansCrudites.join(", ")}</span>`,
+        );
       }
-      
-      const detailsHTML = detailsText.length > 0 
-        ? `<div class="text-[11px] text-gray-500 mt-1 leading-snug flex flex-wrap gap-x-2 gap-y-1">${detailsText.join(" <span class='text-gray-300'>|</span> ")}</div>` 
-        : "";
 
-      const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
+      const detailsHTML =
+        detailsText.length > 0
+          ? `<div class="text-[11px] text-gray-500 mt-1 leading-snug flex flex-wrap gap-x-2 gap-y-1">${detailsText.join(" <span class='text-gray-300'>|</span> ")}</div>`
+          : "";
+
+      const imageUrl =
+        item.image && item.image.trim() !== "" ? item.image : null;
       const fallbackHtml = `<div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div>`;
       const imageHtml = imageUrl
         ? `<div class="relative w-16 h-16 shrink-0"><img src="${imageUrl}" alt="${item.nom}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full rounded-lg object-cover z-10"><div style="display: none;" class="absolute inset-0 rounded-lg bg-gray-100 items-center justify-center border border-gray-200 z-0"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div></div>`
@@ -1576,7 +1777,8 @@ function renderCartItems() {
       `;
     });
   }
-  document.getElementById("cart-total-price").textContent = `${getCartTotal().toFixed(2)} €`;
+  document.getElementById("cart-total-price").textContent =
+    `${getCartTotal().toFixed(2)} €`;
 }
 
 window.updateQuantity = function (productId, delta) {
@@ -1633,8 +1835,8 @@ window.processCheckout = async () => {
         image: item.image || "",
         type: item.type || "seul",
         boissonNom: item.boisson || null,
-        sauces: item.sauces || [],               // 👈 VITAL : LES SAUCES
-        sansCrudites: item.sansCrudites || [],   // 👈 VITAL : LES CRUDITÉS (S-T-O)
+        sauces: item.sauces || [], // 👈 VITAL : LES SAUCES
+        sansCrudites: item.sansCrudites || [], // 👈 VITAL : LES CRUDITÉS (S-T-O)
         tailleChoisie: item.tailleChoisie || null, // 👈 VITAL : POUR LES PIZZAS
         prixBase: item.prixBase || prixUnitaire,
         prixMenuAdd: item.prixMenuAdd || 0,
