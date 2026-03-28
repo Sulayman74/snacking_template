@@ -39,6 +39,13 @@ import "./firebase-init.js";
 // ============================================================================
 // ============================================================================
 
+// ==========================================
+// 💳 VARIABLES STRIPE GLOBALES
+// ==========================================
+let stripeElements = null;
+let stripeInstance = null;
+const stripePublicKey = "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
+
 // ============================================================================
 // 2. INITIALISATION DYNAMIQUE
 // ============================================================================
@@ -870,6 +877,152 @@ function setupContactForm() {
     });
   }
 }
+// ============================================================================
+// 🪄 AUTO-REMPLISSAGE DU FORMULAIRE DE CONTACT (UX)
+// ============================================================================
+window.prefillContactForm = function(user) {
+    const contactField = document.getElementById("contact-field");
+
+    if (!contactField) return; // Sécurité : si on n'est pas sur la page, on s'arrête
+
+    if (user) {
+        // Le client est connecté : on cherche son email (ou son téléphone s'il existe)
+        const contactInfo = user.email || user.phoneNumber || "";
+
+        if (contactInfo) {
+            contactField.value = contactInfo;
+            
+            // 🔒 Bonus UX : On verrouille le champ pour éviter les fautes de frappe
+            contactField.setAttribute("readonly", "true");
+            
+            // On joue avec tes classes Tailwind pour montrer que c'est grisé
+            contactField.classList.remove("bg-gray-50", "text-black", "focus:ring-2");
+            contactField.classList.add("bg-gray-200", "text-gray-500", "cursor-not-allowed");
+        }
+    } else {
+        // 🔓 Le client est déconnecté : on vide et on déverrouille le champ
+        contactField.value = "";
+        contactField.removeAttribute("readonly");
+        
+        // On remet tes classes Tailwind d'origine
+        contactField.classList.remove("bg-gray-200", "text-gray-500", "cursor-not-allowed");
+        contactField.classList.add("bg-gray-50", "text-black", "focus:ring-2");
+    }
+};
+// ==========================================
+// 👀 GESTION DE L'ŒIL DU MOT DE PASSE
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const togglePasswordBtn = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('auth-password');
+    const eyeIcon = document.getElementById('eye-icon');
+
+    if (togglePasswordBtn && passwordInput && eyeIcon) {
+        togglePasswordBtn.addEventListener('click', () => {
+            // 1. On vérifie l'état actuel
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            
+            // 2. On inverse le type (text <-> password)
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            
+            // 3. On change l'icône FontAwesome (œil ouvert <-> œil barré)
+            if (isPassword) {
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        });
+    }
+});
+
+// ==========================================
+// 🆘 RÉINITIALISATION DU MOT DE PASSE
+// ==========================================
+window.resetPassword = async () => {
+    const emailInput = document.getElementById("auth-email").value.trim();
+
+    // 1. On vérifie que le client a bien tapé son email
+    if (!emailInput) {
+        window.showToast("Veuillez d'abord taper votre adresse email dans le champ.", "error");
+        document.getElementById("auth-email").focus(); // On met le curseur dans le champ
+        if (typeof window.triggerVibration === "function") window.triggerVibration("error");
+        return;
+    }
+
+    try {
+        // 2. On demande à Firebase d'envoyer l'email magique
+        const { sendPasswordResetEmail } = window.authTools;
+        await sendPasswordResetEmail(window.auth, emailInput);
+        
+        // 3. Succès !
+        window.showToast("Un email de réinitialisation vous a été envoyé ! 📧", "success");
+        if (typeof window.triggerVibration === "function") window.triggerVibration("success");
+        
+    } catch (error) {
+        console.error("Erreur reset password :", error);
+        // Gestion des erreurs fréquentes
+        if (error.code === 'auth/user-not-found') {
+            window.showToast("Aucun compte n'est lié à cette adresse email.", "error");
+        } else if (error.code === 'auth/invalid-email') {
+            window.showToast("L'adresse email n'est pas valide.", "error");
+        } else {
+            window.showToast("Une erreur est survenue.", "error");
+        }
+    }
+};
+
+// ==========================================
+    // 🚀 2. CONNEXION AVEC GOOGLE (FIREBASE)
+    // ==========================================
+    const btnGoogleLogin = document.getElementById('btn-google-login');
+    
+    if (btnGoogleLogin) {
+        btnGoogleLogin.addEventListener('click', async () => {
+            try {
+                // On prépare le fournisseur Google
+                const provider = new window.authTools.GoogleAuthProvider();
+                
+                // On lance la popup (ou la redirection sur mobile)
+                const result = await window.authTools.signInWithPopup(window.auth, provider);
+                const user = result.user;
+
+                // 🎯 VÉRIFICATION FIRESTORE : On s'assure qu'il est bien dans notre base "users"
+                const { doc, getDoc, setDoc, serverTimestamp } = window.fs;
+                const userRef = doc(window.db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+
+                // Si c'est sa toute première connexion, on crée son profil !
+                if (!userSnap.exists()) {
+                    await setDoc(userRef, {
+                        email: user.email,
+                        nom: user.displayName || "Gourmand",
+                        points: 0,
+                        snackId: window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06", // Ton Snack ID
+                        dateCreation: serverTimestamp(),
+                        role: "client"
+                    });
+                }
+
+                // Succès !
+                if (typeof window.showToast === 'function') {
+                    window.showToast("Connexion Google réussie ! 🍔", "success");
+                }
+                
+                // On ferme la modale
+                if (typeof window.toggleAuthModal === 'function') {
+                    window.toggleAuthModal();
+                }
+
+            } catch (error) {
+                console.error("❌ Erreur Google Auth:", error);
+                if (typeof window.showToast === 'function') {
+                    window.showToast("Erreur lors de la connexion Google.", "error");
+                }
+            }
+        });
+    }
 
 // ============================================================================
 // 📳 MOTEUR DE RETOUR HAPTIQUE (VIBRATIONS PWA)
@@ -1791,111 +1944,248 @@ window.updateQuantity = function (productId, delta) {
 
 // --- 5. L'ENVOI FINAL (Firebase Checkout) ---
 
+
 // ==========================================
-// 💳 PROCESSUS DE COMMANDE & CLICK&COLLECT
+// 💳 PROCESSUS DE COMMANDE & CLICK&COLLECT (STRIPE )
 // ==========================================
 window.processCheckout = async () => {
-  if (cart.length === 0)
-    return window.showToast("Votre panier est vide", "error");
+    const cfg = window.snackConfig;
+    if (cart.length === 0) return window.showToast("Votre panier est vide", "error");
 
-  const btn = document.getElementById("checkout-btn");
-  const originalText = btn.innerHTML;
-  btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Envoi en cuisine...`;
-  btn.disabled = true;
+    if (!cfg?.features?.enableClickAndCollect) {
+         return window.showToast("La commande en ligne est désactivée.", "error");
+    }
 
-  try {
-    const currentSnackId =
-      window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
     const currentUser = window.auth?.currentUser;
+    const btn = document.getElementById("checkout-btn");
 
-    // Sécurité : On force la connexion pour commander (ou on gère les invités)
     if (!currentUser) {
-      window.showToast("Veuillez vous connecter pour commander", "error");
-      window.toggleAuthModal();
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-      return;
+        window.showToast("Veuillez vous connecter pour commander", "error");
+        if (typeof window.toggleAuthModal === "function") window.toggleAuthModal();
+        return;
     }
 
-    // 1. Formatage du Panier pour Firestore
-    const orderItems = cart.map((item) => {
-      const prixUnitaire = item.prix || 0;
-      return {
-        id: item.id,
-        productId: item.productId || item.id.split("-")[0],
-        nom: item.nom,
-        image: item.image || "",
-        type: item.type || "seul",
-        boissonNom: item.boisson || null,
-        sauces: item.sauces || [], // 👈 VITAL : LES SAUCES
-        sansCrudites: item.sansCrudites || [], // 👈 VITAL : LES CRUDITÉS (S-T-O)
-        tailleChoisie: item.tailleChoisie || null, // 👈 VITAL : POUR LES PIZZAS
-        prixBase: item.prixBase || prixUnitaire,
-        prixMenuAdd: item.prixMenuAdd || 0,
-        prixTotalLigne: prixUnitaire * item.quantity,
-        quantity: item.quantity,
-      };
-    });
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connexion banque...`;
+    btn.disabled = true;
 
-    const { addDoc, collection, serverTimestamp } = window.fs;
-
-    // 2. Création du Document Commande
-    const newOrder = {
-      snackId: currentSnackId,
-      userId: currentUser.uid,
-      clientNom: currentUser.displayName || currentUser.email.split("@")[0],
-      clientEmail: currentUser.email,
-      date: serverTimestamp(),
-      statut: "en_attente_client",
-      items: orderItems,
-      total: getCartTotal(),
-      paiement: {
-        methode: "sur_place",
-        statut: "en_attente",
-        stripeSessionId: null,
-      },
-    };
-
-    // 3. Envoi dans le Cloud Firebase
-    const docRef = await addDoc(collection(window.db, "commandes"), newOrder);
-    // 💡 NOUVEAU : MISE À JOUR DU PROFIL CLIENT (Pour le marketing Push)
     try {
-        await window.fs.updateDoc(window.fs.doc(window.db, "users", currentUser.uid), {
-            lastOrderDate: serverTimestamp()
+        if (typeof Stripe === "undefined") {
+            throw new Error("Stripe n'est pas chargé !");
+        }
+
+        if (!stripeInstance) {
+            stripeInstance = Stripe(stripePublicKey); 
+        }
+
+        const totalAmount = getCartTotal();
+
+        // 1. Fermer le panier pour éviter les conflits de z-index
+        if (typeof window.closeCartModal === "function") window.closeCartModal();
+
+        // 2. Mettre à jour et ouvrir la modale Stripe EN PREMIER, pour que le DOM soit prêt
+        document.getElementById("payment-amount-display").innerText = `Total : ${totalAmount.toFixed(2)} €`;
+        
+        // On rend la modale visible mais avec un spinner de chargement dans la zone Stripe
+        const paymentContainer = document.getElementById("payment-element");
+        paymentContainer.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i></div>';
+        
+        if (typeof window.openPaymentSheet === "function") window.openPaymentSheet();
+
+        // 3. Demander le PaymentIntent à la Cloud Function
+        const { httpsCallable, functions } = window.fs;
+        const createPaymentIntent = httpsCallable(functions, "createPaymentIntent");
+
+        const response = await createPaymentIntent({ 
+            amount: Math.round(totalAmount * 100), 
+            currency: "eur" 
         });
-    } catch (e) {
-        console.warn("⚠️ Impossible de mettre à jour la date de dernière commande :", e);
+
+        const clientSecret = response.data.clientSecret;
+
+        // 4. Créer et injecter le formulaire Stripe MAINTENANT que la div est visible
+        const appearance = { theme: 'stripe' }; 
+        stripeElements = stripeInstance.elements({ appearance, clientSecret });
+
+        const paymentElement = stripeElements.create("payment");
+        
+        // On nettoie notre spinner et on monte le formulaire
+        paymentContainer.innerHTML = "";
+        paymentElement.mount("#payment-element");
+
+    } catch (error) {
+        console.error("❌ Erreur préparation paiement :", error);
+        window.showToast("Erreur de connexion sécurisée au paiement.", "error");
+        // Si erreur, on referme la modale Stripe pour ne pas bloquer l'utilisateur
+        if (typeof window.closePaymentSheet === "function") window.closePaymentSheet();
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+};
+
+// ==========================================
+// 💳 GESTION VISUELLE DE LA MODALE STRIPE
+// ==========================================
+
+window.openPaymentSheet = () => {
+    const sheet = document.getElementById("payment-bottom-sheet");
+    const content = document.getElementById("payment-sheet-content");
+    
+    if (!sheet) return console.error("❌ Modale Stripe introuvable dans le HTML !");
+    
+    // On l'affiche
+    sheet.classList.remove("hidden");
+    sheet.classList.add("flex");
+    
+    // On anime le tiroir qui monte
+    setTimeout(() => {
+        sheet.classList.remove("opacity-0");
+        content.classList.remove("translate-y-full");
+    }, 10);
+};
+
+window.closePaymentSheet = () => {
+    const sheet = document.getElementById("payment-bottom-sheet");
+    const content = document.getElementById("payment-sheet-content");
+    
+    if (!sheet) return;
+
+    // On anime le tiroir qui descend
+    sheet.classList.add("opacity-0");
+    content.classList.add("translate-y-full");
+    
+    // On cache complètement après l'animation
+    setTimeout(() => {
+        sheet.classList.add("hidden");
+        sheet.classList.remove("flex");
+        
+        // 🧹 NETTOYAGE CRITIQUE : On vide le formulaire Stripe pour le prochain client
+        const paymentElementDiv = document.getElementById("payment-element");
+        if (paymentElementDiv) paymentElementDiv.innerHTML = ""; 
+        stripeElements = null;
+    }, 300);
+};
+
+// ==========================================
+// 💳 1. SOUMISSION DU PAIEMENT (AU CLIC)
+// ==========================================
+window.submitStripePayment = async () => {
+    const submitPaymentBtn = document.getElementById("submit-payment-btn");
+    
+    // Sécurité : on vérifie que le formulaire Stripe a bien fini de charger
+    if (!stripeInstance || !stripeElements) {
+        window.showToast("Veuillez patienter, connexion sécurisée en cours...", "error");
+        return;
     }
 
-    // 4. Vider le panier
-    cart.length = 0; // 1. Vide la variable
-    if (typeof saveCart === "function") saveCart(); // 2. Vide le localStorage (très important !)
-    if (typeof updateCartUI === "function") updateCartUI(); // 3. Enlève le badge rouge
+    const btnOriginalText = submitPaymentBtn.innerHTML;
+    submitPaymentBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Vérification banque...`;
+    submitPaymentBtn.disabled = true;
 
-    // Ferme la modale du panier
-    if (typeof window.closeCartModal === "function") {
-      window.closeCartModal();
-    } else if (typeof window.toggleCartModal === "function") {
-      window.toggleCartModal();
-    }
+    try {
+        // 🚀 STRIPE PREND LE RELAIS ICI : Il vérifie la carte (CVC, provision, fraude...)
+        const { error, paymentIntent } = await stripeInstance.confirmPayment({
+            elements: stripeElements,
+            confirmParams: {
+                // On pourrait demander le nom ou l'email ici si besoin
+            },
+            redirect: 'if_required' // 🛑 CRUCIAL : Empêche Stripe de changer de page !
+        });
 
-    if (typeof window.triggerVibration === "function") {
-      window.triggerVibration("jackpot");
-    }
-    window.showToast("🎉 Commande envoyée en cuisine !", "success");
+        if (error) {
+            // ❌ La carte a un problème (Refusée, code faux, etc.)
+            const messageContainer = document.getElementById("payment-message");
+            messageContainer.innerText = error.message; // Affiche l'erreur renvoyée par la banque
+            messageContainer.classList.remove("hidden");
+            if (typeof window.triggerVibration === "function") window.triggerVibration("error");
+            
+        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+            // ✅ VICTOIRE ! LE PAIEMENT EST PASSÉ !
+            window.showToast("Paiement validé ! 🎉", "success");
+            
+            // 1. ON FERME LE TIROIR DE PAIEMENT
+            if (typeof window.closePaymentSheet === "function") window.closePaymentSheet();
+            
+            // 2. 💥 ON ENVOIE LA COMMANDE EN CUISINE (Dans Firestore)
+            if (typeof window.finalizeOrderInFirestore === "function") {
+                await window.finalizeOrderInFirestore(paymentIntent.id); 
+            }
+        }
 
-    // 5. 🎯 LA MAGIE CLICK & COLLECT : On mémorise la commande !
-    if (window.snackConfig?.features?.enableClickAndCollect) {
-      localStorage.setItem("activeOrderId", docRef.id);
-      startOrderTracking(docRef.id);
+    } catch (err) {
+         console.error("Erreur critique au moment du paiement :", err);
+         window.showToast("Une erreur est survenue avec le terminal de paiement.", "error");
+    } finally {
+        // Quoi qu'il arrive, on rend le bouton cliquable à nouveau
+        submitPaymentBtn.innerHTML = btnOriginalText;
+        submitPaymentBtn.disabled = false;
     }
-  } catch (error) {
-    console.error("❌ Erreur Checkout :", error);
-    window.showToast("Erreur lors de la commande.", "error");
-  } finally {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-  }
+};
+
+// ==========================================
+// 🧑‍🍳 2. ENVOI EN CUISINE (APRÈS PAIEMENT RÉUSSI)
+// ==========================================
+window.finalizeOrderInFirestore = async (stripePaymentId) => {
+    const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
+    const currentUser = window.auth?.currentUser;
+    const { addDoc, collection, serverTimestamp, updateDoc, doc } = window.fs;
+
+    try {
+        // On formate le panier
+        const orderItems = cart.map(item => ({
+            id: item.id,
+            productId: item.productId || item.id.split("-")[0],
+            nom: item.nom,
+            type: item.type || "seul",
+            boissonNom: item.boisson || null,
+            sauces: item.sauces || [], 
+            sansCrudites: item.sansCrudites || [],
+            tailleChoisie: item.tailleChoisie || null,
+            prixBase: item.prixBase || item.prix,
+            prixMenuAdd: item.prixMenuAdd || 0,
+            quantity: item.quantity,
+        }));
+
+        // On crée le ticket de caisse officiel
+        const newOrder = {
+            snackId: currentSnackId,
+            userId: currentUser.uid,
+            clientNom: currentUser.displayName || currentUser.email.split("@")[0],
+            clientEmail: currentUser.email,
+            date: serverTimestamp(),
+            statut: "en_attente_client", // Le chef peut s'y mettre !
+            items: orderItems,
+            total: getCartTotal(),
+            paiement: {
+                methode: "carte_bancaire",
+                statut: "paye", // 💰 C'est payé !
+                stripeSessionId: stripePaymentId, // La preuve d'achat pour la compta
+            },
+        };
+
+        // On envoie le tout dans le cloud Firebase !
+        const docRef = await addDoc(collection(window.db, "commandes"), newOrder);
+        
+        // Bonus: on met à jour la date de dernière commande du client
+        await updateDoc(doc(window.db, "users", currentUser.uid), { lastOrderDate: serverTimestamp() });
+
+        // On vide le panier du client
+        cart.length = 0;
+        if (typeof saveCart === "function") saveCart();
+        if (typeof updateCartUI === "function") updateCartUI();
+        if (typeof window.triggerVibration === "function") window.triggerVibration("jackpot");
+
+        // 🎯 MAGIE FINALE : On lance le Tracking pour rassurer le client !
+        if (window.snackConfig?.features?.enableClickAndCollect) {
+            localStorage.setItem("activeOrderId", docRef.id);
+            if (typeof window.startOrderTracking === "function") window.startOrderTracking(docRef.id);
+        }
+
+    } catch(err) {
+        console.error("Erreur Firebase après paiement :", err);
+        window.showToast("Paiement réussi, mais erreur d'envoi du ticket. Contactez le restaurant.", "error");
+    }
 };
 
 // ==========================================

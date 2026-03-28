@@ -2,6 +2,17 @@
 // FIREBASE INITIALIZATION & AUTHENTICATION (LE HUB CENTRAL)
 // ============================================================================
 
+import {
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  getAuth,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut
+} from "firebase/auth";
+import { ReCaptchaV3Provider, initializeAppCheck } from "firebase/app-check";
 // 1. LES IMPORTS (TOUJOURS TOUT EN HAUT !)
 import {
   addDoc,
@@ -22,14 +33,8 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import {
-  createUserWithEmailAndPassword,
-  getAuth,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 import { getAnalytics } from "firebase/analytics";
@@ -52,6 +57,12 @@ const messaging = getMessaging(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const functions = getFunctions(app, "europe-west1");
+// 🛡️ INITIALISATION DU BOUCLIER APP CHECK (reCAPTCHA v3)
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo'), // ⚠️ Mets ta clé PUBLIQUE Google ici (pas la secrète !)
+  isTokenAutoRefreshEnabled: true // Laisse Firebase renouveler le jeton tout seul
+});
 
 // ============================================================================
 // 🚀 OPTIMISATION : CHARGEMENT DIFFÉRÉ DE FIREBASE ANALYTICS
@@ -96,30 +107,37 @@ window.db = db;
 window.messaging = messaging;
 
 window.fs = {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  increment,
-  onSnapshot,
-  query,
-  collection,
-  where,
-  orderBy,
-  limit,
-  startAfter,
-  getDocs,
-  deleteDoc,
-  getStorage,
   addDoc,
+  app,
+  collection,
+  deleteDoc,
+  doc,
+  functions,
+  getDoc,
+  getDocs,
+  getFunctions,
+  getStorage,
+  httpsCallable,
+  increment,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
+  setDoc,
+  startAfter,
+  updateDoc,
+  where,
 };
 window.storageTools = { getDownloadURL, ref, uploadBytes };
 window.authTools = {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
 };
 
 // ============================================================================
@@ -609,159 +627,135 @@ if (authForm) {
   });
 }
 
+
 // ============================================================================
-// ÉCOUTEUR D'ÉTAT (LE VIGILE AMÉLIORÉ 🕵️‍♂️)
+// 🕵️‍♂️ ÉCOUTEUR D'ÉTAT (LE VIGILE)
 // ============================================================================
 onAuthStateChanged(auth, async (user) => {
-  const loyaltyBtn = document.getElementById("loyalty-main-btn");
-  const loyaltyDesc = document.getElementById("loyalty-desc");
-  const navLogoutBtn = document.getElementById("nav-logout-btn");
-  const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
+    const loyaltyBtn = document.getElementById("loyalty-main-btn");
+    const loyaltyDesc = document.getElementById("loyalty-desc");
+    const navLogoutBtn = document.getElementById("nav-logout-btn");
+    const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
 
-  // On peut le récupérer depuis l'URL (ex: ?s=ID) ou depuis la config chargée
-  // ====================================================================
-  // 🧭 LE ROUTEUR MAGIQUE SAAS (HYBRIDE : PREVIEW + PRODUCTION)
-  // ====================================================================
-  const urlParams = new URLSearchParams(window.location.search);
-  const forcedSnackId = urlParams.get("s"); // Cherche ?s=... dans l'URL
-  const hostname = window.location.hostname;
-  const pwaAction = urlParams.get("action");
-  const targetId = urlParams.get("id");
+    // 🪄 UX : On pré-remplit ou on vide le formulaire de contact !
+    if (typeof window.prefillContactForm === "function") {
+        window.prefillContactForm(user);
+    }
 
-  let snackIdToLoad = window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
+    // Détermination de l'ID du Snack (Logique SaaS gardée intacte)
+    const urlParams = new URLSearchParams(window.location.search);
+    const forcedSnackId = urlParams.get("s");
+    const hostname = window.location.hostname;
+    let snackIdToLoad = window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
 
-  try {
     if (forcedSnackId) {
-      console.log("🔍 Mode Aperçu activé pour le Snack :", forcedSnackId);
-      snackIdToLoad = forcedSnackId; // ✅ On utilise l'ID de l'URL !
-    } else if (
-      hostname !== "localhost" &&
-      hostname !== "127.0.0.1" &&
-      !hostname.includes("snacking-template.web.app")
-    ) {
-      console.log("🌍 Mode Domaine activé : Recherche de", hostname);
-      const { collection, query, where, getDocs } = window.fs;
-      const q = query(
-        collection(window.db, "snacks"),
-        where("domain", "==", hostname),
-      );
-      const snapshot = await getDocs(q);
-
-      if (!snapshot.empty) {
-        snackIdToLoad = snapshot.docs[0].id;
-      } else {
-        console.error("❌ Domaine inconnu ! Chargement de la démo par défaut.");
-      }
+        snackIdToLoad = forcedSnackId;
+    } else if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.includes("snacking-template.web.app")) {
+        try {
+            const { collection, query, where, getDocs } = window.fs;
+            const q = query(collection(window.db, "snacks"), where("domain", "==", hostname));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) snackIdToLoad = snapshot.docs[0].id;
+        } catch (e) { console.error("Erreur Domaine:", e); }
     }
-  } catch (e) {
-    console.error("Erreur du Routeur SaaS :", e);
-  }
 
-  // 🎯 ROUTEUR PWA SHORTCUTS (S'exécute un peu après le chargement)
-if (pwaAction) {
-    setTimeout(() => {
-      if (pwaAction === "menu") {
-        console.log("🚀 Lancement depuis le Shortcut : MENU");
-        if (typeof window.switchView === "function") window.switchView("menu");
-      } 
-      else if (pwaAction === "loyalty") {
-        console.log("🚀 Lancement depuis le Shortcut : FIDÉLITÉ");
-        if (window.auth.currentUser) {
-          if (typeof window.openClientCard === "function") window.openClientCard();
-        } else {
-          if (typeof window.toggleAuthModal === "function") window.toggleAuthModal();
-        }
-      }
-      // 🍔 LE CIBLAGE PRODUIT ! (Venant d'une Notif Push)
-      else if (pwaAction === "product" && targetId) {
-        console.log(`🚀 Lancement depuis Push Notif : PRODUIT ciblé (${targetId})`);
-        
-        // 1. On ouvre le menu en fond (pour le contexte visuel)
-        if (typeof window.switchView === "function") window.switchView("menu");
-        
-        // 2. On attend un peu que le menuGlobal se remplisse depuis Firebase, 
-        // puis on ouvre directement la modale du produit !
-        setTimeout(() => {
-            if (typeof window.openProductModal === "function") {
-                window.openProductModal(targetId);
+    try {
+        if (user) {
+            if (navLogoutBtn) navLogoutBtn.classList.remove("hidden");
+            if (mobileLogoutBtn) mobileLogoutBtn.classList.remove("hidden");
+
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+            let role = "client";
+            let points = 0;
+
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                if (userData.snackId && userData.role === "admin") snackIdToLoad = userData.snackId;
+                role = userData.role || "client";
+                points = userData.points || 0;
             }
-        }, 600); // 600ms laisse le temps au Menu de charger et au tiroir de monter
-      }
-    }, 1000); // On laisse 1 seconde au démarrage pour que Firebase soit bien branché
-  }
-  // ====================================================================
 
-  try {
-    if (user) {
-      if (navLogoutBtn) navLogoutBtn.classList.remove("hidden");
-      if (mobileLogoutBtn) mobileLogoutBtn.classList.remove("hidden");
+            await window.loadSnackConfig(db, snackIdToLoad);
+            updateUI(user);
+            if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
 
-      const userDocRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
+            if (role === "admin" || role === "superadmin") {
+                if (loyaltyDesc) loyaltyDesc.innerHTML = `<span class="text-red-400 font-bold"><i class="fas fa-crown"></i> Mode Admin</span>`;
+                if (loyaltyBtn) {
+                    loyaltyBtn.innerHTML = '<i class="fas fa-camera"></i> Scanner un client';
+                    loyaltyBtn.onclick = window.openAdminScanner;
+                    loyaltyBtn.className = "bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-red-700 transition transform hover:-translate-y-1";
+                }
+            } else {
+                if (loyaltyDesc) loyaltyDesc.innerHTML = `<span class="text-green-400 font-bold"><i class="fas fa-check-circle"></i> Membre :</span> Tu as <strong>${points} points</strong>`;
+                if (loyaltyBtn) {
+                    loyaltyBtn.innerHTML = '<i class="fas fa-qrcode"></i> Ma Carte';
+                    loyaltyBtn.onclick = window.openClientCard;
+                    loyaltyBtn.className = "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
+                }
+            }
+        } else {
+            if (navLogoutBtn) navLogoutBtn.classList.add("hidden");
+            if (mobileLogoutBtn) mobileLogoutBtn.classList.add("hidden");
 
-      let role = "client";
-      let points = 0;
+            if (loyaltyDesc) loyaltyDesc.innerText = "Gagnez des points à chaque commande !";
+            if (loyaltyBtn) {
+                loyaltyBtn.innerHTML = "Connexion";
+                loyaltyBtn.onclick = window.toggleAuthModal;
+                loyaltyBtn.className = "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
+            }
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-
-        // Sécurité : Si c'est un Admin de resto, on le force sur SON resto
-        if (userData.snackId && userData.role === "admin") {
-          snackIdToLoad = userData.snackId;
+            await window.loadSnackConfig(db, snackIdToLoad);
+            updateUI(null);
+            if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
         }
-
-        role = userData.role || "client";
-        points = userData.points || 0;
-      }
-
-      // 🎯 ON INJECTE LE BON ID ICI !
-      await window.loadSnackConfig(db, snackIdToLoad);
-      updateUI(user);
-      if (typeof window.initAppVisuals === "function")
-        await window.initAppVisuals();
-
-      if (role === "admin" || role === "superadmin") {
-        if (loyaltyDesc)
-          loyaltyDesc.innerHTML = `<span class="text-red-400 font-bold"><i class="fas fa-crown"></i> Mode Admin</span>`;
-        if (loyaltyBtn) {
-          loyaltyBtn.innerHTML =
-            '<i class="fas fa-camera"></i> Scanner un client';
-          loyaltyBtn.onclick = window.openAdminScanner;
-          loyaltyBtn.className =
-            "bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-red-700 transition transform hover:-translate-y-1";
-        }
-      } else {
-        if (loyaltyDesc)
-          loyaltyDesc.innerHTML = `<span class="text-green-400 font-bold"><i class="fas fa-check-circle"></i> Membre :</span> Tu as <strong>${points} points</strong>`;
-        if (loyaltyBtn) {
-          loyaltyBtn.innerHTML = '<i class="fas fa-qrcode"></i> Ma Carte';
-          loyaltyBtn.onclick = window.openClientCard;
-          loyaltyBtn.className =
-            "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
-        }
-      }
-    } else {
-      if (navLogoutBtn) navLogoutBtn.classList.add("hidden");
-      if (mobileLogoutBtn) mobileLogoutBtn.classList.add("hidden");
-
-      if (loyaltyDesc)
-        loyaltyDesc.innerText = "Gagnez des points à chaque commande !";
-      if (loyaltyBtn) {
-        loyaltyBtn.innerHTML = "Connexion";
-        loyaltyBtn.onclick = window.toggleAuthModal;
-        loyaltyBtn.className =
-          "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
-      }
-
-      // 🎯 ET ON INJECTE LE BON ID ICI AUSSI !
-      await window.loadSnackConfig(db, snackIdToLoad);
-      updateUI(null);
-      if (typeof window.initAppVisuals === "function")
-        await window.initAppVisuals();
+    } catch (error) {
+        console.error("❌ Erreur d'initialisation :", error);
     }
-  } catch (error) {
-    console.error("❌ Erreur d'initialisation :", error);
-  }
+});
+
+// ====================================================================
+// 🧭 LE ROUTEUR UNIQUE (Ne s'exécute qu'au chargement)
+// ====================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pwaAction = urlParams.get("action");
+    const targetId = urlParams.get("id");
+
+    if (pwaAction) {
+        // On donne 1 petite seconde à l'appli pour se stabiliser
+        setTimeout(() => {
+            if (pwaAction === "menu") {
+                console.log("🚀 Lancement PWA : MENU");
+                if (typeof window.switchView === "function") window.switchView("menu");
+            } 
+            else if (pwaAction === "loyalty") {
+                console.log("🚀 Lancement PWA : FIDÉLITÉ");
+                // On laisse le Vigile Firebase décider s'il affiche la carte ou la connexion
+                if (window.auth && window.auth.currentUser) {
+                    if (typeof window.openClientCard === "function") window.openClientCard();
+                } else {
+                    if (typeof window.toggleAuthModal === "function") window.toggleAuthModal();
+                }
+            }
+            // 🍔 LE CIBLAGE PRODUIT ! (Notif Push)
+            else if (pwaAction === "product" && targetId) {
+                console.log(`🚀 Lancement Notif : PRODUIT ciblé (${targetId})`);
+                if (typeof window.switchView === "function") window.switchView("menu");
+                
+                setTimeout(() => {
+                    if (typeof window.openProductModal === "function") {
+                        window.openProductModal(targetId);
+                    }
+                }, 600);
+            }
+            
+            // 🧹 NETTOYAGE (Optionnel mais Pro) : On nettoie l'URL pour ne pas reboucler si l'utilisateur rafraîchit
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+        }, 1000);
+    }
 });
 
 // ============================================================================

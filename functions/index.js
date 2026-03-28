@@ -5,7 +5,9 @@ const { getMessaging } = require("firebase-admin/messaging");
 const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const { getStorage } = require("firebase-admin/storage");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const {RecaptchaEnterpriseServiceClient} = require('@google-cloud/recaptcha-enterprise');
 const logger = require("firebase-functions/logger");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
@@ -228,3 +230,65 @@ exports.processPushCampaigns = onSchedule({schedule:"every 5 minutes",region: "e
         console.error("❌ Erreur critique Push :", error);
     }
 });
+
+// ============================================================================
+// 💳 FONCTION 4 : LE TIROIR-CAISSE (STRIPE CHECKOUT)
+// ============================================================================
+
+
+const stripe = require("stripe")("sk_test_51TG1RfIfiBxoqwsyO2yoMirsEnrFhIph722SR3E8LrHakSZCkj3ol6riBD19A7d4JSfSBHkRVSOcR9lUZL5yCN8s00dMYYurX9");
+
+exports.createPaymentIntent = onCall({ region: "europe-west1" }, async (request) => {
+    try {
+        const { amount, currency } = request.data; 
+
+        // Sécurité de base
+        if (!amount || amount < 50) { // Stripe refuse les paiements sous 0.50€
+            throw new HttpsError("invalid-argument", "Montant invalide.");
+        }
+
+        // 1. On crée l'intention de paiement chez Stripe
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount, // Le montant en CENTIMES (ex: 1500 pour 15.00€)
+            currency: currency || "eur",
+            automatic_payment_methods: {
+                enabled: true, // Active tout seul Apple Pay, Google Pay, CB...
+            },
+        });
+
+        // 2. On renvoie le secret au téléphone du client pour qu'il affiche le formulaire
+        return { clientSecret: paymentIntent.client_secret };
+
+    } catch (error) {
+        console.error("❌ Erreur Stripe PaymentIntent :", error);
+        throw new HttpsError("internal", "Impossible d'initialiser le paiement.");
+    }
+});
+
+// TODO ------------------------------ pour Stripe Connect 
+// Aiguillage Multi-tenant (Aperçu de ta future fonction)
+// exports.createCheckoutSession = onCall({ region: "europe-west1" }, async (request) => {
+//     const { cart, snackId } = request.data; 
+
+//     // 1. 🕵️‍♂️ On va chercher le compte Stripe du Snack dans Firestore
+//     const snackDoc = await admin.firestore().collection("snacks").doc(snackId).get();
+//     const connectedAccountId = snackDoc.data().stripeAccountId; // ex: "acct_1Hxyz..."
+
+//     // 2. On prépare le ticket (identique à tout à l'heure)
+//     const lineItems = cart.map(item => ({ /* ... */ }));
+
+//     // 3. 🪄 LA MAGIE STRIPE CONNECT
+//     const session = await stripe.checkout.sessions.create({
+//         payment_method_types: ["card", "apple_pay", "google_pay"],
+//         mode: "payment",
+//         line_items: lineItems,
+//         success_url: "https://ton-app.com/?payment=success",
+//         cancel_url: "https://ton-app.com/?payment=cancel",
+//     }, {
+//         stripeAccount: connectedAccountId // 🎯 C'EST ICI QUE TOUT SE JOUE !
+//     });
+
+//     return { url: session.url };
+// });
+// TODO ------------------------------ (Bonus de CTO : En utilisant Stripe Connect, tu pourras même ajouter une ligne application_fee_amount pour prélever automatiquement ta commission de 1€ ou 2% sur chaque commande en passant !)
+

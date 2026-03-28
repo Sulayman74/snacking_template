@@ -295,6 +295,7 @@
       crossorigin
     />
     <link rel="preload" as="image" href="{{LOGO_URL}}" />
+    <link rel="modulepreload" href="/src/app.js" />
     <link rel="stylesheet" href="src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -314,32 +315,53 @@
         align-items: center;
         justify-content: center;
         z-index: 9999;
-        transition: opacity 0.25s ease;
+        opacity: 1;
+        transition: opacity 0.35s ease;
       }
-      #boot-splash img {
-        width: 110px;
-        height: auto;
-        animation: pop 0.6s ease;
+
+      .splash-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
       }
-      @keyframes pop {
-        0% {
-          transform: scale(0.9);
-          opacity: 0;
-        }
-        100% {
-          transform: scale(1);
-          opacity: 1;
-        }
+
+      .splash-logo {
+        width: 120px;
+        height: 120px;
+        background-image: url("{{LOGO_URL}}");
+        border-radius: 2rem;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
       }
     </style>
-  </head>
-
-  <body class="bg-gray-50 text-gray-800">
-    <div id="boot-splash">
-      <img src="{{LOGO_URL}}" alt="{{SEO_TITLE}}" />
-    </div>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo"></script>
+    <script src="https://www.google.com/recaptcha/enterprise.js?render=6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo"></script>
+    <script>
+        function onClick(e) {
+    e.preventDefault();
+    grecaptcha.enterprise.ready(async () => {
+      const token = await grecaptcha.enterprise.execute('6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo', {action: 'LOGIN'});
+    });
+  }
+    </script>
     <!-- SCRIPT DE TRANSITION APP SHELL -->
     <script>
+      function removeBootSplash() {
+        const boot = document.getElementById("boot-splash");
+        if (!boot) return;
+
+        boot.style.opacity = "0";
+
+        setTimeout(() => {
+          boot.remove();
+        }, 350);
+      }
+
       window.CURRENT_SNACK_ID = "{{SNACK_ID}}";
       const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
@@ -350,16 +372,23 @@
 
         if (isIOS) {
           setTimeout(() => {
-            boot.style.opacity = "0";
-            setTimeout(() => boot.remove(), 250);
-          }, 200);
+            removeBootSplash();
+          }, 150);
         } else {
-         boot.style.opacity = "0";
-          setTimeout(() => boot.remove(), 200);
+          requestAnimationFrame(() => {
+            removeBootSplash();
+          });
         }
       });
     </script>
-
+  </head>
+  <body class="bg-gray-50 text-gray-800">
+    <div id="boot-splash">
+      <div class="splash-inner">
+        <div class="splash-logo"></div>
+        <p class="text-white text-xs my-1 uppercase">{{SEO_TITLE}}</p>
+      </div>
+    </div>
     <main>
       <nav
         id="navbar"
@@ -911,6 +940,11 @@
               <p class="text-sm text-gray-300 mb-2">
                 © 2026 Tous droits réservés.
               </p>
+              <p class="text-[10px] text-gray-400 text-center mt-4">
+  Ce site est protégé par reCAPTCHA. Les 
+  <a href="https://policies.google.com/privacy" target="_blank" class="underline">Règles de confidentialité</a> et les 
+  <a href="https://policies.google.com/terms" target="_blank" class="underline">Conditions d'utilisation</a> de Google s'appliquent.
+</p>
 
               <a
                 href="admin.html"
@@ -1021,7 +1055,8 @@
             class="fas fa-times text-xl w-5 h-5 flex justify-center items-center"
           ></i>
         </button>
-        <div class="text-center mb-8">
+
+        <div class="text-center mb-6">
           <h3
             id="auth-title"
             class="text-3xl font-black text-gray-900 tracking-tight"
@@ -1032,6 +1067,26 @@
             Connectez-vous pour votre carte de fidélité.
           </p>
         </div>
+
+        <button
+          type="button"
+          id="btn-google-login"
+          class="w-full flex items-center justify-center gap-3 px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition shadow-sm mb-6"
+        >
+          <img
+            src="https://www.svgrepo.com/show/475656/google-color.svg"
+            class="w-5 h-5"
+            alt="Google"
+          />
+          Continuer avec Google
+        </button>
+
+        <div class="flex items-center mb-6">
+          <div class="flex-grow border-t border-gray-200"></div>
+          <span class="mx-4 text-gray-400 text-sm font-medium">OU</span>
+          <div class="flex-grow border-t border-gray-200"></div>
+        </div>
+
         <form id="auth-form" class="space-y-5">
           <div>
             <label class="block text-sm sr-only font-bold text-gray-700 mb-2"
@@ -1042,9 +1097,11 @@
               id="auth-email"
               required
               class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"
+              placeholder="Email"
             />
           </div>
-          <div>
+
+          <div class="relative">
             <label class="block text-sm sr-only font-bold text-gray-700 mb-2"
               >Mot de passe</label
             >
@@ -1052,9 +1109,27 @@
               type="password"
               id="auth-password"
               required
-              class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"
+              class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black pr-12"
+              placeholder="Mot de passe"
             />
+            <button
+              type="button"
+              id="toggle-password"
+              class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition focus:outline-none"
+            >
+              <i class="fas fa-eye" id="eye-icon"></i>
+            </button>
           </div>
+          <div class="text-right mt-1 mb-4">
+            <button
+              type="button"
+              onclick="resetPassword()"
+              class="text-sm text-gray-500 hover:text-red-600 hover:underline transition"
+            >
+              Mot de passe oublié ?
+            </button>
+          </div>
+
           <button
             aria-label="Connexion compte fidélité"
             type="submit"
@@ -1064,6 +1139,7 @@
             Se connecter
           </button>
         </form>
+
         <div class="mt-8 text-center text-sm bg-gray-50 p-4 rounded-xl">
           <span id="auth-switch-text" class="text-gray-600"
             >Pas encore de compte ?</span
@@ -1624,6 +1700,42 @@
         >
           Fermer la fenêtre
         </button>
+      </div>
+    </div>
+    <div
+      id="payment-bottom-sheet"
+      class="fixed inset-0 bg-gray-900/80 z-200 hidden flex flex-col justify-end transition-opacity"
+    >
+      <div
+        class="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-6 relative transform translate-y-full transition-transform duration-300"
+        id="payment-sheet-content"
+      >
+        <button
+          onclick="closePaymentSheet()"
+          class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+
+        <h3 class="text-2xl font-black mb-4">Paiement</h3>
+        <p class="text-gray-500 mb-6 font-bold" id="payment-amount-display">
+          Total : 0,00 €
+        </p>
+
+        <div id="payment-element" class="mb-6"></div>
+
+        <button
+          id="submit-payment-btn"
+          onclick="submitStripePayment()"
+          class="w-full bg-black text-white py-4 rounded-xl font-bold shadow-lg flex justify-center items-center disabled:opacity-50"
+        >
+          Payer maintenant
+        </button>
+
+        <div
+          id="payment-message"
+          class="hidden text-red-500 text-sm mt-4 text-center font-bold"
+        ></div>
       </div>
     </div>
 

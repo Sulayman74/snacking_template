@@ -10,7 +10,9 @@
 /* ==========================================================================
    ✨ ANIMATIONS PERSONNALISÉES (SaaS MVP)
    ========================================================================== */
-
+.grecaptcha-badge { 
+    visibility: hidden !important; 
+}
 @keyframes fadeInUp {
     from {
         opacity: 0;
