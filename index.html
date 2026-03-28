@@ -291,11 +291,52 @@
     <link rel="stylesheet" href="src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #1E2938;
+  }
+
+  #boot-splash {
+    position: fixed;
+    inset: 0;
+    background: #1E2938;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.25s ease;
+    animation: pop 0.6s ease;
+  }
+  @keyframes pop {
+    0% {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+</style>
   </head>
 
   <body class="bg-gray-50 text-gray-800">
+    <div id="boot-splash">
+    </div>
         <!-- SCRIPT DE TRANSITION APP SHELL -->
     <script>
+      function removeBootSplash() {
+  const boot = document.getElementById('boot-splash');
+  if (!boot) return;
+
+  boot.style.opacity = '0';
+
+  setTimeout(() => {
+    boot.remove();
+  }, 250);
+}
       window.CURRENT_SNACK_ID = "{{SNACK_ID}}"; 
       // Dès que le DOM est lu, on masque le splash screen très vite (300ms)
       // pour révéler l'App Shell (le site avec les Skeleton Loaders) pendant que Firebase charge.
@@ -308,6 +349,16 @@
           }, 300);
         }
       });
+
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+window.addEventListener('load', () => {
+  if (isIOS) {
+    setTimeout(removeBootSplash, 300);
+  } else {
+    removeBootSplash();
+  }
+});
     </script>
     <div
       id="splash-screen"
