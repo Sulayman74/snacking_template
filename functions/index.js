@@ -236,8 +236,7 @@ exports.processPushCampaigns = onSchedule({schedule:"every 5 minutes",region: "e
 // ============================================================================
 
 
-const stripe = require("stripe")("sk_test_51TG1RfIfiBxoqwsyO2yoMirsEnrFhIph722SR3E8LrHakSZCkj3ol6riBD19A7d4JSfSBHkRVSOcR9lUZL5yCN8s00dMYYurX9");
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 exports.createPaymentIntent = onCall({ region: "europe-west1" }, async (request) => {
     try {
         const { amount, currency } = request.data; 
