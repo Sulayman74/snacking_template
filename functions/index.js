@@ -137,8 +137,14 @@ function chunkArray(array, size) {
 // 🤖 Ce robot se réveille toutes les 5 minutes
 exports.processPushCampaigns = onSchedule("every 5 minutes", async (event) => {
     const now = admin.firestore.Timestamp.now();
+    
+    // 🗓️ Calcul de la date d'il y a 30 jours (pour filtrer les inactifs)
+    const thirtyDaysAgoDate = new Date();
+    thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
+    const thirtyDaysAgo = admin.firestore.Timestamp.fromDate(thirtyDaysAgoDate);
 
     try {
+        // 1. On cherche les campagnes à envoyer MAINTENANT
         const snapshot = await db.collection("campagnes_push")
             .where("statut", "==", "en_attente")
             .where("dateEnvoiPrevue", "<=", now)
@@ -149,60 +155,103 @@ exports.processPushCampaigns = onSchedule("every 5 minutes", async (event) => {
         for (const doc of snapshot.docs) {
             const campagne = doc.data();
             
-            // 💸 OPTIMISATION FIRESTORE : On ne lit QUE les utilisateurs qui ont accepté les notifs
-            // Note : Firebase va te demander de créer un "Index Composite" la 1ère fois que ce code tournera.
+            // 2. On récupère TOUS les utilisateurs du snack ayant accepté les notifs
             const usersSnapshot = await db.collection("users")
                 .where("snackId", "==", campagne.snackId)
                 .where("fcmToken", "!=", null) 
                 .get();
 
             const tokens = [];
-            usersSnapshot.forEach(user => tokens.push(user.data().fcmToken));
 
+            // 🎯 3. LE FILTRAGE INTELLIGENT (Ciblage)
+            usersSnapshot.forEach(userDoc => {
+                const user = userDoc.data();
+                const lastOrder = user.lastOrderDate; // Peut être null s'il n'a jamais commandé
+
+                if (campagne.cible === "active") {
+                    // 🔥 Clients Récents : Ont commandé il y a moins de 30 jours
+                    if (lastOrder && lastOrder.toMillis() >= thirtyDaysAgo.toMillis()) {
+                        tokens.push(user.fcmToken);
+                    }
+                } 
+                else if (campagne.cible === "inactive") {
+                    // 😴 Clients Inactifs : N'ont pas commandé depuis plus de 30 jours (ou jamais)
+                    if (!lastOrder || lastOrder.toMillis() < thirtyDaysAgo.toMillis()) {
+                        tokens.push(user.fcmToken);
+                    }
+                } 
+                else {
+                    // 🌍 Tous les clients (par défaut)
+                    tokens.push(user.fcmToken);
+                }
+            });
+
+            // Si le ciblage a éliminé tout le monde (ex: aucun client inactif)
             if (tokens.length === 0) {
-                await doc.ref.update({ statut: "annulee_sans_cible" });
+                await doc.ref.update({ 
+                    statut: "annulee_sans_cible",
+                    dateEnvoiReelle: admin.firestore.FieldValue.serverTimestamp(),
+                    notes: "Ciblage n'a retourné aucun client"
+                });
+                console.log(`⚠️ Campagne ${doc.id} annulée : Aucun utilisateur ne correspond au ciblage "${campagne.cible}".`);
                 continue;
             }
 
-            // 📦 STRATÉGIE DE CHUNKS : On coupe en paquets de 500 (Limite stricte Google)
+            // 📦 4. STRATÉGIE DE CHUNKS : On coupe en paquets de 500 (Limite stricte Google FCM)
             const tokenChunks = chunkArray(tokens, 500);
             let totalSuccess = 0;
             let totalErrors = 0;
 
+            // 🎨 5. CRÉATION DU MESSAGE (Avec gestion des images Optionnelles)
             const basePayload = {
                 notification: {
                     title: campagne.titre,
                     body: campagne.message,
+                    // Si l'Architecte DB a mis une image, on l'ajoute pour faire une "Rich Notification" !
+                    ...(campagne.imageUrl && { image: campagne.imageUrl })
+                },
+                data: {
+                    // Pour rediriger le client au clic (ex: ?action=menu)
+                    ...(campagne.actionUrl && { click_action: campagne.actionUrl })
                 }
             };
 
-            // 🎢 ENVOI BATCH PAR BATCH
+            // 🎢 6. ENVOI BATCH PAR BATCH
             for (let i = 0; i < tokenChunks.length; i++) {
                 const payload = { ...basePayload, tokens: tokenChunks[i] };
                 
                 // On tire la salve de 500
-                const response = await messaging.sendEachForMulticast(payload);
+                const response = await admin.messaging().sendEachForMulticast(payload);
                 totalSuccess += response.successCount;
                 totalErrors += response.failureCount;
 
-                // 🚦 LE JITTER (Lissage de charge)
-                // S'il reste des paquets à envoyer, on attend 1,5 secondes avant la prochaine salve
-                // Ça permet aux clients d'ouvrir l'app en "vagues" et protège tes quotas Firestore
+                // 🚦 LE JITTER (Lissage de charge pour éviter d'assassiner ton Firestore si les clients ouvrent l'app en même temps)
                 if (i < tokenChunks.length - 1) {
                     await new Promise(resolve => setTimeout(resolve, 1500));
                 }
             }
 
-            // ✅ Mise à jour finale de la campagne
+            // ✅ 7. Mise à jour finale de la campagne
             await doc.ref.update({
                 statut: "envoyee",
                 dateEnvoiReelle: admin.firestore.FieldValue.serverTimestamp(),
                 stats: { envoye: totalSuccess, erreurs: totalErrors }
             });
 
-            console.log(`✅ Campagne ${doc.id} terminée. Succès: ${totalSuccess} | Erreurs: ${totalErrors}`);
+            console.log(`✅ Campagne ${doc.id} terminée (${campagne.cible}). Succès: ${totalSuccess} | Erreurs: ${totalErrors}`);
         }
     } catch (error) {
         console.error("❌ Erreur critique Push :", error);
     }
 });
+
+// Petite fonction utilitaire pour couper le tableau en morceaux de 500 (à laisser en dehors de la fonction)
+function chunkArray(array, size) {
+    const chunked = [];
+    let index = 0;
+    while (index < array.length) {
+        chunked.push(array.slice(index, size + index));
+        index += size;
+    }
+    return chunked;
+}

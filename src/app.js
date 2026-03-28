@@ -480,34 +480,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-window.switchView = function (viewName) {
+window.switchView = function (viewName, ignoreHistory = false) {
   const fullMenu = document.getElementById("full-menu");
   const mobileOverlay = document.getElementById("mobile-menu-overlay");
   const mobileBtnIcon = document.querySelector("#mobile-menu-btn i");
-
   const navIndicator = document.getElementById("nav-indicator");
   const btnHome = document.getElementById("nav-btn-home");
   const btnMenu = document.getElementById("nav-btn-menu");
 
   if (viewName === "menu") {
-    // 1. Déplacement de la pilule avec précision (calculé sur 3 colonnes)
-    if (navIndicator) {
-      // On utilise 200% car elle se décale de 2 fois sa largeur
-      navIndicator.style.transform = "translateX(200%)";
-    }
-
-    // 2. Gestion des états actifs (Couleurs + Animations)
+    if (navIndicator) navIndicator.style.transform = "translateX(200%)";
     btnHome?.classList.replace("text-white", "text-gray-400");
     btnMenu?.classList.replace("text-gray-400", "text-white");
-
-    // Ajout d'une classe pour déclencher l'animation de rebond sur l'icône
     btnMenu?.classList.add("nav-active");
     btnHome?.classList.remove("nav-active");
 
     fullMenu.classList.remove("hidden");
     document.body.style.overflow = "hidden";
 
-    // Fermeture propre du menu burger
+    // 🪄 MAGIE : On simule une nouvelle page pour le téléphone !
+    if (!ignoreHistory) {
+        window.history.pushState({ overlay: 'menu' }, 'Menu', '#menu');
+    }
+
     if (mobileOverlay && !mobileOverlay.classList.contains("hidden")) {
       mobileOverlay.classList.replace("opacity-100", "opacity-0");
       setTimeout(() => {
@@ -519,15 +514,18 @@ window.switchView = function (viewName) {
   } else {
     // Retour à l'accueil
     if (navIndicator) navIndicator.style.transform = "translateX(0%)";
-
     btnHome?.classList.replace("text-gray-400", "text-white");
     btnMenu?.classList.replace("text-white", "text-gray-400");
-
     btnHome?.classList.add("nav-active");
     btnMenu?.classList.remove("nav-active");
 
     fullMenu.classList.add("hidden");
     document.body.style.overflow = "";
+
+    // 🪄 MAGIE : Si on ferme avec la croix, on nettoie l'URL proprement
+    if (!ignoreHistory && window.location.hash === '#menu') {
+        window.history.back(); 
+    }
 
     if (viewName === "home") {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1174,6 +1172,7 @@ window.toggleDrinkSection = function () {
 // ============================================================================
 
 window.openProductModal = function (itemId) {
+  window.history.pushState(null, null, '#modal')
   const cfg = window.snackConfig;
   const item = menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
   if (!item) return;
@@ -1866,6 +1865,14 @@ window.processCheckout = async () => {
 
     // 3. Envoi dans le Cloud Firebase
     const docRef = await addDoc(collection(window.db, "commandes"), newOrder);
+    // 💡 NOUVEAU : MISE À JOUR DU PROFIL CLIENT (Pour le marketing Push)
+    try {
+        await window.fs.updateDoc(window.fs.doc(window.db, "users", currentUser.uid), {
+            lastOrderDate: serverTimestamp()
+        });
+    } catch (e) {
+        console.warn("⚠️ Impossible de mettre à jour la date de dernière commande :", e);
+    }
 
     // 4. Vider le panier
     cart.length = 0; // 1. Vide la variable
@@ -2135,4 +2142,31 @@ document.addEventListener("DOMContentLoaded", () => {
   if (activeOrderId && window.snackConfig?.features?.enableClickAndCollect) {
     startOrderTracking(activeOrderId);
   }
+});
+
+// ============================================================================
+// 🔙 GESTION NATIVE DU BOUTON RETOUR (SWIPE BACK iOS / ANDROID)
+// ============================================================================
+
+// 1. On écoute le geste "Retour" du téléphone
+window.addEventListener('popstate', (event) => {
+    // Le client a fait "Retour". On ferme TOUS les overlays actifs !
+    
+    // Ferme le Menu (si la barre d'url n'a plus #menu)
+    if (window.location.hash !== '#menu') {
+        const fullMenu = document.getElementById("full-menu");
+        if (fullMenu && !fullMenu.classList.contains("hidden")) {
+            // On appelle switchView('home') en lui disant de ne pas retoucher à l'historique
+            window.switchView('home', true); 
+        }
+    }
+
+    // Ferme la Modale Produit
+    if (typeof window.closeProductModal === "function") window.closeProductModal(true);
+    
+    // Ferme le Panier
+    if (typeof window.closeCartModal === "function") window.closeCartModal(true);
+    
+    // Ferme le tracking de commande
+    if (typeof window.closeTrackingModal === "function") window.closeTrackingModal(true);
 });

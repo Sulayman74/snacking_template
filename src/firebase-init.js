@@ -626,6 +626,7 @@ onAuthStateChanged(auth, async (user) => {
   const forcedSnackId = urlParams.get("s"); // Cherche ?s=... dans l'URL
   const hostname = window.location.hostname;
   const pwaAction = urlParams.get("action");
+  const targetId = urlParams.get("id");
 
   let snackIdToLoad = window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
 
@@ -657,23 +658,36 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   // 🎯 ROUTEUR PWA SHORTCUTS (S'exécute un peu après le chargement)
-  if (pwaAction) {
+if (pwaAction) {
     setTimeout(() => {
       if (pwaAction === "menu") {
         console.log("🚀 Lancement depuis le Shortcut : MENU");
         if (typeof window.switchView === "function") window.switchView("menu");
-      } else if (pwaAction === "loyalty") {
+      } 
+      else if (pwaAction === "loyalty") {
         console.log("🚀 Lancement depuis le Shortcut : FIDÉLITÉ");
-        // Si connecté, on ouvre la carte. Sinon, on ouvre la modale de connexion !
         if (window.auth.currentUser) {
-          if (typeof window.openClientCard === "function")
-            window.openClientCard();
+          if (typeof window.openClientCard === "function") window.openClientCard();
         } else {
-          if (typeof window.toggleAuthModal === "function")
-            window.toggleAuthModal();
+          if (typeof window.toggleAuthModal === "function") window.toggleAuthModal();
         }
       }
-    }, 800); // Un léger délai pour laisser le temps au menu de charger depuis Firebase
+      // 🍔 LE CIBLAGE PRODUIT ! (Venant d'une Notif Push)
+      else if (pwaAction === "product" && targetId) {
+        console.log(`🚀 Lancement depuis Push Notif : PRODUIT ciblé (${targetId})`);
+        
+        // 1. On ouvre le menu en fond (pour le contexte visuel)
+        if (typeof window.switchView === "function") window.switchView("menu");
+        
+        // 2. On attend un peu que le menuGlobal se remplisse depuis Firebase, 
+        // puis on ouvre directement la modale du produit !
+        setTimeout(() => {
+            if (typeof window.openProductModal === "function") {
+                window.openProductModal(targetId);
+            }
+        }, 600); // 600ms laisse le temps au Menu de charger et au tiroir de monter
+      }
+    }, 1000); // On laisse 1 seconde au démarrage pour que Firebase soit bien branché
   }
   // ====================================================================
 

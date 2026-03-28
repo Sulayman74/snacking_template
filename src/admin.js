@@ -554,6 +554,7 @@ async function loadAdminProducts() {
 </div>
                         </div>`;
     });
+    populatePushProducts();
   } catch (error) {
     grid.innerHTML =
       '<p class="text-red-500 bg-red-50 p-4 rounded-xl font-bold"><i class="fas fa-exclamation-triangle mr-2"></i> Erreur lors du chargement du menu.</p>';
@@ -944,6 +945,7 @@ if (pushForm) {
             const message = document.getElementById('push-message').value;
             const cible = document.getElementById('push-target').value;
             const dateSaisie = document.getElementById('push-date').value;
+            const selectedProductId = document.getElementById('push-product-link').value;
 
             // Déterminer la date d'envoi prévue (immédiate ou planifiée)
             let dateEnvoi = null;
@@ -951,6 +953,18 @@ if (pushForm) {
                 dateEnvoi = new Date(dateSaisie);
             } else {
                 dateEnvoi = new Date(); // Maintenant
+            }
+            // 🪄 LA MAGIE DU DEEP LINK ET DE LA RICH NOTIFICATION
+            let actionUrl = null;
+            let imageUrl = null;
+            if (selectedProductId) {
+                actionUrl = `?action=product&id=${selectedProductId}`; // Le Deep Link
+                
+                // Bonus de génie : On récupère l'image du produit pour illustrer la notification !
+                const targetProduct = adminProducts.find(p => p.id === selectedProductId);
+                if (targetProduct && targetProduct.image && targetProduct.image.trim() !== "") {
+                    imageUrl = targetProduct.image;
+                }
             }
 
             const { addDoc, collection, serverTimestamp } = window.fs;
@@ -961,6 +975,8 @@ if (pushForm) {
                 titre: titre,
                 message: message,
                 cible: cible,
+                ...(actionUrl && { actionUrl: actionUrl }), // Optionnel
+                ...(imageUrl && { imageUrl: imageUrl }),    // Optionnel
                 dateCreation: serverTimestamp(),
                 dateEnvoiPrevue: dateEnvoi,
                 statut: "en_attente", // Le serveur lira ce statut pour savoir s'il doit envoyer
@@ -1024,6 +1040,22 @@ function populateCategoryDropdown(selectedCategory = "burgers") {
         select.value = "burgers";
         newCatInput.classList.add("hidden");
     }
+}
+
+// ==========================================
+// 🎯 REMPLIR LE MENU DÉROULANT DU MARKETING
+// ==========================================
+function populatePushProducts() {
+    const select = document.getElementById("push-product-link");
+    if (!select) return;
+    
+    // On garde l'option par défaut
+    select.innerHTML = '<option value="">📱 Aucune redirection (Ouvre l\'accueil)</option>';
+    
+    // On boucle sur les produits du resto
+    adminProducts.forEach(p => {
+        select.innerHTML += `<option value="${p.id}">🏷️ Promo sur : ${p.nom}</option>`;
+    });
 }
 
 // L'écouteur pour faire apparaître le champ texte
