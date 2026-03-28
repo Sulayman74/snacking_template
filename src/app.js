@@ -127,13 +127,6 @@ window.initAppVisuals = async () => {
       floatingCartContainer.classList.add("hidden"); // On cache le panier
     }
   }
-
-  // 5. Retirer le Splash Screen
-  // const splash = document.getElementById("splash-screen");
-  // if (splash) {
-  //   splash.classList.add("opacity-0");
-  //   setTimeout(() => splash.remove(), 500);
-  // }
 };
 
 // ============================================================================
