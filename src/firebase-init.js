@@ -59,11 +59,12 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app, "europe-west1");
 // 🛡️ INITIALISATION DU BOUCLIER APP CHECK (reCAPTCHA v3)
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo'), // ⚠️ Mets ta clé PUBLIQUE Google ici (pas la secrète !)
-  isTokenAutoRefreshEnabled: true // Laisse Firebase renouveler le jeton tout seul
-});
-
+// if (typeof window !== "undefined") {
+//     const appCheck = initializeAppCheck(app, {
+//         provider: new ReCaptchaV3Provider('6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo'),
+//         isTokenAutoRefreshEnabled: true 
+//     });
+// }
 // ============================================================================
 // 🚀 OPTIMISATION : CHARGEMENT DIFFÉRÉ DE FIREBASE ANALYTICS
 // ============================================================================
