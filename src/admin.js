@@ -62,7 +62,11 @@ setTimeout(() => {
           document.getElementById("admin-email").innerText = user.email;
 
 if (window.snackConfig && window.snackConfig.features && window.snackConfig.features.enablePushNotifs) {
-    document.getElementById('tab-marketing').classList.remove('hidden');
+    const tabDesktop = document.getElementById('tab-marketing-desktop');
+    const tabMobile = document.getElementById('tab-marketing-mobile');
+    
+    if (tabDesktop) tabDesktop.classList.remove('hidden');
+    if (tabMobile) tabMobile.classList.remove('hidden');
 }
         // On met à jour l'UI
         loginSection.classList.add("hidden"); // On cache le formulaire
@@ -162,9 +166,9 @@ function startKitchenRadar() {
     const newOrdersContainer = document.getElementById("orders-new");
     const readyOrdersContainer = document.getElementById("orders-ready");
 
-    if (waitingOrdersContainer) waitingOrdersContainer.innerHTML = "";
-    newOrdersContainer.innerHTML = "";
-    readyOrdersContainer.innerHTML = "";
+if (waitingOrdersContainer) waitingOrdersContainer.innerHTML = "";
+if (newOrdersContainer) newOrdersContainer.innerHTML = "";
+if (readyOrdersContainer) readyOrdersContainer.innerHTML = "";
 
     let countWaiting = 0,
       countNew = 0,
@@ -409,43 +413,65 @@ window.updatePaymentStatus = async (orderId, currentStatus) => {
     window.showToast("Impossible de mettre à jour le paiement.", "error");
   }
 };
+
 // ==========================================
-// 3. ONGLETS ET GESTION MENU (PIM)
+// 3. ONGLETS ET NAVIGATION (DESKTOP & MOBILE)
 // ==========================================
 window.switchAdminTab = (tabName) => {
     currentAdminTab = tabName;
-    const btnCuisine = document.getElementById('tab-cuisine');
-    const btnMenu = document.getElementById('tab-menu');
-    const btnMarketing = document.getElementById('tab-marketing'); // NOUVEAU
-    
-    const viewCuisine = document.getElementById('view-cuisine');
-    const viewMenu = document.getElementById('view-menu');
-    const viewMarketing = document.getElementById('view-marketing'); // NOUVEAU
+    const tabs = ['cuisine', 'menu', 'marketing', 'compta'];
 
-    // On réinitialise tous les boutons en mode "Inactif"
-    [btnCuisine, btnMenu, btnMarketing].forEach(btn => {
-        if(btn) btn.className = "text-gray-400 hover:text-white hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition flex-1 md:flex-none";
+    tabs.forEach(t => {
+        const btnDesktop = document.getElementById(`tab-${t}-desktop`);
+        const btnMobile = document.getElementById(`tab-${t}-mobile`);
+        const view = document.getElementById(`view-${t}`);
+
+        // 1. Reset Desktop (Sidebar Tiroir)
+        if (btnDesktop) {
+            btnDesktop.className = "w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition";
+        }
+        // 2. Reset Mobile
+        if (btnMobile) {
+            btnMobile.classList.remove('text-red-600', 'text-yellow-500', 'text-blue-600', 'text-green-600');
+            btnMobile.classList.add('text-gray-400');
+        }
+        // 3. Cacher la vue
+        if (view) {
+            view.classList.add('hidden');
+            if (t === 'cuisine') view.classList.remove('flex');
+        }
     });
-    
-    // On cache toutes les vues
-    viewCuisine.classList.replace('flex', 'hidden');
-    viewMenu.classList.add('hidden');
-    if(viewMarketing) viewMarketing.classList.add('hidden');
 
-    // On active l'onglet demandé
+    // Activation de l'onglet demandé
+    const activeBtnDesktop = document.getElementById(`tab-${tabName}-desktop`);
+    const activeBtnMobile = document.getElementById(`tab-${tabName}-mobile`);
+    const activeView = document.getElementById(`view-${tabName}`);
+
+    if (activeBtnDesktop) {
+        activeBtnDesktop.className = "w-full flex items-center px-6 py-4 bg-gray-800 text-white rounded-r-2xl font-bold shadow transition hover:bg-gray-700";
+    }
+
+    if (activeBtnMobile) {
+        activeBtnMobile.classList.remove('text-gray-400');
+        if (tabName === 'cuisine') activeBtnMobile.classList.add('text-red-600');
+        if (tabName === 'menu') activeBtnMobile.classList.add('text-yellow-500');
+        if (tabName === 'marketing') activeBtnMobile.classList.add('text-blue-600');
+        if (tabName === 'compta') activeBtnMobile.classList.add('text-green-600');
+    }
+
+    if (activeView) {
+        activeView.classList.remove('hidden');
+        if (tabName === 'cuisine') activeView.classList.add('flex');
+    }
+
+    // Logique d'arrière-plan
     if (tabName === 'cuisine') {
-        btnCuisine.className = "bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none";
-        viewCuisine.classList.replace('hidden', 'flex');
         startKitchenRadar(); 
-    } else if (tabName === 'menu') {
-        btnMenu.className = "bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none";
-        viewMenu.classList.remove('hidden');
+    } else {
         stopKitchenRadar(); 
+    }
+    if (tabName === 'menu') {
         loadAdminProducts();
-    } else if (tabName === 'marketing') {
-        btnMarketing.className = "bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none";
-        viewMarketing.classList.remove('hidden');
-        stopKitchenRadar();
     }
 };
 
@@ -455,6 +481,7 @@ window.switchAdminTab = (tabName) => {
 async function loadAdminProducts() {
   if (!currentAdminSnackId) return;
   const grid = document.getElementById("admin-products-grid");
+  if (!grid) return;
 
   // 💀 1. INJECTION DES SKELETON LOADERS
   // On génère 6 fausses cartes qui clignotent le temps du chargement
@@ -711,7 +738,8 @@ window.confirmDeleteProduct = async () => {
   if (!productToDeleteId) return;
 
   const btn = document.getElementById("confirm-delete-btn");
-  const originalHtml = btn.innerHTML;
+  
+  // On fige l'état en chargement
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Suppression...';
   btn.disabled = true;
 
@@ -723,8 +751,13 @@ window.confirmDeleteProduct = async () => {
   } catch (error) {
     console.error("Erreur de suppression:", error);
     window.showToast("Erreur lors de la suppression.", "error");
-    btn.innerHTML = originalHtml;
-    btn.disabled = false;
+  } finally {
+    // 🪄 MAGIE : Quoi qu'il arrive (succès ou erreur), on remet le bouton à zéro
+    // On attend 300ms pour que l'animation de fermeture de la modale soit finie
+    setTimeout(() => {
+        btn.innerHTML = '<i class="fas fa-trash"></i> Oui, supprimer';
+        btn.disabled = false;
+    }, 300);
   }
 };
 
@@ -773,7 +806,7 @@ document.getElementById("edit-product-form").addEventListener("submit", async (e
       const prixMenu = parseFloat(document.getElementById("edit-prix-menu").value || 0);
       const fileInput = document.getElementById("edit-img-file");
       const tagChoisi = document.getElementById("edit-tags").value;
-      const categorieChoisie = document.getElementById("edit-category").value;
+      let categorieChoisie = document.getElementById("edit-category").value;
       let categorieTitre = null;
       // 🪄 Si le client a créé une nouvelle catégorie
       if (categorieChoisie === "NEW") {
@@ -1069,6 +1102,315 @@ document.getElementById("edit-category").addEventListener("change", (e) => {
         newCategoryInput.classList.add("hidden");
     }
 });
+
+
+// ==========================================
+// 📥 IMPORT DE PRODUITS EN MASSE (SMART CSV + SÉCURITÉ)
+// ==========================================
+window.importProductsCSV = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!currentAdminSnackId) {
+        return window.showToast("Erreur : Aucun Snack ID détecté.", "error");
+    }
+
+    // UX : On prévient l'utilisateur
+    window.showToast("⏳ Importation en cours...", "info");
+
+    try {
+        const text = await file.text();
+
+        // 🛡️ BOUCLIER 1 : ANTI-RTF (Le piège TextEdit / Wordpad)
+        if (text.includes('{\\rtf1') || text.includes('\\f0\\fs24')) {
+            window.showToast("❌ Erreur : Fichier RTF détecté. Veuillez enregistrer en 'Texte Brut' ou exporter en vrai CSV depuis Excel/Numbers.", "error");
+            event.target.value = ""; // Reset de l'input
+            return;
+        }
+
+        // On coupe les lignes en gérant les retours chariots Windows (\r\n) et Mac/Linux (\n)
+        const lines = text.split(/\r?\n/);
+        let importedCount = 0;
+
+        // 🛡️ OUTIL : Nettoyeur de chaînes (Enlève les guillemets d'Excel et les accolades parasites)
+        const cleanString = (str) => {
+            if (!str) return "";
+            return str.replace(/[{}]/g, '')     // Supprime les accolades
+                      .replace(/^"|"$/g, '')    // Supprime les guillemets au début et à la fin
+                      .trim();                  // Supprime les espaces inutiles
+        };
+
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            const [nomRaw, descRaw, prixRaw, catRaw] = line.split(';');
+            
+            // Sécurité : Si les colonnes obligatoires manquent
+            if (!nomRaw || !prixRaw || !catRaw) continue;
+            if (nomRaw.trim().toLowerCase() === 'nom' || prixRaw.trim().toLowerCase() === 'prix') {
+                continue; // On ignore cette ligne et on passe au vrai produit suivant
+            }
+
+            // 1. Nettoyage intensif des données
+            const nom = cleanString(nomRaw);
+            const description = cleanString(descRaw);
+            
+            // Nettoyage du prix (gère les "8,50", "8.50", "8,50€", '"8,50"')
+            let prixPropre = cleanString(prixRaw).replace(/€/g, '').replace(',', '.').trim();
+            const prix = parseFloat(prixPropre);
+            
+            // Nettoyage de la catégorie
+            const categoriePure = cleanString(catRaw).toLowerCase();
+            const categorieId = categoriePure.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-");
+
+            // 2. L'INTELLIGENCE ARTIFICIELLE DU CODE (Déductions)
+            let icon = "🍽️";
+            let categorieTitre = categoriePure.charAt(0).toUpperCase() + categoriePure.slice(1); // Met la 1ère lettre en majuscule
+            let allowMenu = true;
+
+            if (categorieId.includes("burger")) { icon = "🍔"; }
+            else if (categorieId.includes("pizza")) { icon = "🍕"; allowMenu = false; }
+            else if (categorieId.includes("tacos")) { icon = "🌮"; }
+            else if (categorieId.includes("wrap") || categorieId.includes("sandwich")) { icon = "🌯"; }
+            else if (categorieId.includes("boisson") || categorieId.includes("drink")) { icon = "🥤"; allowMenu = false; }
+            else if (categorieId.includes("dessert") || categorieId.includes("desert")) { icon = "🍰"; allowMenu = false; }
+            else if (categorieId.includes("frite") || categorieId.includes("side")) { icon = "🍟"; allowMenu = false; }
+
+            // 3. CONSTRUCTION DE TON OBJET PARFAIT
+            const newProduct = {
+                nom: nom,
+                description: description,
+                prix: isNaN(prix) ? 0 : prix,
+                categorieId: categorieId,
+                categorieTitre: categorieTitre,
+                icon: icon,
+                allowMenu: allowMenu,
+                snackId: currentAdminSnackId,
+                allergenes: [],
+                devise: "€",
+                image: "",
+                isAvailable: true,
+                isBestSeller: false,
+                menuPriceAdd: 2.50,
+                tags: [],
+                ventes: 0,
+                createdAt: window.fs.serverTimestamp(),
+                updatedAt: window.fs.serverTimestamp()
+            };
+
+            // 4. Envoi à Firestore
+            await window.fs.addDoc(window.fs.collection(window.db, "produits"), newProduct);
+            importedCount++;
+        }
+
+        window.showToast(`✅ Succès : ${importedCount} produits importés !`, "success");
+        loadAdminProducts();
+
+    } catch (error) {
+        console.error("Erreur d'import CSV :", error);
+        window.showToast("❌ Erreur lors de la lecture du fichier CSV.", "error");
+    } finally {
+        event.target.value = ""; 
+    }
+};
+
+// ==========================================
+// 📈 EXPORT COMPTABLE DES VENTES (CSV)
+// ==========================================
+window.exportComptaCSV = async () => {
+    const btn = document.getElementById("btn-export-compta");
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Traitement...`;
+    btn.disabled = true;
+
+    try {
+        const { collection, query, where, orderBy, getDocs } = window.fs;
+        
+        const q = query(
+            collection(window.db, "commandes"),
+            where("snackId", "==", currentAdminSnackId),
+            where("paiement.statut", "==", "paye"),
+            orderBy("date", "desc")
+        );
+
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            window.showToast("Aucune vente trouvée pour l'export.", "info");
+            return;
+        }
+
+        let csvContent = "Date;Heure;Client;Montant (€);Methode;ID Commande;ID Stripe\n";
+
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const id = docSnap.id;
+            
+            let dateStr = "N/A";
+            let timeStr = "N/A";
+            if (data.date) {
+                const dateObj = data.date.toDate();
+                dateStr = dateObj.toLocaleDateString('fr-FR');
+                timeStr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            const total = data.total ? data.total.toFixed(2).replace('.', ',') : "0,00";
+            const client = data.clientNom || "Inconnu";
+            const methode = data.paiement?.methode || "Inconnue";
+            const stripeId = data.paiement?.stripeSessionId || "N/A";
+
+            csvContent += `${dateStr};${timeStr};"${client}";${total};${methode};${id};${stripeId}\n`;
+        });
+
+        const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' }); 
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        
+        const dateDuJour = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Export_Ventes_${dateDuJour}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        window.showToast("✅ Export comptable téléchargé !", "success");
+
+    } catch (error) {
+        console.error("Erreur lors de l'export CSV :", error);
+        window.showToast("Erreur lors de la génération de l'export.", "error");
+    } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    }
+};
+
+// ==========================================
+// 📄 GESTION DE LA MODALE D'AIDE CSV (INJECTION DYNAMIQUE)
+// ==========================================
+window.openCsvInfoModal = () => {
+    // 1. On détruit l'ancienne modale si elle existe déjà (pour ne pas les empiler)
+    const existingModal = document.getElementById("csv-info-modal-js");
+    if (existingModal) existingModal.remove();
+
+    // 2. On crée la modale de toute pièce en JS
+    const modal = document.createElement("div");
+    modal.id = "csv-info-modal-js";
+    
+    // 3. On utilise du CSS "en dur" pour garantir à 1000% l'affichage au 1er plan
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100vw";
+    modal.style.height = "100vh";
+    modal.style.backgroundColor = "rgba(17, 24, 39, 0.8)";
+    modal.style.backdropFilter = "blur(4px)";
+    modal.style.zIndex = "999999"; // L'arme absolue
+    modal.style.display = "flex";
+    modal.style.justifyContent = "center";
+    modal.style.alignItems = "center";
+    modal.style.padding = "1rem";
+
+    // 4. On dessine l'intérieur avec tes belles classes Tailwind
+    modal.innerHTML = `
+        <div class="bg-white w-full max-w-2xl rounded-3xl p-6 relative shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto">
+            
+            <button onclick="document.getElementById('csv-info-modal-js').remove()" class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-gray-100 rounded-full transition flex justify-center items-center">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
+            <h3 class="text-2xl font-black text-gray-900 mb-2 border-b border-gray-100 pb-4">
+                <i class="fas fa-file-csv text-blue-500 mr-2"></i> Guide d'importation CSV
+            </h3>
+            
+            <p class="text-gray-600 mb-6 mt-4">
+                Pour importer votre carte en un clic, votre fichier doit respecter un format strict. Nous vous conseillons de télécharger notre modèle, de le remplir, puis de l'importer.
+            </p>
+
+            <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 mb-6">
+                <h4 class="font-bold text-blue-900 mb-2">Structure requise (4 colonnes) :</h4>
+                <ul class="list-disc pl-5 text-sm text-blue-800 space-y-1">
+                    <li><strong>Nom :</strong> Le nom exact du produit (ex: <i>Tacos XL</i>)</li>
+                    <li><strong>Description :</strong> Les ingrédients (ex: <i>Frites, Viande hachée</i>)</li>
+                    <li><strong>Prix :</strong> Le prix de base (ex: <i>8,50</i> ou <i>8.50</i>)</li>
+                    <li><strong>Categorie :</strong> L'ID de la catégorie en minuscules (ex: <i>tacos, burgers</i>)</li>
+                </ul>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 mt-8">
+                <button onclick="downloadCsvTemplate()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                    <i class="fas fa-download"></i> Télécharger le Modèle
+                </button>
+                <button onclick="document.getElementById('csv-info-modal-js').remove()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition">
+                    J'ai compris
+                </button>
+            </div>
+        </div>
+    `;
+
+    // 5. L'injection finale directement à la racine (Body) !
+    document.body.appendChild(modal);
+};
+
+window.closeCsvInfoModal = () => {
+    const modal = document.getElementById("csv-info-modal");
+    modal.classList.add("opacity-0");
+    modal.querySelector(".bg-white").classList.add("scale-95");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }, 300);
+};
+
+window.downloadCsvTemplate = () => {
+    // Le contenu exact que le client doit voir dans son Excel
+    const content = "Nom;Description;Prix;Categorie\nBurger Classique;Pain brioché, steak 150g, cheddar, salade, tomate, sauce secrète;8,50;burgers\nCoca-Cola 33cl;Canette bien fraîche;2,00;drinks\nFrites Cheddar Bacon;Portion de frites avec sauce cheddar et bacon croustillant;4,50;sides";
+    
+    // Le \ufeff force Excel à lire le fichier en UTF-8 (pour les accents)
+    const blob = new Blob(["\ufeff" + content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", "Modele_Import_Carte.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    window.showToast("Modèle téléchargé !", "success");
+};
+
+// ==========================================
+// 🏦 STRIPE CONNECT : DASHBOARD EXPRESS DU RESTAURATEUR
+// ==========================================
+window.openStripeExpressDashboard = async () => {
+    const btn = document.getElementById("btn-stripe-dashboard");
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connexion Stripe...`;
+    btn.disabled = true;
+
+    try {
+        const { httpsCallable, functions } = window.fs;
+        const getStripeLoginLink = httpsCallable(functions, "createStripeConnectLoginLink");
+        
+        const response = await getStripeLoginLink({ snackId: currentAdminSnackId });
+        
+        if (response.data && response.data.url) {
+            window.open(response.data.url, '_blank');
+        } else {
+            throw new Error("URL introuvable dans la réponse.");
+        }
+
+    } catch (error) {
+        console.error("Erreur ouverture Stripe Dashboard :", error);
+        window.showToast("Erreur de connexion au portail bancaire.", "error");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+};
+
 // ==========================================
 // 5. DÉCONNEXION
 // ==========================================

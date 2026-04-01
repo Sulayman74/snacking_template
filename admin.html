@@ -86,214 +86,226 @@
       </div>
     </div>
 
-    <header class="bg-gray-900 text-white shadow-lg z-50 sticky top-0">
-      <div
-        class="p-4 flex justify-between items-center border-b border-gray-800"
-      >
-        <div class="flex items-center gap-3">
-          <div
-            class="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]"
-          ></div>
-          <h1 class="text-xl md:text-2xl font-black uppercase tracking-widest">
-            Admin <span class="text-red-500">Fusion</span>
-          </h1>
-        </div>
-        <div class="flex items-center gap-4">
-          <span
-            id="admin-email"
-            class="hidden md:inline font-mono text-sm text-gray-400"
-            >admin@...</span
-          >
-          <button
-            onclick="logoutAdmin()"
-            class="bg-gray-800 hover:bg-red-600 border border-gray-700 px-4 py-2 rounded-xl font-bold transition"
-            aria-label="Se déconnecter"
-          >
-            <i class="fas fa-sign-out-alt"></i>
-          </button>
-        </div>
-      </div>
-      <div class="flex justify-center bg-gray-800 p-2 gap-2 overflow-x-auto">
-        <button
-          onclick="switchAdminTab('cuisine')"
-          id="tab-cuisine"
-          class="bg-gray-900 text-white px-6 py-2 rounded-lg font-bold shadow transition flex-1 md:flex-none"
-        >
-          <i class="fas fa-fire text-red-500 mr-2"></i> Commandes
-        </button>
-        <button
-          onclick="switchAdminTab('menu')"
-          id="tab-menu"
-          class="text-gray-400 hover:text-white hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition flex-1 md:flex-none"
-        >
-          <i class="fas fa-hamburger text-yellow-500 mr-2"></i> Menu & Stocks
-        </button>
-        <button
-          onclick="switchAdminTab('marketing')"
-          id="tab-marketing"
-          class="hidden text-gray-400 hover:text-white hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition flex-1 md:flex-none"
-        >
-          <i class="fas fa-bullhorn text-blue-500 mr-2"></i> Marketing Push
-        </button>
-      </div>
-    </header>
+<div class="flex h-screen bg-gray-100 overflow-hidden w-full relative">
 
-    <section
-      id="view-cuisine"
-      class="flex-1 overflow-x-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)]"
-    >
-      <div
-        class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300"
-      >
-        <div
-          class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3"
-        >
-          <h2 class="text-xl font-black text-gray-600 uppercase">
-            <i class="fas fa-car text-gray-500 mr-2"></i> Attente Client
-          </h2>
-          <span
-            id="count-waiting"
-            class="bg-gray-500 text-white font-bold px-3 py-1 rounded-lg"
-            >0</span
-          >
-        </div>
-        <div
-          id="orders-waiting"
-          class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"
-        ></div>
-      </div>
-      <div
-        class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300"
-      >
-        <div
-          class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3"
-        >
-          <h2 class="text-xl font-black text-gray-800 uppercase">
-            <i class="fas fa-fire text-red-600 mr-2"></i> À Préparer
-          </h2>
-          <span
-            id="count-new"
-            class="bg-red-600 text-white font-bold px-3 py-1 rounded-lg"
-            >0</span
-          >
-        </div>
-        <div
-          id="orders-new"
-          class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"
-        ></div>
-      </div>
-      <div
-        class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300"
-      >
-        <div
-          class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3"
-        >
-          <h2 class="text-xl font-black text-gray-800 uppercase">
-            <i class="fas fa-check-circle text-green-600 mr-2"></i> Prêtes
-          </h2>
-          <span
-            id="count-ready"
-            class="bg-green-600 text-white font-bold px-3 py-1 rounded-lg"
-            >0</span
-          >
-        </div>
-        <div
-          id="orders-ready"
-          class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"
-        ></div>
-      </div>
-    </section>
-
-    <section
-      id="view-menu"
-      class="hidden flex-1 overflow-y-auto p-4 md:p-6 bg-gray-100 h-[calc(100vh-140px)]"
-    >
-      <div class="max-w-6xl mx-auto">
-        <div
-          class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"
-        >
-          <div>
-            <h2 class="text-3xl font-black text-gray-900 tracking-tight">
-              Votre Carte
-            </h2>
-            <p class="text-gray-500">
-              Gérez vos prix, ruptures de stocks et photos.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onclick="openAddProductModal()"
-            class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition-transform transform hover:-translate-y-1 active:scale-95 flex items-center gap-2"
-          >
-            <i class="fas fa-plus"></i> Nouveau Produit
-          </button>
-        </div>
-
-        <div
-          id="admin-products-grid"
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"
-        >
-          <p class="text-gray-500 font-bold">
-            <i class="fas fa-spinner fa-spin mr-2"></i> Chargement des
-            produits...
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section id="view-marketing" class="hidden flex-1 overflow-y-auto p-4 md:p-6 bg-gray-100 h-[calc(100vh-140px)]">
-      <div class="max-w-4xl mx-auto">
+    <aside class="group hidden md:flex flex-col w-24 hover:w-72 transition-all duration-300 ease-in-out bg-gray-900 text-white shadow-2xl z-50 absolute top-0 left-0 h-full overflow-hidden">
         
-        <div class="mb-2">
-          <h2 class="text-3xl font-black text-gray-900 tracking-tight"><i class="fas fa-paper-plane text-blue-600 mr-2"></i> Campagnes Push</h2>
-          <p class="text-gray-500">Envoyez une notification directement sur le téléphone de vos clients pour booster vos ventes.</p>
+        <div class="h-20 px-6 flex items-center gap-4 border-b border-gray-800 whitespace-nowrap shrink-0">
+            <div class="w-4 h-4 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)] shrink-0"></div>
+            <h1 class="text-2xl font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300">Admin <span class="text-red-500">Fusion</span></h1>
         </div>
 
-        <div class="bg-white rounded-3xl p-4 shadow-sm border border-gray-200">
-          <form id="push-campaign-form">
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="my-1">
-                  <label class="block text-sm font-bold text-gray-700 mb-2">Titre de la notification</label>
-                  <input type="text" id="push-title"  placeholder="Ex: 🍔 Faim de loup ?" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition font-bold text-gray-900">
+        <nav class="flex-1 py-4 space-y-2 overflow-y-auto overflow-x-hidden">
+            <button onclick="switchAdminTab('cuisine')" id="tab-cuisine-desktop" class="w-full flex items-center px-6 py-4 bg-gray-800 text-white rounded-r-2xl font-bold shadow transition hover:bg-gray-700">
+                <i class="fas fa-fire text-red-500 text-xl w-8 text-center shrink-0"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Commandes</span>
+            </button>
+            <button onclick="switchAdminTab('menu')" id="tab-menu-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
+                <i class="fas fa-hamburger text-yellow-500 text-xl w-8 text-center shrink-0"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Menu & Stocks</span>
+            </button>
+            <button onclick="switchAdminTab('marketing')" id="tab-marketing-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
+                <i class="fas fa-bullhorn text-blue-500 text-xl w-8 text-center shrink-0"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Marketing Push</span>
+            </button>
+            <button onclick="switchAdminTab('compta')" id="tab-compta-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
+                <i class="fas fa-file-invoice-dollar text-green-500 text-xl w-8 text-center shrink-0"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Comptabilité</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-gray-800 bg-gray-900 shrink-0">
+            <div class="flex items-center bg-gray-800 p-2 rounded-xl whitespace-nowrap">
+                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold shrink-0 ml-1">AD</div>
+                <div class="ml-3 flex-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden flex justify-between items-center">
+                    <span id="admin-email-desktop" class="font-mono text-xs text-gray-300 truncate w-24">admin@...</span>
+                    <button onclick="logoutAdmin()" class="text-gray-400 hover:text-red-500 transition p-2 ml-2" aria-label="Se déconnecter">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
                 </div>
-                <div>
-                  <div class="my-1">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Cible de la campagne</label>
-                    <select id="push-target" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition font-medium text-gray-700">
-                      <option value="all">🌍 Tous les clients inscrits</option>
-                      <option value="active">🔥 Clients récents (venus ce mois-ci)</option>
-                      <option value="inactive">😴 Clients inactifs (pour les relancer)</option>
-                    </select>
-                  </div>
-                  <div class="my-1">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Produit à mettre en avant (Deep Link)</label>
-                    <select id="push-product-link" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition font-medium text-gray-700">
-                      <option value="">📱 Aucune redirection (Ouvre l'accueil de l'app)</option>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1"><i class="fas fa-info-circle"></i> Le client atterrira directement sur ce produit en cliquant sur la notification.</p>
-                  </div>
+            </div>
+        </div>
+    </aside>
+<main class="flex-1 flex flex-col h-screen relative overflow-hidden md:ml-20">
+        <header class="md:hidden bg-gray-900 text-white shadow-md z-10 flex justify-between items-center p-4">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <h1 class="text-xl font-black uppercase tracking-widest">Admin <span class="text-red-500">Fusion</span></h1>
+            </div>
+            <button onclick="logoutAdmin()" class="text-gray-400 hover:text-red-500 transition">
+                <i class="fas fa-sign-out-alt text-xl"></i>
+            </button>
+        </header>
+
+    <div class="flex-1 overflow-y-auto pb-24 md:pb-0"> 
+        
+        <section id="view-cuisine" class="flex flex-col md:flex-row gap-6 p-4 md:p-6 h-full">
+            <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
+                    <h2 class="text-xl font-black text-gray-600 uppercase"><i class="fas fa-car text-gray-500 mr-2"></i> Attente Client</h2>
+                    <span id="count-waiting" class="bg-gray-500 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
-                  
+                <div id="orders-waiting" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
+            </div>
+            <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
+                    <h2 class="text-xl font-black text-gray-800 uppercase"><i class="fas fa-fire text-red-600 mr-2"></i> À Préparer</h2>
+                    <span id="count-new" class="bg-red-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
-                <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl flex flex-col w-full items-start gap-3">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Message (Court et percutant) <i class="fas fa-envelope text-blue-500 mt-1"></i></label>
-                    <textarea id="push-message" rows="2"  placeholder="Ex: -20% ce soir sur tous les menus avec le code MENU20 ! Venez vite !" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition text-gray-800"></textarea>
-                  
-                    <label class="block text-sm font-bold text-gray-900 mb-1">Planifier l'envoi (Optionnel) <i class="fas fa-calendar-alt text-blue-500 mt-1"></i></label>
+                <div id="orders-new" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
+            </div>
+            <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
+                    <h2 class="text-xl font-black text-gray-800 uppercase"><i class="fas fa-check-circle text-green-600 mr-2"></i> Prêtes</h2>
+                    <span id="count-ready" class="bg-green-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
+                </div>
+                <div id="orders-ready" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
+            </div>
+        </section>
+
+<section id="view-menu" class="hidden p-4 md:p-6 bg-gray-100 min-h-full">
+                <div class="max-screen mx-auto">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Votre Carte</h2>
+                            <p class="text-gray-500">Gérez vos prix, ruptures de stocks et photos.</p>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button type="button" onclick="openCsvInfoModal()" class="bg-white border border-gray-300 text-gray-600 hover:text-blue-600 hover:border-blue-600 px-4 py-3 rounded-2xl font-bold shadow-sm transition flex items-center justify-center" aria-label="Aide format CSV">
+                                <i class="fas fa-question-circle text-xl"></i>
+                            </button>
+
+                            <input type="file" id="csv-import-input" accept=".csv" class="hidden" onchange="importProductsCSV(event)">
+                            <button type="button" onclick="document.getElementById('csv-import-input').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-2xl font-bold shadow-sm transition flex items-center gap-2 hidden sm:flex">
+                                <i class="fas fa-file-upload"></i> Importer
+                            </button>
+                            
+                            <button type="button" onclick="openAddProductModal()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition flex items-center gap-2">
+                                <i class="fas fa-plus"></i> Nouveau
+                            </button>
+                        </div>
+                    </div>
                     
-                    <p class="text-xs text-gray-500 mb-2">Laissez vide pour un envoi immédiat.</p>
-                    <input type="datetime-local" id="push-date" class="w-full md:w-1/2 px-4 py-2 rounded-lg bg-white border border-gray-200 outline-none">
-                </div>      
-                <button type="submit" id="btn-send-push" class="w-full py-4 bg-blue-600 text-white rounded-full my-1 font-black shadow-[0_8px_20px_rgba(37,99,235,0.3)] hover:bg-blue-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 text-lg">
-                    <i class="fas fa-rocket"></i> Lancer la Campagne
-                </button>
-          </form>
-        </div>
+                    <div id="admin-products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+                        <p class="text-gray-500 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Chargement des produits...</p>
+                    </div>
+                </div>
+            </section>
 
-      </div>
-    </section>
+        <section id="view-marketing" class="hidden p-4 md:p-6 bg-gray-100 min-h-full">
+            <div class="max-screen mx-auto">
+                <h2 class="text-3xl font-black text-gray-900 tracking-tight"><i class="fas fa-paper-plane text-blue-600 mr-2"></i> Campagnes Push</h2>
+                
+                <form id="push-campaign-form" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Titre de la notification</label>
+                        <input type="text" id="push-title" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Message</label>
+                        <textarea id="push-message" rows="3" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Cible</label>
+                            <select id="push-target" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none">
+                                <option value="all">Tous les clients</option>
+                                <option value="active">Clients actifs (30 derniers jours)</option>
+                                <option value="inactive">Clients inactifs</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Date d'envoi (Optionnel)</label>
+                            <input type="datetime-local" id="push-date" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Lien Promotionnel (Optionnel)</label>
+                        <select id="push-product-link" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none">
+                            <option value="">📱 Aucune redirection (Ouvre l'accueil)</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="btn-send-push" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-paper-plane mr-2"></i> Programmer la campagne
+                    </button>
+                </form>
+            </div>
+        </section>
+        
+        <section id="view-compta" class="hidden flex-col h-full overflow-y-auto p-4 md:p-6">
+            <div class="max- mx-auto w-full space-y-6">
+                <div>
+                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">Comptabilité & Caisse</h2>
+                    <p class="text-gray-500">Gérez vos encaissements en ligne et vos virements bancaires.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 lg:col-span-2 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <i class="fas fa-chart-line text-blue-500"></i> Vos Ventes en Ligne (Ce mois-ci)
+                            </h3>
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Total Encaissé</p>
+                                    <p class="text-4xl font-black text-gray-900" id="compta-total-sales">-- €</p>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Commandes</p>
+                                    <p class="text-4xl font-black text-gray-900" id="compta-total-orders">--</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-blue-50 rounded-xl border border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto">
+                            <div class="text-sm text-blue-800">
+                                <strong>Livre de caisse :</strong> Exportez l'historique de vos ventes.
+                            </div>
+                            <button onclick="exportComptaCSV()" id="btn-export-compta" class="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md active:scale-95 flex items-center gap-2">
+                                <i class="fas fa-file-excel"></i> Exporter (CSV)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-indigo-900 to-gray-900 rounded-2xl p-6 shadow-md text-white flex flex-col justify-between h-full">
+                        <div>
+                            <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+                                <i class="fas fa-university text-indigo-400"></i> Virements
+                            </h3>
+                            <p class="text-gray-300 text-sm mb-4 leading-relaxed">
+                                Accédez à <span class="font-bold text-white">Stripe Express</span> pour modifier votre RIB et suivre vos versements.
+                            </p>
+                        </div>
+                        <button onclick="openStripeExpressDashboard()" id="btn-stripe-dashboard" class="w-full bg-white text-gray-900 font-black py-4 rounded-xl shadow-lg hover:bg-gray-100 transition active:scale-95 flex justify-center items-center gap-2 mt-4">
+                            Ouvrir mon portail <i class="fas fa-external-link-alt text-sm text-gray-400"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center p-2 pb-safe z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] fixed bottom-0 w-full">
+        <button onclick="switchAdminTab('cuisine')" id="tab-cuisine-mobile" class="flex flex-col items-center gap-1 p-2 text-red-600 w-16">
+            <i class="fas fa-fire text-xl"></i>
+            <span class="text-[10px] font-bold">Cuisine</span>
+        </button>
+        <button onclick="switchAdminTab('menu')" id="tab-menu-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
+            <i class="fas fa-hamburger text-xl"></i>
+            <span class="text-[10px] font-bold">Menu</span>
+        </button>
+        <button onclick="switchAdminTab('marketing')" id="tab-marketing-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
+            <i class="fas fa-bullhorn text-xl"></i>
+            <span class="text-[10px] font-bold">Push</span>
+        </button>
+        <button onclick="switchAdminTab('compta')" id="tab-compta-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
+            <i class="fas fa-file-invoice-dollar text-xl"></i>
+            <span class="text-[10px] font-bold">Compta</span>
+        </button>
+    </nav>
+</main>
+</div>
 
     <div
       id="edit-product-modal"
@@ -478,9 +490,10 @@
         </form>
       </div>
     </div>
+    </div>
     <div
       id="delete-confirm-modal"
-      class="fixed inset-0 bg-gray-900/90 z-150 hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0"
+      class="fixed inset-0 bg-gray-900/90 z-[150] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0"
     >
       <div
         class="bg-white w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl transform transition-transform scale-95 border border-red-100 relative overflow-hidden"
