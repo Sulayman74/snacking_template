@@ -6,6 +6,7 @@ import { escapeHTML } from "./utils.js";
 // ==========================================
 // 🎮 LE ROUTEUR D'ÉVÉNEMENTS CLIENT (Event Delegation)
 // ==========================================
+// 🚦 FUTURE MODULE : router.js (Le routeur d'événements - Event Delegation)
 document.addEventListener('click', (event) => {
     const target = event.target.closest('[data-action]');
     if (!target) return; 
@@ -534,152 +535,6 @@ window.switchView = function (viewName, ignoreHistory = false) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
-};
-
-// ============================================================================
-// window.openProductModal = function (itemId) {
-//   const cfg = window.snackConfig;
-//   const item = menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
-//   if (!item) return;
-
-//   const devise = item.devise || cfg.identity.currency || "€";
-//   const prixAffiche = item.prix || item.price || 0;
-//   const nomAffiche = item.nom || item.name;
-
-//   document.getElementById("modal-img").src = item.image;
-//   document.getElementById("modal-title").textContent = nomAffiche;
-//   document.getElementById("modal-price").textContent =
-//     parseFloat(prixAffiche).toFixed(2) + devise;
-//   document.getElementById("modal-desc").textContent = item.description || "";
-
-//   const tagsContainer = document.getElementById("modal-tags");
-//   tagsContainer.innerHTML = "";
-//   if (item.tags) {
-//     let tagText = Array.isArray(item.tags) ? item.tags[0] : item.tags;
-//     if (tagText) {
-//       tagsContainer.innerHTML = `<span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-bold shadow-sm">${tagText}</span>`;
-//     }
-//   }
-
-//   const allergenContainer = document.getElementById(
-//     "modal-allergens-container",
-//   );
-//   const allergenesList = item.allergenes || item.allergens;
-//   if (allergenesList && allergenesList.length > 0) {
-//     allergenContainer.classList.remove("hidden");
-//     document.getElementById("modal-allergens").textContent =
-//       allergenesList.join(", ");
-//   } else {
-//     allergenContainer.classList.add("hidden");
-//   }
-
-//  const btn = document.getElementById("modal-cta");
-
-//   // 1. SI LE PRODUIT EST ÉPUISÉ (Priorité absolue)
-//   if (item.isAvailable === false) {
-//     btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
-//     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
-//     btn.removeAttribute("href");
-//     btn.onclick = null; // On bloque le clic
-//   }
-//   // 2. SI LE RESTO EST EN MODE VITRINE (Pack Starter : Pas de commande)
-//   else if (cfg.features && cfg.features.enableOnlineOrder === false) {
-//     btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true" ></i> Fermer`;
-//     btn.className = `w-full cursor-pointer py-4 rounded-xl font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 transition-all mt-auto flex justify-center items-center gap-2`;
-//     btn.removeAttribute("href");
-//     // Le bouton sert juste à fermer la modale
-//     btn.onclick = (e) => {
-//         e.preventDefault();
-//         closeProductModal();
-//     };
-//   }
-//   // 3. SI LE RESTO FAIT DE LA LIVRAISON EXTERNE (UberEats, Deliveroo...)
-//   else if (cfg.features && cfg.features.enableDelivery === true) {
-//     btn.href = cfg.deliveryUrl || "#"; // Lien vers sa page UberEats (à rajouter dans Firestore si besoin)
-//     btn.setAttribute("target", "_blank"); // Ouvre dans un nouvel onglet
-//     btn.innerHTML = `<i class="fas fa-motorcycle mr-2"></i> Commander en livraison`;
-//     const primaryBg = cfg.theme?.colors?.primary?.split(" ")[0] || "bg-red-600";
-//     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg ${primaryBg} hover:opacity-90 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
-//     btn.onclick = null;
-//   }
-//   // 4. MODE PAR DÉFAUT : CLICK & COLLECT (Appel téléphonique)
-//   else {
-//     const phone = cfg.contact.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
-//     btn.href = `tel:${phone}`;
-//     btn.removeAttribute("target");
-//     btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Commander `;
-//     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-green-600 hover:bg-green-700 hover:-translate-y-1 transition-all mt-auto flex justify-center items-center gap-2`;
-//     btn.onclick = null;
-//   }
-
-//   const backdrop = document.getElementById("product-modal-backdrop");
-//   const sheet = document.getElementById("product-modal");
-
-//   backdrop.classList.remove("hidden");
-
-//   // ==========================================
-//   // 🚀 LOGIQUE DE PARTAGE VIRAL (Web Share API)
-//   // ==========================================
-//   const shareBtn = document.getElementById("modal-share-btn");
-
-//   // On vérifie si le téléphone supporte le partage natif (95% des mobiles récents)
-//   if (
-//     shareBtn &&
-//     cfg.features &&
-//     cfg.features.enableViralShare &&
-//     navigator.share
-//   ) {
-//     shareBtn.classList.remove("hidden"); // On affiche le bouton
-
-//     shareBtn.onclick = async () => {
-//       try {
-//         // 📳 Petit clic haptique pour la sensation d'app native !
-//         if (typeof window.triggerVibration === "function")
-//           window.triggerVibration("light");
-
-//         await navigator.share({
-//           title: `Découvre ${nomAffiche} chez ${cfg.identity.name} !`,
-//           text: `Mec, regarde cette dinguerie : ${nomAffiche} à ${parseFloat(prixAffiche).toFixed(2)}${devise}. On teste ça quand ? 🤤🍔`,
-//           url: window.location.href, // Envoie le lien de ton site
-//         });
-
-//         // 📳 Double vibration de succès si le partage a fonctionné
-//         if (typeof window.triggerVibration === "function")
-//           window.triggerVibration("success");
-//       } catch (err) {
-//         console.log("Le client a fermé le menu de partage ou erreur :", err);
-//       }
-//     };
-//   } else if (shareBtn) {
-//     // Si le navigateur (ex: un vieux PC) ne supporte pas le partage, on cache le bouton
-//     shareBtn.classList.add("hidden");
-//   }
-
-//   setTimeout(() => {
-//     backdrop.classList.remove("opacity-0");
-//     sheet.classList.remove("translate-y-full"); // Mobile
-//     sheet.classList.remove(
-//       "md:opacity-0",
-//       "md:pointer-events-none",
-//       "md:scale-95",
-//     ); // PC
-//   }, 10);
-
-//   document.body.style.overflow = "hidden";
-// };
-
-window.closeProductModal = function () {
-  const backdrop = document.getElementById("product-modal-backdrop");
-  const sheet = document.getElementById("product-modal");
-
-  sheet.classList.add("translate-y-full"); // Mobile
-  sheet.classList.add("md:opacity-0", "md:pointer-events-none", "md:scale-95"); // PC
-  backdrop.classList.add("opacity-0");
-
-  setTimeout(() => {
-    backdrop.classList.add("hidden");
-    document.body.style.overflow = "";
-  }, 300);
 };
 
 if ("clearAppBadge" in navigator) {
@@ -1268,15 +1123,52 @@ function setupSmartReviewPrompt() {
   }
 }
 
+// --- 1. VARIABLES D'ÉTAT ---
 // ====================================================================
 // 🚀 MOTEUR E-COMMERCE (PANIER & CHECKOUT)
 // ====================================================================
 
-// --- 1. VARIABLES D'ÉTAT ---
-let cart = JSON.parse(localStorage.getItem("snackCart")) || [];
+// 📦 FUTURE MODULE : cart.js (Le "Cerveau" : Logique d'état et données pures)
+// Ce module ne devra contenir AUCUN document.getElementById()
+// --------------------------------------------------------------------
+
+let cartData = JSON.parse(localStorage.getItem("snackCart")) || [];
+let cartUpdateTimeout;
+
+let cart = new Proxy(cartData, {
+    set(target, property, value) {
+        target[property] = value;
+        
+        // Anti-spam : On regroupe les multiples mises à jour (ex: Array.push change la valeur ET la length)
+        clearTimeout(cartUpdateTimeout);
+        cartUpdateTimeout = setTimeout(() => {
+            localStorage.setItem("snackCart", JSON.stringify(target));
+            // LE MÉGAPHONE 📣 : On annonce à l'application que le panier a changé
+            document.dispatchEvent(new CustomEvent('cart-updated', { detail: target }));
+        }, 10);
+        
+        return true;
+    }
+});
+
 let currentProduct = null;
 
-// Au chargement de la page, on met à jour la bulle rouge
+// 🎨 FUTURE MODULE : ui.js (Les "Muscles" : Manipulation du DOM)
+// Ce module écoutera les événements pour mettre à jour l'affichage
+// --------------------------------------------------------------------
+
+// Écouteur global de la réactivité du panier
+document.addEventListener('cart-updated', () => {
+    updateCartUI(); // Met à jour la bulle rouge
+    
+    // On ne redessine l'intérieur du panier que si la modale est ouverte (Optimisation de performance)
+    const cartModal = document.getElementById("cart-modal");
+    if (cartModal && !cartModal.classList.contains("translate-y-full")) {
+        renderCartItems();
+    }
+});
+
+// Au chargement de la page, on met à jour la bulle rouge une première fois
 document.addEventListener("DOMContentLoaded", updateCartUI);
 
 // ============================================================================
@@ -1806,31 +1698,41 @@ window.closeProductModal = function () {
 };
 
 // --- 3. GESTION DU PANIER (Logique) ---
+// 📦 FUTURE MODULE : cart.js
 function addToCart(itemData) {
-  // Si on a bien reçu notre objet complet
   const existingItem = cart.find((item) => item.id === itemData.id);
 
   if (existingItem) {
-    existingItem.quantity += 1;
+    existingItem.quantity += 1; // 🪄 Déclenche le Proxy automatiquement !
   } else {
-    // On pousse tout l'objet dans le tableau du panier !
-    cart.push({
-      ...itemData,
-      quantity: 1,
-    });
+    cart.push({ ...itemData, quantity: 1 }); // 🪄 Déclenche le Proxy automatiquement !
   }
-  if (typeof window.triggerVibration === "function") {
-    window.triggerVibration("light");
-  }
-
-  saveCart();
-  updateCartUI();
+  
+  if (typeof window.triggerVibration === "function") window.triggerVibration("light");
   window.showToast(`${itemData.nom} ajouté au panier ! 🍔`, "success");
+  
 }
 
-function saveCart() {
-  localStorage.setItem("snackCart", JSON.stringify(cart));
+// 📦 FUTURE MODULE : cart.js
+function updateQuantity(productId, delta) {
+  const index = cart.findIndex((i) => i.id === productId);
+
+  if (index !== -1) {
+    if (typeof window.triggerVibration === "function") window.triggerVibration("light");
+    
+    const newQuantity = cart[index].quantity + delta;
+    
+    if (newQuantity <= 0) {
+      // 🪄 Le 'splice' retire le tiroir : Le Proxy le voit !
+      cart.splice(index, 1); 
+    } else {
+      // 🪄 L'ASTUCE : On remplace TOUT l'objet à cet index.
+      // Le Proxy le voit et déclenche la mise à jour UI instantanément !
+      cart[index] = { ...cart[index], quantity: newQuantity };
+    }
+  }
 }
+
 function getCartTotal() {
   return cart.reduce((total, item) => total + item.prix * item.quantity, 0);
 }
@@ -1932,28 +1834,13 @@ if (item.sansCrudites && item.sansCrudites.length > 0) {
     `${getCartTotal().toFixed(2)} €`;
 }
 
-function updateQuantity(productId, delta) {
-  const item = cart.find((i) => i.id === productId);
-
-  if (typeof window.triggerVibration === "function") {
-    window.triggerVibration("light");
-  }
-
-  if (item) {
-    item.quantity += delta;
-    if (item.quantity <= 0) cart = cart.filter((i) => i.id !== productId);
-    saveCart();
-    updateCartUI();
-    renderCartItems();
-  }
-};
-
 // --- 5. L'ENVOI FINAL (Firebase Checkout) ---
 
 
 // ==========================================
 // 💳 PROCESSUS DE COMMANDE & CLICK&COLLECT (STRIPE )
 // ==========================================
+// 💳 FUTURE MODULE : stripe-service.js (Logique d'encaissement isolée)
 async function processCheckout(){
     const cfg = window.snackConfig;
     if (cart.length === 0) return window.showToast("Votre panier est vide", "error");
@@ -2142,6 +2029,7 @@ window.submitStripePayment = async () => {
 // ==========================================
 // 🧑‍🍳 2. ENVOI EN CUISINE (APRÈS PAIEMENT RÉUSSI)
 // ==========================================
+// 🔥 FUTURE MODULE : firebase-service.js (Interactions directes avec la Base de Données)
 window.finalizeOrderInFirestore = async (stripePaymentId) => {
     const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
     const currentUser = window.auth?.currentUser;
@@ -2187,9 +2075,8 @@ window.finalizeOrderInFirestore = async (stripePaymentId) => {
         await updateDoc(doc(window.db, "users", currentUser.uid), { lastOrderDate: serverTimestamp() });
 
         // On vide le panier du client
-        cart.length = 0;
-        if (typeof saveCart === "function") saveCart();
-        if (typeof updateCartUI === "function") updateCartUI();
+        // On vide le panier en retirant tous les éléments depuis l'index 0
+        cart.splice(0, cart.length); // 🪄 Le Proxy mettra l'UI à jour tout seul et videra le localStorage !
         if (typeof window.triggerVibration === "function") window.triggerVibration("jackpot");
 
         // 🎯 MAGIE FINALE : On lance le Tracking pour rassurer le client !
@@ -2227,18 +2114,6 @@ window.closeTrackingModal = () => {
   }, 300);
 };
 
-// La fameuse fonction "Toggle" (Ouvre si c'est fermé, ferme si c'est ouvert)
-function toggleCartModal() {
-  const modal = document.getElementById("cart-modal");
-  if (modal) {
-    // Si le panier est caché en bas (translate-y-full), on l'ouvre
-    if (modal.classList.contains("translate-y-full")) {
-      window.openCartModal();
-    } else {
-      window.closeCartModal();
-    }
-  }
-};
 
 // ==========================================
 // 📡 LE RADAR DU CLIENT (MISE À JOUR AVEC L'UI)
@@ -2259,6 +2134,7 @@ window.notifyArrival = async (orderId) => {
   }
 };
 
+// 🔥 FUTURE MODULE : firebase-service.js (Interactions directes avec la Base de Données)
 window.startOrderTracking = (orderId) => {
   const trackingBadge = document.getElementById("order-tracking-badge");
   const badgeText = document.getElementById("badge-text");
@@ -2469,3 +2345,4 @@ window.addEventListener('popstate', (event) => {
     // Ferme le tracking de commande
     if (typeof window.closeTrackingModal === "function") window.closeTrackingModal(true);
 });
+
