@@ -235,27 +235,33 @@ exports.processPushCampaigns = onSchedule({schedule:"every 5 minutes",region: "e
 // 💳 FONCTION 4 : LE TIROIR-CAISSE (STRIPE CHECKOUT)
 // ============================================================================
 
-
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 exports.createPaymentIntent = onCall({ region: "europe-west1" }, async (request) => {
     try {
-        const { amount, currency } = request.data; 
+        // 1. 👈 ON RÉCUPÈRE LES NOUVELLES INFOS (description et metadata)
+        const { amount, currency, description, metadata } = request.data; 
 
         // Sécurité de base
         if (!amount || amount < 50) { // Stripe refuse les paiements sous 0.50€
             throw new HttpsError("invalid-argument", "Montant invalide.");
         }
 
-        // 1. On crée l'intention de paiement chez Stripe
+        // 2. On crée l'intention de paiement chez Stripe
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amount, // Le montant en CENTIMES (ex: 1500 pour 15.00€)
             currency: currency || "eur",
+            
+            // 🎯 LES DEUX LIGNES MAGIQUES POUR TON DASHBOARD STRIPE
+            description: description || "Commande en ligne",
+            metadata: metadata || {}, 
+            
             automatic_payment_methods: {
                 enabled: true, // Active tout seul Apple Pay, Google Pay, CB...
             },
         });
 
-        // 2. On renvoie le secret au téléphone du client pour qu'il affiche le formulaire
+        // 3. On renvoie le secret au téléphone du client pour qu'il affiche le formulaire
         return { clientSecret: paymentIntent.client_secret };
 
     } catch (error) {
@@ -263,7 +269,6 @@ exports.createPaymentIntent = onCall({ region: "europe-west1" }, async (request)
         throw new HttpsError("internal", "Impossible d'initialiser le paiement.");
     }
 });
-
 // TODO ------------------------------ pour Stripe Connect 
 // Aiguillage Multi-tenant (Aperçu de ta future fonction)
 // exports.createCheckoutSession = onCall({ region: "europe-west1" }, async (request) => {

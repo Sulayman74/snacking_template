@@ -32,6 +32,7 @@ import {
   startAfter,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -129,6 +130,7 @@ window.fs = {
   startAfter,
   updateDoc,
   where,
+  writeBatch
 };
 window.storageTools = { getDownloadURL, ref, uploadBytes };
 window.authTools = {

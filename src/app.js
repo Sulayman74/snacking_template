@@ -1,43 +1,45 @@
 // import "./bridge.js";
 import "./snack-config.js";
 import "./firebase-init.js";
+import "./utils.js"
 
-// ============================================================================
-// 🛠️ OUTIL DE DEBUG MAC : SIMULATEUR DE VIBRATIONS (CORRIGÉ SAFARI)
-// ============================================================================
-// if (
-//   window.location.hostname === "localhost" ||
-//   window.location.hostname === "127.0.0.1"
-// ) {
-//   // 🛡️ SÉCURITÉ : On vérifie si l'API existe AVANT d'essayer de la copier
-//   if ("vibrate" in navigator && typeof navigator.vibrate === "function") {
-//     const originalVibrate = navigator.vibrate.bind(navigator);
-//     navigator.vibrate = function (pattern) {
-//       const texteLog = Array.isArray(pattern)
-//         ? `Pattern [${pattern.join(", ")}ms]`
-//         : `Secousse ${pattern}ms`;
-//       console.log(
-//         `%c📳 VIBRATION DÉTECTÉE : ${texteLog}`,
-//         "background: #222; color: #ffeb3b; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
-//       );
-//       try { return originalVibrate(pattern); } catch (e) { return true; }
-//     };
-//   } else {
-//     // 🍏 SPÉCIAL SAFARI / APPLE : L'API n'existe pas, on crée juste un Mock (faux)
-//     navigator.vibrate = function (pattern) {
-//       const texteLog = Array.isArray(pattern)
-//         ? `Pattern [${pattern.join(", ")}ms]`
-//         : `Secousse ${pattern}ms`;
-//       console.log(
-//         `%c📳 VIBRATION SIMULÉE (Safari) : ${texteLog}`,
-//         "background: #ff5722; color: #fff; padding: 4px 8px; border-radius: 4px; font-weight: bold;",
-//       );
-//       return true;
-//     };
-//   }
-// }
-// ============================================================================
-// ============================================================================
+// ==========================================
+// 🎮 LE ROUTEUR D'ÉVÉNEMENTS CLIENT (Event Delegation)
+// ==========================================
+document.addEventListener('click', (event) => {
+    const target = event.target.closest('[data-action]');
+    if (!target) return; 
+
+    const action = target.getAttribute('data-action');
+    const id = target.getAttribute('data-id');
+
+    switch(action) {
+        case 'open-product-modal':
+            openProductModal(id);
+            break;
+            
+        case 'update-qty':
+            const delta = parseInt(target.getAttribute('data-delta'));
+            updateQuantity(id, delta);
+            break;
+            
+        case 'error-toast':
+            const message = target.getAttribute('data-message');
+            window.showToast(message, "error");
+            break;
+        case 'open-cart':
+            openCartModal();
+            break;
+
+        case 'close-cart':
+            closeCartModal();
+            break;
+
+        case 'process-checkout':
+            processCheckout();
+            break;
+    }
+});
 
 // ==========================================
 // 💳 VARIABLES STRIPE GLOBALES
@@ -318,8 +320,8 @@ function createProductCard(item, cfg) {
     ? "cursor-pointer"
     : "cursor-not-allowed opacity-70";
   const clickAction = isAvailable
-    ? `onclick="openProductModal('${item.id || item.nom}')"`
-    : `onclick="showToast('Produit momentanément indisponible', 'error')"`;
+    ? `data-action="open-product-modal" data-id="${item.id || item.nom}"`
+    : `data-action="error-toast" data-message="Produit momentanément indisponible"`;
 
   let tagHtml = "";
   if (!isAvailable) {
@@ -327,9 +329,9 @@ function createProductCard(item, cfg) {
   } else if (item.tags) {
     let tagText = "";
     if (Array.isArray(item.tags) && item.tags.length > 0) {
-      tagText = item.tags[0];
+      tagText = window.escapeHTML(item.tags[0]); // 👈 Nettoyé !
     } else if (typeof item.tags === "string" && item.tags.trim() !== "") {
-      tagText = item.tags;
+     tagText = window.escapeHTML(item.tags);
     }
     if (tagText) {
       tagHtml = `<span class="absolute top-3 right-3 z-10 ${cardBg} ${textColor} text-xs font-bold px-3 py-1.5 rounded-full uppercase shadow-lg tracking-wider">${tagText}</span>`;
@@ -338,7 +340,8 @@ function createProductCard(item, cfg) {
 
   const devise = item.devise || cfg.identity.currency || "€";
   const prixAffiche = item.prix || item.price || 0;
-  const nomAffiche = item.nom || item.name;
+const nomAffiche = window.escapeHTML(item.nom || item.name);
+const descriptionAffiche = window.escapeHTML(item.description || "");
 
   // Création du Fallback minimaliste avec icône + gestion des images cassées (onerror)
   const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
@@ -544,10 +547,10 @@ window.switchView = function (viewName, ignoreHistory = false) {
 //   const nomAffiche = item.nom || item.name;
 
 //   document.getElementById("modal-img").src = item.image;
-//   document.getElementById("modal-title").innerText = nomAffiche;
-//   document.getElementById("modal-price").innerText =
+//   document.getElementById("modal-title").textContent = nomAffiche;
+//   document.getElementById("modal-price").textContent =
 //     parseFloat(prixAffiche).toFixed(2) + devise;
-//   document.getElementById("modal-desc").innerText = item.description || "";
+//   document.getElementById("modal-desc").textContent = item.description || "";
 
 //   const tagsContainer = document.getElementById("modal-tags");
 //   tagsContainer.innerHTML = "";
@@ -564,7 +567,7 @@ window.switchView = function (viewName, ignoreHistory = false) {
 //   const allergenesList = item.allergenes || item.allergens;
 //   if (allergenesList && allergenesList.length > 0) {
 //     allergenContainer.classList.remove("hidden");
-//     document.getElementById("modal-allergens").innerText =
+//     document.getElementById("modal-allergens").textContent =
 //       allergenesList.join(", ");
 //   } else {
 //     allergenContainer.classList.add("hidden");
@@ -691,7 +694,7 @@ window.showToast = function (message, type = "success") {
   const msgEl = document.getElementById("snackbar-message");
   const iconEl = document.getElementById("snackbar-icon");
 
-  msgEl.innerText = message;
+  msgEl.textContent = message;
   iconEl.className =
     type === "error"
       ? "fas fa-exclamation-circle text-red-500 text-xl"
@@ -829,7 +832,7 @@ function setupContactForm() {
       e.preventDefault(); // 🛑 Bloque la redirection vers Formspree
 
       // UX : On montre que ça charge
-      const originalText = submitBtn.innerText;
+      const originalText = submitBtn.textContent;
       submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Envoi...`;
       submitBtn.disabled = true;
 
@@ -859,7 +862,7 @@ function setupContactForm() {
             s.classList.add("far", "text-gray-300");
           });
           const feedback = document.getElementById("rating-feedback");
-          if (feedback) feedback.innerText = "";
+          if (feedback) feedback.textContent = "";
 
           // Notification
           window.showToast("Message envoyé avec succès ! Merci.", "success");
@@ -871,7 +874,7 @@ function setupContactForm() {
         window.showToast("Erreur de connexion.", "error");
       } finally {
         // On remet le bouton à son état normal
-        submitBtn.innerText = originalText;
+        submitBtn.textContent = originalText;
         submitBtn.disabled = false;
       }
     });
@@ -1317,7 +1320,7 @@ window.toggleDrinkSection = function () {
 // 🍔 MOTEUR DE MODALE UNIVERSEL (Pizzas, Kebabs, Burgers, Boissons)
 // ============================================================================
 
-window.openProductModal = function (itemId) {
+function openProductModal (itemId) {
   window.history.pushState(null, null, '#modal')
   const cfg = window.snackConfig;
   const item = menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
@@ -1380,8 +1383,8 @@ window.openProductModal = function (itemId) {
     );
   }
 
-  document.getElementById("modal-title").innerText = currentProduct.nom;
-  document.getElementById("modal-desc").innerText = item.description || "";
+  document.getElementById("modal-title").textContent = currentProduct.nom;
+  document.getElementById("modal-desc").textContent = item.description || "";
 
   // 3. Allergènes
   const allergenContainer = document.getElementById(
@@ -1389,7 +1392,7 @@ window.openProductModal = function (itemId) {
   );
   if (item.allergenes && item.allergenes.length > 0) {
     allergenContainer.classList.remove("hidden");
-    document.getElementById("modal-allergens").innerText =
+    document.getElementById("modal-allergens").textContent =
       item.allergenes.join(", ");
   } else {
     allergenContainer.classList.add("hidden");
@@ -1637,7 +1640,7 @@ window.checkSauceLimit = function (event, max) {
 
   // Mise à jour visuelle du compteur
   if (counterUI) {
-    counterUI.innerText = checkedBoxes.length;
+    counterUI.textContent = checkedBoxes.length;
     if (checkedBoxes.length === max) {
       counterUI.parentElement.classList.replace("bg-gray-900", "bg-green-600");
     } else {
@@ -1648,7 +1651,7 @@ window.checkSauceLimit = function (event, max) {
   // Blocage si on dépasse
   if (checkedBoxes.length > max) {
     event.target.checked = false;
-    if (counterUI) counterUI.innerText = max; // On remet au max visuellement
+    if (counterUI) counterUI.textContent = max; // On remet au max visuellement
     window.showToast(`Maximum ${max} sauces autorisées !`, "error");
     if (typeof window.triggerVibration === "function")
       window.triggerVibration("error");
@@ -1855,7 +1858,7 @@ function updateCartUI() {
 }
 
 // --- 4. AFFICHAGE DU PANIER (Modale Panier) ---
-window.openCartModal = function () {
+function openCartModal() {
   renderCartItems();
   document
     .getElementById("cart-backdrop")
@@ -1863,7 +1866,7 @@ window.openCartModal = function () {
   document.getElementById("cart-modal").classList.remove("translate-y-full");
 };
 
-window.closeCartModal = function () {
+function closeCartModal() {
   document
     .getElementById("cart-backdrop")
     .classList.add("opacity-0", "pointer-events-none");
@@ -1885,14 +1888,16 @@ function renderCartItems() {
     cart.forEach((item) => {
       // 🎯 LA MAGIE EST ICI : On crée le sous-titre dynamique
       let detailsText = [];
-      if (item.boisson) detailsText.push(`🥤 ${item.boisson}`);
-      if (item.sauces && item.sauces.length > 0)
-        detailsText.push(`🥣 ${item.sauces.join(", ")}`);
-      if (item.sansCrudites && item.sansCrudites.length > 0) {
-        detailsText.push(
-          `<span class="text-red-600 font-black">⚠️ ${item.sansCrudites.join(", ")}</span>`,
-        );
-      }
+      if (item.boisson) detailsText.push(`🥤 ${window.escapeHTML(item.boisson)}`);
+      if (item.sauces && item.sauces.length > 0) {
+    const safeSauces = item.sauces.map(s => window.escapeHTML(s)).join(", ");
+    detailsText.push(`🥣 ${safeSauces}`);
+}
+
+if (item.sansCrudites && item.sansCrudites.length > 0) {
+    const safeCrudites = item.sansCrudites.map(c => window.escapeHTML(c)).join(", ");
+    detailsText.push(`<span class="text-red-600 font-black">⚠️ ${safeCrudites}</span>`);
+}
 
       const detailsHTML =
         detailsText.length > 0
@@ -1902,21 +1907,22 @@ function renderCartItems() {
       const imageUrl =
         item.image && item.image.trim() !== "" ? item.image : null;
       const fallbackHtml = `<div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div>`;
+     const safeNom = window.escapeHTML(item.nom);
       const imageHtml = imageUrl
-        ? `<div class="relative w-16 h-16 shrink-0"><img src="${imageUrl}" alt="${item.nom}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full rounded-lg object-cover z-10"><div style="display: none;" class="absolute inset-0 rounded-lg bg-gray-100 items-center justify-center border border-gray-200 z-0"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div></div>`
+        ? `<div class="relative w-16 h-16 shrink-0"><img src="${imageUrl}" alt="${safeNom}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full rounded-lg object-cover z-10"><div style="display: none;" class="absolute inset-0 rounded-lg bg-gray-100 items-center justify-center border border-gray-200 z-0"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div></div>`
         : fallbackHtml;
 
       container.innerHTML += `
         <div class="flex items-center gap-4 bg-white p-3 rounded-xl border" role="group">
             ${imageHtml}
             <div class="flex-1 min-w-0">
-                <h2 class="font-bold text-gray-900 leading-tight truncate">${item.nom}</h2>
+                <h2 class="font-bold text-gray-900 leading-tight truncate">${safeNom  }</h2>
                 ${detailsHTML} <p class="text-red-600 font-bold mt-1">${(item.prix * item.quantity).toFixed(2)} €</p>
             </div>
             <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
-                <button type="button" onclick="updateQuantity('${item.id}', -1)" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition"><i class="fas fa-minus text-xs"></i></button>
+                <button type="button" data-action="update-qty" data-id="${item.id}" data-delta="-1" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition"><i class="fas fa-minus text-xs"></i></button>
                 <span class="font-bold w-4 text-black text-center text-sm">${item.quantity}</span>
-                <button type="button" onclick="updateQuantity('${item.id}', 1)" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition"><i class="fas fa-plus text-xs"></i></button>
+                <button type="button" data-action="update-qty" data-id="${item.id}" data-delta="1" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition"><i class="fas fa-plus text-xs"></i></button>
             </div>
         </div>
       `;
@@ -1926,7 +1932,7 @@ function renderCartItems() {
     `${getCartTotal().toFixed(2)} €`;
 }
 
-window.updateQuantity = function (productId, delta) {
+function updateQuantity(productId, delta) {
   const item = cart.find((i) => i.id === productId);
 
   if (typeof window.triggerVibration === "function") {
@@ -1948,7 +1954,7 @@ window.updateQuantity = function (productId, delta) {
 // ==========================================
 // 💳 PROCESSUS DE COMMANDE & CLICK&COLLECT (STRIPE )
 // ==========================================
-window.processCheckout = async () => {
+async function processCheckout(){
     const cfg = window.snackConfig;
     if (cart.length === 0) return window.showToast("Votre panier est vide", "error");
 
@@ -1984,7 +1990,7 @@ window.processCheckout = async () => {
         if (typeof window.closeCartModal === "function") window.closeCartModal();
 
         // 2. Mettre à jour et ouvrir la modale Stripe EN PREMIER, pour que le DOM soit prêt
-        document.getElementById("payment-amount-display").innerText = `Total : ${totalAmount.toFixed(2)} €`;
+        document.getElementById("payment-amount-display").textContent = `Total : ${totalAmount.toFixed(2)} €`;
         
         // On rend la modale visible mais avec un spinner de chargement dans la zone Stripe
         const paymentContainer = document.getElementById("payment-element");
@@ -1996,10 +2002,20 @@ window.processCheckout = async () => {
         const { httpsCallable, functions } = window.fs;
         const createPaymentIntent = httpsCallable(functions, "createPaymentIntent");
 
-        const response = await createPaymentIntent({ 
-            amount: Math.round(totalAmount * 100), 
-            currency: "eur" 
-        });
+// On crée une phrase type : "2x Tacos XL, 1x Frites"
+const ticketSummary = cart.map(item => `${item.quantity}x ${item.nom}`).join(', ');
+
+const response = await createPaymentIntent({ 
+    amount: Math.round(totalAmount * 100), 
+    currency: "eur",
+    // On envoie les infos au serveur (Cloud Function)
+    description: `Commande Web - ${cfg.identity.name}`,
+    metadata: {
+        // Stripe limite à 500 caractères, donc on coupe si c'est trop long
+        ticket: ticketSummary.substring(0, 500),
+        clientEmail: currentUser.email
+    }
+});
 
         const clientSecret = response.data.clientSecret;
 
@@ -2096,7 +2112,7 @@ window.submitStripePayment = async () => {
         if (error) {
             // ❌ La carte a un problème (Refusée, code faux, etc.)
             const messageContainer = document.getElementById("payment-message");
-            messageContainer.innerText = error.message; // Affiche l'erreur renvoyée par la banque
+            messageContainer.textContent = error.message; // Affiche l'erreur renvoyée par la banque
             messageContainer.classList.remove("hidden");
             if (typeof window.triggerVibration === "function") window.triggerVibration("error");
             
@@ -2212,7 +2228,7 @@ window.closeTrackingModal = () => {
 };
 
 // La fameuse fonction "Toggle" (Ouvre si c'est fermé, ferme si c'est ouvert)
-window.toggleCartModal = () => {
+function toggleCartModal() {
   const modal = document.getElementById("cart-modal");
   if (modal) {
     // Si le panier est caché en bas (translate-y-full), on l'ouvre
@@ -2258,7 +2274,7 @@ window.startOrderTracking = (orderId) => {
   // 1. On affiche le badge et l'ID de commande (les 4 derniers caractères pour faire "Ticket")
   if (trackingBadge) trackingBadge.classList.remove("hidden");
   if (orderIdText)
-    orderIdText.innerText = "#" + orderId.slice(-4).toUpperCase();
+    orderIdText.textContent = "#" + orderId.slice(-4).toUpperCase();
 
   if (unsubscribeClientRadar) unsubscribeClientRadar();
   console.log("🟢 Radar Client ACTIVÉ :", orderId);
@@ -2274,13 +2290,13 @@ window.startOrderTracking = (orderId) => {
         if (commande.statut === "en_attente_client") {
           trackingBadge.className =
             "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
-          badgeText.innerText = "En attente de votre arrivée";
+          badgeText.textContent = "En attente de votre arrivée";
 
           iconContainer.className =
             "w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           icon.className =
             "fas fa-car text-5xl text-gray-500 transition-transform duration-500 animate-pulse";
-          title.innerText = "Commande reçue !";
+          title.textContent = "Commande reçue !";
           title.className = "text-3xl font-black text-gray-900 tracking-tight";
           subtitle.innerHTML =
             "Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.";
@@ -2304,19 +2320,19 @@ window.startOrderTracking = (orderId) => {
         else if (commande.statut === "nouvelle") {
           trackingBadge.className =
             "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
-          badgeText.innerText = "Commande en cours";
+          badgeText.textContent = "Commande en cours";
 
           iconContainer.className =
             "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           icon.className =
             "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
-          title.innerText = "En cuisine !";
+          title.textContent = "En cuisine !";
           title.className = "text-3xl font-black text-gray-900 tracking-tight";
-          subtitle.innerText = "Le chef prépare votre commande.";
+          subtitle.textContent = "Le chef prépare votre commande.";
 
           // On remet le bouton en mode "Fermeture" normal
           if (actionBtn) {
-            actionBtn.innerHTML = "Super, j'attends !";
+            actionBtn.textContent = "Super, j'attends !";
             actionBtn.className =
               "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
 
@@ -2334,16 +2350,16 @@ window.startOrderTracking = (orderId) => {
           // Le badge devient Vert et vibre !
           trackingBadge.className =
             "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
-          badgeText.innerText = "C'EST PRÊT !";
+          badgeText.textContent = "C'EST PRÊT !";
 
           // La modale passe au vert
           iconContainer.className =
             "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
           icon.className =
             "fas fa-check text-5xl text-green-600 transition-transform duration-500";
-          title.innerText = "C'est prêt !";
+          title.textContent = "C'est prêt !";
           title.className = "text-4xl font-black text-green-600 tracking-tight";
-          subtitle.innerText = "Présentez-vous au comptoir pour la récupérer.";
+          subtitle.textContent = "Présentez-vous au comptoir pour la récupérer.";
 
           // 🪄 LE BOUTON FINAL !
           if (actionBtn) {

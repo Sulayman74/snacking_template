@@ -1,6 +1,7 @@
 // import "./bridge.js";
 import "./snack-config.js";
 import "./firebase-init.js";
+import "./utils.js"
 
 const {
   addDoc,
@@ -34,6 +35,68 @@ const bell = document.getElementById("kitchen-bell");
 // ==========================================
 // 1. SÉCURITÉ ET DÉMARRAGE
 // ==========================================
+// ==========================================
+// 🎮 LE ROUTEUR D'ÉVÉNEMENTS ADMIN (Event Delegation)
+// ==========================================
+document.addEventListener('click', (event) => {
+    const target = event.target.closest('[data-action]');
+    if (!target) return; // Clic hors d'un bouton interactif
+
+    const action = target.getAttribute('data-action');
+    const id = target.getAttribute('data-id');
+
+    // Aiguillage des actions Admin
+    switch(action) {
+        // --- ZONE CUISINE ---
+        case 'update-order':
+            const status = target.getAttribute('data-status');
+            updateOrderStatus(id, status);
+            break;
+            
+        case 'update-payment':
+            const paymentStatus = target.getAttribute('data-status');
+            updatePaymentStatus(id, paymentStatus);
+            break;
+
+        // --- ZONE MENU / PRODUITS ---
+        case 'toggle-product':
+            const currentStatus = target.getAttribute('data-current-status') === 'true';
+            toggleProductStatus(id, currentStatus);
+            break;
+
+        case 'open-edit-modal':
+            openEditModal(id);
+            break;
+
+        case 'open-delete-modal':
+            openDeleteModal(id);
+            break;
+
+        // --- AUTRES ACTIONS ---
+        case 'close-modal':
+            // Gère la fermeture de n'importe quelle modale !
+            const modalId = target.getAttribute('data-modal-id');
+            closeModal(modalId);
+            break;
+    }
+});
+
+// ✅ LA FONCTION UNIVERSELLE DE FERMETURE
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if(!modal) return;
+    
+    modal.classList.add("opacity-0");
+    modal.querySelector(".bg-white").classList.add("scale-95");
+    
+    setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        // On nettoie la mémoire si on fermait la modale de suppression/édition
+        currentEditingProductId = null;
+        productToDeleteId = null; 
+    }, 300);
+}
 // ==========================================
 // 🔐 GESTION DE LA CONNEXION ADMIN
 // ==========================================
@@ -198,6 +261,9 @@ if (readyOrdersContainer) readyOrdersContainer.innerHTML = "";
             .toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
         : "";
 
+// 🛡️ SÉCURITÉ : Nettoyage du nom du client
+      const safeClientName = window.escapeHTML(commande.clientNom || "Client Anonyme");
+
 let itemsHtml = commande.items.map((item, index) => {
 
 
@@ -208,7 +274,7 @@ let itemsHtml = commande.items.map((item, index) => {
     if (item.tailleChoisie) {
         optionsHTML += `
         <div class="text-gray-800 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
-            <i class="fas fa-ruler-horizontal text-gray-500"></i> Taille : ${item.tailleChoisie}
+            <i class="fas fa-ruler-horizontal text-gray-500"></i> Taille : ${window.escapeHTML(item.tailleChoisie)}
         </div>`;
     }
 
@@ -216,34 +282,36 @@ let itemsHtml = commande.items.map((item, index) => {
     if (item.boissonNom) {
         optionsHTML += `
         <div class="text-blue-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
-            <i class="fas fa-glass-water"></i> ${item.boissonNom}
+            <i class="fas fa-glass-water"></i> ${window.escapeHTML(item.boissonNom)}
         </div>`;
     }
 
     // 🥣 3. Sauces (Sécurité renforcée !)
     if (item.sauces && Array.isArray(item.sauces) && item.sauces.length > 0) {
-        optionsHTML += `
-        <div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
-            <i class="fas fa-blender"></i> Sauces : ${item.sauces.join(' + ')}
-        </div>`;
-    }
+            const safeSauces = item.sauces.map(s => window.escapeHTML(s)).join(' + ');
+            optionsHTML += `
+            <div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
+                <i class="fas fa-blender"></i> Sauces : ${safeSauces}
+            </div>`;
+        }
 
     // 🚫 4. Sans Crudités (Alerte Rouge - Sécurité renforcée !)
-    if (item.sansCrudites && Array.isArray(item.sansCrudites) && item.sansCrudites.length > 0) {
-        optionsHTML += `
-        <div class="mt-2 ml-6">
-            <span class="bg-red-600 text-white px-2 py-1 rounded-md font-black text-xs uppercase shadow-sm border border-red-800">
-                ⚠️ ${item.sansCrudites.join(', ')}
-            </span>
-        </div>`;
-    }
+   if (item.sansCrudites && Array.isArray(item.sansCrudites) && item.sansCrudites.length > 0) {
+            const safeCrudites = item.sansCrudites.map(c => window.escapeHTML(c)).join(', ');
+            optionsHTML += `
+            <div class="mt-2 ml-6">
+                <span class="bg-red-600 text-white px-2 py-1 rounded-md font-black text-xs uppercase shadow-sm border border-red-800">
+                    ⚠️ ${safeCrudites}
+                </span>
+            </div>`;
+        }
 
     // 2. On assemble la ligne du ticket
     return `
         <li class="flex flex-col border-b border-gray-100/50 py-3 last:border-0">
             <div class="flex items-start">
-                <span class="font-black text-lg text-red-600" aria-hidden="true">${item.quantity}x</span> 
-                <span class="font-bold ml-2 text-gray-900 text-lg">${item.nom}</span>
+                <span class="font-black text-lg text-red-600" aria-hidden="true">${window.escapeHTML(item.quantity)}x</span> 
+                <span class="font-bold ml-2 text-gray-900 text-lg">${window.escapeHTML(item.nom)}</span>
             </div>
             ${optionsHTML}
         </li>`;
@@ -255,16 +323,16 @@ let itemsHtml = commande.items.map((item, index) => {
       let ticketColor = "bg-white border-l-8 border-green-500";
       let textColor = "text-green-700";
 
-      let btnHtml = `<button type="button" onclick="updateOrderStatus('${id}', 'terminee')" aria-label="Archiver le ticket. Commande donnée au client." class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-hand-holding-box mr-2" aria-hidden="true"></i> DONNÉE AU CLIENT</button>`;
+      let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" aria-label="Archiver le ticket. Commande donnée au client." class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-hand-holding-box mr-2" aria-hidden="true"></i> DONNÉE AU CLIENT</button>`;
 
       if (isWaiting) {
         ticketColor = "bg-white border-l-8 border-gray-400 opacity-80";
         textColor = "text-gray-600";
-        btnHtml = `<button type="button" onclick="updateOrderStatus('${id}', 'nouvelle')" aria-label="Forcer la mise en cuisson de la commande" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i class="fas fa-fire mr-2" aria-hidden="true"></i> Forcer Cuisson</button>`;
+        btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" aria-label="Forcer la mise en cuisson de la commande" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i class="fas fa-fire mr-2" aria-hidden="true"></i> Forcer Cuisson</button>`;
       } else if (isNew) {
         ticketColor = "bg-white border-l-8 border-red-500";
         textColor = "text-red-700";
-        btnHtml = `<button type="button" onclick="updateOrderStatus('${id}', 'prete')" aria-label="Marquer la commande comme prête à être retirée" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-check mr-2" aria-hidden="true"></i> MARQUER PRÊTE</button>`;
+        btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" aria-label="Marquer la commande comme prête à être retirée" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-check mr-2" aria-hidden="true"></i> MARQUER PRÊTE</button>`;
       }
 
       // 💰 GESTION DU VISUEL DE PAIEMENT & A11Y
@@ -276,10 +344,10 @@ let itemsHtml = commande.items.map((item, index) => {
         : `<p class="font-black text-2xl ${textColor}" aria-label="Prix à encaisser : ${commande.total.toFixed(2)} euros">${commande.total.toFixed(2)} €</p>`;
 
       const paymentBadgeHtml = isPaid
-        ? `<button type="button" onclick="updatePaymentStatus('${id}', 'paye')" aria-label="Annuler l'encaissement. Actuellement payé." class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition active:scale-95 flex items-center gap-1 hover:bg-green-200">
+        ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" aria-label="Annuler l'encaissement. Actuellement payé." class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition active:scale-95 flex items-center gap-1 hover:bg-green-200">
                     <i class="fas fa-check-circle" aria-hidden="true"></i> PAYÉ
                    </button>`
-        : `<button type="button" onclick="updatePaymentStatus('${id}', 'en_attente')" aria-label="Encaisser la commande de ${commande.total.toFixed(2)} euros." class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition active:scale-95 flex items-center gap-1 animate-pulse hover:bg-orange-200">
+        : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" aria-label="Encaisser la commande de ${commande.total.toFixed(2)} euros." class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition active:scale-95 flex items-center gap-1 animate-pulse hover:bg-orange-200">
                     <i class="fas fa-cash-register" aria-hidden="true"></i> ENCAISSER
                    </button>`;
 
@@ -287,7 +355,7 @@ let itemsHtml = commande.items.map((item, index) => {
                 <div class="${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up" role="article" aria-labelledby="ticket-title-${id}">
                     <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
                         <div>
-                            <h3 id="ticket-title-${id}" class="font-black text-2xl text-gray-900">${commande.clientNom}</h3>
+                            <h3 id="ticket-title-${id}" class="font-black text-2xl text-gray-900">${safeClientName}</h3>
                             <p class="text-sm text-gray-500 font-bold mt-1" aria-label="Heure de réception : ${timeString}"><i class="far fa-clock" aria-hidden="true"></i> ${timeString}</p>
                         </div>
                         <div class="flex flex-col items-end">
@@ -344,7 +412,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // 1. ACTION MÉTIER : LA CUISINE
-window.updateOrderStatus = async (orderId, newStatus) => {
+async function updateOrderStatus(orderId, newStatus) {
   try {
     await window.fs.updateDoc(window.fs.doc(window.db, "commandes", orderId), {
       statut: newStatus,
@@ -356,63 +424,58 @@ window.updateOrderStatus = async (orderId, newStatus) => {
 };
 
 // ==========================================
-// 💳 ACTION MÉTIER : LA CAISSE (Encaissement)
+// 💳 ACTION MÉTIER : LA CAISSE (Encaissement avec BATCH)
 // ==========================================
-window.updatePaymentStatus = async (orderId, currentStatus) => {
+async function updatePaymentStatus(orderId, currentStatus) {
   try {
     const newStatus = currentStatus === "paye" ? "en_attente" : "paye";
 
-    // 1. On met à jour le statut du paiement du ticket
-    await window.fs.updateDoc(window.fs.doc(window.db, "commandes", orderId), {
-      "paiement.statut": newStatus,
-    });
-    console.log(`💳 Paiement mis à jour : ${newStatus}`);
+    // 1. On prépare notre BATCH (La boîte sécurisée)
+    const batch = window.fs.writeBatch(window.db);
+    
+    // 2. On prépare la mise à jour de la commande
+    const orderRef = window.fs.doc(window.db, "commandes", orderId);
+    batch.update(orderRef, { "paiement.statut": newStatus });
 
-    // 2. 📈 AUTOMATISATION DE L'ALGORITHME BEST-SELLER
+    // 3. 📈 MISE À JOUR DES STATS BEST-SELLERS
     if (newStatus === "paye") {
-      // On va chercher la commande complète pour voir ce que le client a mangé
-      const orderDoc = await window.fs.getDoc(
-        window.fs.doc(window.db, "commandes", orderId),
-      );
+      const orderDoc = await window.fs.getDoc(orderRef);
 
       if (orderDoc.exists()) {
         const items = orderDoc.data().items || [];
 
-        // On boucle sur chaque burger/tacos de la commande
+        // On boucle et on ajoute CHAQUE modification dans le Batch
         for (const item of items) {
           const realProductId = item.productId || item.id.split("-")[0];
 
           if (realProductId) {
-            const productRef = window.fs.doc(
-              window.db,
-              "produits",
-              realProductId,
-            );
-
-            // 🪄 MAGIE FIREBASE : On ajoute la quantité vendue au produit.
-            // Si 'ventes' n'existe pas, Firebase le crée à 0 puis ajoute la quantité !
-            await window.fs
-              .updateDoc(productRef, {
-                ventes: window.fs.increment(item.quantity),
-              })
-              .catch((e) =>
-                console.log("Stat annulée : Produit peut-être supprimé", e),
-              );
+            const productRef = window.fs.doc(window.db, "produits", realProductId);
+            // On ajoute l'instruction au batch (sans await !)
+            batch.update(productRef, {
+              ventes: window.fs.increment(item.quantity),
+            });
           }
         }
-        window.showToast(
-          "Caisse enregistrée et Best-Sellers mis à jour ! 📈",
-          "success",
-        );
       }
-    } else {
-      window.showToast("Paiement annulé.", "success");
     }
+
+    // 4. L'EXÉCUTION MAGIQUE 🪄
+    // On envoie le lot en une seule fois. C'est 100% sécurisé !
+    await batch.commit();
+    
+    console.log(`💳 Paiement mis à jour : ${newStatus}`);
+    
+    if (newStatus === "paye") {
+        window.showToast("Caisse enregistrée et Best-Sellers mis à jour ! 📈", "success");
+    } else {
+        window.showToast("Paiement annulé.", "success");
+    }
+
   } catch (error) {
     console.error("Erreur lors de l'encaissement :", error);
     window.showToast("Impossible de mettre à jour le paiement.", "error");
   }
-};
+}
 
 // ==========================================
 // 3. ONGLETS ET NAVIGATION (DESKTOP & MOBILE)
@@ -555,7 +618,7 @@ async function loadAdminProducts() {
                             <div class="flex items-center gap-4 p-4 border-b border-gray-100">
                                 ${imageHtml}
                                 <div class="flex-1">
-                                    <h4 class="font-black text-gray-900 leading-tight">${item.nom}</h4>
+                                    <h4 class="font-black text-gray-900 leading-tight">${window.escapeHTML(item.nom)}</h4>
                                     <p class="text-gray-500 text-sm font-bold mt-1">${prixBaseText} <span class="text-red-500 text-xs ml-1">${prixMenuText}</span></p>
                                 </div>
                             </div>
@@ -563,7 +626,7 @@ async function loadAdminProducts() {
     <div class="flex flex-col items-start gap-1">
         <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Disponibilité</p>
         <div class="flex items-center gap-3">
-            <button onclick="toggleProductStatus('${item.id}', ${isAvailable})" class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${toggleColor}">
+            <button data-action="toggle-product" data-id="${item.id}" data-status=${isAvailable} class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${toggleColor}">
                 <span class="inline-block h-5 w-5 transform rounded-full bg-white transition duration-300 shadow-md ${toggleTranslate}"></span>
             </button>
             <span class="text-sm font-bold">${statusText}</span>
@@ -571,10 +634,10 @@ async function loadAdminProducts() {
     </div>
     
     <div class="flex items-center gap-2">
-        <button onclick="openEditModal('${item.id}')" aria-label="Modifier" class="bg-white border border-gray-200 text-gray-900 hover:bg-gray-900 hover:text-white w-10 h-10 rounded-xl text-sm font-bold transition shadow-sm flex items-center justify-center">
+        <button data-action="open-edit-modal" data-id=${item.id} aria-label="Modifier" class="bg-white border border-gray-200 text-gray-900 hover:bg-gray-900 hover:text-white w-10 h-10 rounded-xl text-sm font-bold transition shadow-sm flex items-center justify-center">
             <i class="fas fa-pen"></i>
         </button>
-<button onclick="openDeleteModal('${item.id}')" aria-label="Supprimer" class="bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white w-10 h-10 rounded-xl text-sm font-bold transition shadow-sm flex items-center justify-center">
+<button data-action="open-delete-modal" data-id=${item.id} aria-label="Supprimer" class="bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white w-10 h-10 rounded-xl text-sm font-bold transition shadow-sm flex items-center justify-center">
     <i class="fas fa-trash"></i>
 </button>
     </div>
@@ -588,7 +651,7 @@ async function loadAdminProducts() {
   }
 }
 
-window.toggleProductStatus = async (productId, currentStatus) => {
+async function toggleProductStatus(productId, currentStatus){
   try {
     await updateDoc(doc(window.db, "produits", productId), {
       isAvailable: !currentStatus,
@@ -602,7 +665,7 @@ window.toggleProductStatus = async (productId, currentStatus) => {
 // ==========================================
 // 4. MODALE D'ÉDITION ET UPLOAD FIREBASE STORAGE
 // ==========================================
-window.openEditModal = (productId) => {
+async function openEditModal(productId){
   const product = adminProducts.find((p) => p.id === productId);
   if (!product) return;
   currentEditingProductId = productId;
@@ -697,20 +760,12 @@ document
     }
   });
 
-window.closeEditModal = () => {
-  const modal = document.getElementById("edit-product-modal");
-  modal.classList.add("opacity-0");
-  modal.querySelector(".bg-white").classList.add("scale-95");
-  setTimeout(() => modal.classList.add("hidden"), 300);
-  currentEditingProductId = null;
-};
-
 
 // Variable globale pour mémoriser le produit à supprimer
 let productToDeleteId = null;
 
 // 1. OUVRE LA MODALE (Appelé par le bouton poubelle sur la carte du produit)
-window.openDeleteModal = (id) => {
+async function openDeleteModal(id){
   productToDeleteId = id;
   const modal = document.getElementById("delete-confirm-modal");
   modal.classList.remove("hidden");
@@ -721,17 +776,6 @@ window.openDeleteModal = (id) => {
   }, 10);
 };
 
-// 2. FERME LA MODALE
-window.closeDeleteModal = () => {
-  const modal = document.getElementById("delete-confirm-modal");
-  modal.classList.add("opacity-0");
-  modal.querySelector(".bg-white").classList.add("scale-95");
-  setTimeout(() => {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-    productToDeleteId = null; // On nettoie la mémoire
-  }, 300);
-};
 
 // 3. LA VRAIE SUPPRESSION (Appelé par le gros bouton rouge de la modale)
 window.confirmDeleteProduct = async () => {
@@ -746,7 +790,7 @@ window.confirmDeleteProduct = async () => {
   try {
     await deleteDoc(doc(window.db, "produits", productToDeleteId));
     window.showToast("Produit définitivement supprimé.", "success");
-    closeDeleteModal();
+closeModal("delete-confirm-modal");
     loadAdminProducts(); // On recharge la grille
   } catch (error) {
     console.error("Erreur de suppression:", error);
@@ -889,7 +933,7 @@ document.getElementById("edit-product-form").addEventListener("submit", async (e
       }
 
       // 5. Nettoyage de l'UI
-      window.closeEditModal();
+closeModal("edit-product-modal");
       loadAdminProducts(); // Recharge la grille en direct
 
     } catch (error) {
