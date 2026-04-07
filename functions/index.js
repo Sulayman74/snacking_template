@@ -257,7 +257,7 @@ exports.createPaymentIntent = onCall({ region: "europe-west1" }, async (request)
             metadata: metadata || {}, 
             
             automatic_payment_methods: {
-                enabled: true, // Active tout seul Apple Pay, Google Pay, CB...
+                enabled: true,
             },
         });
 
@@ -266,6 +266,9 @@ exports.createPaymentIntent = onCall({ region: "europe-west1" }, async (request)
 
     } catch (error) {
         console.error("❌ Erreur Stripe PaymentIntent :", error);
+        // Si c'est déjà une erreur HttpsError (comme le montant invalide), on la renvoie telle quelle
+        if (error instanceof HttpsError) throw error;
+        // Sinon, on masque l'erreur serveur critique au client
         throw new HttpsError("internal", "Impossible d'initialiser le paiement.");
     }
 });
