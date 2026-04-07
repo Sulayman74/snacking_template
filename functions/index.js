@@ -235,9 +235,9 @@ exports.processPushCampaigns = onSchedule({schedule:"every 5 minutes",region: "e
 // 💳 FONCTION 4 : LE TIROIR-CAISSE (STRIPE CHECKOUT)
 // ============================================================================
 
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 exports.createPaymentIntent = onCall({ region: "europe-west1" }, async (request) => {
+    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
     try {
         // 1. 👈 ON RÉCUPÈRE LES NOUVELLES INFOS (description et metadata)
         const { amount, currency, description, metadata } = request.data; 
