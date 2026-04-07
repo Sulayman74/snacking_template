@@ -1,7 +1,7 @@
 // import "./bridge.js";
 import "./snack-config.js";
 import "./firebase-init.js";
-import "./utils.js"
+import { escapeHTML } from "./utils.js";
 
 const {
   addDoc,
@@ -262,7 +262,7 @@ if (readyOrdersContainer) readyOrdersContainer.innerHTML = "";
         : "";
 
 // 🛡️ SÉCURITÉ : Nettoyage du nom du client
-      const safeClientName = window.escapeHTML(commande.clientNom || "Client Anonyme");
+      const safeClientName = escapeHTML(commande.clientNom || "Client Anonyme");
 
 let itemsHtml = commande.items.map((item, index) => {
 
@@ -274,7 +274,7 @@ let itemsHtml = commande.items.map((item, index) => {
     if (item.tailleChoisie) {
         optionsHTML += `
         <div class="text-gray-800 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
-            <i class="fas fa-ruler-horizontal text-gray-500"></i> Taille : ${window.escapeHTML(item.tailleChoisie)}
+            <i class="fas fa-ruler-horizontal text-gray-500"></i> Taille : ${escapeHTML(item.tailleChoisie)}
         </div>`;
     }
 
@@ -282,13 +282,13 @@ let itemsHtml = commande.items.map((item, index) => {
     if (item.boissonNom) {
         optionsHTML += `
         <div class="text-blue-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
-            <i class="fas fa-glass-water"></i> ${window.escapeHTML(item.boissonNom)}
+            <i class="fas fa-glass-water"></i> ${escapeHTML(item.boissonNom)}
         </div>`;
     }
 
     // 🥣 3. Sauces (Sécurité renforcée !)
     if (item.sauces && Array.isArray(item.sauces) && item.sauces.length > 0) {
-            const safeSauces = item.sauces.map(s => window.escapeHTML(s)).join(' + ');
+            const safeSauces = item.sauces.map(s => escapeHTML(s)).join(' + ');
             optionsHTML += `
             <div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
                 <i class="fas fa-blender"></i> Sauces : ${safeSauces}
@@ -297,7 +297,7 @@ let itemsHtml = commande.items.map((item, index) => {
 
     // 🚫 4. Sans Crudités (Alerte Rouge - Sécurité renforcée !)
    if (item.sansCrudites && Array.isArray(item.sansCrudites) && item.sansCrudites.length > 0) {
-            const safeCrudites = item.sansCrudites.map(c => window.escapeHTML(c)).join(', ');
+            const safeCrudites = item.sansCrudites.map(c => escapeHTML(c)).join(', ');
             optionsHTML += `
             <div class="mt-2 ml-6">
                 <span class="bg-red-600 text-white px-2 py-1 rounded-md font-black text-xs uppercase shadow-sm border border-red-800">
@@ -310,8 +310,8 @@ let itemsHtml = commande.items.map((item, index) => {
     return `
         <li class="flex flex-col border-b border-gray-100/50 py-3 last:border-0">
             <div class="flex items-start">
-                <span class="font-black text-lg text-red-600" aria-hidden="true">${window.escapeHTML(item.quantity)}x</span> 
-                <span class="font-bold ml-2 text-gray-900 text-lg">${window.escapeHTML(item.nom)}</span>
+                <span class="font-black text-lg text-red-600" aria-hidden="true">${escapeHTML(item.quantity)}x</span> 
+                <span class="font-bold ml-2 text-gray-900 text-lg">${escapeHTML(item.nom)}</span>
             </div>
             ${optionsHTML}
         </li>`;
@@ -618,7 +618,7 @@ async function loadAdminProducts() {
                             <div class="flex items-center gap-4 p-4 border-b border-gray-100">
                                 ${imageHtml}
                                 <div class="flex-1">
-                                    <h4 class="font-black text-gray-900 leading-tight">${window.escapeHTML(item.nom)}</h4>
+                                    <h4 class="font-black text-gray-900 leading-tight">${escapeHTML(item.nom)}</h4>
                                     <p class="text-gray-500 text-sm font-bold mt-1">${prixBaseText} <span class="text-red-500 text-xs ml-1">${prixMenuText}</span></p>
                                 </div>
                             </div>

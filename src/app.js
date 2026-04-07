@@ -1,7 +1,7 @@
 // import "./bridge.js";
 import "./snack-config.js";
 import "./firebase-init.js";
-import "./utils.js"
+import { escapeHTML } from "./utils.js";
 
 // ==========================================
 // 🎮 LE ROUTEUR D'ÉVÉNEMENTS CLIENT (Event Delegation)
@@ -329,9 +329,9 @@ function createProductCard(item, cfg) {
   } else if (item.tags) {
     let tagText = "";
     if (Array.isArray(item.tags) && item.tags.length > 0) {
-      tagText = window.escapeHTML(item.tags[0]); // 👈 Nettoyé !
+      tagText = escapeHTML(item.tags[0]); // 👈 Nettoyé !
     } else if (typeof item.tags === "string" && item.tags.trim() !== "") {
-     tagText = window.escapeHTML(item.tags);
+     tagText = escapeHTML(item.tags);
     }
     if (tagText) {
       tagHtml = `<span class="absolute top-3 right-3 z-10 ${cardBg} ${textColor} text-xs font-bold px-3 py-1.5 rounded-full uppercase shadow-lg tracking-wider">${tagText}</span>`;
@@ -340,8 +340,8 @@ function createProductCard(item, cfg) {
 
   const devise = item.devise || cfg.identity.currency || "€";
   const prixAffiche = item.prix || item.price || 0;
-const nomAffiche = window.escapeHTML(item.nom || item.name);
-const descriptionAffiche = window.escapeHTML(item.description || "");
+const nomAffiche = escapeHTML(item.nom || item.name);
+const descriptionAffiche = escapeHTML(item.description || "");
 
   // Création du Fallback minimaliste avec icône + gestion des images cassées (onerror)
   const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
@@ -1888,14 +1888,14 @@ function renderCartItems() {
     cart.forEach((item) => {
       // 🎯 LA MAGIE EST ICI : On crée le sous-titre dynamique
       let detailsText = [];
-      if (item.boisson) detailsText.push(`🥤 ${window.escapeHTML(item.boisson)}`);
+      if (item.boisson) detailsText.push(`🥤 ${escapeHTML(item.boisson)}`);
       if (item.sauces && item.sauces.length > 0) {
-    const safeSauces = item.sauces.map(s => window.escapeHTML(s)).join(", ");
+    const safeSauces = item.sauces.map(s => escapeHTML(s)).join(", ");
     detailsText.push(`🥣 ${safeSauces}`);
 }
 
 if (item.sansCrudites && item.sansCrudites.length > 0) {
-    const safeCrudites = item.sansCrudites.map(c => window.escapeHTML(c)).join(", ");
+    const safeCrudites = item.sansCrudites.map(c => escapeHTML(c)).join(", ");
     detailsText.push(`<span class="text-red-600 font-black">⚠️ ${safeCrudites}</span>`);
 }
 
@@ -1907,7 +1907,7 @@ if (item.sansCrudites && item.sansCrudites.length > 0) {
       const imageUrl =
         item.image && item.image.trim() !== "" ? item.image : null;
       const fallbackHtml = `<div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div>`;
-     const safeNom = window.escapeHTML(item.nom);
+     const safeNom = escapeHTML(item.nom);
       const imageHtml = imageUrl
         ? `<div class="relative w-16 h-16 shrink-0"><img src="${imageUrl}" alt="${safeNom}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full rounded-lg object-cover z-10"><div style="display: none;" class="absolute inset-0 rounded-lg bg-gray-100 items-center justify-center border border-gray-200 z-0"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div></div>`
         : fallbackHtml;
