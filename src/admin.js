@@ -32,6 +32,41 @@ let unsubscribeKitchenRadar = null;
 let currentAdminTab = "cuisine"; // Pour savoir sur quel onglet on est
 const bell = document.getElementById("kitchen-bell");
 
+// ============================================================================
+// 🍳 LE HACK DU CUISTOT : ANTI-VEILLE DE L'ÉCRAN (WAKE LOCK API)
+// ============================================================================
+
+let wakeLock = null;
+
+// 1. La fonction pour allumer le verrou
+async function requestWakeLock() {
+    // On vérifie que la tablette supporte bien cette technologie
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('💡 [Cuisine] Écran maintenu allumé pour le service !');
+
+            // Si le navigateur relâche le verrou pour une question de batterie faible
+            wakeLock.addEventListener('release', () => {
+                console.log('💡 [Cuisine] Le maintien de l\'écran a été relâché.');
+            });
+        } catch (err) {
+            console.error('❌ Erreur Wake Lock (Anti-veille) :', err.name, err.message);
+        }
+    } else {
+        console.warn("L'API Wake Lock n'est pas supportée sur ce navigateur/tablette.");
+    }
+}
+
+// 2. La sécurité : Relancer si on change d'onglet
+// Si le cuistot va voir ses mails et revient sur la caisse, le verrou saute. 
+// On l'écoute et on le remet dès qu'il revient sur notre app.
+document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+        await requestWakeLock();
+    }
+});
+
 // ==========================================
 // 1. SÉCURITÉ ET DÉMARRAGE
 // ==========================================
@@ -213,180 +248,166 @@ document.getElementById("start-shift-btn").addEventListener("click", () => {
 });
 
 // ==========================================
-// 2. RADAR FIREBASE (COMMANDES TEMPS RÉEL)
+// 🎟️ GÉNÉRATEUR DE TICKET HTML
+// ==========================================
+function createTicketElement(id, commande) {
+    const timeString = commande.date
+        ? commande.date.toDate().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+        : "";
+
+    const safeClientName = escapeHTML(commande.clientNom || "Client Anonyme");
+
+    let itemsHtml = commande.items.map((item) => {
+        let optionsHTML = "";
+        if (item.tailleChoisie) {
+            optionsHTML += `<div class="text-gray-800 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i class="fas fa-ruler-horizontal text-gray-500"></i> Taille : ${escapeHTML(item.tailleChoisie)}</div>`;
+        }
+        if (item.boissonNom) {
+            optionsHTML += `<div class="text-blue-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i class="fas fa-glass-water"></i> ${escapeHTML(item.boissonNom)}</div>`;
+        }
+        if (item.sauces && Array.isArray(item.sauces) && item.sauces.length > 0) {
+            const safeSauces = item.sauces.map(s => escapeHTML(s)).join(' + ');
+            optionsHTML += `<div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i class="fas fa-blender"></i> Sauces : ${safeSauces}</div>`;
+        }
+        if (item.sansCrudites && Array.isArray(item.sansCrudites) && item.sansCrudites.length > 0) {
+            const safeCrudites = item.sansCrudites.map(c => escapeHTML(c)).join(', ');
+            optionsHTML += `<div class="mt-2 ml-6"><span class="bg-red-600 text-white px-2 py-1 rounded-md font-black text-xs uppercase shadow-sm border border-red-800">⚠️ ${safeCrudites}</span></div>`;
+        }
+
+        return `
+            <li class="flex flex-col border-b border-gray-100/50 py-3 last:border-0">
+                <div class="flex items-start">
+                    <span class="font-black text-lg text-red-600" aria-hidden="true">${escapeHTML(item.quantity)}x</span> 
+                    <span class="font-bold ml-2 text-gray-900 text-lg">${escapeHTML(item.nom)}</span>
+                </div>
+                ${optionsHTML}
+            </li>`;
+    }).join("");
+
+    const isWaiting = commande.statut === "en_attente_client";
+    const isNew = commande.statut === "nouvelle";
+
+    let ticketColor = "bg-white border-l-8 border-green-500";
+    let textColor = "text-green-700";
+    let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-hand-holding-box mr-2"></i> DONNÉE AU CLIENT</button>`;
+
+    if (isWaiting) {
+        ticketColor = "bg-white border-l-8 border-gray-400 opacity-80";
+        textColor = "text-gray-600";
+        btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i class="fas fa-fire mr-2"></i> Forcer Cuisson</button>`;
+    } else if (isNew) {
+        ticketColor = "bg-white border-l-8 border-red-500";
+        textColor = "text-red-700";
+        btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-check mr-2"></i> MARQUER PRÊTE</button>`;
+    }
+
+    const paymentStatus = commande.paiement?.statut || "en_attente";
+    const isPaid = paymentStatus === "paye";
+
+    const priceDisplay = isPaid
+        ? `<p class="font-black text-2xl text-green-600 opacity-50 line-through">${commande.total.toFixed(2)} €</p>`
+        : `<p class="font-black text-2xl ${textColor}">${commande.total.toFixed(2)} €</p>`;
+
+    const paymentBadgeHtml = isPaid
+        ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition flex items-center gap-1 hover:bg-green-200"><i class="fas fa-check-circle"></i> PAYÉ</button>`
+        : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition flex items-center gap-1 animate-pulse hover:bg-orange-200"><i class="fas fa-cash-register"></i> ENCAISSER</button>`;
+
+    // On crée un élément DOM complet au lieu d'une simple chaîne HTML
+    const ticketDiv = document.createElement('div');
+    ticketDiv.id = `ticket-${id}`; // 🎯 CRUCIAL : Un ID unique pour retrouver le ticket plus tard
+    ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up`;
+    ticketDiv.setAttribute('data-status', commande.statut); // Utile pour les compteurs
+    
+    ticketDiv.innerHTML = `
+        <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
+            <div>
+                <h3 class="font-black text-2xl text-gray-900">${safeClientName}</h3>
+                <p class="text-sm text-gray-500 font-bold mt-1"><i class="far fa-clock"></i> ${timeString}</p>
+            </div>
+            <div class="flex flex-col items-end">
+                ${priceDisplay}
+                ${paymentBadgeHtml}
+            </div>
+        </div>
+        <ul class="mb-5 text-gray-800 space-y-1">${itemsHtml}</ul>
+        ${btnHtml}
+    `;
+
+    return ticketDiv;
+}
+
+// ==========================================
+// 2. RADAR FIREBASE (COMMANDES TEMPS RÉEL OPTIMISÉ)
 // ==========================================
 function startKitchenRadar() {
-  if (unsubscribeKitchenRadar) unsubscribeKitchenRadar();
-  const q = query(
-    collection(window.db, "commandes"),
-    where("snackId", "==", currentAdminSnackId),
-    where("statut", "in", ["en_attente_client", "nouvelle", "prete"]),
-    orderBy("date", "desc"),
-  );
+    if (unsubscribeKitchenRadar) unsubscribeKitchenRadar();
+    requestWakeLock();
+    
+    const q = query(
+        collection(window.db, "commandes"),
+        where("snackId", "==", currentAdminSnackId),
+        where("statut", "in", ["en_attente_client", "nouvelle", "prete"]),
+        orderBy("date", "asc"), // 💡 Astuce : On trie en 'asc' pour que les vieux tickets restent en haut de la liste quand on les append
+    );
 
-  unsubscribeKitchenRadar = onSnapshot(q, (snapshot) => {
     const waitingOrdersContainer = document.getElementById("orders-waiting");
     const newOrdersContainer = document.getElementById("orders-new");
     const readyOrdersContainer = document.getElementById("orders-ready");
 
-if (waitingOrdersContainer) waitingOrdersContainer.innerHTML = "";
-if (newOrdersContainer) newOrdersContainer.innerHTML = "";
-if (readyOrdersContainer) readyOrdersContainer.innerHTML = "";
+    unsubscribeKitchenRadar = onSnapshot(q, (snapshot) => {
+        let ringTheBell = false;
 
-    let countWaiting = 0,
-      countNew = 0,
-      countReady = 0;
-    let ringTheBell = false;
+        snapshot.docChanges().forEach((change) => {
+            const commande = change.doc.data();
+            const id = change.doc.id;
+            
+            // 🎯 L'élément DOM du ticket (s'il existe déjà sur l'écran)
+            const existingTicket = document.getElementById(`ticket-${id}`);
 
-    // On fait sonner la cloche si un ticket vient de passer en "nouvelle"
-    snapshot.docChanges().forEach((change) => {
-      if (
-        (change.type === "added" || change.type === "modified") &&
-        !isFirstLoad
-      ) {
-        if (change.doc.data().statut === "nouvelle") {
-          ringTheBell = true;
+            if (change.type === "added") {
+                // NOUVEAU TICKET : On le crée et on l'ajoute à la bonne colonne
+                const newTicket = createTicketElement(id, commande);
+                if (commande.statut === "en_attente_client" && waitingOrdersContainer) waitingOrdersContainer.appendChild(newTicket);
+                if (commande.statut === "nouvelle" && newOrdersContainer) newOrdersContainer.appendChild(newTicket);
+                if (commande.statut === "prete" && readyOrdersContainer) readyOrdersContainer.appendChild(newTicket);
+                
+                if (commande.statut === "nouvelle" && !isFirstLoad) ringTheBell = true;
+
+            } else if (change.type === "modified") {
+                // TICKET MODIFIÉ (Changement de statut ou de paiement)
+                if (existingTicket) existingTicket.remove(); // On détruit l'ancien
+                
+                const updatedTicket = createTicketElement(id, commande); // On génère le nouveau (avec les nouvelles couleurs)
+                
+                // On le place dans sa nouvelle maison
+                if (commande.statut === "en_attente_client" && waitingOrdersContainer) waitingOrdersContainer.appendChild(updatedTicket);
+                if (commande.statut === "nouvelle" && newOrdersContainer) newOrdersContainer.appendChild(updatedTicket);
+                if (commande.statut === "prete" && readyOrdersContainer) readyOrdersContainer.appendChild(updatedTicket);
+
+                if (commande.statut === "nouvelle" && !isFirstLoad) ringTheBell = true;
+
+            } else if (change.type === "removed") {
+                // TICKET ARCHIVÉ : On le retire simplement de l'écran
+                if (existingTicket) existingTicket.remove();
+            }
+        });
+
+        // Mise à jour des compteurs (On compte simplement les enfants de chaque div)
+        if (document.getElementById("count-waiting") && waitingOrdersContainer) {
+             document.getElementById("count-waiting").innerText = waitingOrdersContainer.children.length;
         }
-      }
+        if (newOrdersContainer) {
+            document.getElementById("count-new").innerText = newOrdersContainer.children.length;
+        }
+        if (readyOrdersContainer) {
+            document.getElementById("count-ready").innerText = readyOrdersContainer.children.length;
+        }
+
+        if (ringTheBell) bell.play().catch((e) => console.log("Son bloqué"));
+        isFirstLoad = false;
     });
 
-    if (ringTheBell) bell.play().catch((e) => console.log("Son bloqué"));
-
-    snapshot.docs.forEach((docSnap) => {
-      const commande = docSnap.data();
-      const id = docSnap.id;
-      const timeString = commande.date
-        ? commande.date
-            .toDate()
-            .toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
-        : "";
-
-// 🛡️ SÉCURITÉ : Nettoyage du nom du client
-      const safeClientName = escapeHTML(commande.clientNom || "Client Anonyme");
-
-let itemsHtml = commande.items.map((item, index) => {
-
-
-    // 1. On prépare le conteneur des options
-    let optionsHTML = "";
-
-    // 🍕 1. Taille de la Pizza
-    if (item.tailleChoisie) {
-        optionsHTML += `
-        <div class="text-gray-800 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
-            <i class="fas fa-ruler-horizontal text-gray-500"></i> Taille : ${escapeHTML(item.tailleChoisie)}
-        </div>`;
-    }
-
-    // 🥤 2. Boisson
-    if (item.boissonNom) {
-        optionsHTML += `
-        <div class="text-blue-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
-            <i class="fas fa-glass-water"></i> ${escapeHTML(item.boissonNom)}
-        </div>`;
-    }
-
-    // 🥣 3. Sauces (Sécurité renforcée !)
-    if (item.sauces && Array.isArray(item.sauces) && item.sauces.length > 0) {
-            const safeSauces = item.sauces.map(s => escapeHTML(s)).join(' + ');
-            optionsHTML += `
-            <div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2">
-                <i class="fas fa-blender"></i> Sauces : ${safeSauces}
-            </div>`;
-        }
-
-    // 🚫 4. Sans Crudités (Alerte Rouge - Sécurité renforcée !)
-   if (item.sansCrudites && Array.isArray(item.sansCrudites) && item.sansCrudites.length > 0) {
-            const safeCrudites = item.sansCrudites.map(c => escapeHTML(c)).join(', ');
-            optionsHTML += `
-            <div class="mt-2 ml-6">
-                <span class="bg-red-600 text-white px-2 py-1 rounded-md font-black text-xs uppercase shadow-sm border border-red-800">
-                    ⚠️ ${safeCrudites}
-                </span>
-            </div>`;
-        }
-
-    // 2. On assemble la ligne du ticket
-    return `
-        <li class="flex flex-col border-b border-gray-100/50 py-3 last:border-0">
-            <div class="flex items-start">
-                <span class="font-black text-lg text-red-600" aria-hidden="true">${escapeHTML(item.quantity)}x</span> 
-                <span class="font-bold ml-2 text-gray-900 text-lg">${escapeHTML(item.nom)}</span>
-            </div>
-            ${optionsHTML}
-        </li>`;
-}).join("");
-
-      const isWaiting = commande.statut === "en_attente_client";
-      const isNew = commande.statut === "nouvelle";
-
-      let ticketColor = "bg-white border-l-8 border-green-500";
-      let textColor = "text-green-700";
-
-      let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" aria-label="Archiver le ticket. Commande donnée au client." class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-hand-holding-box mr-2" aria-hidden="true"></i> DONNÉE AU CLIENT</button>`;
-
-      if (isWaiting) {
-        ticketColor = "bg-white border-l-8 border-gray-400 opacity-80";
-        textColor = "text-gray-600";
-        btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" aria-label="Forcer la mise en cuisson de la commande" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i class="fas fa-fire mr-2" aria-hidden="true"></i> Forcer Cuisson</button>`;
-      } else if (isNew) {
-        ticketColor = "bg-white border-l-8 border-red-500";
-        textColor = "text-red-700";
-        btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" aria-label="Marquer la commande comme prête à être retirée" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-check mr-2" aria-hidden="true"></i> MARQUER PRÊTE</button>`;
-      }
-
-      // 💰 GESTION DU VISUEL DE PAIEMENT & A11Y
-      const paymentStatus = commande.paiement?.statut || "en_attente";
-      const isPaid = paymentStatus === "paye";
-
-      const priceDisplay = isPaid
-        ? `<p class="font-black text-2xl text-green-600 opacity-50 line-through" aria-label="Prix payé : ${commande.total.toFixed(2)} euros">${commande.total.toFixed(2)} €</p>`
-        : `<p class="font-black text-2xl ${textColor}" aria-label="Prix à encaisser : ${commande.total.toFixed(2)} euros">${commande.total.toFixed(2)} €</p>`;
-
-      const paymentBadgeHtml = isPaid
-        ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" aria-label="Annuler l'encaissement. Actuellement payé." class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition active:scale-95 flex items-center gap-1 hover:bg-green-200">
-                    <i class="fas fa-check-circle" aria-hidden="true"></i> PAYÉ
-                   </button>`
-        : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" aria-label="Encaisser la commande de ${commande.total.toFixed(2)} euros." class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition active:scale-95 flex items-center gap-1 animate-pulse hover:bg-orange-200">
-                    <i class="fas fa-cash-register" aria-hidden="true"></i> ENCAISSER
-                   </button>`;
-
-      const ticketHtml = `
-                <div class="${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up" role="article" aria-labelledby="ticket-title-${id}">
-                    <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
-                        <div>
-                            <h3 id="ticket-title-${id}" class="font-black text-2xl text-gray-900">${safeClientName}</h3>
-                            <p class="text-sm text-gray-500 font-bold mt-1" aria-label="Heure de réception : ${timeString}"><i class="far fa-clock" aria-hidden="true"></i> ${timeString}</p>
-                        </div>
-                        <div class="flex flex-col items-end">
-                            ${priceDisplay}
-                            ${paymentBadgeHtml}
-                        </div>
-                    </div>
-                    <ul class="mb-5 text-gray-800 space-y-1" aria-label="Détail des plats">${itemsHtml}</ul>
-                    ${btnHtml}
-                </div>`;
-
-      if (isWaiting) {
-        if (waitingOrdersContainer)
-          waitingOrdersContainer.innerHTML += ticketHtml;
-        countWaiting++;
-      } else if (isNew) {
-        newOrdersContainer.innerHTML += ticketHtml;
-        countNew++;
-      } else {
-        readyOrdersContainer.innerHTML += ticketHtml;
-        countReady++;
-      }
-    });
-
-    if (document.getElementById("count-waiting"))
-      document.getElementById("count-waiting").innerText = countWaiting;
-    document.getElementById("count-new").innerText = countNew;
-    document.getElementById("count-ready").innerText = countReady;
-    isFirstLoad = false;
-  });
-  console.log("🟢 Radar Cuisine ACTIVÉ (Mode 3 Colonnes).");
+    console.log("🟢 Radar Cuisine ACTIVÉ (Mode Réactif Hautes Performances).");
 }
 // 3. Crée cette nouvelle fonction pour couper le robinet :
 function stopKitchenRadar() {
