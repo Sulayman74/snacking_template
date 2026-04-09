@@ -56,7 +56,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 const auth = getAuth(app);
-const db = getFirestore(app);
+export const db = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app, "europe-west1");
 // 🛡️ INITIALISATION DU BOUCLIER APP CHECK (reCAPTCHA v3)

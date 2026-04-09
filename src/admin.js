@@ -1,6 +1,7 @@
 // import "./bridge.js";
-import "./snack-config.js";
 import "./firebase-init.js";
+import "./snack-config.js";
+
 import { escapeHTML } from "./utils.js";
 
 const {
