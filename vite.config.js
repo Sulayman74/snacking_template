@@ -5,20 +5,20 @@ import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
 
 const seoPath = resolve(__dirname, 'snacks-seo.json');
-let snacksSeo = {};
-if (fs.existsSync(seoPath)) {
-  snacksSeo = JSON.parse(fs.readFileSync(seoPath, 'utf-8'));
-} else {
-  snacksSeo = {
-    "Ym1YiO4Ue5Fb5UXlxr06": {
-      "title": "O'Tacos Fusion",
-      "desc": "Les meilleurs Tacos et Burgers de la ville en Click & Collect.",
-      "theme_color": "#1E2938",
-      "logoUrl": "/assets/logo.webp",
-      "shadowClass": "shadow-red-600/40"
-    }
-  };
-}
+  let snacksSeo = {};
+  if (fs.existsSync(seoPath)) {
+    snacksSeo = JSON.parse(fs.readFileSync(seoPath, 'utf-8'));
+  } else {
+    snacksSeo = {
+      "Ym1YiO4Ue5Fb5UXlxr06": {
+        "title": "O'Tacos Fusion",
+        "desc": "Les meilleurs Tacos et Burgers de la ville en Click & Collect.",
+        "theme_color": "#1E2938",
+        "logoUrl": "/assets/logo.webp",
+        "shadowClass": "shadow-red-600/40"
+      }
+    };
+  }
 
 export default defineConfig(() => {
   const currentSnackId = process.env.SNACK_ID || 'Ym1YiO4Ue5Fb5UXlxr06'
@@ -49,7 +49,7 @@ export default defineConfig(() => {
           name: seoData.title,
           short_name: seoData.title.split('|')[0].trim(), // Prend juste la 1ère partie du titre
           description: seoData.desc,
-          theme_color: seoData.color,
+          theme_color: seoData.theme_color,
           background_color: '#ffffff',
           orientation: 'portrait-primary', // 📱 BONUS : Bloque l'app en mode portrait !
           categories: ['food', 'shopping'], // 📱 BONUS : Aide Android à classer ton app dans le tiroir d'applications
