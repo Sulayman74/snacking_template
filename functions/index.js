@@ -272,6 +272,55 @@ exports.createPaymentIntent = onCall({ region: "europe-west1" }, async (request)
         throw new HttpsError("internal", "Impossible d'initialiser le paiement.");
     }
 });
+
+
+// ============================================================================
+// 🔔 FONCTION 5 : NOTIFICATION "COMMANDE PRÊTE" (V2)
+// ============================================================================
+exports.onOrderStatusChange = onDocumentUpdated("commandes/{orderId}", async (event) => {
+    const newData = event.data.after.data();
+    const oldData = event.data.before.data();
+    const orderId = event.params.orderId;
+
+    // 🎯 On ne déclenche que si le statut passe de n'importe quoi à "prete"
+    if (oldData.statut !== 'prete' && newData.statut === 'prete') {
+        const userId = newData.userId;
+        
+        try {
+            // 1. Chercher le token du client dans la collection 'users'
+            // On utilise la constante 'db' que tu as déjà définie en haut
+            const userDoc = await db.collection('users').doc(userId).get();
+            const userData = userDoc.data();
+            const fcmToken = userData ? userData.fcmToken : null;
+
+            if (fcmToken) {
+                // 2. Préparer le message
+                const message = {
+                    notification: {
+                        title: 'C\'est prêt ! 🍟',
+                        body: `Votre commande #${orderId.slice(-4).toUpperCase()} est prête. Bon appétit !`
+                    },
+                    // Optionnel : On peut ajouter un lien vers l'app
+                    webpush: {
+                        fcm_options: {
+                            link: "https://snacking-template.web.app/"
+                        }
+                    },
+                    token: fcmToken
+                };
+
+                // 3. Envoyer via Messaging
+                const response = await getMessaging().send(message);
+                console.log(`✅ Notif "Prête" envoyée pour commande ${orderId} :`, response);
+            } else {
+                console.log(`⚠️ Pas de token FCM pour l'utilisateur ${userId}.`);
+            }
+        } catch (error) {
+            console.error("❌ Erreur lors de l'envoi de la notification de commande :", error);
+        }
+    }
+});
+
 // TODO ------------------------------ pour Stripe Connect 
 // Aiguillage Multi-tenant (Aperçu de ta future fonction)
 // exports.createCheckoutSession = onCall({ region: "europe-west1" }, async (request) => {

@@ -486,6 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 window.switchView = function (viewName, ignoreHistory = false) {
+  // 1. Sélection des éléments
   const fullMenu = document.getElementById("full-menu");
   const mobileOverlay = document.getElementById("mobile-menu-overlay");
   const mobileBtnIcon = document.querySelector("#mobile-menu-btn i");
@@ -493,21 +494,34 @@ window.switchView = function (viewName, ignoreHistory = false) {
   const btnHome = document.getElementById("nav-btn-home");
   const btnMenu = document.getElementById("nav-btn-menu");
 
-  if (viewName === "menu") {
-    if (navIndicator) navIndicator.style.transform = "translateX(200%)";
-    btnHome?.classList.replace("text-white", "text-gray-400");
-    btnMenu?.classList.replace("text-gray-400", "text-white");
-    btnMenu?.classList.add("nav-active");
-    btnHome?.classList.remove("nav-active");
+  // 2. Nettoyage global (Reset des états UI & A11y)
+  const btns = [btnHome, btnMenu];
+  btns.forEach(btn => {
+    if (!btn) return;
+    btn.classList.remove("is-active", "text-white");
+    btn.classList.add("text-gray-200"); // Meilleur contraste que gray-400 pour Lighthouse
+    btn.setAttribute("aria-selected", "false");
+  });
 
-    fullMenu.classList.remove("hidden");
+  if (viewName === "menu") {
+    // --- MODE MENU ---
+    if (navIndicator) navIndicator.style.transform = "translateX(200%)";
+    
+    // UI & Accessibilité
+    btnMenu?.classList.add("is-active", "text-white");
+    btnMenu?.classList.remove("text-gray-200");
+    btnMenu?.setAttribute("aria-selected", "true");
+
+    // Affichage de la vue
+    fullMenu?.classList.remove("hidden");
     document.body.style.overflow = "hidden";
 
-    // 🪄 MAGIE : On simule une nouvelle page pour le téléphone !
+    // Historique PWA
     if (!ignoreHistory) {
-        window.history.pushState({ overlay: 'menu' }, 'Menu', '#menu');
+      window.history.pushState({ overlay: 'menu' }, 'Menu', '#menu');
     }
 
+    // Fermeture du menu burger si ouvert
     if (mobileOverlay && !mobileOverlay.classList.contains("hidden")) {
       mobileOverlay.classList.replace("opacity-100", "opacity-0");
       setTimeout(() => {
@@ -516,20 +530,22 @@ window.switchView = function (viewName, ignoreHistory = false) {
       }, 300);
       mobileBtnIcon?.classList.replace("fa-times", "fa-bars");
     }
-  } else {
-    // Retour à l'accueil
-    if (navIndicator) navIndicator.style.transform = "translateX(0%)";
-    btnHome?.classList.replace("text-gray-400", "text-white");
-    btnMenu?.classList.replace("text-white", "text-gray-400");
-    btnHome?.classList.add("nav-active");
-    btnMenu?.classList.remove("nav-active");
 
-    fullMenu.classList.add("hidden");
+  } else {
+    // --- MODE ACCUEIL ---
+    if (navIndicator) navIndicator.style.transform = "translateX(0%)";
+    
+    // UI & Accessibilité
+    btnHome?.classList.add("is-active", "text-white");
+    btnHome?.classList.remove("text-gray-200");
+    btnHome?.setAttribute("aria-selected", "true");
+
+    fullMenu?.classList.add("hidden");
     document.body.style.overflow = "";
 
-    // 🪄 MAGIE : Si on ferme avec la croix, on nettoie l'URL proprement
+    // Nettoyage de l'URL
     if (!ignoreHistory && window.location.hash === '#menu') {
-        window.history.back(); 
+      window.history.back(); 
     }
 
     if (viewName === "home") {
@@ -537,6 +553,17 @@ window.switchView = function (viewName, ignoreHistory = false) {
     }
   }
 };
+
+/**
+ * 💡 BONUS : Gestion du bouton "Précédent" du téléphone (Android/iOS Swipe)
+ * Indispensable pour un score A11y parfait et une UX native.
+ */
+window.addEventListener('popstate', (event) => {
+  if (window.location.hash !== '#menu') {
+    // Si l'utilisateur fait "retour" alors que le menu est ouvert, on ferme proprement
+    window.switchView('home', true); 
+  }
+});
 
 if ("clearAppBadge" in navigator) {
   navigator

@@ -12,7 +12,7 @@ if (fs.existsSync(seoPath)) {
   snacksSeo = {
     "Ym1YiO4Ue5Fb5UXlxr06": {
       "title": "O'Tacos Fusion",
-      "desc": "Les meilleurs Tacos et Burgers de la ville en Click & Collect et Livraison.",
+      "desc": "Les meilleurs Tacos et Burgers de la ville en Click & Collect.",
       "theme_color": "#1E2938",
       "logoUrl": "/assets/logo.webp",
       "shadowClass": "shadow-red-600/40"
