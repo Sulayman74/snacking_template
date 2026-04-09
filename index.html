@@ -982,47 +982,47 @@
         style="transition-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);"
       ></div>
 
-      <a
-        onclick="switchView('home')"
+<button
+        data-action="switch-home"
         id="nav-btn-home"
         role="tab"
         aria-selected="true"
         aria-label="Retour à l'accueil"
-        class="group is-active relative z-10 flex flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+        class="group is-active relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
       >
-        <i class="fas fa-home text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1" aria-hidden="true"></i>
+        <i class="fas fa-home text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none" aria-hidden="true"></i>
         <span class="sr-only">Accueil</span>
-        <span class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1">
+        <span class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1 pointer-events-none">
           Accueil
         </span>
-      </a>
+      </button>
 
-      <div class="relative flex justify-center items-center">
-        <a
-          href="#"
+      <div class="relative flex w-full h-full justify-center items-center pointer-events-none">
+        <button
+          data-action="open-cart"
           id="mobile-cta-btn"
           role="button"
           aria-label="Passer commande ou appeler"
-          class="hidden absolute -top-8 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/50"
+          class="hidden absolute -top-8 pointer-events-auto text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
         >
-          <i id="mobile-cta-icon" class="fas fa-utensils text-xl" aria-hidden="true"></i>
-        </a>
+          <i id="mobile-cta-icon" class="fas fa-utensils text-xl pointer-events-none" aria-hidden="true"></i>
+        </button>
       </div>
 
-      <a
-        onclick="switchView('menu')"
+      <button
+        data-action="switch-menu"
         id="nav-btn-menu"
         role="tab"
         aria-selected="false"
         aria-label="Voir la carte du restaurant"
-        class="group relative z-10 flex flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+        class="group relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
       >
-        <i class="fas fa-hamburger text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1" aria-hidden="true"></i>
+        <i class="fas fa-hamburger text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none" aria-hidden="true"></i>
         <span class="sr-only">Menu</span>
-        <span class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1">
+        <span class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1 pointer-events-none">
           Menu
         </span>
-      </a>
+      </button>
     </div>
   </div>
 </nav>

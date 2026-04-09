@@ -16,6 +16,17 @@ document.addEventListener('click', (event) => {
     const id = target.getAttribute('data-id');
 
     switch(action) {
+
+      case 'switch-home':
+            if (typeof window.triggerVibration === "function") window.triggerVibration("light");
+            switchView('home');
+            break;
+            
+        case 'switch-menu':
+            if (typeof window.triggerVibration === "function") window.triggerVibration("light");
+            switchView('menu');
+            break;
+            
         case 'open-product-modal':
             openProductModal(id);
             break;
@@ -485,7 +496,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-window.switchView = function (viewName, ignoreHistory = false) {
+function switchView (viewName, ignoreHistory = false) {
   // 1. Sélection des éléments
   const fullMenu = document.getElementById("full-menu");
   const mobileOverlay = document.getElementById("mobile-menu-overlay");
