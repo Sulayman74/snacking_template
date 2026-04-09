@@ -107,12 +107,28 @@ document.addEventListener('click', (event) => {
         case 'open-delete-modal':
             openDeleteModal(id);
             break;
+        case 'save-product':
+            saveProduct(event);
+            break;
 
         // --- AUTRES ACTIONS ---
         case 'close-modal':
-            // Gère la fermeture de n'importe quelle modale !
             const modalId = target.getAttribute('data-modal-id');
-            closeModal(modalId);
+            const modalToClose = document.getElementById(modalId);
+            if (modalToClose) {
+                const modalContent = modalToClose.querySelector('.bg-white');
+
+                // 1. On lance l'animation de disparition
+                modalToClose.classList.add("opacity-0");
+                if (modalContent) modalContent.classList.add("scale-95");
+
+                // 2. Après l'animation (300ms), on la cache VRAIMENT
+                setTimeout(() => {
+                    modalToClose.classList.add("hidden");
+                    // 🧹 OPTIONNEL MAIS SÉCURISÉ : On force le centrage ici si Tailwind fait des siennes
+                    modalToClose.classList.add("flex", "items-center", "justify-center"); 
+                }, 300);
+            }
             break;
     }
 });
@@ -692,8 +708,8 @@ async function openEditModal(productId){
   if (!product) return;
   currentEditingProductId = productId;
 
-  document.getElementById("edit-modal-title").innerText =
-    `Modifier : ${product.nom}`;
+  document.getElementById("edit-modal-title").innerText = `Modifier : ${product.nom}`;
+  document.getElementById("edit-nom").value = product.nom || "";
   document.getElementById("edit-desc").value = product.description || "";
   document.getElementById("edit-prix").value = product.prix || 0;
   document.getElementById("edit-prix-menu").value = product.menuPriceAdd || 2.5;
@@ -758,10 +774,14 @@ async function openEditModal(productId){
 
   // Affichage de la modale
   const modal = document.getElementById("edit-product-modal");
-  modal.classList.remove("hidden");
+  const modalContent = modal.querySelector(".bg-white");
+  modal.classList.add("opacity-0");
+  modalContent.classList.add("scale-95");
+  modal.classList.remove("hidden"); // On la rend visible (mais transparente)
+  // 2. On lance l'animation d'apparition
   setTimeout(() => {
     modal.classList.remove("opacity-0");
-    modal.querySelector(".bg-white").classList.remove("scale-95");
+    modalContent.classList.remove("scale-95");
   }, 10);
 };
 
@@ -855,119 +875,141 @@ window.openAddProductModal = () => {
 };
 
 // ==========================================
-// 💾 SAUVEGARDE DU PRODUIT (UNIQUE ET SÉCURISÉ)
+// 💾 SAUVEGARDE DU PRODUIT (CRÉATION ET ÉDITION)
 // ==========================================
-document.getElementById("edit-product-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+async function saveProduct(event){
+    // Si c'est déclenché par un formulaire, on bloque le rechargement de la page
+    if (event) event.preventDefault();
+
     const btn = document.getElementById("save-product-btn");
+    if (!btn) return;
+
     const originalBtnHtml = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sauvegarde...';
     btn.disabled = true;
 
     try {
-      // 1. Récupération des données
-      const nom = document.getElementById("edit-nom").value;
-      const desc = document.getElementById("edit-desc").value;
-      const prix = parseFloat(document.getElementById("edit-prix").value);
-      const prixMenu = parseFloat(document.getElementById("edit-prix-menu").value || 0);
-      const fileInput = document.getElementById("edit-img-file");
-      const tagChoisi = document.getElementById("edit-tags").value;
-      let categorieChoisie = document.getElementById("edit-category").value;
-      let categorieTitre = null;
-      // 🪄 Si le client a créé une nouvelle catégorie
-      if (categorieChoisie === "NEW") {
-          const newCatRaw = document.getElementById("edit-new-category").value.trim();
-          if (!newCatRaw) {
-              window.showToast("Veuillez saisir le nom de la catégorie", "error");
-              btn.innerHTML = originalBtnHtml;
-              btn.disabled = false;
-              return;
-          }
-          categorieTitre = newCatRaw; // "🥗 Salades Fraîches"
-          // On génère un ID technique propre (ex: "salades-fraiches")
-          categorieChoisie = newCatRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-");
-      }
-      
-      const allowMenuCheckbox = document.getElementById("edit-allow-menu");
-      const allowMenu = allowMenuCheckbox ? allowMenuCheckbox.checked : true;
+        const { doc, updateDoc, addDoc, collection, serverTimestamp } = window.fs;
+        const { ref, uploadBytes, getDownloadURL } = window.storage;
 
-    // 💡 GESTION INTELLIGENTE DES CRUDITÉS
-      const hasCrudites = document.getElementById("edit-has-crudites").checked;
-      let finalCrudites = null;
-      if (hasCrudites) {
-          const cruditesInput = document.getElementById("edit-crudites-list").value;
-          // Transforme "Salade, Tomate, Oignon" en ["Salade", "Tomate", "Oignon"]
-          finalCrudites = cruditesInput.split(',').map(s => s.trim()).filter(s => s !== "");
-          if (finalCrudites.length === 0) finalCrudites = ["Salade", "Tomate", "Oignon"];
-      }
+        // 1. Récupération des données (avec .trim() pour nettoyer les espaces)
+        const nom = document.getElementById("edit-nom").value.trim();
+        const desc = document.getElementById("edit-desc").value.trim();
+        const prix = parseFloat(document.getElementById("edit-prix").value) || 0;
+        const prixMenu = parseFloat(document.getElementById("edit-prix-menu").value) || 0;
+        const fileInput = document.getElementById("edit-img-file");
+        const tagChoisi = document.getElementById("edit-tags").value.trim();
+        let categorieChoisie = document.getElementById("edit-category").value;
+        let categorieTitre = null;
 
-      // 💡 GESTION INTELLIGENTE DES SAUCES
-      const hasSauces = document.getElementById("edit-has-sauces").checked;
-      let finalSauces = null;
-      if (hasSauces) {
-          const saucesInput = document.getElementById("edit-sauces-list").value;
-          const maxSauces = parseInt(document.getElementById("edit-sauces-max").value) || 2;
-          const listeSauces = saucesInput.split(',').map(s => s.trim()).filter(s => s !== "");
-          
-          if (listeSauces.length > 0) {
-              finalSauces = { liste: listeSauces, max: maxSauces };
-          }
-      }
+        // 🪄 Si le client a créé une nouvelle catégorie
+        if (categorieChoisie === "NEW") {
+            const newCatRaw = document.getElementById("edit-new-category").value.trim();
+            if (!newCatRaw) {
+                window.showToast("Veuillez saisir le nom de la catégorie", "error");
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                return;
+            }
+            categorieTitre = newCatRaw;
+            // 🛡️ On réutilise notre super nettoyeur d'ID !
+            categorieChoisie = newCatRaw.toLowerCase().normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, "-")
+                .replace(/^-+|-+$/g, ''); // 🧹 Supprime les tirets parasites aux extrémités
+        }
+        
+        const allowMenuCheckbox = document.getElementById("edit-allow-menu");
+        const allowMenu = allowMenuCheckbox ? allowMenuCheckbox.checked : true;
 
-      // 2. Formatage de l'objet (On utilise updateData PARTOUT)
-      let updateData = {
-        nom: nom,
-        description: desc,
-        prix: prix,
-        menuPriceAdd: prixMenu,
-        tags: tagChoisi ? [tagChoisi] : [],
-        categorieId: categorieChoisie,
-        ...(categorieTitre && { categorieTitre: categorieTitre }),
-        allowMenu: allowMenu,
-        hasCrudites: hasCrudites,     
-        crudites: finalCrudites,      
-        choixSauces: finalSauces,     
-        updatedAt: serverTimestamp(),
-      };
+        // 🥗 GESTION INTELLIGENTE DES CRUDITÉS
+        const hasCrudites = document.getElementById("edit-has-crudites").checked;
+        let finalCrudites = null;
+        if (hasCrudites) {
+            const cruditesInput = document.getElementById("edit-crudites-list").value;
+            finalCrudites = cruditesInput.split(',').map(s => s.trim()).filter(s => s !== "");
+            if (finalCrudites.length === 0) finalCrudites = ["Salade", "Tomate", "Oignon"];
+        }
 
-      // 3. Gestion de l'image (si nouvelle image sélectionnée)
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-        const storageReference = ref(window.storage, `produits/${currentAdminSnackId}/${fileName}`);
-        await uploadBytes(storageReference, file);
-        updateData.image = await getDownloadURL(storageReference);
-      }
+        // 🥣 GESTION INTELLIGENTE DES SAUCES
+        const hasSauces = document.getElementById("edit-has-sauces").checked;
+        let finalSauces = null;
+        if (hasSauces) {
+            const saucesInput = document.getElementById("edit-sauces-list").value;
+            const maxSauces = parseInt(document.getElementById("edit-sauces-max").value) || 2;
+            const listeSauces = saucesInput.split(',').map(s => s.trim()).filter(s => s !== "");
+            
+            if (listeSauces.length > 0) {
+                finalSauces = { liste: listeSauces, max: maxSauces };
+            }
+        }
 
-      // 4. Envoi à Firestore (Création ou Mise à jour)
-      if (currentEditingProductId) {
-        // 🔄 MISE À JOUR
-        await updateDoc(doc(window.db, "produits", currentEditingProductId), updateData);
-        window.showToast("Produit mis à jour avec succès !", "success");
-      } else {
-        // 🆕 CRÉATION
-        updateData.snackId = currentAdminSnackId;
-        updateData.createdAt = serverTimestamp();
-        updateData.isAvailable = true;
+        // 2. Formatage de l'objet Firebase
+        let updateData = {
+            nom: nom,
+            description: desc,
+            prix: prix,
+            menuPriceAdd: prixMenu,
+            tags: tagChoisi ? [tagChoisi] : [],
+            categorieId: categorieChoisie,
+            ...(categorieTitre && { categorieTitre: categorieTitre }),
+            allowMenu: allowMenu,
+            hasCrudites: hasCrudites,     
+            crudites: finalCrudites,      
+            choixSauces: finalSauces,     
+            updatedAt: serverTimestamp(),
+        };
 
-        await addDoc(collection(window.db, "produits"), updateData);
-        window.showToast("Nouveau produit ajouté !", "success");
-      }
+        // 3. Gestion de l'image (si nouvelle image)
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
+            const storageReference = ref(window.storage, `produits/${currentAdminSnackId}/${fileName}`);
+            await uploadBytes(storageReference, file);
+            updateData.image = await getDownloadURL(storageReference);
+        }
 
-      // 5. Nettoyage de l'UI
-closeModal("edit-product-modal");
-      loadAdminProducts(); // Recharge la grille en direct
+        // 4. Envoi à Firestore (Création ou Mise à jour)
+        if (currentEditingProductId) {
+            // 🔄 MISE À JOUR
+            await updateDoc(doc(window.db, "produits", currentEditingProductId), updateData);
+            window.showToast("Produit mis à jour avec succès !", "success");
+        } else {
+            // 🆕 CRÉATION
+            updateData.snackId = currentAdminSnackId;
+            updateData.createdAt = serverTimestamp();
+            updateData.isAvailable = true;
+            await addDoc(collection(window.db, "produits"), updateData);
+            window.showToast("Nouveau produit ajouté !", "success");
+        }
+
+        // 5. Nettoyage de l'UI
+       // 🎉 5. SUCCÈS, NETTOYAGE & FERMETURE
+        if (typeof loadAdminProducts === "function") loadAdminProducts(); // On rafraîchit la grille en arrière-plan
+        
+        const modal = document.getElementById("edit-product-modal");
+        if (modal) {
+            const modalContent = modal.querySelector(".bg-white");
+            
+            // On lance l'animation de disparition
+            modal.classList.add("opacity-0");
+            if (modalContent) modalContent.classList.add("scale-95");
+            
+            // On cache complètement après 300ms et on sécurise le centrage
+            setTimeout(() => {
+                modal.classList.add("hidden");
+                modal.classList.add("flex", "items-center", "justify-center"); 
+            }, 300);
+        }
 
     } catch (error) {
-      console.error("Erreur de sauvegarde :", error);
-      window.showToast("Erreur lors de la sauvegarde.", "error");
+        console.error("🔥 Erreur de sauvegarde :", error);
+        window.showToast("Erreur lors de la sauvegarde.", "error");
     } finally {
-      // On rend le bouton cliquable à nouveau
-      btn.innerHTML = originalBtnHtml;
-      btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+        btn.disabled = false;
     }
-});
-
+};
 // ==========================================
 // 💡 BONUS UX : AFFICHER/CACHER LE PRIX DU MENU
 // ==========================================
@@ -1198,12 +1240,22 @@ window.importProductsCSV = async (event) => {
         const lines = text.split(/\r?\n/);
         let importedCount = 0;
 
-        // 🛡️ OUTIL : Nettoyeur de chaînes (Enlève les guillemets d'Excel et les accolades parasites)
+// 🛡️ OUTIL : Nettoyeur de chaînes RENFORCÉ
         const cleanString = (str) => {
             if (!str) return "";
             return str.replace(/[{}]/g, '')     // Supprime les accolades
                       .replace(/^"|"$/g, '')    // Supprime les guillemets au début et à la fin
                       .trim();                  // Supprime les espaces inutiles
+        };
+        
+        // 🛡️ OUTIL NOUVEAU : Nettoyeur spécial pour les IDs de catégorie
+        // Enlève les espaces, les accents, met en minuscules, ET supprime les caractères spéciaux parasites aux extrémités
+        const createCleanId = (str) => {
+            return str.normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "") // Enlève les accents
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]/g, "-")      // Remplace tout ce qui n'est pas lettre/chiffre par des tirets
+                      .replace(/^-+|-+$/g, '');        // 🧹 MAGIE : Supprime les tirets restants au début ou à la fin (ex: "drinks-" devient "drinks")
         };
 
         for (let i = 1; i < lines.length; i++) {
@@ -1227,8 +1279,8 @@ window.importProductsCSV = async (event) => {
             const prix = parseFloat(prixPropre);
             
             // Nettoyage de la catégorie
-            const categoriePure = cleanString(catRaw).toLowerCase();
-            const categorieId = categoriePure.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-");
+            const categoriePure = cleanString(catRaw); // "Drinks / " ou "  Boissons_ "
+            const categorieId = createCleanId(categoriePure); // Deviendra strictement "drinks" ou "boissons"
 
             // 2. L'INTELLIGENCE ARTIFICIELLE DU CODE (Déductions)
             let icon = "🍽️";

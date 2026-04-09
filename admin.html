@@ -314,10 +314,7 @@
       <div
         class="bg-white w-full max-w-lg rounded-3xl p-6 relative shadow-2xl transform transition-transform scale-95 max-h-[90vh] overflow-y-auto"
       >
-        <button
-          onclick="closeEditModal()"
-          class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-gray-400/40 p-1 rounded-full transition z-10"
-        >
+       <button data-action="close-modal" data-modal-id="edit-product-modal" class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-gray-400/40 p-1 rounded-full transition z-10">
           <i class="fas fa-times text-xl flex justify-center items-center"></i>
         </button>
 
@@ -482,6 +479,7 @@
           </div>
           <button
             type="submit"
+            data-action="save-product"
             id="save-product-btn"
             class="w-full py-4 mt-4 bg-green-600 text-white rounded-xl font-bold shadow-lg hover:bg-green-700 transition flex items-center justify-center gap-2"
           >
@@ -525,10 +523,7 @@
             <i class="fas fa-trash"></i> Oui, supprimer définitivement
           </button>
 
-          <button
-            onclick="closeDeleteModal()"
-            class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition"
-          >
+         <button data-action="close-modal" data-modal-id="delete-confirm-modal" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition">
             Annuler
           </button>
         </div>
