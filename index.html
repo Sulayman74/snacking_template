@@ -2,7 +2,7 @@
 <html lang="fr" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     <!-- <meta name="robots" content="noindex, nofollow"> -->
     <title>{{SEO_TITLE}}</title>
     <!-- <meta http-equiv="Content-Security-Policy" content="
@@ -296,7 +296,7 @@
     />
     <link rel="preload" as="image" href="{{LOGO_URL}}" />
     <link rel="modulepreload" href="/src/app.js" />
-    <link rel="stylesheet" href="src/styles.css" />
+    <link rel="stylesheet" href="/src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <style>
@@ -988,7 +988,7 @@
         role="tab"
         aria-selected="true"
         aria-label="Retour à l'accueil"
-        class="group is-active relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
+        class="cursor-pointer group is-active relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
       >
         <i class="fas fa-home text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none" aria-hidden="true"></i>
         <span class="sr-only">Accueil</span>
@@ -1003,7 +1003,7 @@
           id="mobile-cta-btn"
           role="button"
           aria-label="Passer commande ou appeler"
-          class="hidden absolute -top-8 pointer-events-auto text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
+          class="cursor-pointer hidden absolute -top-8 pointer-events-auto text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
         >
           <i id="mobile-cta-icon" class="fas fa-utensils text-xl pointer-events-none" aria-hidden="true"></i>
         </button>
@@ -1015,7 +1015,7 @@
         role="tab"
         aria-selected="false"
         aria-label="Voir la carte du restaurant"
-        class="group relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
+        class="cursor-pointer group relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
       >
         <i class="fas fa-hamburger text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none" aria-hidden="true"></i>
         <span class="sr-only">Menu</span>
@@ -1727,6 +1727,6 @@ data-action="process-checkout"
         ></div>
       </div>
     </div>
-    <script type="module" src="src/app.js"></script>
+    <script type="module" src="/src/app.js"></script>
   </body>
 </html>
