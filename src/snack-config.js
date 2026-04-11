@@ -46,6 +46,11 @@ const SAAS_THEMES = {
 
 window.loadSnackConfig = async (db, snackId) => {
 try {
+  // 🚀 Cache en mémoire : évite une lecture Firestore si le snack est déjà chargé
+  if (window.snackConfig?.identity?.id === snackId) {
+    return window.snackConfig;
+  }
+
   const { doc, getDoc } = window.fs;
 
   const snackRef = doc(db, "snacks", snackId);

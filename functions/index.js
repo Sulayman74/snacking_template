@@ -5,7 +5,6 @@ const { getMessaging } = require("firebase-admin/messaging");
 const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const { getStorage } = require("firebase-admin/storage");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const {RecaptchaEnterpriseServiceClient} = require('@google-cloud/recaptcha-enterprise');
 const logger = require("firebase-functions/logger");
 const { onCall,HttpsError} = require("firebase-functions/v2/https");
 const path = require("path");
@@ -132,7 +131,7 @@ function chunkArray(array, size) {
 // ============================================================================
 // 🚀 FONCTION 3 : LE ROBOT MARKETING PUSH (CRON JOB)
 // ============================================================================
-exports.processPushCampaigns = onSchedule({schedule:"every 5 minutes",region: "europe-west1"}, async (event) => {
+exports.processPushCampaigns = onSchedule({ schedule: "every 5 minutes",region: "europe-west1" }, async (_event) => {
     const now = admin.firestore.Timestamp.now();
     
     const thirtyDaysAgoDate = new Date();

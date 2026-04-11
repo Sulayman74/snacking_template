@@ -1,6 +1,8 @@
 // import "./bridge.js";
 import "./firebase-init.js";
 import "./snack-config.js";
+import "./tracking.js";
+import "./pwa.js";
 
 import { escapeHTML } from "./utils.js";
 
@@ -11,6 +13,9 @@ import { escapeHTML } from "./utils.js";
 document.addEventListener("click", (event) => {
   const target = event.target.closest("[data-action]");
   if (!target) return;
+
+  // Empêche le comportement natif des <a href="#"> pour laisser le routeur gérer
+  event.preventDefault();
 
   const action = target.getAttribute("data-action");
   const id = target.getAttribute("data-id");
@@ -74,11 +79,11 @@ document.addEventListener("click", (event) => {
       break;
 
     case "open-tracking-modal":
-      openTrackingModal();
+      window.openTrackingModal();
       break;
 
     case "close-tracking-modal":
-      closeTrackingModal();
+      window.closeTrackingModal();
       break;
 
     case "close-payment-sheet":
@@ -197,8 +202,10 @@ window.initAppVisuals = async () => {
   const fontClass = cfg.theme.fontFamily || "font-sans";
   body.classList.add(fontClass);
 
-  // 🍔 3. CHARGER LE MENU ET LES BEST SELLERS
-  await window.chargerMenuComplet();
+  // 🍔 3. CHARGER LE MENU ET LES BEST SELLERS (seulement si pas encore chargé)
+  if (menuGlobal.length === 0) {
+    await window.chargerMenuComplet();
+  }
 
   // 4. Feature Flags (Fidélité & Commandes)
   const features = cfg.features || {};
@@ -216,6 +223,12 @@ window.initAppVisuals = async () => {
     navLoyalty.style.display = showLoyalty ? "inline-block" : "none";
   if (mobileLoyalty)
     mobileLoyalty.style.display = showLoyalty ? "block" : "none";
+
+  // --- REPRISE DU TRACKING (ici snackConfig est garanti chargé) ---
+  const activeOrderId = localStorage.getItem("activeOrderId");
+  if (activeOrderId && features.enableClickAndCollect) {
+    window.startOrderTracking(activeOrderId);
+  }
 };
 
 // ==========================================
@@ -677,6 +690,10 @@ function switchView(viewName, ignoreHistory = false) {
     fullMenu?.classList.remove("hidden");
     document.body.style.overflow = "hidden";
 
+    // Afficher le bouton panier flottant s'il y a des articles
+    const floatingCart = document.getElementById("floating-cart-container");
+    if (floatingCart && cart.length > 0) floatingCart.classList.remove("hidden");
+
     // Historique PWA
     if (!ignoreHistory) {
       window.history.pushState({ overlay: "menu" }, "Menu", "#menu");
@@ -703,6 +720,10 @@ function switchView(viewName, ignoreHistory = false) {
     fullMenu?.classList.add("hidden");
     document.body.style.overflow = "";
 
+    // Cacher le bouton panier flottant quand on revient sur l'accueil
+    const floatingCart = document.getElementById("floating-cart-container");
+    if (floatingCart) floatingCart.classList.add("hidden");
+
     // Nettoyage de l'URL
     if (!ignoreHistory && window.location.hash === "#menu") {
       window.history.back();
@@ -714,16 +735,6 @@ function switchView(viewName, ignoreHistory = false) {
   }
 }
 window.switchView = switchView;
-/**
- * 💡 BONUS : Gestion du bouton "Précédent" du téléphone (Android/iOS Swipe)
- * Indispensable pour un score A11y parfait et une UX native.
- */
-window.addEventListener("popstate", (event) => {
-  if (window.location.hash !== "#menu") {
-    // Si l'utilisateur fait "retour" alors que le menu est ouvert, on ferme proprement
-    switchView("home", true);
-  }
-});
 
 if ("clearAppBadge" in navigator) {
   navigator
@@ -1120,222 +1131,7 @@ window.triggerVibration = function (type = "light") {
   }
 };
 
-// ============================================================================
-// 📲 GESTION DE L'INSTALLATION PWA (A2HS)
-// ============================================================================
-let deferredPrompt;
-const installBanner = document.getElementById("pwa-install-banner");
-const installBtn = document.getElementById("pwa-install-btn");
-const closeBtn = document.getElementById("pwa-close-btn");
-
-// Le navigateur annonce qu'il est prêt à installer l'app
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault(); // On bloque la mini-bannière moche par défaut
-  deferredPrompt = e; // On sauvegarde l'événement
-
-  // On affiche notre magnifique bannière après 3 secondes (le temps que le client regarde le menu)
-  setTimeout(() => {
-    if (installBanner) {
-      installBanner.classList.remove(
-        "translate-y-32",
-        "pointer-events-none",
-        "opacity-0",
-      );
-      if (typeof window.triggerVibration === "function")
-        window.triggerVibration("light");
-    }
-  }, 3000);
-});
-
-if (installBtn) {
-  installBtn.addEventListener("click", async () => {
-    if (deferredPrompt) {
-      installBanner.classList.add("translate-y-32", "opacity-0"); // On cache la bannière
-      deferredPrompt.prompt(); // On lance la vraie pop-up d'installation du téléphone
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`Résultat de l'installation : ${outcome}`);
-      deferredPrompt = null;
-      if (
-        outcome === "accepted" &&
-        typeof window.triggerVibration === "function"
-      ) {
-        window.triggerVibration("success");
-      }
-    }
-  });
-}
-
-if (closeBtn) {
-  closeBtn.addEventListener("click", () => {
-    installBanner.classList.add(
-      "translate-y-32",
-      "pointer-events-none",
-      "opacity-0",
-    );
-  });
-}
-
-// ============================================================================
-// 🔄 PULL-TO-REFRESH NATIF
-// ============================================================================
-function setupPullToRefresh() {
-  const scrollArea = document.getElementById("full-menu");
-  const ptrIndicator = document.getElementById("ptr-indicator");
-  const ptrIcon = document.getElementById("ptr-icon");
-  let touchStartY = 0;
-  let isPulling = false;
-
-  if (!scrollArea || !ptrIndicator) return;
-
-  // Le doigt touche l'écran
-  scrollArea.addEventListener(
-    "touchstart",
-    (e) => {
-      if (scrollArea.scrollTop === 0) {
-        touchStartY = e.touches[0].clientY;
-        isPulling = true;
-        ptrIndicator.style.transition = "none"; // Suit le doigt parfaitement
-      }
-    },
-    { passive: true },
-  );
-
-  // Le doigt glisse
-  scrollArea.addEventListener(
-    "touchmove",
-    (e) => {
-      if (!isPulling) return;
-      const pullDistance = e.touches[0].clientY - touchStartY;
-
-      // Si on tire vers le bas et qu'on est tout en haut du menu
-      if (pullDistance > 0 && scrollArea.scrollTop === 0) {
-        // Fait descendre la petite bulle (max 60px)
-        const translateY = Math.min(pullDistance / 2, 60);
-        ptrIndicator.style.transform = `translate(-50%, calc(-100% + ${translateY}px))`;
-
-        // L'icône tourne selon la force du tirage
-        ptrIcon.style.transform = `rotate(${Math.min(pullDistance * 2, 180)}deg)`;
-
-        // Si on tire assez fort, on prévient l'utilisateur que c'est prêt à lâcher
-        if (translateY >= 50 && ptrIcon.classList.contains("fa-arrow-down")) {
-          ptrIcon.classList.replace("fa-arrow-down", "fa-arrow-up");
-          if (typeof window.triggerVibration === "function")
-            window.triggerVibration("light");
-        }
-      }
-    },
-    { passive: true },
-  );
-
-  // Le doigt lâche l'écran
-  scrollArea.addEventListener("touchend", async () => {
-    if (!isPulling) return;
-    isPulling = false;
-    ptrIndicator.style.transition = "transform 0.3s ease-out"; // Remet l'animation
-
-    // Si on a tiré assez fort, on rafraîchit !
-    if (ptrIcon.classList.contains("fa-arrow-up")) {
-      ptrIcon.className = "fas fa-spinner fa-spin text-red-600 text-xl"; // Ça charge !
-      if (typeof window.triggerVibration === "function")
-        window.triggerVibration("success");
-
-      // 🔄 On recharge les données depuis Firebase
-      await window.chargerMenuComplet();
-    }
-
-    // On remet la bulle à sa place
-    ptrIndicator.style.transform = "translate(-50%, -100%)";
-    setTimeout(() => {
-      ptrIcon.className = "fas fa-arrow-down text-gray-400 text-xl"; // Reset
-    }, 300);
-  });
-}
-// ============================================================================
-// ⭐ SMART APP REVIEW PROMPT (SEO Booster)
-// ==========================================
-function setupSmartReviewPrompt() {
-  // 1. Si le client a déjà noté l'app, on ne l'embête plus jamais !
-  if (localStorage.getItem("hasRatedApp") === "true") return;
-  // L'envoie vers Google
-  const cfg = window.snackConfig;
-  if (!cfg || !cfg.features || cfg.features.enableSmartReview !== true) {
-    return;
-  }
-
-  // 2. On compte ses visites
-  let visits = parseInt(localStorage.getItem("appVisits") || "0");
-  visits++;
-  localStorage.setItem("appVisits", visits);
-
-  // 3. LE DÉCLENCHEUR : À la Nème visite (Tu peux changer ce chiffre)
-  if (visits === 3) {
-    // On attend 5 secondes après l'ouverture pour ne pas bloquer sa lecture du menu
-    setTimeout(() => {
-      const modal = document.getElementById("app-review-modal");
-      if (modal) {
-        modal.classList.remove("hidden");
-        setTimeout(() => {
-          modal.classList.remove("opacity-0");
-          modal.querySelector(".bg-white").classList.remove("scale-95");
-        }, 10);
-
-        // 📳 Petite vibration double pour attirer son attention
-        if (typeof window.triggerVibration === "function")
-          window.triggerVibration("success");
-      }
-    }, 5000);
-  }
-
-  // --- GESTION DES BOUTONS ---
-  const btnGoogle = document.getElementById("btn-review-google");
-  const btnContact = document.getElementById("btn-review-contact");
-  const btnLater = document.getElementById("btn-review-later");
-  const modal = document.getElementById("app-review-modal");
-
-  const closeModal = () => {
-    modal.classList.add("opacity-0");
-    modal.querySelector(".bg-white").classList.add("scale-95");
-    setTimeout(() => modal.classList.add("hidden"), 300);
-  };
-
-  if (btnGoogle) {
-    btnGoogle.addEventListener("click", () => {
-      // Mémorise qu'il a cliqué
-      localStorage.setItem("hasRatedApp", "true");
-
-      const googleLink =
-        cfg?.reviews?.googleMapsReviewLink ||
-        cfg?.contact?.address?.googleMapsUrl;
-      if (googleLink) window.open(googleLink, "_blank");
-
-      closeModal();
-    });
-  }
-
-  if (btnContact) {
-    btnContact.addEventListener("click", () => {
-      // Mémorise qu'il a cliqué
-      localStorage.setItem("hasRatedApp", "true");
-      closeModal();
-
-      // Le fait glisser doucement vers ton formulaire de contact Formspree
-      document
-        .getElementById("contact")
-        ?.scrollIntoView({ behavior: "smooth" });
-      const sourceAvisInput = document.getElementById("source-avis");
-      if (sourceAvisInput)
-        sourceAvisInput.value = "Suggestion depuis le prompt PWA";
-    });
-  }
-
-  if (btnLater) {
-    btnLater.addEventListener("click", () => {
-      // On remet le compteur à zéro. Il sera redemandé dans 3 visites.
-      localStorage.setItem("appVisits", "0");
-      closeModal();
-    });
-  }
-}
+// PWA (install banner, pull-to-refresh, smart review, deep linking) → src/pwa.js
 
 // --- 1. VARIABLES D'ÉTAT ---
 // ====================================================================
@@ -1993,12 +1789,20 @@ function getCartTotal() {
 
 function updateCartUI() {
   const badge = document.getElementById("cart-badge");
+  const floatingCart = document.getElementById("floating-cart-container");
+  const fullMenu = document.getElementById("full-menu");
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
   if (totalItems > 0) {
     badge.textContent = totalItems;
     badge.classList.remove("hidden");
+    // Afficher le bouton flottant uniquement quand la vue Menu est ouverte
+    if (floatingCart && fullMenu && !fullMenu.classList.contains("hidden")) {
+      floatingCart.classList.remove("hidden");
+    }
   } else {
     badge.classList.add("hidden");
+    if (floatingCart) floatingCart.classList.add("hidden");
   }
 
   // try {
@@ -2352,8 +2156,7 @@ async function finalizeOrderInFirestore(stripePaymentId) {
     // 🎯 MAGIE FINALE : On lance le Tracking pour rassurer le client !
     if (window.snackConfig?.features?.enableClickAndCollect) {
       localStorage.setItem("activeOrderId", docRef.id);
-      if (typeof window.startOrderTracking === "function")
-        window.startOrderTracking(docRef.id);
+      window.startOrderTracking(docRef.id);
     }
   } catch (err) {
     console.error("Erreur Firebase après paiement :", err);
@@ -2364,277 +2167,9 @@ async function finalizeOrderInFirestore(stripePaymentId) {
   }
 }
 
-// ==========================================
-// 🎟️ GESTION DE L'UI DE LA MODALE TRACKING
-// ==========================================
-function openTrackingModal() {
-  const modal = document.getElementById("order-tracking-modal");
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  setTimeout(() => {
-    modal.classList.remove("opacity-0");
-    modal.querySelector(".bg-white").classList.remove("scale-95");
-  }, 10);
-}
+// Tracking (openTrackingModal, closeTrackingModal, startOrderTracking, notifyArrival,
+// visibilitychange, popstate) → src/tracking.js
 
-function closeTrackingModal() {
-  const modal = document.getElementById("order-tracking-modal");
-  modal.classList.add("opacity-0");
-  modal.querySelector(".bg-white").classList.add("scale-95");
-  setTimeout(() => {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-  }, 300);
-}
-
-// ==========================================
-// 📡 LE RADAR DU CLIENT (MISE À JOUR AVEC L'UI)
-// ==========================================
-let unsubscribeClientRadar = null;
-
-// ==========================================
-// 📡 NOTIFICATION ARRIVÉE (POUR LE CHEF)
-// ==========================================
-async function notifyArrival(orderId) {
-  // 👈 On enlève le "async function" anonyme pour une déclaration nommée
-  try {
-    const btn = document.getElementById("tracking-action-btn");
-    if (!btn) return;
-
-    // UX : On montre que l'info part en cuisine
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Transmission au chef...`;
-    btn.disabled = true;
-
-    const { doc, updateDoc } = window.fs;
-    const db = window.db;
-
-    // 🚀 On bascule la commande en "nouvelle" pour faire sonner la tablette du chef !
-    await updateDoc(doc(db, "commandes", orderId), {
-      statut: "nouvelle",
-      dateArriveeClient: window.fs.serverTimestamp(), // Optionnel : pour la stat de temps de prep
-    });
-
-    window.showToast("C'est noté ! Le chef lance la cuisson 🔥", "success");
-
-    if (typeof window.triggerVibration === "function")
-      window.triggerVibration("success");
-  } catch (e) {
-    console.error("Erreur notifyArrival:", e);
-    window.showToast("Erreur lors de la notification du chef.", "error");
-    const btn = document.getElementById("tracking-action-btn");
-    if (btn) btn.disabled = false;
-  }
-}
-
-// 🔥 FUTURE MODULE : firebase-service.js (Interactions directes avec la Base de Données)
-// ============================================================================
-// 📡 TRACKING DE COMMANDE EN TEMPS RÉEL (FIREBASE)
-// ============================================================================
-function startOrderTracking(orderId) {
-  // ⬅️ Fini le window.
-  const trackingBadge = document.getElementById("order-tracking-badge");
-  const badgeText = document.getElementById("badge-text");
-
-  // Éléments de la Modale
-  const orderIdText = document.getElementById("tracking-order-id");
-  const iconContainer = document.getElementById("tracking-icon-container");
-  const icon = document.getElementById("tracking-icon");
-  const title = document.getElementById("tracking-title");
-  const subtitle = document.getElementById("tracking-subtitle");
-  const actionBtn = document.getElementById("tracking-action-btn");
-
-  if (trackingBadge) trackingBadge.classList.remove("hidden");
-  if (orderIdText)
-    orderIdText.textContent = "#" + orderId.slice(-4).toUpperCase();
-
-  if (typeof unsubscribeClientRadar === "function") unsubscribeClientRadar();
-  console.log("🟢 Radar Client ACTIVÉ :", orderId);
-
-  // Écoute Firebase
-  unsubscribeClientRadar = window.fs.onSnapshot(
-    window.fs.doc(window.db, "commandes", orderId),
-    (docSnap) => {
-      if (docSnap.exists()) {
-        const commande = docSnap.data();
-
-        // ⚪ STATUT 1 : EN ATTENTE DU CLIENT
-        if (commande.statut === "en_attente_client") {
-          trackingBadge.className =
-            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
-          badgeText.textContent = "En attente de votre arrivée";
-
-          iconContainer.className =
-            "w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
-          icon.className =
-            "fas fa-car text-5xl text-gray-500 transition-transform duration-500 animate-pulse";
-          title.textContent = "Commande reçue !";
-          title.className = "text-3xl font-black text-gray-900 tracking-tight";
-          subtitle.innerHTML =
-            "Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.";
-
-          if (actionBtn) {
-            actionBtn.innerHTML =
-              "<i class='fas fa-car mr-2' aria-hidden='true'></i> Je suis à 5 min / Sur place";
-            actionBtn.className =
-              "w-full bg-blue-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
-            actionBtn.setAttribute(
-              "aria-label",
-              "Signaler mon arrivée au restaurant pour lancer la cuisson",
-            );
-
-            // 🪄 LA MAGIE DE L'EVENT DELEGATION EST ICI :
-            actionBtn.removeAttribute("onclick"); // Par sécurité
-            actionBtn.setAttribute("data-action", "notify-arrival"); // Nouvelle action !
-            actionBtn.setAttribute("data-id", orderId); // On glisse l'ID de la commande
-          }
-        }
-        // 🟡 STATUT 2 : NOUVELLE (En préparation)
-        else if (commande.statut === "nouvelle") {
-          trackingBadge.className =
-            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
-          badgeText.textContent = "Commande en cours";
-
-          iconContainer.className =
-            "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
-          icon.className =
-            "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
-          title.textContent = "En cuisine !";
-          title.className = "text-3xl font-black text-gray-900 tracking-tight";
-          subtitle.textContent = "Le chef prépare votre commande.";
-
-          if (actionBtn) {
-            actionBtn.textContent = "Super, j'attends !";
-            actionBtn.className =
-              "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
-            actionBtn.setAttribute(
-              "aria-label",
-              "Fermer la fenêtre de suivi de commande",
-            );
-
-            // 🪄 RETOUR AU COMPORTEMENT NORMAL
-            actionBtn.removeAttribute("onclick");
-            actionBtn.setAttribute("data-action", "close-tracking-modal");
-            actionBtn.removeAttribute("data-id");
-          }
-        }
-
-        // 🟢 STATUT : PRÊTE
-        else if (commande.statut === "prete") {
-          trackingBadge.className =
-            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
-          badgeText.textContent = "C'EST PRÊT !";
-
-          iconContainer.className =
-            "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
-          icon.className =
-            "fas fa-check text-5xl text-green-600 transition-transform duration-500";
-          title.textContent = "C'est prêt !";
-          title.className = "text-4xl font-black text-green-600 tracking-tight";
-          subtitle.textContent =
-            "Présentez-vous au comptoir pour la récupérer.";
-
-          if (actionBtn) {
-            actionBtn.innerHTML =
-              "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
-            actionBtn.className =
-              "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
-            actionBtn.setAttribute(
-              "aria-label",
-              "Fermer la fenêtre. Commande prête à être retirée.",
-            );
-
-            actionBtn.removeAttribute("onclick");
-            actionBtn.setAttribute("data-action", "close-tracking-modal");
-            actionBtn.removeAttribute("data-id");
-          }
-
-          window.showToast("🔔 DING ! Votre commande est PRÊTE !", "success");
-          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-
-          openTrackingModal();
-        }
-
-        // ⚪ STATUT : TERMINÉE
-        else if (commande.statut === "terminee") {
-          window.showToast("Bon appétit ! À bientôt.", "success");
-          localStorage.removeItem("activeOrderId");
-
-          if (trackingBadge) trackingBadge.className = "hidden";
-
-          // 🧹 PLUS DE TYPEOF, APPEL DIRECT !
-          try {
-            closeTrackingModal();
-          } catch (e) {}
-
-          if (unsubscribeClientRadar) {
-            unsubscribeClientRadar();
-            unsubscribeClientRadar = null;
-          }
-        }
-      }
-    },
-  );
-}
-
-// ==========================================
-// 🔄 AUTOMATISATION : PAUSE / REPRISE DU RADAR
-// ==========================================
-document.addEventListener("visibilitychange", () => {
-  const activeOrderId = localStorage.getItem("activeOrderId");
-
-  // Si Le client n'a pas de commande en cours, on ne fait rien
-  if (!activeOrderId) return;
-
-  if (document.hidden) {
-    // 🛑 Le client a quitté l'onglet ou verrouillé son téléphone : On coupe Firestore !
-    if (unsubscribeClientRadar) {
-      unsubscribeClientRadar();
-      unsubscribeClientRadar = null;
-      console.log("🔴 Radar Client EN PAUSE (Économie de requêtes).");
-    }
-  } else {
-    // 🟢 Le client rouvre l'onglet pour vérifier où en est son Tacos : On rallume Firestore !
-    if (window.snackConfig?.features?.enableClickAndCollect) {
-      console.log("📡 Reprise du tracking pour la commande :", activeOrderId);
-      startOrderTracking(activeOrderId);
-    }
-  }
-});
-
-// À l'ouverture initiale de l'application
-document.addEventListener("DOMContentLoaded", () => {
-  const activeOrderId = localStorage.getItem("activeOrderId");
-  if (activeOrderId && window.snackConfig?.features?.enableClickAndCollect) {
-    startOrderTracking(activeOrderId);
-  }
-});
-
-// ============================================================================
-// 🔙 GESTION NATIVE DU BOUTON RETOUR (SWIPE BACK iOS / ANDROID)
-// ============================================================================
-
-// 1. On écoute le geste "Retour" du téléphone
-window.addEventListener("popstate", (event) => {
-  // Le client a fait "Retour". On ferme TOUS les overlays actifs !
-
-  // Ferme le Menu (si la barre d'url n'a plus #menu)
-  if (window.location.hash !== "#menu") {
-    const fullMenu = document.getElementById("full-menu");
-    if (fullMenu && !fullMenu.classList.contains("hidden")) {
-      // On appelle switchView('home') en lui disant de ne pas retoucher à l'historique
-      switchView("home", true);
-    }
-  }
-
-  // Ferme la Modale Produit
-  try {
-    closeProductModal(true);
-    closeCartModal(true);
-    closeTrackingModal(true);
-  } catch (e) {
-    console.log(e);
-  }
-});
 
 // ==========================================
 // 🎁 GESTION CARTE FIDÉLITÉ & NOTIFS (UI)
@@ -2648,6 +2183,17 @@ function openClientCard() {
   if (!user) return;
 
   const cfg = window.snackConfig;
+// 🔔 GESTION DU BOUTON NOTIFICATIONS
+  const notifBtn = document.getElementById("promo-notif-btn");
+  if (notifBtn) {
+    // On ne montre le bouton QUE si la permission est encore en mode "par défaut"
+    // Si c'est "granted" (accepté) ou "denied" (refusé), on le cache d'office
+    if (Notification.permission === "default") {
+        notifBtn.classList.remove("hidden");
+    } else {
+        notifBtn.classList.add("hidden");
+    }
+  }
 
   // 1. Mise à jour des textes et du design selon la config SaaS
   if (cfg?.loyalty) {
@@ -2752,6 +2298,10 @@ async function requestNotif() {
     if (permission === "granted") {
       // ✅ ON RÉCUPÈRE CELUI QUE VITE A DÉJÀ INSTALLÉ !
       const registration = await navigator.serviceWorker.ready;
+      const { getToken } = window.authTools;
+      const { updateDoc, doc } = window.fs;
+      const db = window.db;
+      const messaging = window.messaging;
 
       const currentToken = await getToken(messaging, {
         vapidKey:
@@ -2760,7 +2310,7 @@ async function requestNotif() {
       });
 
       if (currentToken) {
-        const user = auth.currentUser;
+        const user = window.auth.currentUser;
         if (user)
           await updateDoc(doc(db, "users", user.uid), {
             fcmToken: currentToken,
@@ -2781,47 +2331,14 @@ async function requestNotif() {
 }
 
 function closeAdminScanner() {
-  const modal = document.getElementById("admin-scanner-modal");
-  if (!modal) return;
-
-  modal.classList.add("hidden");
-  modal.classList.remove("flex");
-
-  // 🚧 Plus tard, on mettra ici la fonction pour éteindre la caméra de Html5Qrcode
+  // On délègue à window.closeAdminScanner (firebase-init.js) qui coupe aussi la caméra
+  if (typeof window.closeAdminScanner === "function") {
+    window.closeAdminScanner();
+  }
 }
 
-// ====================================================================
-// 🧭 LE ROUTEUR DE DÉMARRAGE (Deep Linking)
-// ====================================================================
-document.addEventListener("DOMContentLoaded", () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const pwaAction = urlParams.get("action");
-  const targetId = urlParams.get("id");
+// Deep linking (DOMContentLoaded router) → src/pwa.js
 
-  if (pwaAction) {
-    // On attend que l'initialisation SaaS soit terminée (1s)
-    setTimeout(() => {
-      if (pwaAction === "menu") {
-        switchView("menu"); // Appel direct (plus de window.)
-      } else if (pwaAction === "loyalty") {
-        // Si connecté, on ouvre la carte, sinon la modale de login
-        if (window.auth && window.auth.currentUser) {
-          openClientCard();
-        } else {
-          toggleAuthModal();
-        }
-      } else if (pwaAction === "product" && targetId) {
-        switchView("menu");
-        setTimeout(() => {
-          openProductModal(targetId);
-        }, 600);
-      }
-
-      // Nettoyage de l'URL pour éviter de relancer l'action au refresh
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }, 1000);
-  }
-});
 async function logoutUser() {
   try {
     // On récupère les outils depuis le window
@@ -2836,6 +2353,13 @@ async function logoutUser() {
     console.error("Erreur de déconnexion", error);
   }
 }
+
+// Expositions pour les modules extraits (pwa.js, tracking.js)
+window.toggleAuthModal = toggleAuthModal;
+window.openClientCard = openClientCard;
+window.openProductModal = openProductModal;
+window.closeProductModal = closeProductModal;
+window.closeCartModal = closeCartModal;
 
 // On l'expose pour le routeur
 window.logoutUser = logoutUser;
