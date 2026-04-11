@@ -9,6 +9,7 @@ import "./admin-kitchen.js";
 import "./admin-products.js";
 import "./admin-marketing.js";
 import "./admin-csv.js";
+import "./admin-compta.js";
 
 import { escapeHTML } from "./utils.js";
 
@@ -80,7 +81,6 @@ window.closeModal = (modalId) => {
 
   setTimeout(() => {
     modal.classList.add("hidden");
-    modal.classList.remove("flex");
     if (typeof window.adminResetEditIds === "function")
       window.adminResetEditIds();
   }, 300);
@@ -161,6 +161,8 @@ window.switchAdminTab = (tabName) => {
         window.populatePushProducts();
       }
     }
+
+    if (tabName === "compta") window.loadComptaDashboard();
   }
 };
 

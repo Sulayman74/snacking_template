@@ -20,6 +20,10 @@ window.applySaaSThemeToHTML = () => {
     "pwa-install-btn",
     "btn-review-google",
     "checkout-btn",
+    "loyalty-main-btn",     // Le bouton de la section fidélité
+    "btn-submit-form",      // Le bouton du formulaire de contact
+    "tracking-action-btn",  // Le bouton de la modale de tracking
+    "submit-payment-btn"    // Le bouton Stripe
   ];
   primaryButtons.forEach((id) => {
     const btn = document.getElementById(id);
@@ -126,7 +130,7 @@ function updateUI(user) {
         mobileCtaBtn.setAttribute("data-action", "open-cart");
         mobileCtaBtn.removeAttribute("data-phone");
         mobileCtaBtn.removeAttribute("data-url");
-        mobileCtaBtn.classList.add("bg-green-600", "text-white");
+        mobileCtaBtn.classList.add(primaryBg.split(" ")[0], textOnPrimary);
         mobileCtaIcon.className = "fas fa-shopping-bag text-2xl";
       }
       if (desktopCtaBtn) {
@@ -134,9 +138,9 @@ function updateUI(user) {
         desktopCtaBtn.removeAttribute("data-phone");
         desktopCtaBtn.removeAttribute("data-url");
         desktopCtaBtn.innerHTML = '<i class="fas fa-shopping-bag mr-2"></i> Commander';
-        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-gray-900 text-white`;
+        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition ${primaryBg} ${textOnPrimary}`;
+        if (mobileBurgerCallBtn) mobileBurgerCallBtn.classList.add("hidden");
       }
-      if (mobileBurgerCallBtn) mobileBurgerCallBtn.classList.add("hidden");
     } else if (isDelivery) {
       if (mobileCtaBtn && mobileCtaIcon) {
         mobileCtaBtn.setAttribute("data-action", "open-delivery");
@@ -158,7 +162,7 @@ function updateUI(user) {
         mobileCtaBtn.setAttribute("data-action", "call-phone");
         mobileCtaBtn.setAttribute("data-phone", phoneClean || "");
         mobileCtaBtn.removeAttribute("data-url");
-        mobileCtaBtn.classList.add("bg-green-600", "text-white");
+        mobileCtaBtn.classList.add(primaryBg.split(" ")[0], textOnPrimary);
         mobileCtaIcon.className = "fas fa-phone text-2xl animate-pulse";
       }
       if (desktopCtaBtn) {
@@ -166,7 +170,7 @@ function updateUI(user) {
         desktopCtaBtn.setAttribute("data-phone", phoneClean || "");
         desktopCtaBtn.removeAttribute("data-url");
         desktopCtaBtn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> ${cfg.contact?.phone || "Appeler"}`;
-        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-green-600 text-white`;
+        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition ${primaryBg} ${textOnPrimary}`;
       }
       if (mobileBurgerCallBtn) {
         mobileBurgerCallBtn.href = phoneClean ? `tel:${phoneClean}` : "#";
@@ -413,9 +417,6 @@ function switchView(viewName, ignoreHistory = false) {
     fullMenu?.classList.remove("hidden");
     document.body.style.overflow = "hidden";
 
-    const floatingCart = document.getElementById("floating-cart-container");
-    if (floatingCart && window.cart?.length > 0) floatingCart.classList.remove("hidden");
-
     if (!ignoreHistory) {
       window.history.pushState({ overlay: "menu" }, "Menu", "#menu");
     }
@@ -437,9 +438,6 @@ function switchView(viewName, ignoreHistory = false) {
 
     fullMenu?.classList.add("hidden");
     document.body.style.overflow = "";
-
-    const floatingCart = document.getElementById("floating-cart-container");
-    if (floatingCart) floatingCart.classList.add("hidden");
 
     if (!ignoreHistory && window.location.hash === "#menu") {
       window.history.back();
@@ -682,3 +680,19 @@ document.addEventListener("DOMContentLoaded", () => {
   window.setupPullToRefresh?.();
   window.setupSmartReviewPrompt?.();
 });
+
+// --- GESTION DU MODE OFFLINE ---
+window.addEventListener('online', () => {
+    window.showToast("🌐 Connexion rétablie ! Vos données sont synchronisées.", "success");
+    document.body.classList.remove('is-offline');
+});
+
+window.addEventListener('offline', () => {
+    window.showToast("⚠️ Connexion perdue. L'application reste consultable hors-ligne.", "error");
+    document.body.classList.add('is-offline');
+});
+
+// Vérification initiale au chargement
+if (!navigator.onLine) {
+    document.body.classList.add('is-offline');
+}

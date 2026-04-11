@@ -2,6 +2,8 @@
 // FIREBASE INITIALIZATION & AUTHENTICATION (LE HUB CENTRAL)
 // ============================================================================
 
+import "./scanner.js";
+
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -15,6 +17,7 @@ import {
 import { ReCaptchaV3Provider, initializeAppCheck } from "firebase/app-check";
 // 1. LES IMPORTS (TOUJOURS TOUT EN HAUT !)
 import {
+  Timestamp,
   addDoc,
   collection,
   deleteDoc,
@@ -23,16 +26,19 @@ import {
   getDocs,
   getFirestore,
   increment,
+  initializeFirestore,
   limit,
   onSnapshot,
   orderBy,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   query,
   serverTimestamp,
   setDoc,
   startAfter,
   updateDoc,
   where,
-  writeBatch,
+  writeBatch
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -40,7 +46,6 @@ import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 import { getAnalytics } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
-import "./scanner.js";
 
 // 2. CONFIGURATION
 const firebaseConfig = {
@@ -57,7 +62,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const messaging = getMessaging(app);
-export const db = getFirestore(app);
+// Activation du cache persistant (pour le mode offline)
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
 const storage = getStorage(app);
 const functions = getFunctions(app, "europe-west1");
 // 🛡️ INITIALISATION DU BOUCLIER APP CHECK (reCAPTCHA v3)
@@ -98,9 +106,9 @@ setTimeout(initAnalytics, 3500);
 // ============================================================================
 // 4. EXPORTATION SÉCURISÉE (LE HUB POUR VITE)
 // ============================================================================
+window.db = db;
 window.storage = storage;
 window.auth = auth;
-window.db = db;
 window.messaging = messaging;
 
 window.fs = {
@@ -121,6 +129,7 @@ window.fs = {
   orderBy,
   query,
   serverTimestamp,
+  Timestamp, 
   setDoc,
   startAfter,
   updateDoc,

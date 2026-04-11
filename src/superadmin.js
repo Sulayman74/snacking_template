@@ -5,7 +5,7 @@
 import './snack-config.js';
 import './firebase-init.js';
 
-const { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, serverTimestamp } = window.fs;
+const { collection, doc, getDoc, getDocs, updateDoc, addDoc, serverTimestamp } = window.fs;
 const { onAuthStateChanged, signOut } = window.authTools;
 const auth = window.auth;
 const db = window.db;
@@ -78,9 +78,10 @@ async function loadDashboardData() {
             }
         });
 
-        // 💰 Calcul du MRR (Revenu Mensuel Récurrent)
-        // On simule que chaque snack actif rapporte le prix de l'abonnement
-        const mrr = snacksActifs * PRIX_ABONNEMENT_MENSUEL;
+        // 💰 MRR : somme des tarifs individuels (prixAbonnement) ou tarif de base
+        const mrr = allSnacks
+            .filter(s => !s.maintenanceMode)
+            .reduce((sum, s) => sum + (s.prixAbonnement || PRIX_ABONNEMENT_MENSUEL), 0);
 
         // Mise à jour de l'UI
         document.getElementById("kpi-total-snacks").innerText = allSnacks.length;
@@ -110,32 +111,42 @@ function renderSnacksTable() {
     }
 
     allSnacks.forEach(snack => {
-        // Le badge de statut
-        const statusBadge = snack.maintenanceMode 
+        const statusBadge = snack.maintenanceMode
             ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i class="fas fa-tools mr-1"></i> Maintenance</span>`
             : `<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i class="fas fa-globe mr-1"></i> En Ligne</span>`;
 
-        // Petits badges visuels pour les modules activés
         let featuresHtml = '';
-        if(snack.enableClickAndCollect) featuresHtml += `<i class="fas fa-shopping-bag text-indigo-500 mx-1" title="Click & Collect"></i>`;
-        if(snack.enableLoyaltyCard) featuresHtml += `<i class="fas fa-gift text-pink-500 mx-1" title="Fidélité"></i>`;
-        if(snack.enableViralShare) featuresHtml += `<i class="fas fa-share-nodes text-blue-500 mx-1" title="Partage Viral"></i>`;
+        if (snack.enableClickAndCollect) featuresHtml += `<i class="fas fa-shopping-bag text-indigo-500 mx-1" title="Click & Collect"></i>`;
+        if (snack.enableDelivery)        featuresHtml += `<i class="fas fa-motorcycle text-orange-500 mx-1" title="Livraison"></i>`;
+        if (snack.enableLoyaltyCard)     featuresHtml += `<i class="fas fa-gift text-pink-500 mx-1" title="Fidélité"></i>`;
+        if (snack.enablePushNotifs)      featuresHtml += `<i class="fas fa-bell text-blue-500 mx-1" title="Push Notifs"></i>`;
+        if (snack.enableSmartReview)     featuresHtml += `<i class="fas fa-star text-yellow-500 mx-1" title="Smart Review"></i>`;
+        if (snack.enableViralShare)      featuresHtml += `<i class="fas fa-share-nodes text-teal-500 mx-1" title="Partage Viral"></i>`;
+
+        const mrrClient = (snack.prixAbonnement || PRIX_ABONNEMENT_MENSUEL).toFixed(0);
+        const powerBtnClass = snack.maintenanceMode
+            ? "text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
+            : "text-gray-500 bg-gray-100 hover:bg-gray-200";
 
         tbody.innerHTML += `
             <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
                 <td class="p-4">
                     <div class="font-bold text-gray-900 text-lg">${snack.nom || "Sans Nom"}</div>
-                    <div class="text-xs text-gray-500 uppercase tracking-widest mt-1">
-                        Palette : <span class="font-bold text-gray-700">${snack.colorPalette || "Par défaut"}</span>
+                    <div class="text-xs text-gray-400 mt-1 flex items-center gap-3">
+                        <span class="font-mono">${snack.id}</span>
+                        <span class="bg-green-50 text-green-700 font-black px-2 py-0.5 rounded-md">${mrrClient} €/mois</span>
                     </div>
                 </td>
                 <td class="p-4 text-center">${statusBadge}</td>
-                <td class="p-4 text-center text-lg">${featuresHtml || '<span class="text-gray-400 text-xs uppercase tracking-widest">Aucun module</span>'}</td>
-                <td class="p-4 text-right">
-                    <a href="index.html?s=${snack.id}" target="_blank" class="text-indigo-600 hover:text-indigo-900 font-bold text-sm bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition mr-2">
-                        <i class="fas fa-external-link-alt"></i> Voir
+                <td class="p-4 text-center text-lg">${featuresHtml || '<span class="text-gray-300 text-xs">—</span>'}</td>
+                <td class="p-4 text-right space-x-1 whitespace-nowrap">
+                    <a href="index.html?s=${snack.id}" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 hover:text-white font-bold text-sm bg-indigo-50 hover:bg-indigo-600 px-3 py-2 rounded-lg transition">
+                        <i class="fas fa-external-link-alt text-xs"></i> Voir
                     </a>
-                    <button onclick="toggleMaintenance('${snack.id}', ${snack.maintenanceMode})" class="text-gray-500 hover:text-gray-900 font-bold text-sm bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg transition" title="Gérer le statut">
+                    <button onclick="window.openConfigModal('${snack.id}')" class="text-gray-700 hover:text-white font-bold text-sm bg-gray-100 hover:bg-indigo-600 px-3 py-2 rounded-lg transition" title="Configurer les modules">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button onclick="toggleMaintenance('${snack.id}', ${snack.maintenanceMode})" class="font-bold text-sm px-3 py-2 rounded-lg transition ${powerBtnClass}" title="${snack.maintenanceMode ? 'Mettre en ligne' : 'Mettre en maintenance'}">
                         <i class="fas fa-power-off"></i>
                     </button>
                 </td>
@@ -145,17 +156,136 @@ function renderSnacksTable() {
 }
 
 
-// Fonction globale pour le bouton ON/OFF
+// Fonction globale pour le bouton ON/OFF rapide
 window.toggleMaintenance = async (snackId, currentStatus) => {
     const action = currentStatus ? "mettre EN LIGNE" : "mettre EN MAINTENANCE";
-    if(confirm(`Voulez-vous ${action} ce restaurant ?`)) {
+    if (confirm(`Voulez-vous ${action} ce restaurant ?`)) {
         await updateDoc(doc(db, "snacks", snackId), { maintenanceMode: !currentStatus });
-        loadDashboardData(); // Recharge le tableau avec les nouvelles données
+        loadDashboardData();
     }
 };
 
 // ============================================================================
-// 🪄 4. CRÉATION D'UN NOUVEAU CLIENT (MODALE)
+// ⚙️ 4. CONFIGURATION PAR CLIENT — Feature Flags
+// ============================================================================
+const CONFIG_FLAGS = [
+    "maintenanceMode",
+    "enableClickAndCollect",
+    "enableDelivery",
+    "enableLoyaltyCard",
+    "enablePushNotifs",
+    "enableSmartReview",
+    "enableViralShare",
+];
+
+let currentConfigSnackId = null;
+
+function _setToggle(btn, isOn) {
+    const isMaintenance = btn.id === "cfg-maintenanceMode";
+    const onColor = isMaintenance ? "bg-yellow-500" : "bg-indigo-600";
+    btn.setAttribute("data-state", isOn ? "on" : "off");
+    if (isOn) {
+        btn.classList.remove("bg-gray-200");
+        btn.classList.add(onColor);
+        btn.querySelector("span").classList.remove("translate-x-1");
+        btn.querySelector("span").classList.add("translate-x-6");
+    } else {
+        btn.classList.remove("bg-indigo-600", "bg-yellow-500");
+        btn.classList.add("bg-gray-200");
+        btn.querySelector("span").classList.remove("translate-x-6");
+        btn.querySelector("span").classList.add("translate-x-1");
+    }
+}
+
+window.toggleConfigFlag = (btn) => {
+    _setToggle(btn, btn.getAttribute("data-state") !== "on");
+};
+
+window.openConfigModal = (snackId) => {
+    const snack = allSnacks.find(s => s.id === snackId);
+    if (!snack) return;
+    currentConfigSnackId = snackId;
+
+    document.getElementById("config-modal-title").textContent = `Configurer : ${snack.nom || snackId}`;
+    document.getElementById("config-modal-snack-id").textContent = `ID : ${snackId}`;
+
+    CONFIG_FLAGS.forEach(flag => {
+        const btn = document.getElementById(`cfg-${flag}`);
+        if (btn) _setToggle(btn, !!snack[flag]);
+    });
+
+    document.getElementById("cfg-maxPoints").value = snack.maxPoints || 10;
+    document.getElementById("cfg-prixAbonnement").value = snack.prixAbonnement || PRIX_ABONNEMENT_MENSUEL;
+    document.getElementById("cfg-colorPalette").value = snack.colorPalette || "ruby";
+    document.getElementById("cfg-domaine").value = snack.domaine || "";
+
+    const modal = document.getElementById("modal-config-snack");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+};
+
+document.getElementById("btn-close-config-modal").addEventListener("click", () => {
+    document.getElementById("modal-config-snack").classList.replace("flex", "hidden");
+});
+
+document.getElementById("btn-save-config").addEventListener("click", async () => {
+    if (!currentConfigSnackId) return;
+
+    const btn = document.getElementById("btn-save-config");
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Sauvegarde...`;
+    btn.disabled = true;
+
+    const updates = {};
+    CONFIG_FLAGS.forEach(flag => {
+        const el = document.getElementById(`cfg-${flag}`);
+        if (el) updates[flag] = el.getAttribute("data-state") === "on";
+    });
+    updates.maxPoints       = parseInt(document.getElementById("cfg-maxPoints").value) || 10;
+    updates.prixAbonnement  = parseFloat(document.getElementById("cfg-prixAbonnement").value) || PRIX_ABONNEMENT_MENSUEL;
+    updates.colorPalette    = document.getElementById("cfg-colorPalette").value;
+    updates.domaine         = document.getElementById("cfg-domaine").value.trim().toLowerCase();
+
+    try {
+        await updateDoc(doc(db, "snacks", currentConfigSnackId), updates);
+
+        // Mise à jour du cache local
+        const snack = allSnacks.find(s => s.id === currentConfigSnackId);
+        if (snack) Object.assign(snack, updates);
+
+        // Recalcul MRR avec les nouveaux tarifs
+        const mrr = allSnacks
+            .filter(s => !s.maintenanceMode)
+            .reduce((sum, s) => sum + (s.prixAbonnement || PRIX_ABONNEMENT_MENSUEL), 0);
+        document.getElementById("kpi-mrr").textContent = `${mrr.toFixed(2)} €`;
+
+        renderSnacksTable();
+        document.getElementById("modal-config-snack").classList.replace("flex", "hidden");
+        showSAToast("✅ Configuration mise à jour !");
+    } catch (error) {
+        console.error("Erreur sauvegarde config :", error);
+        showSAToast("❌ Erreur lors de la sauvegarde.", "error");
+    } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    }
+});
+
+// ============================================================================
+// 🍞 TOAST SUPERADMIN
+// ============================================================================
+function showSAToast(message, type = "success") {
+    const toast = document.getElementById("sa-toast");
+    document.getElementById("sa-toast-msg").textContent = message;
+    document.getElementById("sa-toast-icon").className = type === "error"
+        ? "fas fa-exclamation-circle text-red-400"
+        : "fas fa-check-circle text-green-400";
+    toast.classList.remove("translate-y-20", "opacity-0");
+    setTimeout(() => toast.classList.add("translate-y-20", "opacity-0"), 3000);
+}
+
+// ============================================================================
+// 🪄 5. CRÉATION D'UN NOUVEAU CLIENT (MODALE)
 // ============================================================================
 const modalNewSnack = document.getElementById("modal-new-snack");
 const btnOpenModal = document.getElementById("btn-open-new-snack");

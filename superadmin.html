@@ -132,6 +132,147 @@
         </div>
     </div>
 
+    <!-- ================================================================ -->
+    <!-- MODALE CONFIGURATION CLIENT (Feature Flags)                     -->
+    <!-- ================================================================ -->
+    <div id="modal-config-snack" class="fixed inset-0 bg-gray-900/80 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button id="btn-close-config-modal" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 w-8 h-8 rounded-full transition flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h3 class="text-2xl font-black text-gray-900 mb-0.5" id="config-modal-title">Configurer</h3>
+            <p class="text-xs text-gray-400 font-mono mb-6 pb-4 border-b border-gray-100" id="config-modal-snack-id"></p>
+
+            <!-- MODULES -->
+            <div class="mb-6">
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Modules</p>
+
+                <!-- Maintenance (alerte jaune) -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 mb-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-black text-sm text-yellow-800"><i class="fas fa-tools mr-2"></i>Mode Maintenance</p>
+                            <p class="text-xs text-yellow-600 mt-0.5">Le site est inaccessible aux clients</p>
+                        </div>
+                        <button id="cfg-maintenanceMode" onclick="window.toggleConfigFlag(this)" data-state="off"
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                            <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Autres modules -->
+                <div class="space-y-0 bg-gray-50 rounded-2xl border border-gray-100 divide-y divide-gray-200 overflow-hidden">
+                    <div class="flex items-center justify-between px-4 py-3">
+                        <div>
+                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-shopping-bag text-indigo-500 mr-2 w-4"></i>Click & Collect</p>
+                            <p class="text-xs text-gray-400 ml-6">Commandes en ligne à emporter</p>
+                        </div>
+                        <button id="cfg-enableClickAndCollect" onclick="window.toggleConfigFlag(this)" data-state="off"
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between px-4 py-3">
+                        <div>
+                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-motorcycle text-orange-500 mr-2 w-4"></i>Livraison</p>
+                            <p class="text-xs text-gray-400 ml-6">Redirige vers Uber Eats / lien perso</p>
+                        </div>
+                        <button id="cfg-enableDelivery" onclick="window.toggleConfigFlag(this)" data-state="off"
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between px-4 py-3">
+                        <div>
+                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-gift text-pink-500 mr-2 w-4"></i>Carte de Fidélité</p>
+                            <p class="text-xs text-gray-400 ml-6">Programme de tampons / points</p>
+                        </div>
+                        <button id="cfg-enableLoyaltyCard" onclick="window.toggleConfigFlag(this)" data-state="off"
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between px-4 py-3">
+                        <div>
+                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-bell text-blue-500 mr-2 w-4"></i>Notifications Push</p>
+                            <p class="text-xs text-gray-400 ml-6">Campagnes marketing, promotions</p>
+                        </div>
+                        <button id="cfg-enablePushNotifs" onclick="window.toggleConfigFlag(this)" data-state="off"
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between px-4 py-3">
+                        <div>
+                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-star text-yellow-500 mr-2 w-4"></i>Smart Review</p>
+                            <p class="text-xs text-gray-400 ml-6">Redirection automatique vers Google Avis</p>
+                        </div>
+                        <button id="cfg-enableSmartReview" onclick="window.toggleConfigFlag(this)" data-state="off"
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between px-4 py-3">
+                        <div>
+                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-share-nodes text-teal-500 mr-2 w-4"></i>Partage Viral</p>
+                            <p class="text-xs text-gray-400 ml-6">Bouton "Partager" sur les fiches produit</p>
+                        </div>
+                        <button id="cfg-enableViralShare" onclick="window.toggleConfigFlag(this)" data-state="off"
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPTIONS -->
+            <div class="mb-6">
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Options</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">Tampons pour récompense</label>
+                        <input type="number" id="cfg-maxPoints" min="1" max="50" value="10"
+                            class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-400 outline-none text-sm font-bold text-center">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">Abonnement mensuel (€)</label>
+                        <input type="number" id="cfg-prixAbonnement" min="0" step="1" value="49"
+                            class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-400 outline-none text-sm font-bold text-center">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">Palette de couleur</label>
+                        <select id="cfg-colorPalette"
+                            class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-400 outline-none text-sm font-medium">
+                            <option value="ruby">🔴 Ruby Red</option>
+                            <option value="ocean">🔵 Ocean Blue</option>
+                            <option value="forest">🟢 Forest Green</option>
+                            <option value="midnight">⚫ Midnight Dark</option>
+                            <option value="sunflower">🟡 Sunflower</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">Domaine personnalisé</label>
+                        <input type="text" id="cfg-domaine" placeholder="ex: monsite.fr"
+                            class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-400 outline-none text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-save-config"
+                class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i> Enregistrer les modifications
+            </button>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="sa-toast" class="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl font-bold text-sm transition-all duration-300 translate-y-20 opacity-0 z-[200] flex items-center gap-3 pointer-events-none">
+        <i id="sa-toast-icon" class="fas fa-check-circle text-green-400"></i>
+        <span id="sa-toast-msg">Message</span>
+    </div>
+
     <script type="module" src="src/superadmin.js"></script>
 </body>
 </html>

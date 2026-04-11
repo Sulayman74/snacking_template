@@ -121,7 +121,7 @@ try {
       loyalty: {
         programName: data.loyaltyProgramName || "Club Fidélité",
         cardDesign: {
-          backgroundGradient: data.cardGradient || "from-red-500 to-orange-600",
+          backgroundGradient: data.cardGradient || `from-${selectedTheme.primary.replace('bg-', '')} to-gray-900`,
         },
       },
     };

@@ -51,20 +51,35 @@ function getCartTotal() {
 }
 
 function updateCartUI() {
-  const badge = document.getElementById("cart-badge");
-  const floatingCart = document.getElementById("floating-cart-container");
-  const fullMenu = document.getElementById("full-menu");
+  // Plus besoin du "floating-cart-container" ou du "cart-badge" original !
+  const mobileBadge = document.getElementById("mobile-cart-badge"); // Badge Mobile
+  const desktopCtaBtn = document.getElementById("cta-nav"); // Bouton PC
+
   const totalItems = window.cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalAmount = getCartTotal().toFixed(2);
 
   if (totalItems > 0) {
-    badge.textContent = totalItems;
-    badge.classList.remove("hidden");
-    if (floatingCart && fullMenu && !fullMenu.classList.contains("hidden")) {
-      floatingCart.classList.remove("hidden");
+    // 📱 MISE À JOUR MOBILE
+    if (mobileBadge) {
+        mobileBadge.textContent = totalItems;
+        mobileBadge.classList.remove("hidden");
+        // Petit effet de rebond dynamique
+        mobileBadge.classList.add("scale-125");
+        setTimeout(() => mobileBadge.classList.remove("scale-125"), 200);
     }
+
+    // 💻 MISE À JOUR PC (Navbar CTA)
+    if (desktopCtaBtn && desktopCtaBtn.getAttribute("data-action") === "open-cart") {
+        desktopCtaBtn.innerHTML = `<i class="fas fa-shopping-bag mr-2"></i> ${totalAmount} €`;
+    }
+
   } else {
-    badge.classList.add("hidden");
-    if (floatingCart) floatingCart.classList.add("hidden");
+    // 🛑 PANIER VIDE : On cache le badge et on reset le bouton PC
+    if (mobileBadge) mobileBadge.classList.add("hidden");
+
+    if (desktopCtaBtn && desktopCtaBtn.getAttribute("data-action") === "open-cart") {
+        desktopCtaBtn.innerHTML = `<i class="fas fa-shopping-bag mr-2"></i> Commander`;
+    }
   }
 }
 

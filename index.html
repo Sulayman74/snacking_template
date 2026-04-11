@@ -706,7 +706,7 @@
                     aria-label="Connexion au club fidélité"
                     id="loyalty-main-btn"
                     data-action="toggle-auth-modal"
-                    class="bg-white text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1"
+                    class=" text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1"
                   >
                     Connexion
                   </button>
@@ -924,7 +924,7 @@
                 Architecture Digitale
               </p>
               <a
-                href="https://codecrafters.fr"
+                href="https://sulayman74.github.io/portfolio_Sirikone/"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="flex items-center gap-2 text-gray-300 text-xs font-light bg-gray-800/30 hover:bg-gray-800/60 px-4 py-2 rounded-full backdrop-blur-sm border border-gray-700/50 transition-all duration-300 hover:border-red-500/30"
@@ -1016,18 +1016,16 @@
           <div
             class="relative flex w-full h-full justify-center items-center pointer-events-none"
           >
-            <button
-              id="mobile-cta-btn"
-              role="button"
-              aria-label="Passer commande ou appeler"
-              class="cursor-pointer hidden absolute -top-8 pointer-events-auto text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
-            >
-              <i
-                id="mobile-cta-icon"
-                class="fas fa-utensils text-xl pointer-events-none"
-                aria-hidden="true"
-              ></i>
-            </button>
+<button
+  id="mobile-cta-btn"
+  role="button"
+  aria-label="Passer commande ou appeler"
+  class="cursor-pointer hidden absolute -top-8 pointer-events-auto text-white w-14 h-14 rounded-full items-center justify-center shadow-lg shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
+>
+  <i id="mobile-cta-icon" class="fas fa-utensils text-xl pointer-events-none" aria-hidden="true"></i>
+  
+  <span id="mobile-cart-badge" class="absolute -top-1 -right-1 bg-white text-red-600 text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-md hidden border-2 border-gray-900 z-10 pointer-events-none transition-transform duration-300">0</span>
+</button>
           </div>
 
           <button
@@ -1298,18 +1296,16 @@
       </button>
     </div>
 
-    <div
+<div
       id="admin-scanner-modal"
       class="fixed inset-0 bg-gray-900/95 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md"
     >
       <div
-        class="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] relative flex flex-col"
+        class="w-full max-w-lg h-[85vh] md:h-auto bg-white rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] relative flex flex-col"
       >
-        <div
-          class="p-5 bg-gray-900 text-white flex justify-between items-center z-10 shadow-md"
-        >
+        <div class="p-5 bg-gray-900 text-white flex justify-between items-center z-10 shadow-md shrink-0">
           <h3 class="font-bold text-lg">
-            <i class="fas fa-ode text-red-500 mr-2 animate-pulse"></i>
+            <i class="fas fa-qrcode text-red-500 mr-2 animate-pulse"></i>
             Scanner Client
           </h3>
           <button
@@ -1317,35 +1313,34 @@
             data-action="close-admin-scanner"
             class="text-gray-300 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600"
           >
-            <i
-              class="fas fa-times w-5 h-5 flex items-center justify-center"
-            ></i>
+            <i class="fas fa-times w-5 h-5 flex items-center justify-center"></i>
           </button>
         </div>
 
-        <div
-          class="relative w-full bg-black aspect-square flex items-center justify-center overflow-hidden"
-        >
+        <div class="relative w-full flex-1 bg-black flex items-center justify-center overflow-hidden min-h-[50vh]">
           <div
             id="reader"
-            class="w-full h-full absolute inset-0 object-cover"
+            class="w-full h-full absolute inset-0 [&>video]:object-cover"
           ></div>
 
-          <div
-            class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"
-          >
+          <div class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
             <div
-              class="w-64 h-64 border-4 border-red-500 rounded-3xl shadow-[0_0_0_4000px_rgba(0,0,0,0.6)]"
-            ></div>
+              class="w-[80%] max-w-[320px] aspect-square border-4 border-red-500 rounded-3xl shadow-[0_0_0_4000px_rgba(0,0,0,0.7)] relative"
+            >
+              <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-2xl -mt-1 -ml-1"></div>
+              <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-2xl -mt-1 -mr-1"></div>
+              <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-2xl -mb-1 -ml-1"></div>
+              <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-2xl -mb-1 -mr-1"></div>
+            </div>
           </div>
         </div>
 
-        <div class="p-6 bg-white text-center z-10">
+        <div class="p-6 bg-white text-center z-10 shrink-0">
           <p class="text-gray-900 font-black text-xl mb-1 tracking-tight">
-            Placez le QR Code dans le cadre
+            Visez le QR Code
           </p>
           <p class="text-sm text-gray-500 font-medium">
-            La caméra s'active automatiquement.
+            La caméra s'adapte automatiquement.
           </p>
         </div>
       </div>
@@ -1436,23 +1431,23 @@
       </div>
     </div>
 
-    <div
-      id="floating-cart-container"
-      class="hidden fixed bottom-14 left-1/2 transform -translate-x-1/2 z-50"
+<div
+  id="floating-cart-container"
+  class="hidden fixed bottom-14 left-1/2 transform -translate-x-1/2 z-50"
+>
+  <button
+    data-action="open-cart"
+    aria-label="Ouvrir le panier"
+    class="text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 shadow-red-600/30 border-white relative hover:scale-105 transition"
+  >
+    <i class="fas fa-shopping-bag text-2xl"></i>
+    <span
+      id="cart-badge"
+      class="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden"
+      >0</span
     >
-      <button
-        data-action="open-cart"
-        aria-label="Ouvrir le panier"
-        class="text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 shadow-red-600/30 border-white relative hover:scale-105 transition"
-      >
-        <i class="fas fa-shopping-bag text-2xl"></i>
-        <span
-          id="cart-badge"
-          class="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden"
-          >0</span
-        >
-      </button>
-    </div>
+  </button>
+</div>
 
     <div
       id="product-modal-backdrop"

@@ -112,7 +112,6 @@ function closeClientCard() {
 
   setTimeout(() => {
     modal.classList.add("hidden");
-    modal.classList.remove("flex");
     document.body.style.overflow = "";
   }, 300);
 }

@@ -57,7 +57,10 @@ async function loadAdminProducts() {
       const statusText = isAvailable
         ? "<span class='text-green-600'>En stock</span>"
         : "<span class='text-red-600 font-bold'>Épuisé</span>";
-      const prixBaseText = `${(item.prix || 0).toFixed(2)} €`;
+      const hasTailleData = Array.isArray(item.tailles) && item.tailles.length > 0;
+      const prixBaseText = hasTailleData
+        ? item.tailles.map(t => `${escapeHTML(t.nom)}: ${t.prix.toFixed(2)}€`).join(" · ")
+        : `${(item.prix || 0).toFixed(2)} €`;
       const prixMenuText =
         item.allowMenu !== false
           ? `<span class="text-red-500 text-xs ml-1 bg-red-50 px-2 py-0.5 rounded-md">(Menu +${(item.menuPriceAdd || 2.5).toFixed(2)}€)</span>`
@@ -203,6 +206,25 @@ async function openEditModal(productId) {
     .getElementById("edit-has-sauces")
     .dispatchEvent(new Event("change"));
 
+  // Tailles (pizzas)
+  const taillesList = document.getElementById("edit-tailles-list");
+  if (taillesList) taillesList.innerHTML = "";
+  const hasTailles = Array.isArray(product.tailles) && product.tailles.length > 0;
+  const taillesCheckbox = document.getElementById("edit-has-tailles");
+  if (taillesCheckbox) {
+    if (hasTailles) {
+      taillesCheckbox.checked = true;
+      product.tailles.forEach((t) => window.addTailleRow(t.nom, t.prix));
+    } else if (product.categorieId === "pizzas") {
+      taillesCheckbox.checked = true;
+      window.addTailleRow("M", "");
+      window.addTailleRow("L", "");
+    } else {
+      taillesCheckbox.checked = false;
+    }
+    taillesCheckbox.dispatchEvent(new Event("change"));
+  }
+
   const imgEl = document.getElementById("edit-preview-img");
   const fallbackEl = document.getElementById("edit-preview-fallback");
   if (product.image && product.image.trim() !== "") {
@@ -284,6 +306,15 @@ window.openAddProductModal = () => {
   document.getElementById("edit-allow-menu").checked = true;
   document.getElementById("edit-has-crudites").checked = false;
   document.getElementById("edit-has-sauces").checked = false;
+
+  const taillesCheckbox = document.getElementById("edit-has-tailles");
+  const taillesList = document.getElementById("edit-tailles-list");
+  if (taillesCheckbox) {
+    taillesCheckbox.checked = false;
+    taillesCheckbox.dispatchEvent(new Event("change"));
+  }
+  if (taillesList) taillesList.innerHTML = "";
+
   populateCategoryDropdown("burgers");
 
   const modal = document.getElementById("edit-product-modal");
@@ -369,18 +400,33 @@ async function saveProduct(event) {
       }
     }
 
+    const hasTailles = document.getElementById("edit-has-tailles")?.checked;
+    let finalTailles = [];
+    if (hasTailles) {
+      const tailleRows = document.querySelectorAll("#edit-tailles-list .taille-row");
+      finalTailles = Array.from(tailleRows)
+        .map((row) => ({
+          nom: row.querySelector(".edit-taille-nom").value.trim(),
+          prix: parseFloat(row.querySelector(".edit-taille-prix").value) || 0,
+        }))
+        .filter((t) => t.nom !== "");
+    }
+
+    const prixFinal = finalTailles.length > 0 ? finalTailles[0].prix : prix;
+
     let updateData = {
       nom,
       description: desc,
-      prix,
+      prix: prixFinal,
       menuPriceAdd: prixMenu,
       tags: tagChoisi ? [tagChoisi] : [],
       categorieId: categorieChoisie,
       ...(categorieTitre && { categorieTitre }),
-      allowMenu,
+      allowMenu: finalTailles.length > 0 ? false : allowMenu,
       hasCrudites,
       crudites: finalCrudites,
       choixSauces: finalSauces,
+      tailles: finalTailles,
       updatedAt: serverTimestamp(),
     };
 
@@ -480,7 +526,51 @@ document.getElementById("edit-category")?.addEventListener("change", (e) => {
   } else {
     newCategoryInput.classList.add("hidden");
   }
+
+  // Auto-activer les tailles pour les pizzas
+  if (e.target.value === "pizzas") {
+    const taillesCheckbox = document.getElementById("edit-has-tailles");
+    const taillesList = document.getElementById("edit-tailles-list");
+    if (taillesCheckbox && !taillesCheckbox.checked) {
+      taillesCheckbox.checked = true;
+      taillesCheckbox.dispatchEvent(new Event("change"));
+      if (taillesList && taillesList.children.length === 0) {
+        window.addTailleRow("M", "");
+        window.addTailleRow("L", "");
+      }
+    }
+  }
 });
+
+const taillesCheckbox = document.getElementById("edit-has-tailles");
+const taillesContainer = document.getElementById("edit-tailles-container");
+if (taillesCheckbox && taillesContainer) {
+  taillesCheckbox.addEventListener("change", (e) => {
+    e.target.checked
+      ? taillesContainer.classList.remove("hidden")
+      : taillesContainer.classList.add("hidden");
+  });
+}
+
+// Ajouter une rangée de taille dans l'éditeur (appelé depuis HTML)
+window.addTailleRow = (nom = "", prix = "") => {
+  const container = document.getElementById("edit-tailles-list");
+  if (!container) return;
+  const row = document.createElement("div");
+  row.className = "flex gap-2 items-center taille-row";
+  row.innerHTML = `
+    <input type="text" placeholder="Ex: M, L, 33cm…" value="${escapeHTML(String(nom))}"
+      class="edit-taille-nom flex-1 px-3 py-2 rounded-lg border border-violet-200 focus:border-violet-500 outline-none text-sm font-bold">
+    <input type="number" step="0.10" min="0" placeholder="Prix" value="${prix !== "" ? prix : ""}"
+      class="edit-taille-prix w-24 px-3 py-2 rounded-lg border border-violet-200 focus:border-violet-500 outline-none text-sm font-bold text-center">
+    <span class="text-gray-500 text-sm font-bold shrink-0">€</span>
+    <button type="button" onclick="this.closest('.taille-row').remove()"
+      class="w-8 h-8 shrink-0 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+      <i class="fas fa-times text-xs"></i>
+    </button>
+  `;
+  container.appendChild(row);
+};
 
 const allowMenuCheckbox = document.getElementById("edit-allow-menu");
 const prixMenuContainer = document.getElementById("edit-prix-menu-container");
