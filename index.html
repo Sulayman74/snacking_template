@@ -2,7 +2,10 @@
 <html lang="fr" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <!-- <meta name="robots" content="noindex, nofollow"> -->
     <title>{{SEO_TITLE}}</title>
     <!-- <meta http-equiv="Content-Security-Policy" content="
@@ -343,12 +346,15 @@
     <script src="https://www.google.com/recaptcha/api.js?render=6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo"></script>
     <script src="https://www.google.com/recaptcha/enterprise.js?render=6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo"></script>
     <script>
-        function onClick(e) {
-    e.preventDefault();
-    grecaptcha.enterprise.ready(async () => {
-      const token = await grecaptcha.enterprise.execute('6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo', {action: 'LOGIN'});
-    });
-  }
+      function onClick(e) {
+        e.preventDefault();
+        grecaptcha.enterprise.ready(async () => {
+          const token = await grecaptcha.enterprise.execute(
+            "6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo",
+            { action: "LOGIN" },
+          );
+        });
+      }
     </script>
     <!-- SCRIPT DE TRANSITION APP SHELL -->
     <script>
@@ -468,7 +474,7 @@
           >
           <a
             href="#loyalty"
-            class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110 hidden"
+            class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110"
             id="mobile-link-loyalty"
             >Fidélité</a
           >
@@ -493,7 +499,7 @@
             href="#"
             data-action="logout-user"
             id="mobile-logout-btn"
-            class="hidden mobile-link text-xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110 mt-8"
+            class="mobile-link text-xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110 mt-8"
           >
             Déconnexion
           </a>
@@ -605,7 +611,7 @@
 
           <div class="text-center">
             <button
-            data-action="switch-menu"
+              data-action="switch-menu"
               class="bg-gray-800 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300"
             >
               Voir toute la carte
@@ -933,10 +939,22 @@
                 © 2026 Tous droits réservés.
               </p>
               <p class="text-[10px] text-gray-400 text-center mt-4">
-  Ce site est protégé par reCAPTCHA. Les 
-  <a href="https://policies.google.com/privacy" target="_blank" class="underline">Règles de confidentialité</a> et les 
-  <a href="https://policies.google.com/terms" target="_blank" class="underline">Conditions d'utilisation</a> de Google s'appliquent.
-</p>
+                Ce site est protégé par reCAPTCHA. Les
+                <a
+                  href="https://policies.google.com/privacy"
+                  target="_blank"
+                  class="underline"
+                  >Règles de confidentialité</a
+                >
+                et les
+                <a
+                  href="https://policies.google.com/terms"
+                  target="_blank"
+                  class="underline"
+                  >Conditions d'utilisation</a
+                >
+                de Google s'appliquent.
+              </p>
 
               <a
                 href="admin.html"
@@ -949,84 +967,102 @@
         </div>
       </footer>
     </main>
-<nav
-  id="mobile-nav-container"
-  aria-label="Menu de navigation principal mobile"
-  class="md:hidden fixed bottom-6 inset-x-0 z-50 flex justify-center pointer-events-none pb-[env(safe-area-inset-bottom)]"
->
-  <div
-    id="mobile-nav"
-    class="w-full max-w-md pointer-events-auto relative rounded-4xl p-1.5 transition-all duration-300 mx-4"
-    role="tablist"
-  >
-    <div
-      class="absolute inset-0 bg-gray-900/80 backdrop-blur-2xl rounded-4xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-0"
-    ></div>
-
-    <div
-      id="mobile-nav-grid"
-      class="relative z-10 grid grid-cols-3 h-14 gap-1 transition-all duration-300"
+    <nav
+      id="mobile-nav-container"
+      aria-label="Menu de navigation principal mobile"
+      class="md:hidden fixed bottom-6 inset-x-0 z-[60] flex justify-center pointer-events-none pb-[env(safe-area-inset-bottom)]"
     >
       <div
-        id="nav-indicator"
-        class="absolute top-0 bottom-0 left-0 w-[calc(100%/3)] bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_4px_15px_rgba(255,255,255,0.05)] rounded-3xl transition-transform duration-300 pointer-events-none z-0"
-        style="transition-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);"
-      ></div>
-
-<button
-        data-action="switch-home"
-        id="nav-btn-home"
-        role="tab"
-        aria-selected="true"
-        aria-label="Retour à l'accueil"
-        class="cursor-pointer group is-active relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
+        id="mobile-nav"
+        class="w-full isolate max-w-md pointer-events-auto relative rounded-4xl p-1.5 transition-all duration-300 mx-4"
+        role="tablist"
       >
-        <i class="fas fa-home text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none" aria-hidden="true"></i>
-        <span class="sr-only">Accueil</span>
-        <span class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1 pointer-events-none">
-          Accueil
-        </span>
-      </button>
+        <div
+          class="absolute inset-0 bg-gray-900/80 backdrop-blur-2xl rounded-4xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-0"
+        ></div>
 
-      <div class="relative flex w-full h-full justify-center items-center pointer-events-none">
-        <button
-          data-action="open-cart"
-          id="mobile-cta-btn"
-          role="button"
-          aria-label="Passer commande ou appeler"
-          class="cursor-pointer hidden absolute -top-8 pointer-events-auto text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
+        <div
+          id="mobile-nav-grid"
+          class="relative z-10 grid grid-cols-3 h-14 gap-1 transition-all duration-300"
         >
-          <i id="mobile-cta-icon" class="fas fa-utensils text-xl pointer-events-none" aria-hidden="true"></i>
-        </button>
+          <div
+            id="nav-indicator"
+            class="absolute top-0 bottom-0 left-0 w-[calc(100%/3)] bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_4px_15px_rgba(255,255,255,0.05)] rounded-3xl transition-transform duration-300 pointer-events-none z-0"
+            style="
+              transition-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+            "
+          ></div>
+
+          <button
+            data-action="switch-home"
+            id="nav-btn-home"
+            role="tab"
+            aria-selected="true"
+            aria-label="Retour à l'accueil"
+            class="cursor-pointer group is-active relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
+          >
+            <i
+              class="fas fa-home text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none"
+              aria-hidden="true"
+            ></i>
+            <span class="sr-only">Accueil</span>
+            <span
+              class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1 pointer-events-none"
+            >
+              Accueil
+            </span>
+          </button>
+
+          <div
+            class="relative flex w-full h-full justify-center items-center pointer-events-none"
+          >
+            <button
+              id="mobile-cta-btn"
+              role="button"
+              aria-label="Passer commande ou appeler"
+              class="cursor-pointer hidden absolute -top-8 pointer-events-auto text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-red-600/40 transform active:scale-90 transition-all border-[4px] border-gray-900 bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
+            >
+              <i
+                id="mobile-cta-icon"
+                class="fas fa-utensils text-xl pointer-events-none"
+                aria-hidden="true"
+              ></i>
+            </button>
+          </div>
+
+          <button
+            data-action="switch-menu"
+            id="nav-btn-menu"
+            role="tab"
+            aria-selected="false"
+            aria-label="Voir la carte du restaurant"
+            class="cursor-pointer group relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
+          >
+            <i
+              class="fas fa-hamburger text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none"
+              aria-hidden="true"
+            ></i>
+            <span class="sr-only">Menu</span>
+            <span
+              class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1 pointer-events-none"
+            >
+              Menu
+            </span>
+          </button>
+        </div>
       </div>
+    </nav>
 
-      <button
-        data-action="switch-menu"
-        id="nav-btn-menu"
-        role="tab"
-        aria-selected="false"
-        aria-label="Voir la carte du restaurant"
-        class="cursor-pointer group relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
-      >
-        <i class="fas fa-hamburger text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none" aria-hidden="true"></i>
-        <span class="sr-only">Menu</span>
-        <span class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1 pointer-events-none">
-          Menu
-        </span>
-      </button>
-    </div>
-  </div>
-</nav>
-
-   <div
-  id="auth-modal"
-  class="fixed inset-0 bg-gray-900/80 z-[100] hidden items-center justify-center p-4 backdrop-blur-md opacity-0 transition-opacity duration-300"
->
+    <div
+      id="auth-modal"
+      class="fixed inset-0 bg-gray-900/80 z-[100] hidden items-center justify-center p-4 backdrop-blur-md opacity-0 transition-opacity duration-300"
+    >
       <div
         class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95 md:scale-100"
       >
         <button
-          aria-label="Toggle authentification"
+          data-action="toggle-auth-modal"
+          aria-label="Fermer la fenêtre de connexion"
           type="button"
           class="absolute top-4 right-4 text-gray-300 hover:text-black bg-gray-100 p-2 rounded-full transition"
         >
@@ -1124,7 +1160,9 @@
             >Pas encore de compte ?</span
           >
           <button
-            aria-label="Bouton Inscription"
+            data-action="switch-auth-mode"
+            aria-label="Basculer entre connexion et inscription"
+            type="button"
             id="auth-switch-btn"
             class="text-red-600 font-bold ml-1 hover:underline"
           >
@@ -1315,7 +1353,7 @@
 
     <div
       id="pwa-install-banner"
-      class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700"
+      class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700"
     >
       <div class="flex items-center gap-3">
         <img
@@ -1403,7 +1441,6 @@
       class="hidden fixed bottom-14 left-1/2 transform -translate-x-1/2 z-50"
     >
       <button
-data-action="open-cart"
         aria-label="Ouvrir le panier"
         class="text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 shadow-red-600/30 border-white relative hover:scale-105 transition"
       >
@@ -1541,7 +1578,7 @@ data-action="open-cart"
           <button
             id="modal-share-btn"
             aria-label="Partager ce produit"
-            class="hidden w-full py-3 mt-3 rounded-xl font-bold text-gray-700 bg-gray-100 border border-gray-200 hover:bg-gray-200 active:scale-95 transition-all flex justify-center items-center gap-2"
+            class="hidden w-full py-3 mt-3 rounded-xl font-bold text-gray-700 bg-gray-100 border border-gray-200 hover:bg-gray-200 active:scale-95 transition-all justify-center items-center gap-2"
           >
             <i class="fas fa-share-nodes text-red-500"></i> Partager à un pote
           </button>
@@ -1551,7 +1588,7 @@ data-action="open-cart"
 
     <div
       id="cart-backdrop"
-data-action="close-cart"
+      data-action="close-cart"
       class="fixed inset-0 bg-gray-900/60 z-90 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm"
     ></div>
 
@@ -1588,7 +1625,7 @@ data-action="close-cart"
 
         <button
           id="checkout-btn"
-data-action="process-checkout"
+          data-action="process-checkout"
           class="w-full bg-red-600 text-white font-bold text-lg py-4 rounded-xl shadow-[0_8px_20px_rgba(220,38,38,0.3)] hover:bg-red-700 active:scale-95 transition-all flex justify-center items-center"
         >
           <span>Valider ma commande</span>

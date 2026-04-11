@@ -10,7 +10,7 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signOut
+  signOut,
 } from "firebase/auth";
 import { ReCaptchaV3Provider, initializeAppCheck } from "firebase/app-check";
 // 1. LES IMPORTS (TOUJOURS TOUT EN HAUT !)
@@ -54,8 +54,8 @@ const firebaseConfig = {
 
 // 3. INITIALISATION
 const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
 const auth = getAuth(app);
+const messaging = getMessaging(app);
 export const db = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app, "europe-west1");
@@ -63,7 +63,7 @@ const functions = getFunctions(app, "europe-west1");
 // if (typeof window !== "undefined") {
 //     const appCheck = initializeAppCheck(app, {
 //         provider: new ReCaptchaV3Provider('6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo'),
-//         isTokenAutoRefreshEnabled: true 
+//         isTokenAutoRefreshEnabled: true
 //     });
 // }
 // ============================================================================
@@ -130,7 +130,7 @@ window.fs = {
   startAfter,
   updateDoc,
   where,
-  writeBatch
+  writeBatch,
 };
 window.storageTools = { getDownloadURL, ref, uploadBytes };
 window.authTools = {
@@ -141,6 +141,8 @@ window.authTools = {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  getToken,
+  onMessage,
 };
 
 // ============================================================================
@@ -152,92 +154,29 @@ window.applySaaSThemeToHTML = () => {
 
   const { primary, accent, textOnPrimary, border, blurBg } = cfg.theme.colors;
 
-  // 1. CHANGER LA COULEUR DES BOUTONS FIXES (Panier, Modales, Auth)
+  // Mise à jour des boutons et éléments thématiques (ton code existant est bon ici)
   const primaryButtons = [
     "auth-submit-btn",
     "pwa-install-btn",
     "btn-review-google",
     "checkout-btn",
   ];
-
   primaryButtons.forEach((id) => {
     const btn = document.getElementById(id);
     if (btn) {
       btn.className = btn.className
         .replace(/bg-[a-z]+-\d+/g, "")
-        .replace(/text-[a-z]+-\d+/g, "")
         .replace("text-white", "")
         .replace("text-black", "");
       btn.className += ` ${primary} ${textOnPrimary}`;
     }
   });
 
-  // 2. CHANGER LE PANIER FLOTTANT
-  const floatingCartBtn = document.querySelector(
-    "#floating-cart-container button",
-  );
-  if (floatingCartBtn) {
-    floatingCartBtn.className = floatingCartBtn.className
-      .replace(/bg-[a-z]+-\d+/g, "")
-      .replace(/shadow-[a-z]+-\d+\/\d+/g, "");
-    floatingCartBtn.className += ` ${primary} shadow-[0_8px_20px_rgba(0,0,0,0.3)]`;
-  }
-
-  // Le petit badge de quantité sur le panier
-  const cartBadge = document.getElementById("cart-badge");
-  if (cartBadge) {
-    cartBadge.className = cartBadge.className.replace(
-      /text-[a-z]+-\d+/g,
-      textOnPrimary,
-    );
-  }
-
-  // ==========================================
-  // 3. LA SECTION FIDÉLITÉ (Bordures, Icônes et Halo lumineux)
-  // ==========================================
   const loyaltyCard = document.getElementById("loyalty-card");
-  const loyaltyBlur = document.getElementById("loyalty-blur");
+  if (loyaltyCard && border) loyaltyCard.classList.add(border);
+
   const loyaltyIcon = document.querySelector("#loyalty .fa-gift");
-  const loyaltyBtn = document.getElementById("loyalty-main-btn");
-
-  if (loyaltyCard && border) {
-    // ✅ 1. On ajoute la bordure à la carte (Sans le "=" !)
-    loyaltyCard.classList.add(border);
-
-    if (loyaltyBlur && blurBg) {
-      // ✅ 2. Comme ton HTML n'a pas de fond par défaut, on a juste à l'ajouter
-      // (blurBg vaut par exemple "bg-blue-600/60")
-      loyaltyBlur.classList.add(blurBg);
-    }
-  }
-
-  if (loyaltyBtn && border) {
-    // ✅ 3. On ajoute la couleur de la bordure ET son épaisseur (border-2)
-    loyaltyBtn.classList.add("border-2", border);
-  }
-
-  if (loyaltyIcon && accent) {
-    // ✅ 4. Le cadeau n'a plus de couleur de base, on ajoute la nouvelle direct
-    loyaltyIcon.classList.add(accent);
-  }
-
-  // 4. LES PETITS DÉTAILS D'ACCENTUATION (Flèches, Spinners)
-  // La flèche "Voir toute la carte"
-  const arrowIcons = document.querySelectorAll(".fa-arrow-right.text-red-500");
-  arrowIcons.forEach((icon) => {
-    icon.className = icon.className.replace("text-red-500", accent);
-  });
-
-  // Le spinner de rechargement (Pull to refresh)
-  const ptrIcon = document.getElementById("ptr-icon");
-  if (ptrIcon && ptrIcon.classList.contains("text-red-600")) {
-    ptrIcon.className = ptrIcon.className.replace("text-red-600", accent);
-  }
-
-  // L'icône de scan de la modal scanner admin
-  const scanIcon = document.querySelector(".fa-qrcode.text-red-500");
-  if (scanIcon)
-    scanIcon.className = scanIcon.className.replace("text-red-500", accent);
+  if (loyaltyIcon && accent) loyaltyIcon.classList.add(accent);
 };
 function updateUI(user) {
   const cfg = window.snackConfig;
@@ -280,8 +219,21 @@ function updateUI(user) {
   if (heroSection && cfg.identity.heroImg) {
     heroSection.style.backgroundImage = `url('${cfg.identity.heroImg}')`;
   }
+  // ==========================================
+  // 🚪 Bouton Déconnexion (visible si connecté)
+  // ==========================================
+  const navLogoutBtn = document.getElementById("nav-logout-btn");
+  const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
 
-// ==========================================
+  if (user) {
+    navLogoutBtn?.classList.remove("hidden");
+    mobileLogoutBtn?.classList.remove("hidden");
+  } else {
+    navLogoutBtn?.classList.add("hidden");
+    mobileLogoutBtn?.classList.add("hidden");
+  }
+
+  // ==========================================
   // 2. Liens d'appel (Mobile CTA, Desktop CTA & Burger Menu)
   // ==========================================
   const mobileCtaBtn = document.getElementById("mobile-cta-btn");
@@ -290,89 +242,109 @@ function updateUI(user) {
   const mobileBurgerCallBtn = document.getElementById("mobile-burger-call-btn");
 
   // On nettoie d'abord les classes dynamiques des boutons
-  if (mobileCtaBtn) mobileCtaBtn.className = mobileCtaBtn.className.replace(/bg-\w+-\d+/g, '').replace(/text-\w+-\d+/g, '').replace('text-white', '').replace('text-black', '');
-  if (desktopCtaBtn) desktopCtaBtn.className = desktopCtaBtn.className.replace(/bg-\w+-\d+/g, '').replace(/text-\w+-\d+/g, '').replace('text-white', '').replace('text-black', '');
+  if (mobileCtaBtn)
+    mobileCtaBtn.className = mobileCtaBtn.className
+      .replace(/bg-\w+-\d+/g, "")
+      .replace(/text-\w+-\d+/g, "")
+      .replace("text-white", "")
+      .replace("text-black", "");
+  if (desktopCtaBtn)
+    desktopCtaBtn.className = desktopCtaBtn.className
+      .replace(/bg-\w+-\d+/g, "")
+      .replace(/text-\w+-\d+/g, "")
+      .replace("text-white", "")
+      .replace("text-black", "");
 
   // 🏪 MODE VITRINE (Pas de commande)
   if (cfg.features && cfg.features.enableOnlineOrder === false) {
-      if (mobileCtaBtn) mobileCtaBtn.classList.add("hidden");
-      if (desktopCtaBtn) desktopCtaBtn.classList.add("hidden");
+    if (mobileCtaBtn) mobileCtaBtn.classList.add("hidden");
+    if (desktopCtaBtn) desktopCtaBtn.classList.add("hidden");
+    if (mobileBurgerCallBtn) mobileBurgerCallBtn.classList.add("hidden");
+  } else if (cfg.features) {
+    // Le restaurant prend des commandes ! On affiche les boutons
+    if (mobileCtaBtn) mobileCtaBtn.classList.remove("hidden");
+    if (desktopCtaBtn) desktopCtaBtn.classList.remove("hidden");
+
+    const isDelivery = cfg.features.enableDelivery === true;
+    const isClickAndCollect = cfg.features.enableClickAndCollect === true;
+    const phoneClean = cfg.contact?.phone
+      ? cfg.contact.phone.replace(/\s/g, "")
+      : "";
+
+    // 🛒 PRIORITÉ 1 : CLICK & COLLECT (On renvoie vers le Menu)
+    if (isClickAndCollect) {
+      if (mobileCtaBtn && mobileCtaIcon) {
+        mobileCtaBtn.setAttribute("data-action", "open-cart");
+        mobileCtaBtn.removeAttribute("data-phone");
+        mobileCtaBtn.removeAttribute("data-url");
+        mobileCtaBtn.classList.add("bg-green-600", "text-white"); // Couleur par défaut Panier
+        mobileCtaIcon.className = "fas fa-shopping-bag text-2xl";
+      }
+      if (desktopCtaBtn) {
+        desktopCtaBtn.setAttribute("data-action", "open-cart");
+        desktopCtaBtn.removeAttribute("data-phone");
+        desktopCtaBtn.removeAttribute("data-url");
+        desktopCtaBtn.innerHTML =
+          '<i class="fas fa-shopping-bag mr-2"></i> Commander';
+        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-gray-900 text-white`;
+
+      }
+      // On cache le bouton d'appel du Burger Menu car on a un vrai panier
       if (mobileBurgerCallBtn) mobileBurgerCallBtn.classList.add("hidden");
-  } 
-  else if (cfg.features) {
-      // Le restaurant prend des commandes ! On affiche les boutons
-      if (mobileCtaBtn) mobileCtaBtn.classList.remove("hidden");
-      if (desktopCtaBtn) desktopCtaBtn.classList.remove("hidden");
+    }
 
-      const isDelivery = cfg.features.enableDelivery === true;
-      const isClickAndCollect = cfg.features.enableClickAndCollect === true;
-      const phoneClean = cfg.contact?.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
+    // 🏍️ PRIORITÉ 2 : LIVRAISON EXTERNE
+    else if (isDelivery) {
+      if (mobileCtaBtn && mobileCtaIcon) {
+        mobileCtaBtn.setAttribute("data-action", "open-delivery");
+        mobileCtaBtn.setAttribute("data-url", cfg.deliveryUrl || "");
+        mobileCtaBtn.removeAttribute("data-phone");
+        mobileCtaBtn.classList.add(primaryBg.split(" ")[0], textOnPrimary);
+        mobileCtaIcon.className = "fas fa-motorcycle text-2xl";
+      }
+      if (desktopCtaBtn) {
+        desktopCtaBtn.setAttribute("data-action", "open-delivery");
+        desktopCtaBtn.setAttribute("data-url", cfg.deliveryUrl || "");
+        desktopCtaBtn.removeAttribute("data-phone");
+        desktopCtaBtn.innerHTML =
+          '<i class="fas fa-motorcycle mr-2"></i> Commander en livraison';
+        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition ${primaryBg} ${textOnPrimary}`;
 
-      // 🛒 PRIORITÉ 1 : CLICK & COLLECT (On renvoie vers le Menu)
-      if (isClickAndCollect) {
-          if (mobileCtaBtn && mobileCtaIcon) {
-              mobileCtaBtn.href = "#";
-              mobileCtaBtn.removeAttribute("target");
-              mobileCtaBtn.classList.add("bg-gray-900", "text-white"); // Couleur par défaut Panier
-              mobileCtaIcon.className = "fas fa-utensils text-2xl";
-              mobileCtaBtn.onclick = (e) => { e.preventDefault(); if(typeof window.switchView === 'function') window.switchView('menu'); };
-          }
-          if (desktopCtaBtn) {
-              desktopCtaBtn.href = "#";
-              desktopCtaBtn.removeAttribute("target");
-              desktopCtaBtn.innerHTML = '<i class="fas fa-shopping-bag mr-2"></i> Commander';
-              desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-gray-900 text-white`;
-              desktopCtaBtn.onclick = (e) => { e.preventDefault(); if(typeof window.switchView === 'function') window.switchView('menu'); };
-          }
-          // On cache le bouton d'appel du Burger Menu car on a un vrai panier
-          if (mobileBurgerCallBtn) mobileBurgerCallBtn.classList.add("hidden");
       }
-      
-      // 🏍️ PRIORITÉ 2 : LIVRAISON EXTERNE
-      else if (isDelivery) {
-          if (mobileCtaBtn && mobileCtaIcon) {
-              mobileCtaBtn.href = cfg.deliveryUrl || "#";
-              mobileCtaBtn.setAttribute("target", "_blank");
-              mobileCtaBtn.classList.add(primaryBg.split(" ")[0], textOnPrimary); // Couleur du Thème SaaS
-              mobileCtaIcon.className = "fas fa-motorcycle text-2xl";
-              mobileCtaBtn.onclick = !cfg.deliveryUrl ? (e) => { e.preventDefault(); window.showToast("Lien de livraison non configuré", "error"); } : null;
-          }
-          if (desktopCtaBtn) {
-              desktopCtaBtn.href = cfg.deliveryUrl || "#";
-              desktopCtaBtn.setAttribute("target", "_blank");
-              desktopCtaBtn.innerHTML = '<i class="fas fa-motorcycle mr-2"></i> Commander en livraison';
-              desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition ${primaryBg} ${textOnPrimary}`;
-              desktopCtaBtn.onclick = !cfg.deliveryUrl ? (e) => { e.preventDefault(); window.showToast("Lien de livraison non configuré", "error"); } : null;
-          }
-          // On cache le bouton d'appel du Burger Menu car la livraison prime
-          if (mobileBurgerCallBtn) mobileBurgerCallBtn.classList.add("hidden");
+      // On cache le bouton d'appel du Burger Menu car la livraison prime
+      if (mobileBurgerCallBtn) mobileBurgerCallBtn.classList.add("hidden");
+    }
+
+    // 📞 PRIORITÉ 3 : TÉLÉPHONE (Par défaut)
+    else {
+      if (mobileCtaBtn && mobileCtaIcon) {
+        mobileCtaBtn.setAttribute("data-action", "call-phone");
+        mobileCtaBtn.setAttribute("data-phone", phoneClean || "");
+        mobileCtaBtn.removeAttribute("data-url");
+        mobileCtaBtn.classList.add("bg-green-600", "text-white");
+        mobileCtaIcon.className = "fas fa-phone text-2xl animate-pulse";
+
       }
-      
-      // 📞 PRIORITÉ 3 : TÉLÉPHONE (Par défaut)
-      else {
-          if (mobileCtaBtn && mobileCtaIcon) {
-              mobileCtaBtn.href = phoneClean ? `tel:${phoneClean}` : "#";
-              mobileCtaBtn.removeAttribute("target");
-              mobileCtaBtn.classList.add("bg-green-600", "text-white");
-              mobileCtaIcon.className = "fas fa-phone text-2xl animate-pulse";
-              mobileCtaBtn.onclick = phoneClean ? null : (e) => { e.preventDefault(); window.showToast("Numéro non renseigné", "error"); };
-          }
-          if (desktopCtaBtn) {
-              desktopCtaBtn.href = phoneClean ? `tel:${phoneClean}` : "#";
-              desktopCtaBtn.removeAttribute("target");
-              desktopCtaBtn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> ${cfg.contact?.phone || "Appeler"}`;
-              desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-green-600 text-white`;
-              desktopCtaBtn.onclick = phoneClean ? null : (e) => { e.preventDefault(); window.showToast("Numéro non renseigné", "error"); };
-          }
-          // On affiche le bouton d'appel dans le Burger Menu !
-          if (mobileBurgerCallBtn) {
-              mobileBurgerCallBtn.href = phoneClean ? `tel:${phoneClean}` : "#";
-              mobileBurgerCallBtn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> ${cfg.contact?.phone || "Appeler"}`;
-              mobileBurgerCallBtn.classList.remove("hidden");
-              mobileBurgerCallBtn.classList.add("flex", "items-center", "justify-center");
-              mobileBurgerCallBtn.onclick = phoneClean ? null : (e) => { e.preventDefault(); window.showToast("Numéro non renseigné", "error"); };
-          }
+      if (desktopCtaBtn) {
+        desktopCtaBtn.setAttribute("data-action", "call-phone");
+        desktopCtaBtn.setAttribute("data-phone", phoneClean || "");
+        desktopCtaBtn.removeAttribute("data-url");
+        desktopCtaBtn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> ${cfg.contact?.phone || "Appeler"}`;
+        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-green-600 text-white`;
+
       }
+      // On affiche le bouton d'appel dans le Burger Menu !
+      if (mobileBurgerCallBtn) {
+        mobileBurgerCallBtn.href = phoneClean ? `tel:${phoneClean}` : "#";
+        mobileBurgerCallBtn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> ${cfg.contact?.phone || "Appeler"}`;
+        mobileBurgerCallBtn.classList.remove("hidden");
+        mobileBurgerCallBtn.classList.add(
+          "flex",
+          "items-center",
+          "justify-center",
+        );
+      }
+    }
   }
 
   // ==========================================
@@ -547,6 +519,7 @@ function updateUI(user) {
   script.type = "application/ld+json";
   script.textContent = JSON.stringify(schemaData);
   document.head.appendChild(script);
+  
 
   if (typeof window.applySaaSThemeToHTML === "function") {
     window.applySaaSThemeToHTML();
@@ -554,342 +527,60 @@ function updateUI(user) {
 }
 
 // ============================================================================
-// GESTION DE L'INTERFACE UTILISATEUR (MODALS)
-// ============================================================================
-let isSignUpMode = false;
-
-window.toggleAuthModal = () => {
-  document.getElementById("auth-modal").classList.toggle("hidden");
-};
-
-window.switchAuthMode = () => {
-  isSignUpMode = !isSignUpMode;
-  document.getElementById("auth-title").innerText = isSignUpMode
-    ? "Créer un compte"
-    : "Bienvenue !";
-  document.getElementById("auth-submit-btn").innerText = isSignUpMode
-    ? "S'inscrire"
-    : "Se connecter";
-  document.getElementById("auth-switch-btn").innerText = isSignUpMode
-    ? "Se connecter"
-    : "S'inscrire";
-  document.getElementById("auth-switch-text").innerText = isSignUpMode
-    ? "Déjà un compte ?"
-    : "Pas encore de compte ?";
-};
-
-const authForm = document.getElementById("auth-form");
-
-// Le bouclier : On n'écoute le bouton "submit" QUE si le formulaire existe sur la page
-if (authForm) {
-  authForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const email = document.getElementById("auth-email").value;
-    const password = document.getElementById("auth-password").value;
-
-    try {
-      if (isSignUpMode) {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password,
-        );
-        const user = userCredential.user;
-        const currentSnackId =
-          window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
-
-        try {
-          await setDoc(doc(db, "users", user.uid), {
-            email: user.email,
-            role: "client",
-            points: 0,
-            snackId: currentSnackId,
-            createdAt: new Date().toISOString(),
-          });
-          window.showToast(`Bienvenue ${user.email} ! 🎉`, "success");
-        } catch (dbError) {
-          console.error("❌ ERREUR FIRESTORE CRITIQUE :", dbError);
-        }
-      } else {
-        const userCredential = await signInWithEmailAndPassword(
-          auth,
-          email,
-          password,
-        );
-        const user = userCredential.user;
-        window.showToast(`Ravi de vous revoir ${user.email} ! 👋`, "success");
-      }
-
-      window.toggleAuthModal();
-      if (typeof window.switchView === "function") window.switchView("home");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (error) {
-      window.showToast("Erreur : " + error.message, "error");
-    }
-  });
-}
-
-
-// ============================================================================
 // 🕵️‍♂️ ÉCOUTEUR D'ÉTAT (LE VIGILE)
 // ============================================================================
 onAuthStateChanged(auth, async (user) => {
+  const urlParams = new URLSearchParams(window.location.search);
+  let snackIdToLoad =
+    urlParams.get("s") || window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
+
+  try {
+    // 1. On charge la config SaaS en premier !
+    await window.loadSnackConfig(db, snackIdToLoad);
+
+    // 2. On injecte les textes, logos et thèmes (La Pause)
+    // C'est ICI que tu répares le chargement des données
+    if (typeof updateUI === "function") updateUI(user);
+
+    // 3. Gestion du bouton de fidélité
     const loyaltyBtn = document.getElementById("loyalty-main-btn");
     const loyaltyDesc = document.getElementById("loyalty-desc");
-    const navLogoutBtn = document.getElementById("nav-logout-btn");
-    const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
 
-    // 🪄 UX : On pré-remplit ou on vide le formulaire de contact !
-    if (typeof window.prefillContactForm === "function") {
-        window.prefillContactForm(user);
-    }
+    if (user) {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const data = userDoc.exists()
+        ? userDoc.data()
+        : { points: 0, role: "client" };
 
-    // Détermination de l'ID du Snack (Logique SaaS gardée intacte)
-    const urlParams = new URLSearchParams(window.location.search);
-    const forcedSnackId = urlParams.get("s");
-    const hostname = window.location.hostname;
-    let snackIdToLoad = window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
-
-    if (forcedSnackId) {
-        snackIdToLoad = forcedSnackId;
-    } else if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.includes("snacking-template.web.app")) {
-        try {
-            const { collection, query, where, getDocs } = window.fs;
-            const q = query(collection(window.db, "snacks"), where("domain", "==", hostname));
-            const snapshot = await getDocs(q);
-            if (!snapshot.empty) snackIdToLoad = snapshot.docs[0].id;
-        } catch (e) { console.error("Erreur Domaine:", e); }
-    }
-
-    try {
-        if (user) {
-            if (navLogoutBtn) navLogoutBtn.classList.remove("hidden");
-            if (mobileLogoutBtn) mobileLogoutBtn.classList.remove("hidden");
-
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-            let role = "client";
-            let points = 0;
-
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                if (userData.snackId && userData.role === "admin") snackIdToLoad = userData.snackId;
-                role = userData.role || "client";
-                points = userData.points || 0;
-            }
-
-            await window.loadSnackConfig(db, snackIdToLoad);
-            updateUI(user);
-            if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
-
-            if (role === "admin" || role === "superadmin") {
-                if (loyaltyDesc) loyaltyDesc.innerHTML = `<span class="text-red-400 font-bold"><i class="fas fa-crown"></i> Mode Admin</span>`;
-                if (loyaltyBtn) {
-                    loyaltyBtn.innerHTML = '<i class="fas fa-camera"></i> Scanner un client';
-                    loyaltyBtn.onclick = window.openAdminScanner;
-                    loyaltyBtn.className = "bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-red-700 transition transform hover:-translate-y-1";
-                }
-            } else {
-                if (loyaltyDesc) loyaltyDesc.innerHTML = `<span class="text-green-400 font-bold"><i class="fas fa-check-circle"></i> Membre :</span> Tu as <strong>${points} points</strong>`;
-                if (loyaltyBtn) {
-                    loyaltyBtn.innerHTML = '<i class="fas fa-qrcode"></i> Ma Carte';
-                    loyaltyBtn.onclick = window.openClientCard;
-                    loyaltyBtn.className = "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
-                }
-            }
-        } else {
-            if (navLogoutBtn) navLogoutBtn.classList.add("hidden");
-            if (mobileLogoutBtn) mobileLogoutBtn.classList.add("hidden");
-
-            if (loyaltyDesc) loyaltyDesc.innerText = "Gagnez des points à chaque commande !";
-            if (loyaltyBtn) {
-                loyaltyBtn.innerHTML = "Connexion";
-                loyaltyBtn.onclick = window.toggleAuthModal;
-                loyaltyBtn.className = "bg-white border-2 border-green-600 text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1";
-            }
-
-            await window.loadSnackConfig(db, snackIdToLoad);
-            updateUI(null);
-            if (typeof window.initAppVisuals === "function") await window.initAppVisuals();
-        }
-    } catch (error) {
-        console.error("❌ Erreur d'initialisation :", error);
-    }
-});
-
-// ====================================================================
-// 🧭 LE ROUTEUR UNIQUE (Ne s'exécute qu'au chargement)
-// ====================================================================
-document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const pwaAction = urlParams.get("action");
-    const targetId = urlParams.get("id");
-
-    if (pwaAction) {
-        // On donne 1 petite seconde à l'appli pour se stabiliser
-        setTimeout(() => {
-            if (pwaAction === "menu") {
-                console.log("🚀 Lancement PWA : MENU");
-                if (typeof window.switchView === "function") window.switchView("menu");
-            } 
-            else if (pwaAction === "loyalty") {
-                console.log("🚀 Lancement PWA : FIDÉLITÉ");
-                // On laisse le Vigile Firebase décider s'il affiche la carte ou la connexion
-                if (window.auth && window.auth.currentUser) {
-                    if (typeof window.openClientCard === "function") window.openClientCard();
-                } else {
-                    if (typeof window.toggleAuthModal === "function") window.toggleAuthModal();
-                }
-            }
-            // 🍔 LE CIBLAGE PRODUIT ! (Notif Push)
-            else if (pwaAction === "product" && targetId) {
-                console.log(`🚀 Lancement Notif : PRODUIT ciblé (${targetId})`);
-                if (typeof window.switchView === "function") window.switchView("menu");
-                
-                setTimeout(() => {
-                    if (typeof window.openProductModal === "function") {
-                        window.openProductModal(targetId);
-                    }
-                }, 600);
-            }
-            
-            // 🧹 NETTOYAGE (Optionnel mais Pro) : On nettoie l'URL pour ne pas reboucler si l'utilisateur rafraîchit
-            window.history.replaceState({}, document.title, window.location.pathname);
-            
-        }, 1000);
-    }
-});
-
-// ============================================================================
-// 🔔 GESTION DES NOTIFICATIONS PUSH (FCM)
-// ============================================================================
-window.demanderPermissionNotifs = async () => {
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission === "granted") {
-      // ✅ ON RÉCUPÈRE CELUI QUE VITE A DÉJÀ INSTALLÉ !
-      const registration = await navigator.serviceWorker.ready;
-
-      const currentToken = await getToken(messaging, {
-        vapidKey:
-          "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098",
-        serviceWorkerRegistration: registration,
-      });
-
-      if (currentToken) {
-        const user = auth.currentUser;
-        if (user)
-          await updateDoc(doc(db, "users", user.uid), {
-            fcmToken: currentToken,
-          });
-
-        const notifBtn = document.getElementById("promo-notif-btn");
-        if (notifBtn) notifBtn.classList.add("hidden");
-        window.showToast("🔔 Parfait ! Vous recevrez nos promos.", "success");
+      if (data.role === "admin") {
+        loyaltyBtn?.setAttribute("data-action", "open-admin-scanner");
+        if (loyaltyBtn)
+          loyaltyBtn.innerHTML = '<i class="fas fa-camera"></i> Scanner';
+      } else {
+        loyaltyBtn?.setAttribute("data-action", "open-client-card");
+        if (loyaltyBtn)
+          loyaltyBtn.innerHTML = '<i class="fas fa-qrcode"></i> Ma Carte';
+        if (loyaltyDesc)
+          loyaltyDesc.innerHTML = `Membre : <strong>${data.points || 0} points</strong>`;
       }
     } else {
-      window.showToast("Notifications refusées.", "error");
-      const notifBtn = document.getElementById("promo-notif-btn");
-      if (notifBtn) notifBtn.classList.add("hidden");
+      loyaltyBtn?.setAttribute("data-action", "toggle-auth-modal");
+      if (loyaltyBtn) loyaltyBtn.innerHTML = "Connexion";
     }
+
+    // 4. On lance les visuels (Menu, Pull-to-refresh...)
+    if (typeof window.initAppVisuals === "function")
+      await window.initAppVisuals();
   } catch (error) {
-    console.error("❌ Erreur : ", error);
+    console.error("❌ Erreur Initialisation :", error);
   }
-};
+});
 
 onMessage(messaging, (payload) => {
   const titre = payload.notification?.title || "Nouvelle notification";
   const message = payload.notification?.body || "";
   window.showToast(`🔔 ${titre} : ${message}`, "success");
 });
-
-// ============================================================================
-// 💳 CLUB FIDÉLITÉ : GESTION DU QR CODE ET DES POINTS
-// ============================================================================
-
-let unsubscribeClientCard = null;
-
-window.openClientCard = async () => {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  if (typeof window.snackConfig !== "undefined" && window.snackConfig.loyalty) {
-    document.getElementById("card-program-name").innerText =
-      window.snackConfig.loyalty.programName;
-    document.getElementById("card-bg-gradient").className =
-      `absolute inset-0 z-0 bg-gradient-to-br ${window.snackConfig.loyalty.cardDesign.backgroundGradient}`;
-  }
-
-  document.getElementById("card-user-email").innerText = user.email;
-  document.getElementById("card-qr-img").src =
-    `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${user.uid}`;
-
-  const modal = document.getElementById("client-card-modal");
-  modal.classList.remove("hidden");
-  setTimeout(() => {
-    modal.classList.remove("opacity-0");
-    document.getElementById("virtual-card").classList.remove("scale-95");
-  }, 10);
-
-  unsubscribeClientCard = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-    if (docSnap.exists()) {
-      const points = docSnap.data().points || 0;
-      animerCarteFidelite(points);
-    }
-  });
-
-  // 🛑 MODIFICATION ICI : On vérifie si le Pack Premium (Push) est actif
-  const notifBtn = document.getElementById("promo-notif-btn");
-  if (
-    notifBtn &&
-    window.snackConfig &&
-    window.snackConfig.features.enablePushNotifs
-  ) {
-    if ("Notification" in window && Notification.permission === "default") {
-      notifBtn.classList.remove("hidden");
-    } else {
-      notifBtn.classList.add("hidden");
-    }
-  } else if (notifBtn) {
-    notifBtn.classList.add("hidden"); // On cache pour les packs Starter/Pro
-  }
-};
-
-function animerCarteFidelite(points) {
-  const maxPoints = 10;
-  const ratio = Math.min((points / maxPoints) * 100, 100);
-
-  const pointsText = document.getElementById("card-points");
-  const progressBar = document.getElementById("card-progress-bar");
-  const progressLabel = document.getElementById("progress-text");
-  const pointsContainer = document.getElementById("points-display-container");
-  const giftIcon = document.getElementById("gift-icon");
-
-  pointsText.innerText = points;
-  progressBar.style.width = `${ratio}%`;
-
-  if (points >= maxPoints) {
-    pointsContainer.classList.add("text-green-300");
-    progressLabel.innerText = "🎉 MENU OFFERT ! PRÉSENTEZ CE CODE";
-    progressLabel.classList.add("text-green-300", "animate-pulse");
-    giftIcon.classList.add("animate-bounce", "text-green-300");
-    pointsText.classList.add("scale-125", "transition-transform");
-    window.showToast(
-      "Bravo ! Vous avez droit à votre Menu gratuit ! 🍔",
-      "success",
-    );
-    if (typeof window.triggerVibration === "function")
-      window.triggerVibration("jackpot");
-  } else {
-    pointsContainer.classList.remove("text-green-300");
-    progressLabel.classList.remove("text-green-300", "animate-pulse");
-    giftIcon.classList.remove("animate-bounce", "text-green-300");
-    pointsText.classList.remove("scale-125");
-    const restants = maxPoints - points;
-    progressLabel.innerText = `Encore ${restants} point${restants > 1 ? "s" : ""} avant ta récompense`;
-  }
-}
 
 window.closeClientCard = () => {
   const modal = document.getElementById("client-card-modal");
@@ -1046,13 +737,3 @@ function onScanFailure(error) {
   // On utilise console.warn au lieu de showToast pour ne pas gêner l'utilisateur
   // console.warn("⚠️ Avertissement Scanner (Non bloquant) :", errorMessage);
 }
-
-window.logoutUser = async () => {
-  try {
-    await signOut(auth);
-    window.showToast("Vous êtes déconnecté. À bientôt !", "success");
-    if (typeof window.switchView === "function") window.switchView("home");
-  } catch (error) {
-    console.error("Erreur de déconnexion", error);
-  }
-};

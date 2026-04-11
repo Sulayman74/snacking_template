@@ -8,121 +8,164 @@ import { escapeHTML } from "./utils.js";
 // 🎮 LE ROUTEUR D'ÉVÉNEMENTS CLIENT (Event Delegation)
 // ==========================================
 // 🚦 FUTURE MODULE : router.js (Le routeur d'événements - Event Delegation)
-document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-action]');
-    if (!target) return; 
+document.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-action]");
+  if (!target) return;
 
-    const action = target.getAttribute('data-action');
-    const id = target.getAttribute('data-id');
+  const action = target.getAttribute("data-action");
+  const id = target.getAttribute("data-id");
 
-    switch(action) {
+  switch (action) {
+    case "switch-home":
+      if (typeof window.triggerVibration === "function")
+        window.triggerVibration("light");
+      switchView("home");
+      break;
 
-      case 'switch-home':
-            if (typeof window.triggerVibration === "function") window.triggerVibration("light");
-            switchView('home');
-            break;
-            
-        case 'switch-menu':
-            if (typeof window.triggerVibration === "function") window.triggerVibration("light");
-            switchView('menu');
-            break;
-            
-        case 'open-product-modal':
-            openProductModal(id);
-            break;
-            
-        case 'update-qty':
-            const delta = parseInt(target.getAttribute('data-delta'));
-            updateQuantity(id, delta);
-            break;
-            
-        case 'error-toast':
-            const message = target.getAttribute('data-message');
-            window.showToast(message, "error");
-            break;
-        case 'open-cart':
-            openCartModal();
-            break;
+    case "switch-menu":
+      if (typeof window.triggerVibration === "function")
+        window.triggerVibration("light");
+      switchView("menu");
+      break;
 
-        case 'close-cart':
-            closeCartModal();
-            break;
+    case "open-product-modal":
+      openProductModal(id);
+      break;
 
-        case 'process-checkout':
-            processCheckout();
-            break;
-            case 'close-product-modal':
-            closeProductModal();
-            break;
-            
-        case 'add-to-cart':
-            confirmAddToCart();
-            break;
+    case "update-qty":
+      const delta = parseInt(target.getAttribute("data-delta"));
+      updateQuantity(id, delta);
+      break;
 
-        case 'toggle-auth-modal':
-          console.log("🎯 Routeur : Action 'toggle-auth-modal' détectée");
-            toggleAuthModal();
-            break;
+    case "error-toast":
+      const message = target.getAttribute("data-message");
+      window.showToast(message, "error");
+      break;
+    case "open-cart":
+      openCartModal();
+      break;
 
-        case 'logout-user':
-            if (typeof logoutUser === "function") logoutUser();
-            break;
+    case "close-cart":
+      closeCartModal();
+      break;
 
-        case 'open-tracking-modal':
-            openTrackingModal();
-            break;
+    case "process-checkout":
+      processCheckout();
+      break;
+    case "close-product-modal":
+      closeProductModal();
+      break;
 
-        case 'close-tracking-modal':
-            closeTrackingModal();
-            break;
+    case "add-to-cart":
+      confirmAddToCart();
+      break;
 
-        case 'close-payment-sheet':
-            closePaymentSheet();
-            break;
+    case "switch-auth-mode":
+      switchAuthMode();
+      break;
 
-        case 'submit-stripe-payment':
-            submitStripePayment();
-            break;
+    case "toggle-auth-modal":
+      console.log("🎯 Routeur : Action 'toggle-auth-modal' détectée");
+      toggleAuthModal();
+      break;
 
-          case 'reset-password':
-            resetPassword();
-            break;
+    case "logout-user":
+      logoutUser();
+      break;
 
-          case 'request-notif':
-            requestNotif();
-            break;
+    case "open-tracking-modal":
+      openTrackingModal();
+      break;
 
-        case 'close-client-card':
-            closeClientCard();
-            break;
+    case "close-tracking-modal":
+      closeTrackingModal();
+      break;
 
-        case 'close-admin-scanner':
-            closeAdminScanner();
-            break;
-    }
+    case "close-payment-sheet":
+      closePaymentSheet();
+      break;
+
+    case "submit-stripe-payment":
+      submitStripePayment();
+      break;
+
+    case "reset-password":
+      resetPassword();
+      break;
+
+    case "request-notif":
+      requestNotif();
+      break;
+
+    case "call-phone":
+      // Le href tel: est sur l'élément, on le déclenche nativement
+      const phone = target.getAttribute("data-phone");
+      if (phone) window.location.href = `tel:${phone}`;
+      else window.showToast("Numéro non renseigné", "error");
+      break;
+
+    case "open-delivery":
+      const url = target.getAttribute("data-url");
+      if (url) window.open(url, "_blank", "noopener");
+      else window.showToast("Lien de livraison non configuré", "error");
+      break;
+
+    case "open-client-card":
+      if (typeof window.triggerVibration === "function")
+        window.triggerVibration("light");
+      openClientCard();
+      break;
+
+    case "notify-arrival":
+      notifyArrival(id);
+      break;
+
+    case "close-client-card":
+      closeClientCard();
+      break;
+    case "open-admin-scanner":
+      window.openAdminScanner();
+      break;
+
+    case "close-admin-scanner":
+      closeAdminScanner();
+      break;
+  }
 });
 
 // ==========================================
 // 🎛️ ROUTEUR DES CHANGEMENTS D'ÉTAT (Inputs, Radios)
 // ==========================================
-document.addEventListener('change', (event) => {
-    // Si on change la formule (Menu / Seul)
-    if (event.target.name === 'formule') {
-        toggleDrinkSection();
-    }
-    // Si on change la taille d'une pizza
-    if (event.target.name === 'taille_produit') {
-        updateProductSize(event.target);
-    }
-    // Si on coche/décoche une sauce
-    if (event.target.classList.contains('sauce-checkbox')) {
-        const max = parseInt(event.target.getAttribute('data-max')) || 2;
-        checkSauceLimit(event, max);
-    }
+document.addEventListener("change", (event) => {
+  // Si on change la formule (Menu / Seul)
+  if (event.target.name === "formule") {
+    toggleDrinkSection();
+  }
+  // Si on change la taille d'une pizza
+  if (event.target.name === "taille_produit") {
+    updateProductSize(event.target);
+  }
+  // Si on coche/décoche une sauce
+  if (event.target.classList.contains("sauce-checkbox")) {
+    const max = parseInt(event.target.getAttribute("data-max")) || 2;
+    checkSauceLimit(event, max);
+  }
+});
+document.addEventListener("DOMContentLoaded", () => {
+  setupMobileMenu();
+  setupReviews();
+  setupContactForm();
+  setupPullToRefresh();
+  setupSmartReviewPrompt();
 });
 window.initAppVisuals = async () => {
   const cfg = window.snackConfig;
-  if (!cfg) return;
+  if (!cfg) {
+    console.error(
+      "❌ initAppVisuals: snackConfig manquant — features désactivées",
+    );
+    return;
+  }
 
   // =======================================================================
   // 🛑 LE COUPE-CIRCUIT (MODE MAINTENANCE)
@@ -154,13 +197,6 @@ window.initAppVisuals = async () => {
   const fontClass = cfg.theme.fontFamily || "font-sans";
   body.classList.add(fontClass);
 
-  // 2. Menu Burger, Étoiles & Formulaire
-  if (typeof setupMobileMenu === "function") setupMobileMenu();
-  if (typeof setupReviews === "function") setupReviews();
-  if (typeof setupContactForm === "function") setupContactForm();
-  if (typeof setupPullToRefresh === "function") setupPullToRefresh();
-  if (typeof setupSmartReviewPrompt === "function") setupSmartReviewPrompt();
-
   // 🍔 3. CHARGER LE MENU ET LES BEST SELLERS
   await window.chargerMenuComplet();
 
@@ -180,30 +216,6 @@ window.initAppVisuals = async () => {
     navLoyalty.style.display = showLoyalty ? "inline-block" : "none";
   if (mobileLoyalty)
     mobileLoyalty.style.display = showLoyalty ? "block" : "none";
-
-  // --- BOUTON COMMANDER ---
-  const desktopOrderBtn = document.getElementById("cta-nav");
-  const mobileOrderBtn = document.getElementById("mobile-cta-btn");
-  const showOrder = features.enableOnlineOrder !== false;
-
-  if (desktopOrderBtn)
-    desktopOrderBtn.style.display = showOrder ? "inline-block" : "none";
-  if (mobileOrderBtn)
-    mobileOrderBtn.style.display = showOrder ? "flex" : "none";
-
-  const floatingCartContainer = document.getElementById(
-    "floating-cart-container",
-  );
-  const isCartActive = features && features.enableClickAndCollect === true;
-
-  if (floatingCartContainer) {
-    if (isCartActive) {
-      floatingCartContainer.classList.remove("hidden"); // On affiche le panier
-    } else {
-      floatingCartContainer.classList.add("hidden"); // On cache le panier
-    }
-  }
-
 };
 
 // ==========================================
@@ -211,53 +223,83 @@ window.initAppVisuals = async () => {
 // ==========================================
 let stripeElements = null;
 let stripeInstance = null;
-const stripePublicKey = "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
+const stripePublicKey =
+  "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
 
 // ============================================================================
 // 2. INITIALISATION DYNAMIQUE
 // ============================================================================
 let menuGlobal = [];
 
-
 // ==========================================
 // 🔐 GESTION DE LA MODALE D'AUTHENTIFICATION
 // ==========================================
-function toggleAuthModal() {
-    const modal = document.getElementById("auth-modal");
-    if (!modal) return;
 
-    // On regarde si la modale est invisible (soit via 'hidden', soit via l'opacité)
-    const isVisible = !modal.classList.contains("hidden") && !modal.classList.contains("opacity-0");
+// ==========================================
+// 🔐 LOGIQUE DU FORMULAIRE D'AUTH
+// ==========================================
+let isSignUpMode = false;
 
-    if (!isVisible) {
-        // --- ON OUVRE ---
-        console.log("🔓 Action : Ouverture de la modale");
-        modal.classList.remove("hidden");
-        modal.classList.add("flex");
-        
-        // On force le z-index au cas où Tailwind bloque
-        modal.style.zIndex = "1000"; 
+function switchAuthMode() {
+  isSignUpMode = !isSignUpMode;
+  document.getElementById("auth-title").innerText = isSignUpMode
+    ? "Créer un compte"
+    : "Bienvenue !";
+  document.getElementById("auth-submit-btn").innerText = isSignUpMode
+    ? "S'inscrire"
+    : "Se connecter";
+  document.getElementById("auth-switch-btn").innerText = isSignUpMode
+    ? "Se connecter"
+    : "S'inscrire";
+}
 
-        setTimeout(() => {
-            modal.classList.remove("opacity-0");
-            const modalContent = modal.querySelector(".bg-white");
-            if (modalContent) modalContent.classList.remove("scale-95");
-        }, 10);
-        
-        document.body.style.overflow = "hidden";
-    } else {
-        // --- ON FERME ---
-        console.log("🔒 Action : Fermeture de la modale");
-        modal.classList.add("opacity-0");
-        const modalContent = modal.querySelector(".bg-white");
-        if (modalContent) modalContent.classList.add("scale-95");
-        
-        setTimeout(() => {
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
-            document.body.style.overflow = ""; 
-        }, 300);
+// On attache l'événement au formulaire
+const authForm = document.getElementById("auth-form");
+if (authForm) {
+  authForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("auth-email").value;
+    const password = document.getElementById("auth-password").value;
+
+    try {
+      const { signInWithEmailAndPassword, createUserWithEmailAndPassword } =
+        window.authTools;
+      if (isSignUpMode) {
+        await createUserWithEmailAndPassword(window.auth, email, password);
+        window.showToast("Compte créé ! 🎉", "success");
+      } else {
+        await signInWithEmailAndPassword(window.auth, email, password);
+        window.showToast("Ravi de vous revoir ! 👋", "success");
+      }
+      toggleAuthModal(); // Utilise la bonne fonction qui libère le scroll !
+    } catch (error) {
+      window.showToast("Erreur : " + error.message, "error");
     }
+  });
+}
+// On expose pour le bouton "S'inscrire" du HTML
+window.switchAuthMode = switchAuthMode;
+function toggleAuthModal() {
+  const modal = document.getElementById("auth-modal");
+  if (!modal) return;
+
+  const isVisible =
+    !modal.classList.contains("hidden") &&
+    !modal.classList.contains("opacity-0");
+
+  if (!isVisible) {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    setTimeout(() => modal.classList.remove("opacity-0"), 10);
+    document.body.style.overflow = "hidden"; // Bloque le scroll
+  } else {
+    modal.classList.add("opacity-0");
+    setTimeout(() => {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      document.body.style.overflow = ""; // 🔓 LIBÈRE LE SCROLL
+    }, 300);
+  }
 }
 // ============================================================================
 // 3. MOTEUR D'AFFICHAGE DU MENU (Catégories + Best Sellers)
@@ -452,7 +494,7 @@ function createProductCard(item, cfg) {
     if (Array.isArray(item.tags) && item.tags.length > 0) {
       tagText = escapeHTML(item.tags[0]); // 👈 Nettoyé !
     } else if (typeof item.tags === "string" && item.tags.trim() !== "") {
-     tagText = escapeHTML(item.tags);
+      tagText = escapeHTML(item.tags);
     }
     if (tagText) {
       tagHtml = `<span class="absolute top-3 right-3 z-10 ${cardBg} ${textColor} text-xs font-bold px-3 py-1.5 rounded-full uppercase shadow-lg tracking-wider">${tagText}</span>`;
@@ -461,8 +503,8 @@ function createProductCard(item, cfg) {
 
   const devise = item.devise || cfg.identity.currency || "€";
   const prixAffiche = item.prix || item.price || 0;
-const nomAffiche = escapeHTML(item.nom || item.name);
-const descriptionAffiche = escapeHTML(item.description || "");
+  const nomAffiche = escapeHTML(item.nom || item.name);
+  const descriptionAffiche = escapeHTML(item.description || "");
 
   // Création du Fallback minimaliste avec icône + gestion des images cassées (onerror)
   const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
@@ -604,7 +646,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-function switchView (viewName, ignoreHistory = false) {
+function switchView(viewName, ignoreHistory = false) {
   // 1. Sélection des éléments
   const fullMenu = document.getElementById("full-menu");
   const mobileOverlay = document.getElementById("mobile-menu-overlay");
@@ -615,7 +657,7 @@ function switchView (viewName, ignoreHistory = false) {
 
   // 2. Nettoyage global (Reset des états UI & A11y)
   const btns = [btnHome, btnMenu];
-  btns.forEach(btn => {
+  btns.forEach((btn) => {
     if (!btn) return;
     btn.classList.remove("is-active", "text-white");
     btn.classList.add("text-gray-200"); // Meilleur contraste que gray-400 pour Lighthouse
@@ -625,7 +667,7 @@ function switchView (viewName, ignoreHistory = false) {
   if (viewName === "menu") {
     // --- MODE MENU ---
     if (navIndicator) navIndicator.style.transform = "translateX(200%)";
-    
+
     // UI & Accessibilité
     btnMenu?.classList.add("is-active", "text-white");
     btnMenu?.classList.remove("text-gray-200");
@@ -637,7 +679,7 @@ function switchView (viewName, ignoreHistory = false) {
 
     // Historique PWA
     if (!ignoreHistory) {
-      window.history.pushState({ overlay: 'menu' }, 'Menu', '#menu');
+      window.history.pushState({ overlay: "menu" }, "Menu", "#menu");
     }
 
     // Fermeture du menu burger si ouvert
@@ -649,11 +691,10 @@ function switchView (viewName, ignoreHistory = false) {
       }, 300);
       mobileBtnIcon?.classList.replace("fa-times", "fa-bars");
     }
-
   } else {
     // --- MODE ACCUEIL ---
     if (navIndicator) navIndicator.style.transform = "translateX(0%)";
-    
+
     // UI & Accessibilité
     btnHome?.classList.add("is-active", "text-white");
     btnHome?.classList.remove("text-gray-200");
@@ -663,24 +704,24 @@ function switchView (viewName, ignoreHistory = false) {
     document.body.style.overflow = "";
 
     // Nettoyage de l'URL
-    if (!ignoreHistory && window.location.hash === '#menu') {
-      window.history.back(); 
+    if (!ignoreHistory && window.location.hash === "#menu") {
+      window.history.back();
     }
 
     if (viewName === "home") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
-};
-
+}
+window.switchView = switchView;
 /**
  * 💡 BONUS : Gestion du bouton "Précédent" du téléphone (Android/iOS Swipe)
  * Indispensable pour un score A11y parfait et une UX native.
  */
-window.addEventListener('popstate', (event) => {
-  if (window.location.hash !== '#menu') {
+window.addEventListener("popstate", (event) => {
+  if (window.location.hash !== "#menu") {
     // Si l'utilisateur fait "retour" alors que le menu est ouvert, on ferme proprement
-    switchView('home', true); 
+    switchView("home", true);
   }
 });
 
@@ -885,148 +926,167 @@ function setupContactForm() {
 // ============================================================================
 // 🪄 AUTO-REMPLISSAGE DU FORMULAIRE DE CONTACT (UX)
 // ============================================================================
-window.prefillContactForm = function(user) {
-    const contactField = document.getElementById("contact-field");
+window.prefillContactForm = function (user) {
+  const contactField = document.getElementById("contact-field");
 
-    if (!contactField) return; // Sécurité : si on n'est pas sur la page, on s'arrête
+  if (!contactField) return; // Sécurité : si on n'est pas sur la page, on s'arrête
 
-    if (user) {
-        // Le client est connecté : on cherche son email (ou son téléphone s'il existe)
-        const contactInfo = user.email || user.phoneNumber || "";
+  if (user) {
+    // Le client est connecté : on cherche son email (ou son téléphone s'il existe)
+    const contactInfo = user.email || user.phoneNumber || "";
 
-        if (contactInfo) {
-            contactField.value = contactInfo;
-            
-            // 🔒 Bonus UX : On verrouille le champ pour éviter les fautes de frappe
-            contactField.setAttribute("readonly", "true");
-            
-            // On joue avec tes classes Tailwind pour montrer que c'est grisé
-            contactField.classList.remove("bg-gray-50", "text-black", "focus:ring-2");
-            contactField.classList.add("bg-gray-200", "text-gray-500", "cursor-not-allowed");
-        }
-    } else {
-        // 🔓 Le client est déconnecté : on vide et on déverrouille le champ
-        contactField.value = "";
-        contactField.removeAttribute("readonly");
-        
-        // On remet tes classes Tailwind d'origine
-        contactField.classList.remove("bg-gray-200", "text-gray-500", "cursor-not-allowed");
-        contactField.classList.add("bg-gray-50", "text-black", "focus:ring-2");
+    if (contactInfo) {
+      contactField.value = contactInfo;
+
+      // 🔒 Bonus UX : On verrouille le champ pour éviter les fautes de frappe
+      contactField.setAttribute("readonly", "true");
+
+      // On joue avec tes classes Tailwind pour montrer que c'est grisé
+      contactField.classList.remove("bg-gray-50", "text-black", "focus:ring-2");
+      contactField.classList.add(
+        "bg-gray-200",
+        "text-gray-500",
+        "cursor-not-allowed",
+      );
     }
+  } else {
+    // 🔓 Le client est déconnecté : on vide et on déverrouille le champ
+    contactField.value = "";
+    contactField.removeAttribute("readonly");
+
+    // On remet tes classes Tailwind d'origine
+    contactField.classList.remove(
+      "bg-gray-200",
+      "text-gray-500",
+      "cursor-not-allowed",
+    );
+    contactField.classList.add("bg-gray-50", "text-black", "focus:ring-2");
+  }
 };
 // ==========================================
 // 👀 GESTION DE L'ŒIL DU MOT DE PASSE
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const togglePasswordBtn = document.getElementById('toggle-password');
-    const passwordInput = document.getElementById('auth-password');
-    const eyeIcon = document.getElementById('eye-icon');
+document.addEventListener("DOMContentLoaded", () => {
+  const togglePasswordBtn = document.getElementById("toggle-password");
+  const passwordInput = document.getElementById("auth-password");
+  const eyeIcon = document.getElementById("eye-icon");
 
-    if (togglePasswordBtn && passwordInput && eyeIcon) {
-        togglePasswordBtn.addEventListener('click', () => {
-            // 1. On vérifie l'état actuel
-            const isPassword = passwordInput.getAttribute('type') === 'password';
-            
-            // 2. On inverse le type (text <-> password)
-            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
-            
-            // 3. On change l'icône FontAwesome (œil ouvert <-> œil barré)
-            if (isPassword) {
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
-            } else {
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.add('fa-eye');
-            }
-        });
-    }
+  if (togglePasswordBtn && passwordInput && eyeIcon) {
+    togglePasswordBtn.addEventListener("click", () => {
+      // 1. On vérifie l'état actuel
+      const isPassword = passwordInput.getAttribute("type") === "password";
+
+      // 2. On inverse le type (text <-> password)
+      passwordInput.setAttribute("type", isPassword ? "text" : "password");
+
+      // 3. On change l'icône FontAwesome (œil ouvert <-> œil barré)
+      if (isPassword) {
+        eyeIcon.classList.remove("fa-eye");
+        eyeIcon.classList.add("fa-eye-slash");
+      } else {
+        eyeIcon.classList.remove("fa-eye-slash");
+        eyeIcon.classList.add("fa-eye");
+      }
+    });
+  }
 });
 
 // ==========================================
 // 🆘 RÉINITIALISATION DU MOT DE PASSE
 // ==========================================
 async function resetPassword() {
-    const emailInput = document.getElementById("auth-email").value.trim();
+  const emailInput = document.getElementById("auth-email").value.trim();
 
-    // 1. On vérifie que le client a bien tapé son email
-    if (!emailInput) {
-        window.showToast("Veuillez d'abord taper votre adresse email dans le champ.", "error");
-        document.getElementById("auth-email").focus(); // On met le curseur dans le champ
-        if (typeof window.triggerVibration === "function") window.triggerVibration("error");
-        return;
-    }
+  // 1. On vérifie que le client a bien tapé son email
+  if (!emailInput) {
+    window.showToast(
+      "Veuillez d'abord taper votre adresse email dans le champ.",
+      "error",
+    );
+    document.getElementById("auth-email").focus(); // On met le curseur dans le champ
+    if (typeof window.triggerVibration === "function")
+      window.triggerVibration("error");
+    return;
+  }
 
-    try {
-        // 2. On demande à Firebase d'envoyer l'email magique
-        const { sendPasswordResetEmail } = window.authTools;
-        await sendPasswordResetEmail(window.auth, emailInput);
-        
-        // 3. Succès !
-        window.showToast("Un email de réinitialisation vous a été envoyé ! 📧", "success");
-        if (typeof window.triggerVibration === "function") window.triggerVibration("success");
-        
-    } catch (error) {
-        console.error("Erreur reset password :", error);
-        // Gestion des erreurs fréquentes
-        if (error.code === 'auth/user-not-found') {
-            window.showToast("Aucun compte n'est lié à cette adresse email.", "error");
-        } else if (error.code === 'auth/invalid-email') {
-            window.showToast("L'adresse email n'est pas valide.", "error");
-        } else {
-            window.showToast("Une erreur est survenue.", "error");
-        }
+  try {
+    // 2. On demande à Firebase d'envoyer l'email magique
+    const { sendPasswordResetEmail } = window.authTools;
+    await sendPasswordResetEmail(window.auth, emailInput);
+
+    // 3. Succès !
+    window.showToast(
+      "Un email de réinitialisation vous a été envoyé ! 📧",
+      "success",
+    );
+    if (typeof window.triggerVibration === "function")
+      window.triggerVibration("success");
+  } catch (error) {
+    console.error("Erreur reset password :", error);
+    // Gestion des erreurs fréquentes
+    if (error.code === "auth/user-not-found") {
+      window.showToast(
+        "Aucun compte n'est lié à cette adresse email.",
+        "error",
+      );
+    } else if (error.code === "auth/invalid-email") {
+      window.showToast("L'adresse email n'est pas valide.", "error");
+    } else {
+      window.showToast("Une erreur est survenue.", "error");
     }
-};
+  }
+}
 
 // ==========================================
-    // 🚀 2. CONNEXION AVEC GOOGLE (FIREBASE)
-    // ==========================================
-    const btnGoogleLogin = document.getElementById('btn-google-login');
-    
-    if (btnGoogleLogin) {
-        btnGoogleLogin.addEventListener('click', async () => {
-            try {
-                // On prépare le fournisseur Google
-                const provider = new window.authTools.GoogleAuthProvider();
-                
-                // On lance la popup (ou la redirection sur mobile)
-                const result = await window.authTools.signInWithPopup(window.auth, provider);
-                const user = result.user;
+// 🚀 2. CONNEXION AVEC GOOGLE (FIREBASE)
+// ==========================================
+const btnGoogleLogin = document.getElementById("btn-google-login");
 
-                // 🎯 VÉRIFICATION FIRESTORE : On s'assure qu'il est bien dans notre base "users"
-                const { doc, getDoc, setDoc, serverTimestamp } = window.fs;
-                const userRef = doc(window.db, "users", user.uid);
-                const userSnap = await getDoc(userRef);
+if (btnGoogleLogin) {
+  btnGoogleLogin.addEventListener("click", async () => {
+    try {
+      // On prépare le fournisseur Google
+      const provider = new window.authTools.GoogleAuthProvider();
 
-                // Si c'est sa toute première connexion, on crée son profil !
-                if (!userSnap.exists()) {
-                    await setDoc(userRef, {
-                        email: user.email,
-                        nom: user.displayName || "Gourmand",
-                        points: 0,
-                        snackId: window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06", // Ton Snack ID
-                        dateCreation: serverTimestamp(),
-                        role: "client"
-                    });
-                }
+      // On lance la popup (ou la redirection sur mobile)
+      const result = await window.authTools.signInWithPopup(
+        window.auth,
+        provider,
+      );
+      const user = result.user;
 
-                // Succès !
-                if (typeof window.showToast === 'function') {
-                    window.showToast("Connexion Google réussie ! 🍔", "success");
-                }
-                
-                // On ferme la modale
-                toggleAuthModal();
+      // 🎯 VÉRIFICATION FIRESTORE : On s'assure qu'il est bien dans notre base "users"
+      const { doc, getDoc, setDoc, serverTimestamp } = window.fs;
+      const userRef = doc(window.db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
 
-
-            } catch (error) {
-                console.error("❌ Erreur Google Auth:", error);
-                if (typeof window.showToast === 'function') {
-                    window.showToast("Erreur lors de la connexion Google.", "error");
-                }
-            }
+      // Si c'est sa toute première connexion, on crée son profil !
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+          nom: user.displayName || "Gourmand",
+          points: 0,
+          snackId: window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06", // Ton Snack ID
+          dateCreation: serverTimestamp(),
+          role: "client",
         });
+      }
+
+      // Succès !
+      if (typeof window.showToast === "function") {
+        window.showToast("Connexion Google réussie ! 🍔", "success");
+      }
+
+      // On ferme la modale
+      toggleAuthModal();
+    } catch (error) {
+      console.error("❌ Erreur Google Auth:", error);
+      if (typeof window.showToast === "function") {
+        window.showToast("Erreur lors de la connexion Google.", "error");
+      }
     }
+  });
+}
 
 // ============================================================================
 // 📳 MOTEUR DE RETOUR HAPTIQUE (VIBRATIONS PWA)
@@ -1076,7 +1136,11 @@ window.addEventListener("beforeinstallprompt", (e) => {
   // On affiche notre magnifique bannière après 3 secondes (le temps que le client regarde le menu)
   setTimeout(() => {
     if (installBanner) {
-      installBanner.classList.remove("translate-y-32", "opacity-0");
+      installBanner.classList.remove(
+        "translate-y-32",
+        "pointer-events-none",
+        "opacity-0",
+      );
       if (typeof window.triggerVibration === "function")
         window.triggerVibration("light");
     }
@@ -1103,7 +1167,11 @@ if (installBtn) {
 
 if (closeBtn) {
   closeBtn.addEventListener("click", () => {
-    installBanner.classList.add("translate-y-32", "opacity-0");
+    installBanner.classList.add(
+      "translate-y-32",
+      "pointer-events-none",
+      "opacity-0",
+    );
   });
 }
 
@@ -1282,19 +1350,21 @@ let cartData = JSON.parse(localStorage.getItem("snackCart")) || [];
 let cartUpdateTimeout;
 
 let cart = new Proxy(cartData, {
-    set(target, property, value) {
-        target[property] = value;
-        
-        // Anti-spam : On regroupe les multiples mises à jour (ex: Array.push change la valeur ET la length)
-        clearTimeout(cartUpdateTimeout);
-        cartUpdateTimeout = setTimeout(() => {
-            localStorage.setItem("snackCart", JSON.stringify(target));
-            // LE MÉGAPHONE 📣 : On annonce à l'application que le panier a changé
-            document.dispatchEvent(new CustomEvent('cart-updated', { detail: target }));
-        }, 10);
-        
-        return true;
-    }
+  set(target, property, value) {
+    target[property] = value;
+
+    // Anti-spam : On regroupe les multiples mises à jour (ex: Array.push change la valeur ET la length)
+    clearTimeout(cartUpdateTimeout);
+    cartUpdateTimeout = setTimeout(() => {
+      localStorage.setItem("snackCart", JSON.stringify(target));
+      // LE MÉGAPHONE 📣 : On annonce à l'application que le panier a changé
+      document.dispatchEvent(
+        new CustomEvent("cart-updated", { detail: target }),
+      );
+    }, 10);
+
+    return true;
+  },
 });
 
 let currentProduct = null;
@@ -1304,26 +1374,25 @@ let currentProduct = null;
 // --------------------------------------------------------------------
 
 // Écouteur global de la réactivité du panier
-document.addEventListener('cart-updated', () => {
-    updateCartUI(); // Met à jour la bulle rouge
-    
-    // On ne redessine l'intérieur du panier que si la modale est ouverte (Optimisation de performance)
-    const cartModal = document.getElementById("cart-modal");
-    if (cartModal && !cartModal.classList.contains("translate-y-full")) {
-        renderCartItems();
-    }
+document.addEventListener("cart-updated", () => {
+  updateCartUI(); // Met à jour la bulle rouge
+
+  // On ne redessine l'intérieur du panier que si la modale est ouverte (Optimisation de performance)
+  const cartModal = document.getElementById("cart-modal");
+  if (cartModal && !cartModal.classList.contains("translate-y-full")) {
+    renderCartItems();
+  }
 });
 
 // Au chargement de la page, on met à jour la bulle rouge une première fois
 document.addEventListener("DOMContentLoaded", updateCartUI);
 
-
 // ============================================================================
 // 🍔 MOTEUR DE MODALE UNIVERSEL (Pizzas, Kebabs, Burgers, Boissons)
 // ============================================================================
 
-function openProductModal (itemId) {
-  window.history.pushState(null, null, '#modal')
+function openProductModal(itemId) {
+  window.history.pushState(null, null, "#modal");
   const cfg = window.snackConfig;
   const item = menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
   if (!item) return;
@@ -1404,33 +1473,34 @@ function openProductModal (itemId) {
   const btn = document.getElementById("modal-cta");
   const optionsContainer = document.getElementById("modal-options-container");
 
-if (item.isAvailable === false) {
+  if (item.isAvailable === false) {
     if (optionsContainer) optionsContainer.classList.add("hidden");
     btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
     btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
     btn.onclick = null;
-  } 
-  else {
-      // 🛒 SI CLICK & COLLECT EST ACTIVÉ : ON GÉNÈRE LES OPTIONS (SAUCES, TAILLES, ETC.)
-      if (cfg.features?.enableClickAndCollect) {
-          if (optionsContainer) {
-              optionsContainer.classList.remove("hidden");
-              let allOptionsHTML = "";
+  } else {
+    // 🛒 SI CLICK & COLLECT EST ACTIVÉ : ON GÉNÈRE LES OPTIONS (SAUCES, TAILLES, ETC.)
+    if (cfg.features?.enableClickAndCollect) {
+      if (optionsContainer) {
+        optionsContainer.classList.remove("hidden");
+        let allOptionsHTML = "";
 
-              // --- MODULE 1 : PIZZAS (Tailles) ---
-              if (item.tailles && item.tailles.length > 0) {
-                  currentProduct.allowMenu = false;
-                  currentProduct.prixBase = item.tailles[0].prix;
-                  currentProduct.tailleChoisie = item.tailles[0].nom;
+        // --- MODULE 1 : PIZZAS (Tailles) ---
+        if (item.tailles && item.tailles.length > 0) {
+          currentProduct.allowMenu = false;
+          currentProduct.prixBase = item.tailles[0].prix;
+          currentProduct.tailleChoisie = item.tailles[0].nom;
 
-                  allOptionsHTML += `
+          allOptionsHTML += `
                   <fieldset class="mb-8">
                       <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
                       <span>1. Choisissez la taille</span>
                       <span class="text-xs font-bold ${primaryBg} ${textOnPrimary} px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
                       </legend>
                       <div class="grid grid-cols-2 gap-3">
-                      ${item.tailles.map((taille, index) => `
+                      ${item.tailles
+                        .map(
+                          (taille, index) => `
                           <label class="relative cursor-pointer group">
                               <input type="radio" name="taille_produit" value="${taille.nom}" data-prix="${taille.prix}" ${index === 0 ? "checked" : ""}  class="sr-only peer">
                               <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex flex-col items-center justify-center text-center">
@@ -1438,18 +1508,25 @@ if (item.isAvailable === false) {
                                   <span class="font-black ${accentText} text-sm">${taille.prix.toFixed(2)} ${devise}</span>
                               </div>
                           </label>
-                      `).join("")}
+                      `,
+                        )
+                        .join("")}
                       </div>
                       ${item.ingredients ? `<p class="text-sm text-gray-500 font-medium mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100"><i class="fas fa-leaf mr-2 text-green-500"></i> ${item.ingredients.join(", ")}</p>` : ""}
                   </fieldset>
                   `;
-              }
-              // --- MODULE 2 : BURGERS / TACOS (Seul ou Menu) ---
-              else if (currentProduct.allowMenu) {
-                  const boissonsDispo = menuGlobal.filter((i) => i.categorieId === "drinks" && i.isAvailable !== false);
-                  const listeBoissons = boissonsDispo.length > 0 ? boissonsDispo : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
+        }
+        // --- MODULE 2 : BURGERS / TACOS (Seul ou Menu) ---
+        else if (currentProduct.allowMenu) {
+          const boissonsDispo = menuGlobal.filter(
+            (i) => i.categorieId === "drinks" && i.isAvailable !== false,
+          );
+          const listeBoissons =
+            boissonsDispo.length > 0
+              ? boissonsDispo
+              : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
 
-                  allOptionsHTML += `
+          allOptionsHTML += `
                   <fieldset class="mb-8">
                       <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
                       <span>1. Formule</span>
@@ -1487,7 +1564,9 @@ if (item.isAvailable === false) {
                       <span class="text-xs font-bold ${primaryBg} ${textOnPrimary} px-2 py-1 rounded uppercase tracking-wider shadow-sm">Choix requis</span>
                       </legend>
                       <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          ${listeBoissons.map((boisson, index) => `
+                          ${listeBoissons
+                            .map(
+                              (boisson, index) => `
                               <label class="relative cursor-pointer">
                                   <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="sr-only peer">
                                   <div class="p-3 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex items-center gap-3">
@@ -1497,16 +1576,21 @@ if (item.isAvailable === false) {
                                       <span class="font-bold text-gray-800 text-sm leading-tight">${boisson.nom}</span>
                                   </div>
                               </label>
-                          `).join("")}
+                          `,
+                            )
+                            .join("")}
                       </div>
                   </fieldset>
                   `;
-              }
+        }
 
-              // --- MODULE 3 : KEBABS (Crudités) ---
-              if (item.hasCrudites) {
-                  const listeCrudites = Array.isArray(item.crudites) && item.crudites.length > 0 ? item.crudites : ["Salade", "Tomate", "Oignon"];
-                  allOptionsHTML += `
+        // --- MODULE 3 : KEBABS (Crudités) ---
+        if (item.hasCrudites) {
+          const listeCrudites =
+            Array.isArray(item.crudites) && item.crudites.length > 0
+              ? item.crudites
+              : ["Salade", "Tomate", "Oignon"];
+          allOptionsHTML += `
                   <fieldset class="mb-8">
                       <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
                       <span>Garniture</span>
@@ -1514,7 +1598,9 @@ if (item.isAvailable === false) {
                       </legend>
                       <p class="text-sm text-gray-500 mb-3 font-medium">Décochez pour retirer un ingrédient.</p>
                       <div class="flex flex-wrap gap-3">
-                          ${listeCrudites.map((c) => `
+                          ${listeCrudites
+                            .map(
+                              (c) => `
                               <label class="relative cursor-pointer group">
                                   <input type="checkbox" name="crudite" value="${c}" checked class="sr-only peer">
                                   <div class="px-4 py-2 border-2 rounded-full font-bold text-sm transition-all border-red-200 bg-red-50 text-red-800 line-through opacity-70 hover:opacity-100 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-800 peer-checked:no-underline peer-checked:opacity-100 peer-checked:hover:bg-green-100">
@@ -1523,16 +1609,23 @@ if (item.isAvailable === false) {
                                       ${c}
                                   </div>
                               </label>
-                          `).join("")}
+                          `,
+                            )
+                            .join("")}
                       </div>
                   </fieldset>
                   `;
-              }
-              // --- MODULE 4 : SAUCES ---
-              if (item.choixSauces) {
-                  const sauces = item.choixSauces.liste || ["Blanche", "Algérienne", "Samouraï", "Mayonnaise"];
-                  const maxSauces = item.choixSauces.max || 2;
-                  allOptionsHTML += `
+        }
+        // --- MODULE 4 : SAUCES ---
+        if (item.choixSauces) {
+          const sauces = item.choixSauces.liste || [
+            "Blanche",
+            "Algérienne",
+            "Samouraï",
+            "Mayonnaise",
+          ];
+          const maxSauces = item.choixSauces.max || 2;
+          allOptionsHTML += `
                   <fieldset class="mb-8">
                       <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
                       <span>Sauces</span>
@@ -1541,80 +1634,124 @@ if (item.isAvailable === false) {
                       </span>
                       </legend>
                       <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          ${sauces.map((sauce) => `
+                          ${sauces
+                            .map(
+                              (sauce) => `
                               <label class="relative cursor-pointer block">
                                   <input type="checkbox" name="sauce" value="${sauce}" data-max="${maxSauces}" class="sr-only peer sauce-checkbox">
                                   <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex items-center justify-center text-center">
                                       <span class="font-bold text-gray-800 text-sm leading-tight">${sauce}</span>
                                   </div>
                               </label>
-                          `).join("")}
+                          `,
+                            )
+                            .join("")}
                       </div>
                   </fieldset>
                   `;
-              }
+        }
 
-              if (allOptionsHTML === "") {
-                  optionsContainer.classList.add("hidden");
-              } else {
-                  optionsContainer.innerHTML = allOptionsHTML;
-                  toggleDrinkSection();
-              }
-          }
-      } 
-      // 🛑 SI PAS DE CLICK & COLLECT : ON CACHE TOUTES LES OPTIONS
-      else {
-          if (optionsContainer) optionsContainer.classList.add("hidden");
+        if (allOptionsHTML === "") {
+          optionsContainer.classList.add("hidden");
+        } else {
+          optionsContainer.innerHTML = allOptionsHTML;
+          toggleDrinkSection();
+        }
       }
+    }
+    // 🛑 SI PAS DE CLICK & COLLECT : ON CACHE TOUTES LES OPTIONS
+    else {
+      if (optionsContainer) optionsContainer.classList.add("hidden");
+    }
 
-      // ==========================================
-      // 🎯 L'AIGUILLAGE DU BOUTON PRINCIPAL (LE CTA)
-      // ==========================================
+    // ==========================================
+    // 🎯 L'AIGUILLAGE DU BOUTON PRINCIPAL (LE CTA)
+    // ==========================================
 
-      // 🛒 SCÉNARIO 1 : MODE PANIER (CLICK & COLLECT)
-      if (cfg.features?.enableClickAndCollect) {
-          btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
-          btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-          btn.setAttribute('data-action','add-to-cart')
-      }
-      
-      // 🏪 Scénario 2 : MODE VITRINE (Pas de commande en ligne du tout)
-      else if (!cfg.features?.enableOnlineOrder) {
-          btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true"></i> Fermer`;
-          btn.className = `w-full py-4 rounded-full font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 border ${accentBorder} hover:border-gray-400 transition-all flex justify-center items-center gap-2`;
-          btn.setAttribute('data-action','close-product-modal')
-      }
-      
-      // 🏍️ Scénario 3 : LIVRAISON EXTERNE (UberEats, Deliveroo...)
-      else if (cfg.features?.enableDelivery) {
-          btn.innerHTML = `<i class="fas fa-motorcycle mr-2"></i> Commander en livraison`;
-          btn.className = `w-full py-4 rounded-full font-bold ${textOnPrimary} text-center shadow-lg text-lg ${primaryBg} hover:opacity-90 hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
-          btn.onclick = () => {
-              if (cfg.deliveryUrl && cfg.deliveryUrl.trim() !== "" && cfg.deliveryUrl !== "#") {
-                  window.open(cfg.deliveryUrl, "_blank");
-              } else {
-                  window.showToast("Le lien de livraison n'est pas configuré.", "error");
-                  if (typeof window.triggerVibration === "function") window.triggerVibration("error");
-              }
-          };
-      }
-      
-      // 📞 Scénario 4 : PAR DÉFAUT (Lance l'appel téléphonique natif)
-      else {
-          const phone = cfg.contact?.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
-          btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
-          btn.className = `w-full py-4 rounded-full font-bold ${textOnPrimary} text-center shadow-lg text-lg ${primaryBg} hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
-          btn.onclick = () => {
-              if (phone) {
-                  window.location.href = `tel:${phone}`;
-              } else {
-                  window.showToast("Numéro non renseigné", "error");
-                  if (typeof window.triggerVibration === "function") window.triggerVibration("error");
-              }
-          };
-      }
+    // 🛒 SCÉNARIO 1 : MODE PANIER (CLICK & COLLECT)
+    if (cfg.features?.enableClickAndCollect) {
+      btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
+      btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+      btn.setAttribute("data-action", "add-to-cart");
+    }
+
+    // 🏪 Scénario 2 : MODE VITRINE (Pas de commande en ligne du tout)
+    else if (!cfg.features?.enableOnlineOrder) {
+      btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true"></i> Fermer`;
+      btn.className = `w-full py-4 rounded-full font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 border ${accentBorder} hover:border-gray-400 transition-all flex justify-center items-center gap-2`;
+      btn.setAttribute("data-action", "close-product-modal");
+    }
+
+    // 🏍️ Scénario 3 : LIVRAISON EXTERNE (UberEats, Deliveroo...)
+    else if (cfg.features?.enableDelivery) {
+      btn.innerHTML = `<i class="fas fa-motorcycle mr-2"></i> Commander en livraison`;
+      btn.className = `w-full py-4 rounded-full font-bold ${textOnPrimary} text-center shadow-lg text-lg ${primaryBg} hover:opacity-90 hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
+      btn.onclick = () => {
+        if (
+          cfg.deliveryUrl &&
+          cfg.deliveryUrl.trim() !== "" &&
+          cfg.deliveryUrl !== "#"
+        ) {
+          window.open(cfg.deliveryUrl, "_blank");
+        } else {
+          window.showToast(
+            "Le lien de livraison n'est pas configuré.",
+            "error",
+          );
+          if (typeof window.triggerVibration === "function")
+            window.triggerVibration("error");
+        }
+      };
+    }
+
+    // 📞 Scénario 4 : PAR DÉFAUT (Lance l'appel téléphonique natif)
+    else {
+      const phone = cfg.contact?.phone
+        ? cfg.contact.phone.replace(/\s/g, "")
+        : "";
+      btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
+      btn.className = `w-full py-4 rounded-full font-bold ${textOnPrimary} text-center shadow-lg text-lg ${primaryBg} hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
+      btn.onclick = () => {
+        if (phone) {
+          window.location.href = `tel:${phone}`;
+        } else {
+          window.showToast("Numéro non renseigné", "error");
+          if (typeof window.triggerVibration === "function")
+            window.triggerVibration("error");
+        }
+      };
+    }
   }
 
+  // ==========================================
+  // 🔗 LOGIQUE DU BOUTON PARTAGE VIRAL
+  // ==========================================
+  const shareBtn = document.getElementById("modal-share-btn");
+  if (shareBtn) {
+    // On l'affiche seulement si l'option est activée dans la config
+    if (cfg.features?.enableViralShare === true) {
+      shareBtn.classList.remove("hidden");
+      shareBtn.classList.add("flex");
+
+      shareBtn.onclick = () => {
+        if (navigator.share) {
+          navigator
+            .share({
+              title: `Découvre le ${currentProduct.nom} !`,
+              text: `Regarde ce que j'ai trouvé chez ${cfg.identity.name} : ${currentProduct.nom}`,
+              url: window.location.href, // Partage le lien de ton app
+            })
+            .then(() => console.log("Partage réussi"))
+            .catch((error) => console.log("Erreur de partage", error));
+        } else {
+          window.showToast("Le partage n'est pas supporté ici", "error");
+        }
+      };
+    } else {
+      shareBtn.classList.add("hidden");
+      shareBtn.classList.remove("flex");
+    }
+  }
   // 5. Affichage final
   const backdrop = document.getElementById("product-modal-backdrop");
   const sheet = document.getElementById("product-modal");
@@ -1629,7 +1766,7 @@ if (item.isAvailable === false) {
     );
   }, 10);
   document.body.style.overflow = "hidden";
-};
+}
 
 // ============================================================================
 // 🍹 BASCULE AFFICHAGE BOISSONS (Avec animations Tailwind & Event Delegation)
@@ -1651,10 +1788,10 @@ function toggleDrinkSection() {
   }
 
   const isMenu = formuleInput.value === "menu";
-  
+
   // 📳 Retour haptique au toucher
   if (typeof window.triggerVibration === "function") {
-      window.triggerVibration("light");
+    window.triggerVibration("light");
   }
 
   if (isMenu) {
@@ -1667,7 +1804,7 @@ function toggleDrinkSection() {
       }, 20);
     }
     if (btn) {
-        btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
+      btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
     }
   } else {
     if (drinkSection) {
@@ -1676,7 +1813,7 @@ function toggleDrinkSection() {
       setTimeout(() => drinkSection.classList.add("hidden"), 300);
     }
     if (btn) {
-        btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+      btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
     }
   }
 }
@@ -1711,7 +1848,7 @@ function checkSauceLimit(event, max) {
     if (typeof window.triggerVibration === "function")
       window.triggerVibration("light");
   }
-};
+}
 
 // Helper 2 : Mettre à jour le prix de la pizza en direct
 function updateProductSize(radioBtn) {
@@ -1724,12 +1861,12 @@ function updateProductSize(radioBtn) {
     `<span>Ajouter - ${nouveauPrix.toFixed(2)} ${devise}</span>`;
   if (typeof window.triggerVibration === "function")
     window.triggerVibration("light");
-};
+}
 
 // ==========================================
 // 🛒 LA VALIDATION ET L'AJOUT AU PANIER
 // ==========================================
-function confirmAddToCart () {
+function confirmAddToCart() {
   const formuleInput = document.querySelector('input[name="formule"]:checked');
   const isMenu = formuleInput ? formuleInput.value === "menu" : false;
 
@@ -1792,10 +1929,10 @@ function confirmAddToCart () {
   });
 
   closeProductModal();
-};
+}
 
 // Fermeture de la modale unifiée
-function closeProductModal () {
+function closeProductModal() {
   const backdrop = document.getElementById("product-modal-backdrop");
   const sheet = document.getElementById("product-modal");
 
@@ -1811,7 +1948,7 @@ function closeProductModal () {
     backdrop.classList.add("hidden");
     document.body.style.overflow = "";
   }, 300);
-};
+}
 
 // --- 3. GESTION DU PANIER (Logique) ---
 // 📦 FUTURE MODULE : cart.js
@@ -1823,10 +1960,10 @@ function addToCart(itemData) {
   } else {
     cart.push({ ...itemData, quantity: 1 }); // 🪄 Déclenche le Proxy automatiquement !
   }
-  
-  if (typeof window.triggerVibration === "function") window.triggerVibration("light");
+
+  if (typeof window.triggerVibration === "function")
+    window.triggerVibration("light");
   window.showToast(`${itemData.nom} ajouté au panier ! 🍔`, "success");
-  
 }
 
 // 📦 FUTURE MODULE : cart.js
@@ -1834,13 +1971,14 @@ function updateQuantity(productId, delta) {
   const index = cart.findIndex((i) => i.id === productId);
 
   if (index !== -1) {
-    if (typeof window.triggerVibration === "function") window.triggerVibration("light");
-    
+    if (typeof window.triggerVibration === "function")
+      window.triggerVibration("light");
+
     const newQuantity = cart[index].quantity + delta;
-    
+
     if (newQuantity <= 0) {
       // 🪄 Le 'splice' retire le tiroir : Le Proxy le voit !
-      cart.splice(index, 1); 
+      cart.splice(index, 1);
     } else {
       // 🪄 L'ASTUCE : On remplace TOUT l'objet à cet index.
       // Le Proxy le voit et déclenche la mise à jour UI instantanément !
@@ -1882,14 +2020,14 @@ function openCartModal() {
     .getElementById("cart-backdrop")
     .classList.remove("opacity-0", "pointer-events-none");
   document.getElementById("cart-modal").classList.remove("translate-y-full");
-};
+}
 
 function closeCartModal() {
   document
     .getElementById("cart-backdrop")
     .classList.add("opacity-0", "pointer-events-none");
   document.getElementById("cart-modal").classList.add("translate-y-full");
-};
+}
 
 function renderCartItems() {
   const container = document.getElementById("cart-items-container");
@@ -1908,14 +2046,18 @@ function renderCartItems() {
       let detailsText = [];
       if (item.boisson) detailsText.push(`🥤 ${escapeHTML(item.boisson)}`);
       if (item.sauces && item.sauces.length > 0) {
-    const safeSauces = item.sauces.map(s => escapeHTML(s)).join(", ");
-    detailsText.push(`🥣 ${safeSauces}`);
-}
+        const safeSauces = item.sauces.map((s) => escapeHTML(s)).join(", ");
+        detailsText.push(`🥣 ${safeSauces}`);
+      }
 
-if (item.sansCrudites && item.sansCrudites.length > 0) {
-    const safeCrudites = item.sansCrudites.map(c => escapeHTML(c)).join(", ");
-    detailsText.push(`<span class="text-red-600 font-black">⚠️ ${safeCrudites}</span>`);
-}
+      if (item.sansCrudites && item.sansCrudites.length > 0) {
+        const safeCrudites = item.sansCrudites
+          .map((c) => escapeHTML(c))
+          .join(", ");
+        detailsText.push(
+          `<span class="text-red-600 font-black">⚠️ ${safeCrudites}</span>`,
+        );
+      }
 
       const detailsHTML =
         detailsText.length > 0
@@ -1925,7 +2067,7 @@ if (item.sansCrudites && item.sansCrudites.length > 0) {
       const imageUrl =
         item.image && item.image.trim() !== "" ? item.image : null;
       const fallbackHtml = `<div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div>`;
-     const safeNom = escapeHTML(item.nom);
+      const safeNom = escapeHTML(item.nom);
       const imageHtml = imageUrl
         ? `<div class="relative w-16 h-16 shrink-0"><img src="${imageUrl}" alt="${safeNom}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full rounded-lg object-cover z-10"><div style="display: none;" class="absolute inset-0 rounded-lg bg-gray-100 items-center justify-center border border-gray-200 z-0"><i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i></div></div>`
         : fallbackHtml;
@@ -1934,7 +2076,7 @@ if (item.sansCrudites && item.sansCrudites.length > 0) {
         <div class="flex items-center gap-4 bg-white p-3 rounded-xl border" role="group">
             ${imageHtml}
             <div class="flex-1 min-w-0">
-                <h2 class="font-bold text-gray-900 leading-tight truncate">${safeNom  }</h2>
+                <h2 class="font-bold text-gray-900 leading-tight truncate">${safeNom}</h2>
                 ${detailsHTML} <p class="text-red-600 font-bold mt-1">${(item.prix * item.quantity).toFixed(2)} €</p>
             </div>
             <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
@@ -1952,264 +2094,280 @@ if (item.sansCrudites && item.sansCrudites.length > 0) {
 
 // --- 5. L'ENVOI FINAL (Firebase Checkout) ---
 
-
 // ==========================================
 // 💳 PROCESSUS DE COMMANDE & CLICK&COLLECT (STRIPE )
 // ==========================================
 // 💳 FUTURE MODULE : stripe-service.js (Logique d'encaissement isolée)
-async function processCheckout(){
-    const cfg = window.snackConfig;
-    if (cart.length === 0) return window.showToast("Votre panier est vide", "error");
+async function processCheckout() {
+  const cfg = window.snackConfig;
+  if (cart.length === 0)
+    return window.showToast("Votre panier est vide", "error");
 
-    if (!cfg?.features?.enableClickAndCollect) {
-         return window.showToast("La commande en ligne est désactivée.", "error");
+  if (!cfg?.features?.enableClickAndCollect) {
+    return window.showToast("La commande en ligne est désactivée.", "error");
+  }
+
+  const currentUser = window.auth?.currentUser;
+  const btn = document.getElementById("checkout-btn");
+
+  if (!currentUser) {
+    window.showToast("Veuillez vous connecter pour commander", "error");
+    toggleAuthModal();
+    return;
+  }
+
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connexion banque...`;
+  btn.disabled = true;
+
+  try {
+    if (typeof Stripe === "undefined") {
+      throw new Error("Stripe n'est pas chargé !");
     }
 
-    const currentUser = window.auth?.currentUser;
-    const btn = document.getElementById("checkout-btn");
-
-    if (!currentUser) {
-        window.showToast("Veuillez vous connecter pour commander", "error");
-        toggleAuthModal();
-        return;
+    if (!stripeInstance) {
+      stripeInstance = Stripe(stripePublicKey);
     }
 
-    const originalText = btn.innerHTML;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connexion banque...`;
-    btn.disabled = true;
+    const totalAmount = getCartTotal();
 
-    try {
-        if (typeof Stripe === "undefined") {
-            throw new Error("Stripe n'est pas chargé !");
-        }
+    // 1. Fermer le panier pour éviter les conflits de z-index
+    closeCartModal();
 
-        if (!stripeInstance) {
-            stripeInstance = Stripe(stripePublicKey); 
-        }
+    // 2. Mettre à jour et ouvrir la modale Stripe EN PREMIER, pour que le DOM soit prêt
+    document.getElementById("payment-amount-display").textContent =
+      `Total : ${totalAmount.toFixed(2)} €`;
 
-        const totalAmount = getCartTotal();
+    // On rend la modale visible mais avec un spinner de chargement dans la zone Stripe
+    const paymentContainer = document.getElementById("payment-element");
+    paymentContainer.innerHTML =
+      '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i></div>';
 
-        // 1. Fermer le panier pour éviter les conflits de z-index
-          closeCartModal();
+    openPaymentSheet();
 
-        // 2. Mettre à jour et ouvrir la modale Stripe EN PREMIER, pour que le DOM soit prêt
-        document.getElementById("payment-amount-display").textContent = `Total : ${totalAmount.toFixed(2)} €`;
-        
-        // On rend la modale visible mais avec un spinner de chargement dans la zone Stripe
-        const paymentContainer = document.getElementById("payment-element");
-        paymentContainer.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i></div>';
-        
-        openPaymentSheet();
+    // 3. Demander le PaymentIntent à la Cloud Function
+    const { httpsCallable, functions } = window.fs;
+    const createPaymentIntent = httpsCallable(functions, "createPaymentIntent");
 
-        // 3. Demander le PaymentIntent à la Cloud Function
-        const { httpsCallable, functions } = window.fs;
-        const createPaymentIntent = httpsCallable(functions, "createPaymentIntent");
+    // On crée une phrase type : "2x Tacos XL, 1x Frites"
+    const ticketSummary = cart
+      .map((item) => `${item.quantity}x ${item.nom}`)
+      .join(", ");
 
-// On crée une phrase type : "2x Tacos XL, 1x Frites"
-const ticketSummary = cart.map(item => `${item.quantity}x ${item.nom}`).join(', ');
-
-const response = await createPaymentIntent({ 
-    amount: Math.round(totalAmount * 100), 
-    currency: "eur",
-    // On envoie les infos au serveur (Cloud Function)
-    description: `Commande Web - ${cfg.identity.name}`,
-    metadata: {
+    const response = await createPaymentIntent({
+      amount: Math.round(totalAmount * 100),
+      currency: "eur",
+      // On envoie les infos au serveur (Cloud Function)
+      description: `Commande Web - ${cfg.identity.name}`,
+      metadata: {
         // Stripe limite à 500 caractères, donc on coupe si c'est trop long
         ticket: ticketSummary.substring(0, 500),
-        clientEmail: currentUser.email
-    }
-});
+        clientEmail: currentUser.email,
+      },
+    });
 
-        const clientSecret = response.data.clientSecret;
+    const clientSecret = response.data.clientSecret;
 
-        // 4. Créer et injecter le formulaire Stripe MAINTENANT que la div est visible
-        const appearance = { theme: 'stripe' }; 
-        stripeElements = stripeInstance.elements({ appearance, clientSecret });
+    // 4. Créer et injecter le formulaire Stripe MAINTENANT que la div est visible
+    const appearance = { theme: "stripe" };
+    stripeElements = stripeInstance.elements({ appearance, clientSecret });
 
-        const paymentElement = stripeElements.create("payment");
-        
-        // On nettoie notre spinner et on monte le formulaire
-        paymentContainer.innerHTML = "";
-        paymentElement.mount("#payment-element");
+    const paymentElement = stripeElements.create("payment");
 
-    } catch (error) {
-        console.error("❌ Erreur préparation paiement :", error);
-        window.showToast("Erreur de connexion sécurisée au paiement.", "error");
-        // Si erreur, on referme la modale Stripe pour ne pas bloquer l'utilisateur
-        if (typeof window.closePaymentSheet === "function") window.closePaymentSheet();
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-};
+    // On nettoie notre spinner et on monte le formulaire
+    paymentContainer.innerHTML = "";
+    paymentElement.mount("#payment-element");
+  } catch (error) {
+    console.error("❌ Erreur préparation paiement :", error);
+    window.showToast("Erreur de connexion sécurisée au paiement.", "error");
+    // Si erreur, on referme la modale Stripe pour ne pas bloquer l'utilisateur
+    if (typeof window.closePaymentSheet === "function")
+      window.closePaymentSheet();
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
 
 // ==========================================
 // 💳 GESTION VISUELLE DE LA MODALE STRIPE
 // ==========================================
 
 function openPaymentSheet() {
-    const sheet = document.getElementById("payment-bottom-sheet");
-    const content = document.getElementById("payment-sheet-content");
-    
-    if (!sheet) return console.error("❌ Modale Stripe introuvable dans le HTML !");
-    
-    // On l'affiche
-    sheet.classList.remove("hidden");
-    sheet.classList.add("flex");
-    
-    // On anime le tiroir qui monte
-    setTimeout(() => {
-        sheet.classList.remove("opacity-0");
-        content.classList.remove("translate-y-full");
-    }, 10);
-};
+  const sheet = document.getElementById("payment-bottom-sheet");
+  const content = document.getElementById("payment-sheet-content");
+
+  if (!sheet)
+    return console.error("❌ Modale Stripe introuvable dans le HTML !");
+
+  // On l'affiche
+  sheet.classList.remove("hidden");
+  sheet.classList.add("flex");
+
+  // On anime le tiroir qui monte
+  setTimeout(() => {
+    sheet.classList.remove("opacity-0");
+    content.classList.remove("translate-y-full");
+  }, 10);
+}
 
 function closePaymentSheet() {
-    const sheet = document.getElementById("payment-bottom-sheet");
-    const content = document.getElementById("payment-sheet-content");
-    
-    if (!sheet) return;
+  const sheet = document.getElementById("payment-bottom-sheet");
+  const content = document.getElementById("payment-sheet-content");
 
-    // On anime le tiroir qui descend
-    sheet.classList.add("opacity-0");
-    content.classList.add("translate-y-full");
-    
-    // On cache complètement après l'animation
-    setTimeout(() => {
-        sheet.classList.add("hidden");
-        sheet.classList.remove("flex");
-        
-        // 🧹 NETTOYAGE CRITIQUE : On vide le formulaire Stripe pour le prochain client
-        const paymentElementDiv = document.getElementById("payment-element");
-        if (paymentElementDiv) paymentElementDiv.innerHTML = ""; 
-        stripeElements = null;
-    }, 300);
-};
+  if (!sheet) return;
+
+  // On anime le tiroir qui descend
+  sheet.classList.add("opacity-0");
+  content.classList.add("translate-y-full");
+
+  // On cache complètement après l'animation
+  setTimeout(() => {
+    sheet.classList.add("hidden");
+    sheet.classList.remove("flex");
+
+    // 🧹 NETTOYAGE CRITIQUE : On vide le formulaire Stripe pour le prochain client
+    const paymentElementDiv = document.getElementById("payment-element");
+    if (paymentElementDiv) paymentElementDiv.innerHTML = "";
+    stripeElements = null;
+  }, 300);
+}
 
 // ==========================================
 // 💳 1. SOUMISSION DU PAIEMENT (AU CLIC)
 // ==========================================
 async function submitStripePayment() {
-    const submitPaymentBtn = document.getElementById("submit-payment-btn");
-    
-    // Sécurité : on vérifie que le formulaire Stripe a bien fini de charger
-    if (!stripeInstance || !stripeElements) {
-        window.showToast("Veuillez patienter, connexion sécurisée en cours...", "error");
-        return;
+  const submitPaymentBtn = document.getElementById("submit-payment-btn");
+
+  // Sécurité : on vérifie que le formulaire Stripe a bien fini de charger
+  if (!stripeInstance || !stripeElements) {
+    window.showToast(
+      "Veuillez patienter, connexion sécurisée en cours...",
+      "error",
+    );
+    return;
+  }
+
+  const btnOriginalText = submitPaymentBtn.innerHTML;
+  submitPaymentBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Vérification banque...`;
+  submitPaymentBtn.disabled = true;
+
+  try {
+    // 🚀 STRIPE PREND LE RELAIS ICI : Il vérifie la carte (CVC, provision, fraude...)
+    const { error, paymentIntent } = await stripeInstance.confirmPayment({
+      elements: stripeElements,
+      confirmParams: {
+        // On pourrait demander le nom ou l'email ici si besoin
+      },
+      redirect: "if_required", // 🛑 CRUCIAL : Empêche Stripe de changer de page !
+    });
+
+    if (error) {
+      // ❌ La carte a un problème (Refusée, code faux, etc.)
+      const messageContainer = document.getElementById("payment-message");
+      messageContainer.textContent = error.message; // Affiche l'erreur renvoyée par la banque
+      messageContainer.classList.remove("hidden");
+      if (typeof window.triggerVibration === "function")
+        window.triggerVibration("error");
+    } else if (paymentIntent && paymentIntent.status === "succeeded") {
+      // ✅ VICTOIRE ! LE PAIEMENT EST PASSÉ !
+      window.showToast("Paiement validé ! 🎉", "success");
+
+      // 1. ON FERME LE TIROIR DE PAIEMENT
+      closePaymentSheet();
+
+      // 2. 💥 ON ENVOIE LA COMMANDE EN CUISINE (Dans Firestore)
+      await finalizeOrderInFirestore(paymentIntent.id);
     }
-
-    const btnOriginalText = submitPaymentBtn.innerHTML;
-    submitPaymentBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Vérification banque...`;
-    submitPaymentBtn.disabled = true;
-
-    try {
-        // 🚀 STRIPE PREND LE RELAIS ICI : Il vérifie la carte (CVC, provision, fraude...)
-        const { error, paymentIntent } = await stripeInstance.confirmPayment({
-            elements: stripeElements,
-            confirmParams: {
-                // On pourrait demander le nom ou l'email ici si besoin
-            },
-            redirect: 'if_required' // 🛑 CRUCIAL : Empêche Stripe de changer de page !
-        });
-
-        if (error) {
-            // ❌ La carte a un problème (Refusée, code faux, etc.)
-            const messageContainer = document.getElementById("payment-message");
-            messageContainer.textContent = error.message; // Affiche l'erreur renvoyée par la banque
-            messageContainer.classList.remove("hidden");
-            if (typeof window.triggerVibration === "function") window.triggerVibration("error");
-            
-        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-            // ✅ VICTOIRE ! LE PAIEMENT EST PASSÉ !
-            window.showToast("Paiement validé ! 🎉", "success");
-            
-            // 1. ON FERME LE TIROIR DE PAIEMENT
-            closePaymentSheet();
-            
-            // 2. 💥 ON ENVOIE LA COMMANDE EN CUISINE (Dans Firestore)
-                await finalizeOrderInFirestore(paymentIntent.id); 
-            
-        }
-
-    } catch (err) {
-         console.error("Erreur critique au moment du paiement :", err);
-         window.showToast("Une erreur est survenue avec le terminal de paiement.", "error");
-    } finally {
-        // Quoi qu'il arrive, on rend le bouton cliquable à nouveau
-        submitPaymentBtn.innerHTML = btnOriginalText;
-        submitPaymentBtn.disabled = false;
-    }
-};
+  } catch (err) {
+    console.error("Erreur critique au moment du paiement :", err);
+    window.showToast(
+      "Une erreur est survenue avec le terminal de paiement.",
+      "error",
+    );
+  } finally {
+    // Quoi qu'il arrive, on rend le bouton cliquable à nouveau
+    submitPaymentBtn.innerHTML = btnOriginalText;
+    submitPaymentBtn.disabled = false;
+  }
+}
 
 // ==========================================
 // 🧑‍🍳 2. ENVOI EN CUISINE (APRÈS PAIEMENT RÉUSSI)
 // ==========================================
 // 🔥 FUTURE MODULE : firebase-service.js (Interactions directes avec la Base de Données)
 async function finalizeOrderInFirestore(stripePaymentId) {
-    const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
-    const currentUser = window.auth?.currentUser;
-    const { addDoc, collection, serverTimestamp, updateDoc, doc } = window.fs;
+  const currentSnackId =
+    window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
+  const currentUser = window.auth?.currentUser;
+  const { addDoc, collection, serverTimestamp, updateDoc, doc } = window.fs;
 
-    try {
-        // On formate le panier
-        const orderItems = cart.map(item => ({
-            id: item.id,
-            productId: item.productId || item.id.split("-")[0],
-            nom: item.nom,
-            type: item.type || "seul",
-            boissonNom: item.boisson || null,
-            sauces: item.sauces || [], 
-            sansCrudites: item.sansCrudites || [],
-            tailleChoisie: item.tailleChoisie || null,
-            prixBase: item.prixBase || item.prix,
-            prixMenuAdd: item.prixMenuAdd || 0,
-            quantity: item.quantity,
-        }));
+  try {
+    // On formate le panier
+    const orderItems = cart.map((item) => ({
+      id: item.id,
+      productId: item.productId || item.id.split("-")[0],
+      nom: item.nom,
+      type: item.type || "seul",
+      boissonNom: item.boisson || null,
+      sauces: item.sauces || [],
+      sansCrudites: item.sansCrudites || [],
+      tailleChoisie: item.tailleChoisie || null,
+      prixBase: item.prixBase || item.prix,
+      prixMenuAdd: item.prixMenuAdd || 0,
+      quantity: item.quantity,
+    }));
 
-        // On crée le ticket de caisse officiel
-        const newOrder = {
-            snackId: currentSnackId,
-            userId: currentUser.uid,
-            clientNom: currentUser.displayName || currentUser.email.split("@")[0],
-            clientEmail: currentUser.email,
-            date: serverTimestamp(),
-            statut: "en_attente_client", // Le chef peut s'y mettre !
-            items: orderItems,
-            total: getCartTotal(),
-            paiement: {
-                methode: "carte_bancaire",
-                statut: "paye", // 💰 C'est payé !
-                stripeSessionId: stripePaymentId, // La preuve d'achat pour la compta
-            },
-        };
+    // On crée le ticket de caisse officiel
+    const newOrder = {
+      snackId: currentSnackId,
+      userId: currentUser.uid,
+      clientNom: currentUser.displayName || currentUser.email.split("@")[0],
+      clientEmail: currentUser.email,
+      date: serverTimestamp(),
+      statut: "en_attente_client", // Le chef peut s'y mettre !
+      items: orderItems,
+      total: getCartTotal(),
+      paiement: {
+        methode: "carte_bancaire",
+        statut: "paye", // 💰 C'est payé !
+        stripeSessionId: stripePaymentId, // La preuve d'achat pour la compta
+      },
+    };
 
-        // On envoie le tout dans le cloud Firebase !
-        const docRef = await addDoc(collection(window.db, "commandes"), newOrder);
-        
-        // Bonus: on met à jour la date de dernière commande du client
-        await updateDoc(doc(window.db, "users", currentUser.uid), { lastOrderDate: serverTimestamp() });
+    // On envoie le tout dans le cloud Firebase !
+    const docRef = await addDoc(collection(window.db, "commandes"), newOrder);
 
-        // On vide le panier du client
-        // On vide le panier en retirant tous les éléments depuis l'index 0
-        cart.splice(0, cart.length); // 🪄 Le Proxy mettra l'UI à jour tout seul et videra le localStorage !
-        if (typeof window.triggerVibration === "function") window.triggerVibration("jackpot");
+    // Bonus: on met à jour la date de dernière commande du client
+    await updateDoc(doc(window.db, "users", currentUser.uid), {
+      lastOrderDate: serverTimestamp(),
+    });
 
-        // 🎯 MAGIE FINALE : On lance le Tracking pour rassurer le client !
-        if (window.snackConfig?.features?.enableClickAndCollect) {
-            localStorage.setItem("activeOrderId", docRef.id);
-            if (typeof window.startOrderTracking === "function") window.startOrderTracking(docRef.id);
-        }
+    // On vide le panier du client
+    // On vide le panier en retirant tous les éléments depuis l'index 0
+    cart.splice(0, cart.length); // 🪄 Le Proxy mettra l'UI à jour tout seul et videra le localStorage !
+    if (typeof window.triggerVibration === "function")
+      window.triggerVibration("jackpot");
 
-    } catch(err) {
-        console.error("Erreur Firebase après paiement :", err);
-        window.showToast("Paiement réussi, mais erreur d'envoi du ticket. Contactez le restaurant.", "error");
+    // 🎯 MAGIE FINALE : On lance le Tracking pour rassurer le client !
+    if (window.snackConfig?.features?.enableClickAndCollect) {
+      localStorage.setItem("activeOrderId", docRef.id);
+      if (typeof window.startOrderTracking === "function")
+        window.startOrderTracking(docRef.id);
     }
-};
+  } catch (err) {
+    console.error("Erreur Firebase après paiement :", err);
+    window.showToast(
+      "Paiement réussi, mais erreur d'envoi du ticket. Contactez le restaurant.",
+      "error",
+    );
+  }
+}
 
 // ==========================================
 // 🎟️ GESTION DE L'UI DE LA MODALE TRACKING
 // ==========================================
-function openTrackingModal () {
+function openTrackingModal() {
   const modal = document.getElementById("order-tracking-modal");
   modal.classList.remove("hidden");
   modal.classList.add("flex");
@@ -2217,7 +2375,7 @@ function openTrackingModal () {
     modal.classList.remove("opacity-0");
     modal.querySelector(".bg-white").classList.remove("scale-95");
   }, 10);
-};
+}
 
 function closeTrackingModal() {
   const modal = document.getElementById("order-tracking-modal");
@@ -2227,33 +2385,53 @@ function closeTrackingModal() {
     modal.classList.add("hidden");
     modal.classList.remove("flex");
   }, 300);
-};
-
+}
 
 // ==========================================
 // 📡 LE RADAR DU CLIENT (MISE À JOUR AVEC L'UI)
 // ==========================================
 let unsubscribeClientRadar = null;
 
+// ==========================================
+// 📡 NOTIFICATION ARRIVÉE (POUR LE CHEF)
+// ==========================================
 async function notifyArrival(orderId) {
+  // 👈 On enlève le "async function" anonyme pour une déclaration nommée
   try {
     const btn = document.getElementById("tracking-action-btn");
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Préparation en cuisine...`;
-    // On bascule la commande en "nouvelle" pour alerter le chef !
-    await window.fs.updateDoc(window.fs.doc(window.db, "commandes", orderId), {
+    if (!btn) return;
+
+    // UX : On montre que l'info part en cuisine
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Transmission au chef...`;
+    btn.disabled = true;
+
+    const { doc, updateDoc } = window.fs;
+    const db = window.db;
+
+    // 🚀 On bascule la commande en "nouvelle" pour faire sonner la tablette du chef !
+    await updateDoc(doc(db, "commandes", orderId), {
       statut: "nouvelle",
+      dateArriveeClient: window.fs.serverTimestamp(), // Optionnel : pour la stat de temps de prep
     });
+
     window.showToast("C'est noté ! Le chef lance la cuisson 🔥", "success");
+
+    if (typeof window.triggerVibration === "function")
+      window.triggerVibration("success");
   } catch (e) {
-    console.error(e);
+    console.error("Erreur notifyArrival:", e);
+    window.showToast("Erreur lors de la notification du chef.", "error");
+    const btn = document.getElementById("tracking-action-btn");
+    if (btn) btn.disabled = false;
   }
-};
+}
 
 // 🔥 FUTURE MODULE : firebase-service.js (Interactions directes avec la Base de Données)
 // ============================================================================
 // 📡 TRACKING DE COMMANDE EN TEMPS RÉEL (FIREBASE)
 // ============================================================================
-function startOrderTracking(orderId) { // ⬅️ Fini le window.
+function startOrderTracking(orderId) {
+  // ⬅️ Fini le window.
   const trackingBadge = document.getElementById("order-tracking-badge");
   const badgeText = document.getElementById("badge-text");
 
@@ -2266,7 +2444,8 @@ function startOrderTracking(orderId) { // ⬅️ Fini le window.
   const actionBtn = document.getElementById("tracking-action-btn");
 
   if (trackingBadge) trackingBadge.classList.remove("hidden");
-  if (orderIdText) orderIdText.textContent = "#" + orderId.slice(-4).toUpperCase();
+  if (orderIdText)
+    orderIdText.textContent = "#" + orderId.slice(-4).toUpperCase();
 
   if (typeof unsubscribeClientRadar === "function") unsubscribeClientRadar();
   console.log("🟢 Radar Client ACTIVÉ :", orderId);
@@ -2280,20 +2459,29 @@ function startOrderTracking(orderId) { // ⬅️ Fini le window.
 
         // ⚪ STATUT 1 : EN ATTENTE DU CLIENT
         if (commande.statut === "en_attente_client") {
-          trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
+          trackingBadge.className =
+            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
           badgeText.textContent = "En attente de votre arrivée";
 
-          iconContainer.className = "w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
-          icon.className = "fas fa-car text-5xl text-gray-500 transition-transform duration-500 animate-pulse";
+          iconContainer.className =
+            "w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+          icon.className =
+            "fas fa-car text-5xl text-gray-500 transition-transform duration-500 animate-pulse";
           title.textContent = "Commande reçue !";
           title.className = "text-3xl font-black text-gray-900 tracking-tight";
-          subtitle.innerHTML = "Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.";
+          subtitle.innerHTML =
+            "Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.";
 
           if (actionBtn) {
-            actionBtn.innerHTML = "<i class='fas fa-car mr-2' aria-hidden='true'></i> Je suis à 5 min / Sur place";
-            actionBtn.className = "w-full bg-blue-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
-            actionBtn.setAttribute("aria-label", "Signaler mon arrivée au restaurant pour lancer la cuisson");
-            
+            actionBtn.innerHTML =
+              "<i class='fas fa-car mr-2' aria-hidden='true'></i> Je suis à 5 min / Sur place";
+            actionBtn.className =
+              "w-full bg-blue-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
+            actionBtn.setAttribute(
+              "aria-label",
+              "Signaler mon arrivée au restaurant pour lancer la cuisson",
+            );
+
             // 🪄 LA MAGIE DE L'EVENT DELEGATION EST ICI :
             actionBtn.removeAttribute("onclick"); // Par sécurité
             actionBtn.setAttribute("data-action", "notify-arrival"); // Nouvelle action !
@@ -2302,20 +2490,27 @@ function startOrderTracking(orderId) { // ⬅️ Fini le window.
         }
         // 🟡 STATUT 2 : NOUVELLE (En préparation)
         else if (commande.statut === "nouvelle") {
-          trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
+          trackingBadge.className =
+            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
           badgeText.textContent = "Commande en cours";
 
-          iconContainer.className = "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
-          icon.className = "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
+          iconContainer.className =
+            "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+          icon.className =
+            "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
           title.textContent = "En cuisine !";
           title.className = "text-3xl font-black text-gray-900 tracking-tight";
           subtitle.textContent = "Le chef prépare votre commande.";
 
           if (actionBtn) {
             actionBtn.textContent = "Super, j'attends !";
-            actionBtn.className = "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
-            actionBtn.setAttribute("aria-label", "Fermer la fenêtre de suivi de commande");
-            
+            actionBtn.className =
+              "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
+            actionBtn.setAttribute(
+              "aria-label",
+              "Fermer la fenêtre de suivi de commande",
+            );
+
             // 🪄 RETOUR AU COMPORTEMENT NORMAL
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
@@ -2325,20 +2520,29 @@ function startOrderTracking(orderId) { // ⬅️ Fini le window.
 
         // 🟢 STATUT : PRÊTE
         else if (commande.statut === "prete") {
-          trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
+          trackingBadge.className =
+            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
           badgeText.textContent = "C'EST PRÊT !";
 
-          iconContainer.className = "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
-          icon.className = "fas fa-check text-5xl text-green-600 transition-transform duration-500";
+          iconContainer.className =
+            "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
+          icon.className =
+            "fas fa-check text-5xl text-green-600 transition-transform duration-500";
           title.textContent = "C'est prêt !";
           title.className = "text-4xl font-black text-green-600 tracking-tight";
-          subtitle.textContent = "Présentez-vous au comptoir pour la récupérer.";
+          subtitle.textContent =
+            "Présentez-vous au comptoir pour la récupérer.";
 
           if (actionBtn) {
-            actionBtn.innerHTML = "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
-            actionBtn.className = "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
-            actionBtn.setAttribute("aria-label", "Fermer la fenêtre. Commande prête à être retirée.");
-            
+            actionBtn.innerHTML =
+              "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
+            actionBtn.className =
+              "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
+            actionBtn.setAttribute(
+              "aria-label",
+              "Fermer la fenêtre. Commande prête à être retirée.",
+            );
+
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
             actionBtn.removeAttribute("data-id");
@@ -2358,7 +2562,9 @@ function startOrderTracking(orderId) { // ⬅️ Fini le window.
           if (trackingBadge) trackingBadge.className = "hidden";
 
           // 🧹 PLUS DE TYPEOF, APPEL DIRECT !
-          try { closeTrackingModal(); } catch (e) {}
+          try {
+            closeTrackingModal();
+          } catch (e) {}
 
           if (unsubscribeClientRadar) {
             unsubscribeClientRadar();
@@ -2366,7 +2572,7 @@ function startOrderTracking(orderId) { // ⬅️ Fini le window.
           }
         }
       }
-    }
+    },
   );
 }
 
@@ -2408,56 +2614,228 @@ document.addEventListener("DOMContentLoaded", () => {
 // ============================================================================
 
 // 1. On écoute le geste "Retour" du téléphone
-window.addEventListener('popstate', (event) => {
-    // Le client a fait "Retour". On ferme TOUS les overlays actifs !
-    
-    // Ferme le Menu (si la barre d'url n'a plus #menu)
-    if (window.location.hash !== '#menu') {
-        const fullMenu = document.getElementById("full-menu");
-        if (fullMenu && !fullMenu.classList.contains("hidden")) {
-            // On appelle switchView('home') en lui disant de ne pas retoucher à l'historique
-            switchView('home', true); 
-        }
-    }
+window.addEventListener("popstate", (event) => {
+  // Le client a fait "Retour". On ferme TOUS les overlays actifs !
 
-    // Ferme la Modale Produit
-   try {
+  // Ferme le Menu (si la barre d'url n'a plus #menu)
+  if (window.location.hash !== "#menu") {
+    const fullMenu = document.getElementById("full-menu");
+    if (fullMenu && !fullMenu.classList.contains("hidden")) {
+      // On appelle switchView('home') en lui disant de ne pas retoucher à l'historique
+      switchView("home", true);
+    }
+  }
+
+  // Ferme la Modale Produit
+  try {
     closeProductModal(true);
     closeCartModal(true);
     closeTrackingModal(true);
-} catch (e) {
+  } catch (e) {
     console.log(e);
-}
+  }
 });
 
 // ==========================================
 // 🎁 GESTION CARTE FIDÉLITÉ & NOTIFS (UI)
 // ==========================================
 
-function closeClientCard() {
-    const modal = document.getElementById("client-card-modal");
-    if (!modal) return;
-    
-    // Animation de fermeture
-    modal.classList.add("opacity-0");
+// Variable globale au module pour stopper l'écouteur Firestore quand on ferme la carte
+let unsubscribeClientCard = null;
+
+function openClientCard() {
+  const user = window.auth?.currentUser;
+  if (!user) return;
+
+  const cfg = window.snackConfig;
+
+  // 1. Mise à jour des textes et du design selon la config SaaS
+  if (cfg?.loyalty) {
+    const progName = document.getElementById("card-program-name");
+    const cardBg = document.getElementById("card-bg-gradient");
+    if (progName) progName.innerText = cfg.loyalty.programName;
+    if (cardBg)
+      cardBg.className = `absolute inset-0 z-0 bg-linear-to-br ${cfg.loyalty.cardDesign.backgroundGradient}`;
+  }
+
+  // 2. Identité du client et QR Code
+  const userEmail = document.getElementById("card-user-email");
+  const qrImg = document.getElementById("card-qr-img");
+  if (userEmail) userEmail.innerText = user.email;
+  if (qrImg)
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${user.uid}`;
+
+  // 3. Affichage de la modale avec animation
+  const modal = document.getElementById("client-card-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
     setTimeout(() => {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-    }, 300);
+      modal.classList.remove("opacity-0");
+      const vCard = document.getElementById("virtual-card");
+      if (vCard) vCard.classList.remove("scale-95");
+    }, 10);
+
+    document.body.style.overflow = "hidden";
+  }
+
+  // 4. Écouteur temps réel des points (Radar de points)
+  const { doc, onSnapshot } = window.fs;
+  const db = window.db;
+
+  // On coupe l'ancien écouteur s'il existait déjà
+  if (typeof unsubscribeClientCard === "function") unsubscribeClientCard();
+
+  unsubscribeClientCard = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+    if (docSnap.exists()) {
+      const points = docSnap.data().points || 0;
+      animerCarteFidelite(points);
+    }
+  });
 }
 
-function requestNotif() {
-    // 🚧 Logique Firebase Cloud Messaging à venir...
-    window.showToast("Les notifications arrivent bientôt !", "success");
-    if (typeof window.triggerVibration === "function") window.triggerVibration("light");
+// Fonction assistante pour l'animation de la barre de progression
+function animerCarteFidelite(points) {
+  const maxPoints = 10;
+  const ratio = Math.min((points / maxPoints) * 100, 100);
+
+  const pointsText = document.getElementById("card-points");
+  const progressBar = document.getElementById("card-progress-bar");
+  const progressLabel = document.getElementById("progress-text");
+  const giftIcon = document.getElementById("gift-icon");
+
+  if (pointsText) pointsText.innerText = points;
+  if (progressBar) progressBar.style.width = `${ratio}%`;
+
+  if (points >= maxPoints) {
+    if (progressLabel) {
+      progressLabel.innerText = "🎉 MENU OFFERT ! PRÉSENTEZ CE CODE";
+      progressLabel.classList.add("text-green-300", "animate-pulse");
+    }
+    if (giftIcon) giftIcon.classList.add("animate-bounce", "text-green-300");
+    if (typeof window.triggerVibration === "function")
+      window.triggerVibration("jackpot");
+  } else {
+    const restants = maxPoints - points;
+    if (progressLabel) {
+      progressLabel.innerText = `Encore ${restants} point${restants > 1 ? "s" : ""} avant ta récompense`;
+      progressLabel.classList.remove("text-green-300", "animate-pulse");
+    }
+    if (giftIcon) giftIcon.classList.remove("animate-bounce", "text-green-300");
+  }
+}
+
+function closeClientCard() {
+  const modal = document.getElementById("client-card-modal");
+  if (!modal) return;
+
+  // 🛑 ON COUPE LE RADAR DE POINTS
+  if (typeof unsubscribeClientCard === "function") {
+    unsubscribeClientCard();
+    unsubscribeClientCard = null;
+  }
+
+  modal.classList.add("opacity-0");
+  const vCard = document.getElementById("virtual-card");
+  if (vCard) vCard.classList.add("scale-95");
+
+  setTimeout(() => {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    document.body.style.overflow = "";
+  }, 300);
+}
+
+async function requestNotif() {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      // ✅ ON RÉCUPÈRE CELUI QUE VITE A DÉJÀ INSTALLÉ !
+      const registration = await navigator.serviceWorker.ready;
+
+      const currentToken = await getToken(messaging, {
+        vapidKey:
+          "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098",
+        serviceWorkerRegistration: registration,
+      });
+
+      if (currentToken) {
+        const user = auth.currentUser;
+        if (user)
+          await updateDoc(doc(db, "users", user.uid), {
+            fcmToken: currentToken,
+          });
+
+        const notifBtn = document.getElementById("promo-notif-btn");
+        if (notifBtn) notifBtn.classList.add("hidden");
+        window.showToast("🔔 Parfait ! Vous recevrez nos promos.", "success");
+      }
+    } else {
+      window.showToast("Notifications refusées.", "error");
+      const notifBtn = document.getElementById("promo-notif-btn");
+      if (notifBtn) notifBtn.classList.add("hidden");
+    }
+  } catch (error) {
+    console.error("❌ Erreur : ", error);
+  }
 }
 
 function closeAdminScanner() {
-    const modal = document.getElementById("admin-scanner-modal");
-    if (!modal) return;
-    
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-    
-    // 🚧 Plus tard, on mettra ici la fonction pour éteindre la caméra de Html5Qrcode
+  const modal = document.getElementById("admin-scanner-modal");
+  if (!modal) return;
+
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+
+  // 🚧 Plus tard, on mettra ici la fonction pour éteindre la caméra de Html5Qrcode
 }
+
+// ====================================================================
+// 🧭 LE ROUTEUR DE DÉMARRAGE (Deep Linking)
+// ====================================================================
+document.addEventListener("DOMContentLoaded", () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const pwaAction = urlParams.get("action");
+  const targetId = urlParams.get("id");
+
+  if (pwaAction) {
+    // On attend que l'initialisation SaaS soit terminée (1s)
+    setTimeout(() => {
+      if (pwaAction === "menu") {
+        switchView("menu"); // Appel direct (plus de window.)
+      } else if (pwaAction === "loyalty") {
+        // Si connecté, on ouvre la carte, sinon la modale de login
+        if (window.auth && window.auth.currentUser) {
+          openClientCard();
+        } else {
+          toggleAuthModal();
+        }
+      } else if (pwaAction === "product" && targetId) {
+        switchView("menu");
+        setTimeout(() => {
+          openProductModal(targetId);
+        }, 600);
+      }
+
+      // Nettoyage de l'URL pour éviter de relancer l'action au refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }, 1000);
+  }
+});
+async function logoutUser() {
+  try {
+    // On récupère les outils depuis le window
+    const { signOut } = window.authTools;
+    const auth = window.auth;
+
+    await signOut(auth);
+    window.showToast("Vous êtes déconnecté. À bientôt !", "success");
+
+    switchView("home");
+  } catch (error) {
+    console.error("Erreur de déconnexion", error);
+  }
+}
+
+// On l'expose pour le routeur
+window.logoutUser = logoutUser;

@@ -113,23 +113,9 @@ document.addEventListener('click', (event) => {
 
         // --- AUTRES ACTIONS ---
         case 'close-modal':
-            const modalId = target.getAttribute('data-modal-id');
-            const modalToClose = document.getElementById(modalId);
-            if (modalToClose) {
-                const modalContent = modalToClose.querySelector('.bg-white');
-
-                // 1. On lance l'animation de disparition
-                modalToClose.classList.add("opacity-0");
-                if (modalContent) modalContent.classList.add("scale-95");
-
-                // 2. Après l'animation (300ms), on la cache VRAIMENT
-                setTimeout(() => {
-                    modalToClose.classList.add("hidden");
-                    // 🧹 OPTIONNEL MAIS SÉCURISÉ : On force le centrage ici si Tailwind fait des siennes
-                    modalToClose.classList.add("flex", "items-center", "justify-center"); 
-                }, 300);
-            }
-            break;
+    const modalId = target.getAttribute('data-modal-id');
+    closeModal(modalId);
+    break;
     }
 });
 
@@ -664,7 +650,7 @@ async function loadAdminProducts() {
     <div class="flex flex-col items-start gap-1">
         <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Disponibilité</p>
         <div class="flex items-center gap-3">
-            <button data-action="toggle-product" data-id="${item.id}" data-status=${isAvailable} class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${toggleColor}">
+            <button data-action="toggle-product" data-id="${item.id}" data-current-status="${isAvailable}" class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${toggleColor}">
                 <span class="inline-block h-5 w-5 transform rounded-full bg-white transition duration-300 shadow-md ${toggleTranslate}"></span>
             </button>
             <span class="text-sm font-bold">${statusText}</span>
@@ -890,7 +876,7 @@ async function saveProduct(event){
 
     try {
         const { doc, updateDoc, addDoc, collection, serverTimestamp } = window.fs;
-        const { ref, uploadBytes, getDownloadURL } = window.storage;
+        const { ref, uploadBytes, getDownloadURL } = window.storageTools;
 
         // 1. Récupération des données (avec .trim() pour nettoyer les espaces)
         const nom = document.getElementById("edit-nom").value.trim();
