@@ -42,17 +42,25 @@ self.addEventListener('notificationclick', function(event) {
     self.navigator.clearAppBadge();
   }
 
-  const urlToOpen = new URL('/', self.location.origin).href;
+  // 🔗 DEEP LINK : On utilise l'actionUrl envoyée dans les données de la notification
+  // (ex: "?action=product&id=xxx" pour ouvrir directement la fiche produit)
+  const actionUrl = event.notification.data?.actionUrl
+    ? new URL(event.notification.data.actionUrl, self.location.origin).href
+    : new URL('/', self.location.origin).href;
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Si l'app est déjà ouverte, on navigue dedans
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus();
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          return (client.navigate ? client.navigate(actionUrl) : Promise.resolve(client))
+            .then((c) => c && c.focus());
         }
       }
+      // Sinon on ouvre une nouvelle fenêtre sur l'URL cible
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(actionUrl);
       }
     })
   );
