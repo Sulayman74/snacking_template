@@ -29,6 +29,7 @@ export default defineConfig(() => {
       tailwindcss(),
       {
         name: 'html-transform',
+        enforce: 'pre',
         transformIndexHtml(html) {
           return html
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)

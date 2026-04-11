@@ -422,10 +422,7 @@
           <div class="hidden md:flex items-center gap-4">
             <a
               href="#"
-              onclick="
-                switchView('menu');
-                return false;
-              "
+              data-action="switch-menu"
               class="text-white hover:text-red-400 font-medium transition drop-shadow-md"
               >La Carte</a
             >
@@ -450,8 +447,8 @@
             <button
               aria-label="Déconnexion"
               type="button"
+              data-action="logout-user"
               id="nav-logout-btn"
-              onclick="logoutUser()"
               class="hidden bg-white/10 backdrop-blur-sm text-white hover:bg-red-600 px-4 py-2 rounded-full font-bold transition flex items-center gap-2"
             >
               <i class="fas fa-sign-out-alt"></i> Quitter
@@ -465,10 +462,7 @@
         >
           <a
             href="#"
-            onclick="
-              switchView('menu');
-              return false;
-            "
+            data-action="switch-menu"
             class="mobile-link text-4xl font-bold text-white hover:text-red-500 transition transform hover:scale-110"
             >La Carte</a
           >
@@ -497,11 +491,8 @@
           </a>
           <a
             href="#"
+            data-action="logout-user"
             id="mobile-logout-btn"
-            onclick="
-              logoutUser();
-              return false;
-            "
             class="hidden mobile-link text-xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110 mt-8"
           >
             Déconnexion
@@ -614,7 +605,7 @@
 
           <div class="text-center">
             <button
-              onclick="switchView('menu')"
+            data-action="switch-menu"
               class="bg-gray-800 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300"
             >
               Voir toute la carte
@@ -644,7 +635,7 @@
             <p></p>
             <button
               aria-label="Retour sur la home page"
-              onclick="switchView('home')"
+              data-action="switch-home"
               class="text-gray-600 bg-white shadow-sm border border-red-200 w-12 h-12 rounded-full hover:bg-gray-100 hover:text-red-600 transition flex items-center justify-center"
             >
               <i class="fas fa-times text-xl"></i>
@@ -708,7 +699,7 @@
                     type="button"
                     aria-label="Connexion au club fidélité"
                     id="loyalty-main-btn"
-                    onclick="toggleAuthModal()"
+                    data-action="toggle-auth-modal"
                     class="bg-white text-black px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1"
                   >
                     Connexion
@@ -1027,17 +1018,16 @@
   </div>
 </nav>
 
-    <div
-      id="auth-modal"
-      class="fixed inset-0 bg-gray-900/80 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md"
-    >
+   <div
+  id="auth-modal"
+  class="fixed inset-0 bg-gray-900/80 z-[100] hidden items-center justify-center p-4 backdrop-blur-md opacity-0 transition-opacity duration-300"
+>
       <div
         class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95 md:scale-100"
       >
         <button
           aria-label="Toggle authentification"
           type="button"
-          onclick="toggleAuthModal()"
           class="absolute top-4 right-4 text-gray-300 hover:text-black bg-gray-100 p-2 rounded-full transition"
         >
           <i
@@ -1071,9 +1061,9 @@
         </button>
 
         <div class="flex items-center mb-6">
-          <div class="flex-grow border-t border-gray-200"></div>
+          <div class="grow border-t border-gray-200"></div>
           <span class="mx-4 text-gray-400 text-sm font-medium">OU</span>
-          <div class="flex-grow border-t border-gray-200"></div>
+          <div class="grow border-t border-gray-200"></div>
         </div>
 
         <form id="auth-form" class="space-y-5">
@@ -1112,7 +1102,7 @@
           <div class="text-right mt-1 mb-4">
             <button
               type="button"
-              onclick="resetPassword()"
+              data-action="reset-password"
               class="text-sm text-gray-500 hover:text-red-600 hover:underline transition"
             >
               Mot de passe oublié ?
@@ -1135,7 +1125,6 @@
           >
           <button
             aria-label="Bouton Inscription"
-            onclick="switchAuthMode()"
             id="auth-switch-btn"
             class="text-red-600 font-bold ml-1 hover:underline"
           >
@@ -1245,7 +1234,7 @@
             <button
               id="promo-notif-btn"
               aria-label="Autorisation push notifications"
-              onclick="demanderPermissionNotifs()"
+              data-action="request-notif"
               class="mt-4 w-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 border border-white/20 hidden backdrop-blur-sm"
             >
               <i class="fas fa-bell animate-pulse"></i> Activer les
@@ -1260,7 +1249,7 @@
       </div>
 
       <button
-        onclick="closeClientCard()"
+        data-action="close-client-card"
         aria-label="Fermeture carte"
         class="mt-8 text-white/70 hover:text-white flex flex-col items-center gap-2 transition-transform hover:scale-110"
       >
@@ -1282,12 +1271,12 @@
           class="p-5 bg-gray-900 text-white flex justify-between items-center z-10 shadow-md"
         >
           <h3 class="font-bold text-lg">
-            <i class="fas fa-qrcode text-red-500 mr-2 animate-pulse"></i>
+            <i class="fas fa-ode text-red-500 mr-2 animate-pulse"></i>
             Scanner Client
           </h3>
           <button
             aria-label="Fermeture scanner"
-            onclick="closeAdminScanner()"
+            data-action="close-admin-scanner"
             class="text-gray-300 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600"
           >
             <i
@@ -1429,7 +1418,7 @@ data-action="open-cart"
 
     <div
       id="product-modal-backdrop"
-      onclick="closeProductModal()"
+      data-action="close-product-modal"
       class="fixed inset-0 bg-gray-900/70 z-70 hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"
     ></div>
 
@@ -1438,7 +1427,7 @@ data-action="open-cart"
       class="fixed bottom-0 left-0 md:left-1/2 w-full md:max-w-2xl bg-white rounded-t-3xl md:rounded-3xl shadow-2xl z-[80] transform md:-translate-x-1/2 translate-y-full md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:pointer-events-none md:scale-95 md:h-auto md:bottom-auto transition-all duration-300 max-h-[90vh] overflow-y-auto"
     >
       <button
-        onclick="closeProductModal()"
+        data-action="close-product-modal"
         aria-label="Fermer la modale"
         type="button"
         aria-label="Fermeture de la modal"
@@ -1498,7 +1487,6 @@ data-action="open-cart"
                     name="formule"
                     value="seul"
                     checked
-                    onchange="toggleDrinkSection()"
                     class="w-4 h-4 text-red-600 focus:ring-red-500"
                   />
                   <span class="font-medium text-gray-900 text-sm">Seul</span>
@@ -1516,7 +1504,6 @@ data-action="open-cart"
                     type="radio"
                     name="formule"
                     value="menu"
-                    onchange="toggleDrinkSection()"
                     class="w-4 h-4 text-red-600 focus:ring-red-500"
                   />
                   <div>
@@ -1610,7 +1597,7 @@ data-action="process-checkout"
     </div>
     <button
       id="order-tracking-badge"
-      onclick="openTrackingModal()"
+      data-action="open-tracking-modal"
       class="hidden fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black flex items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce"
     >
       <i class="fas fa-bell animate-pulse"></i>
@@ -1626,7 +1613,7 @@ data-action="process-checkout"
       >
         <button
           id="tracking-close-btn"
-          onclick="closeTrackingModal()"
+          data-action="close-tracking-modal"
           class="absolute top-4 right-4 text-gray-300 hover:text-black bg-gray-100 p-2 rounded-full transition w-10 h-10 flex items-center justify-center z-10"
         >
           <i class="fas fa-times text-xl"></i>
@@ -1682,7 +1669,7 @@ data-action="process-checkout"
         <button
           type="button"
           id="tracking-action-btn"
-          onclick="closeTrackingModal()"
+          data-action="close-tracking-modal"
           aria-label="Fermer la fenêtre de suivi de commande"
           aria-controls="order-tracking-modal"
           class="w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95"
@@ -1700,7 +1687,7 @@ data-action="process-checkout"
         id="payment-sheet-content"
       >
         <button
-          onclick="closePaymentSheet()"
+          data-action="close-payment-sheet"
           class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full"
         >
           <i class="fas fa-times"></i>
@@ -1715,7 +1702,7 @@ data-action="process-checkout"
 
         <button
           id="submit-payment-btn"
-          onclick="submitStripePayment()"
+          data-action="submit-stripe-payment"
           class="w-full bg-black text-white py-4 rounded-xl font-bold shadow-lg flex justify-center items-center disabled:opacity-50"
         >
           Payer maintenant

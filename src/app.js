@@ -51,21 +51,75 @@ document.addEventListener('click', (event) => {
         case 'process-checkout':
             processCheckout();
             break;
+            case 'close-product-modal':
+            closeProductModal();
+            break;
+            
+        case 'add-to-cart':
+            confirmAddToCart();
+            break;
+
+        case 'toggle-auth-modal':
+          console.log("🎯 Routeur : Action 'toggle-auth-modal' détectée");
+            toggleAuthModal();
+            break;
+
+        case 'logout-user':
+            if (typeof logoutUser === "function") logoutUser();
+            break;
+
+        case 'open-tracking-modal':
+            openTrackingModal();
+            break;
+
+        case 'close-tracking-modal':
+            closeTrackingModal();
+            break;
+
+        case 'close-payment-sheet':
+            closePaymentSheet();
+            break;
+
+        case 'submit-stripe-payment':
+            submitStripePayment();
+            break;
+
+          case 'reset-password':
+            resetPassword();
+            break;
+
+          case 'request-notif':
+            requestNotif();
+            break;
+
+        case 'close-client-card':
+            closeClientCard();
+            break;
+
+        case 'close-admin-scanner':
+            closeAdminScanner();
+            break;
     }
 });
 
 // ==========================================
-// 💳 VARIABLES STRIPE GLOBALES
+// 🎛️ ROUTEUR DES CHANGEMENTS D'ÉTAT (Inputs, Radios)
 // ==========================================
-let stripeElements = null;
-let stripeInstance = null;
-const stripePublicKey = "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
-
-// ============================================================================
-// 2. INITIALISATION DYNAMIQUE
-// ============================================================================
-let menuGlobal = [];
-
+document.addEventListener('change', (event) => {
+    // Si on change la formule (Menu / Seul)
+    if (event.target.name === 'formule') {
+        toggleDrinkSection();
+    }
+    // Si on change la taille d'une pizza
+    if (event.target.name === 'taille_produit') {
+        updateProductSize(event.target);
+    }
+    // Si on coche/décoche une sauce
+    if (event.target.classList.contains('sauce-checkbox')) {
+        const max = parseInt(event.target.getAttribute('data-max')) || 2;
+        checkSauceLimit(event, max);
+    }
+});
 window.initAppVisuals = async () => {
   const cfg = window.snackConfig;
   if (!cfg) return;
@@ -149,8 +203,62 @@ window.initAppVisuals = async () => {
       floatingCartContainer.classList.add("hidden"); // On cache le panier
     }
   }
+
 };
 
+// ==========================================
+// 💳 VARIABLES STRIPE GLOBALES
+// ==========================================
+let stripeElements = null;
+let stripeInstance = null;
+const stripePublicKey = "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
+
+// ============================================================================
+// 2. INITIALISATION DYNAMIQUE
+// ============================================================================
+let menuGlobal = [];
+
+
+// ==========================================
+// 🔐 GESTION DE LA MODALE D'AUTHENTIFICATION
+// ==========================================
+function toggleAuthModal() {
+    const modal = document.getElementById("auth-modal");
+    if (!modal) return;
+
+    // On regarde si la modale est invisible (soit via 'hidden', soit via l'opacité)
+    const isVisible = !modal.classList.contains("hidden") && !modal.classList.contains("opacity-0");
+
+    if (!isVisible) {
+        // --- ON OUVRE ---
+        console.log("🔓 Action : Ouverture de la modale");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        
+        // On force le z-index au cas où Tailwind bloque
+        modal.style.zIndex = "1000"; 
+
+        setTimeout(() => {
+            modal.classList.remove("opacity-0");
+            const modalContent = modal.querySelector(".bg-white");
+            if (modalContent) modalContent.classList.remove("scale-95");
+        }, 10);
+        
+        document.body.style.overflow = "hidden";
+    } else {
+        // --- ON FERME ---
+        console.log("🔒 Action : Fermeture de la modale");
+        modal.classList.add("opacity-0");
+        const modalContent = modal.querySelector(".bg-white");
+        if (modalContent) modalContent.classList.add("scale-95");
+        
+        setTimeout(() => {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            document.body.style.overflow = ""; 
+        }, 300);
+    }
+}
 // ============================================================================
 // 3. MOTEUR D'AFFICHAGE DU MENU (Catégories + Best Sellers)
 // ============================================================================
@@ -572,7 +680,7 @@ function switchView (viewName, ignoreHistory = false) {
 window.addEventListener('popstate', (event) => {
   if (window.location.hash !== '#menu') {
     // Si l'utilisateur fait "retour" alors que le menu est ouvert, on ferme proprement
-    window.switchView('home', true); 
+    switchView('home', true); 
   }
 });
 
@@ -837,7 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 // 🆘 RÉINITIALISATION DU MOT DE PASSE
 // ==========================================
-window.resetPassword = async () => {
+async function resetPassword() {
     const emailInput = document.getElementById("auth-email").value.trim();
 
     // 1. On vérifie que le client a bien tapé son email
@@ -908,9 +1016,8 @@ window.resetPassword = async () => {
                 }
                 
                 // On ferme la modale
-                if (typeof window.toggleAuthModal === 'function') {
-                    window.toggleAuthModal();
-                }
+                toggleAuthModal();
+
 
             } catch (error) {
                 console.error("❌ Erreur Google Auth:", error);
@@ -1210,43 +1317,7 @@ document.addEventListener('cart-updated', () => {
 // Au chargement de la page, on met à jour la bulle rouge une première fois
 document.addEventListener("DOMContentLoaded", updateCartUI);
 
-// ============================================================================
-// 🍹 BASCULE AFFICHAGE BOISSONS (Sécurisée pour Pizzas & Burgers)
-// ============================================================================
-window.toggleDrinkSection = function () {
-  const formuleInput = document.querySelector('input[name="formule"]:checked');
-  const drinkSection = document.getElementById("drink-section");
-  const btn = document.getElementById("modal-cta");
-  const devise = window.snackConfig?.identity?.currency || "€";
 
-  // 🛑 LE BOUCLIER ANTI-CRASH :
-  // S'il n'y a pas de bouton "formule" (Ex: c'est une Pizza), on cache les boissons et on s'arrête là !
-  if (!formuleInput) {
-    if (drinkSection) {
-      drinkSection.classList.add("opacity-0");
-      setTimeout(() => drinkSection.classList.add("hidden"), 300);
-    }
-    return;
-  }
-
-  const isMenu = formuleInput.value === "menu";
-
-  if (isMenu) {
-    if (drinkSection) {
-      drinkSection.classList.remove("hidden");
-      setTimeout(() => drinkSection.classList.remove("opacity-0"), 10);
-    }
-    if (btn)
-      btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
-  } else {
-    if (drinkSection) {
-      drinkSection.classList.add("opacity-0");
-      setTimeout(() => drinkSection.classList.add("hidden"), 300);
-    }
-    if (btn)
-      btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-  }
-};
 // ============================================================================
 // 🍔 MOTEUR DE MODALE UNIVERSEL (Pizzas, Kebabs, Burgers, Boissons)
 // ============================================================================
@@ -1361,7 +1432,7 @@ if (item.isAvailable === false) {
                       <div class="grid grid-cols-2 gap-3">
                       ${item.tailles.map((taille, index) => `
                           <label class="relative cursor-pointer group">
-                              <input type="radio" name="taille_produit" value="${taille.nom}" data-prix="${taille.prix}" ${index === 0 ? "checked" : ""} onchange="updateProductSize(this)" class="sr-only peer">
+                              <input type="radio" name="taille_produit" value="${taille.nom}" data-prix="${taille.prix}" ${index === 0 ? "checked" : ""}  class="sr-only peer">
                               <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex flex-col items-center justify-center text-center">
                                   <span class="font-bold text-gray-900 mb-1">${taille.nom}</span>
                                   <span class="font-black ${accentText} text-sm">${taille.prix.toFixed(2)} ${devise}</span>
@@ -1386,7 +1457,7 @@ if (item.isAvailable === false) {
                       </legend>
                       <div class="grid grid-cols-2 gap-3">
                           <label class="relative cursor-pointer">
-                              <input type="radio" name="formule" value="seul" checked onchange="toggleDrinkSection()" class="sr-only peer">
+                              <input type="radio" name="formule" value="seul" checked class="sr-only peer">
                               <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center">
                                   <i class="fas fa-hamburger text-2xl text-gray-400 mb-2 peer-checked:${accentText}"></i>
                                   <span class="font-bold text-gray-900">Seul</span>
@@ -1395,7 +1466,7 @@ if (item.isAvailable === false) {
                           </label>
 
                           <label class="relative cursor-pointer">
-                              <input type="radio" name="formule" value="menu" onchange="toggleDrinkSection()" class="sr-only peer">
+                              <input type="radio" name="formule" value="menu" class="sr-only peer">
                               <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center relative overflow-hidden">
                                   <div class="absolute -right-6 -top-6 w-16 h-16 ${accentBg} rounded-full opacity-10"></div>
                                   <div class="flex gap-1 mb-2">
@@ -1472,7 +1543,7 @@ if (item.isAvailable === false) {
                       <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                           ${sauces.map((sauce) => `
                               <label class="relative cursor-pointer block">
-                                  <input type="checkbox" name="sauce" value="${sauce}" onchange="checkSauceLimit(event, ${maxSauces})" class="sr-only peer sauce-checkbox">
+                                  <input type="checkbox" name="sauce" value="${sauce}" data-max="${maxSauces}" class="sr-only peer sauce-checkbox">
                                   <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex items-center justify-center text-center">
                                       <span class="font-bold text-gray-800 text-sm leading-tight">${sauce}</span>
                                   </div>
@@ -1487,7 +1558,7 @@ if (item.isAvailable === false) {
                   optionsContainer.classList.add("hidden");
               } else {
                   optionsContainer.innerHTML = allOptionsHTML;
-                  if (typeof window.toggleDrinkSection === "function") window.toggleDrinkSection();
+                  toggleDrinkSection();
               }
           }
       } 
@@ -1504,14 +1575,14 @@ if (item.isAvailable === false) {
       if (cfg.features?.enableClickAndCollect) {
           btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
           btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-          btn.onclick = window.confirmAddToCart;
+          btn.setAttribute('data-action','add-to-cart')
       }
       
       // 🏪 Scénario 2 : MODE VITRINE (Pas de commande en ligne du tout)
       else if (!cfg.features?.enableOnlineOrder) {
           btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true"></i> Fermer`;
           btn.className = `w-full py-4 rounded-full font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 border ${accentBorder} hover:border-gray-400 transition-all flex justify-center items-center gap-2`;
-          btn.onclick = window.closeProductModal;
+          btn.setAttribute('data-action','close-product-modal')
       }
       
       // 🏍️ Scénario 3 : LIVRAISON EXTERNE (UberEats, Deliveroo...)
@@ -1560,12 +1631,62 @@ if (item.isAvailable === false) {
   document.body.style.overflow = "hidden";
 };
 
+// ============================================================================
+// 🍹 BASCULE AFFICHAGE BOISSONS (Avec animations Tailwind & Event Delegation)
+// ============================================================================
+function toggleDrinkSection() {
+  const formuleInput = document.querySelector('input[name="formule"]:checked');
+  const drinkSection = document.getElementById("drink-section");
+  const btn = document.getElementById("modal-cta");
+  const devise = window.snackConfig?.identity?.currency || "€";
+
+  // 🛑 BOUCLIER ANTI-CRASH : Si pas de formule (ex: Pizza), on cache et on sort.
+  if (!formuleInput) {
+    if (drinkSection) {
+      drinkSection.classList.remove("translate-y-0", "opacity-100");
+      drinkSection.classList.add("translate-y-4", "opacity-0");
+      setTimeout(() => drinkSection.classList.add("hidden"), 300);
+    }
+    return;
+  }
+
+  const isMenu = formuleInput.value === "menu";
+  
+  // 📳 Retour haptique au toucher
+  if (typeof window.triggerVibration === "function") {
+      window.triggerVibration("light");
+  }
+
+  if (isMenu) {
+    if (drinkSection) {
+      drinkSection.classList.remove("hidden");
+      // Micro-délai pour que l'animation de slide/fade s'active correctement
+      setTimeout(() => {
+        drinkSection.classList.remove("translate-y-4", "opacity-0");
+        drinkSection.classList.add("translate-y-0", "opacity-100");
+      }, 20);
+    }
+    if (btn) {
+        btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
+    }
+  } else {
+    if (drinkSection) {
+      drinkSection.classList.remove("translate-y-0", "opacity-100");
+      drinkSection.classList.add("translate-y-4", "opacity-0");
+      setTimeout(() => drinkSection.classList.add("hidden"), 300);
+    }
+    if (btn) {
+        btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+    }
+  }
+}
+
 // ==========================================
 // 🛠️ LES PETITS SCRIPTS ASSISTANTS (UX & A11y)
 // ==========================================
 
 // Helper 1 : Gérer les sauces + Mettre à jour le compteur visuel
-window.checkSauceLimit = function (event, max) {
+function checkSauceLimit(event, max) {
   const checkedBoxes = document.querySelectorAll(".sauce-checkbox:checked");
   const counterUI = document.getElementById("sauce-counter-ui");
 
@@ -1593,7 +1714,7 @@ window.checkSauceLimit = function (event, max) {
 };
 
 // Helper 2 : Mettre à jour le prix de la pizza en direct
-window.updateProductSize = function (radioBtn) {
+function updateProductSize(radioBtn) {
   const nouveauPrix = parseFloat(radioBtn.getAttribute("data-prix"));
   currentProduct.prixBase = nouveauPrix;
   currentProduct.tailleChoisie = radioBtn.value;
@@ -1605,54 +1726,10 @@ window.updateProductSize = function (radioBtn) {
     window.triggerVibration("light");
 };
 
-// ============================================================================
-// 🍹 BASCULE AFFICHAGE BOISSONS (Avec animations Tailwind)
-// ============================================================================
-window.toggleDrinkSection = function () {
-  const formuleInput = document.querySelector('input[name="formule"]:checked');
-  const drinkSection = document.getElementById("drink-section");
-  const btn = document.getElementById("modal-cta");
-  const devise = window.snackConfig?.identity?.currency || "€";
-
-  if (!formuleInput) {
-    if (drinkSection) {
-      drinkSection.classList.remove("translate-y-0", "opacity-100");
-      drinkSection.classList.add("translate-y-4", "opacity-0");
-      setTimeout(() => drinkSection.classList.add("hidden"), 300);
-    }
-    return;
-  }
-
-  const isMenu = formuleInput.value === "menu";
-  if (typeof window.triggerVibration === "function")
-    window.triggerVibration("light");
-
-  if (isMenu) {
-    if (drinkSection) {
-      drinkSection.classList.remove("hidden");
-      // L'animation a besoin d'un micro-délai pour que le display:block soit appliqué par le navigateur avant de transitionner l'opacité
-      setTimeout(() => {
-        drinkSection.classList.remove("translate-y-4", "opacity-0");
-        drinkSection.classList.add("translate-y-0", "opacity-100");
-      }, 20);
-    }
-    if (btn)
-      btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
-  } else {
-    if (drinkSection) {
-      drinkSection.classList.remove("translate-y-0", "opacity-100");
-      drinkSection.classList.add("translate-y-4", "opacity-0");
-      setTimeout(() => drinkSection.classList.add("hidden"), 300);
-    }
-    if (btn)
-      btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-  }
-};
-
 // ==========================================
 // 🛒 LA VALIDATION ET L'AJOUT AU PANIER
 // ==========================================
-window.confirmAddToCart = function () {
+function confirmAddToCart () {
   const formuleInput = document.querySelector('input[name="formule"]:checked');
   const isMenu = formuleInput ? formuleInput.value === "menu" : false;
 
@@ -1718,7 +1795,7 @@ window.confirmAddToCart = function () {
 };
 
 // Fermeture de la modale unifiée
-window.closeProductModal = function () {
+function closeProductModal () {
   const backdrop = document.getElementById("product-modal-backdrop");
   const sheet = document.getElementById("product-modal");
 
@@ -1893,7 +1970,7 @@ async function processCheckout(){
 
     if (!currentUser) {
         window.showToast("Veuillez vous connecter pour commander", "error");
-        if (typeof window.toggleAuthModal === "function") window.toggleAuthModal();
+        toggleAuthModal();
         return;
     }
 
@@ -1913,7 +1990,7 @@ async function processCheckout(){
         const totalAmount = getCartTotal();
 
         // 1. Fermer le panier pour éviter les conflits de z-index
-        if (typeof window.closeCartModal === "function") window.closeCartModal();
+          closeCartModal();
 
         // 2. Mettre à jour et ouvrir la modale Stripe EN PREMIER, pour que le DOM soit prêt
         document.getElementById("payment-amount-display").textContent = `Total : ${totalAmount.toFixed(2)} €`;
@@ -1922,7 +1999,7 @@ async function processCheckout(){
         const paymentContainer = document.getElementById("payment-element");
         paymentContainer.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i></div>';
         
-        if (typeof window.openPaymentSheet === "function") window.openPaymentSheet();
+        openPaymentSheet();
 
         // 3. Demander le PaymentIntent à la Cloud Function
         const { httpsCallable, functions } = window.fs;
@@ -1970,7 +2047,7 @@ const response = await createPaymentIntent({
 // 💳 GESTION VISUELLE DE LA MODALE STRIPE
 // ==========================================
 
-window.openPaymentSheet = () => {
+function openPaymentSheet() {
     const sheet = document.getElementById("payment-bottom-sheet");
     const content = document.getElementById("payment-sheet-content");
     
@@ -1987,7 +2064,7 @@ window.openPaymentSheet = () => {
     }, 10);
 };
 
-window.closePaymentSheet = () => {
+function closePaymentSheet() {
     const sheet = document.getElementById("payment-bottom-sheet");
     const content = document.getElementById("payment-sheet-content");
     
@@ -2012,7 +2089,7 @@ window.closePaymentSheet = () => {
 // ==========================================
 // 💳 1. SOUMISSION DU PAIEMENT (AU CLIC)
 // ==========================================
-window.submitStripePayment = async () => {
+async function submitStripePayment() {
     const submitPaymentBtn = document.getElementById("submit-payment-btn");
     
     // Sécurité : on vérifie que le formulaire Stripe a bien fini de charger
@@ -2047,12 +2124,11 @@ window.submitStripePayment = async () => {
             window.showToast("Paiement validé ! 🎉", "success");
             
             // 1. ON FERME LE TIROIR DE PAIEMENT
-            if (typeof window.closePaymentSheet === "function") window.closePaymentSheet();
+            closePaymentSheet();
             
             // 2. 💥 ON ENVOIE LA COMMANDE EN CUISINE (Dans Firestore)
-            if (typeof window.finalizeOrderInFirestore === "function") {
-                await window.finalizeOrderInFirestore(paymentIntent.id); 
-            }
+                await finalizeOrderInFirestore(paymentIntent.id); 
+            
         }
 
     } catch (err) {
@@ -2069,7 +2145,7 @@ window.submitStripePayment = async () => {
 // 🧑‍🍳 2. ENVOI EN CUISINE (APRÈS PAIEMENT RÉUSSI)
 // ==========================================
 // 🔥 FUTURE MODULE : firebase-service.js (Interactions directes avec la Base de Données)
-window.finalizeOrderInFirestore = async (stripePaymentId) => {
+async function finalizeOrderInFirestore(stripePaymentId) {
     const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
     const currentUser = window.auth?.currentUser;
     const { addDoc, collection, serverTimestamp, updateDoc, doc } = window.fs;
@@ -2133,7 +2209,7 @@ window.finalizeOrderInFirestore = async (stripePaymentId) => {
 // ==========================================
 // 🎟️ GESTION DE L'UI DE LA MODALE TRACKING
 // ==========================================
-window.openTrackingModal = () => {
+function openTrackingModal () {
   const modal = document.getElementById("order-tracking-modal");
   modal.classList.remove("hidden");
   modal.classList.add("flex");
@@ -2143,7 +2219,7 @@ window.openTrackingModal = () => {
   }, 10);
 };
 
-window.closeTrackingModal = () => {
+function closeTrackingModal() {
   const modal = document.getElementById("order-tracking-modal");
   modal.classList.add("opacity-0");
   modal.querySelector(".bg-white").classList.add("scale-95");
@@ -2159,7 +2235,7 @@ window.closeTrackingModal = () => {
 // ==========================================
 let unsubscribeClientRadar = null;
 
-window.notifyArrival = async (orderId) => {
+async function notifyArrival(orderId) {
   try {
     const btn = document.getElementById("tracking-action-btn");
     btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Préparation en cuisine...`;
@@ -2174,7 +2250,10 @@ window.notifyArrival = async (orderId) => {
 };
 
 // 🔥 FUTURE MODULE : firebase-service.js (Interactions directes avec la Base de Données)
-window.startOrderTracking = (orderId) => {
+// ============================================================================
+// 📡 TRACKING DE COMMANDE EN TEMPS RÉEL (FIREBASE)
+// ============================================================================
+function startOrderTracking(orderId) { // ⬅️ Fini le window.
   const trackingBadge = document.getElementById("order-tracking-badge");
   const badgeText = document.getElementById("badge-text");
 
@@ -2186,144 +2265,110 @@ window.startOrderTracking = (orderId) => {
   const subtitle = document.getElementById("tracking-subtitle");
   const actionBtn = document.getElementById("tracking-action-btn");
 
-  // 1. On affiche le badge et l'ID de commande (les 4 derniers caractères pour faire "Ticket")
   if (trackingBadge) trackingBadge.classList.remove("hidden");
-  if (orderIdText)
-    orderIdText.textContent = "#" + orderId.slice(-4).toUpperCase();
+  if (orderIdText) orderIdText.textContent = "#" + orderId.slice(-4).toUpperCase();
 
-  if (unsubscribeClientRadar) unsubscribeClientRadar();
+  if (typeof unsubscribeClientRadar === "function") unsubscribeClientRadar();
   console.log("🟢 Radar Client ACTIVÉ :", orderId);
 
-  // 2. Écoute Firebase
+  // Écoute Firebase
   unsubscribeClientRadar = window.fs.onSnapshot(
     window.fs.doc(window.db, "commandes", orderId),
     (docSnap) => {
       if (docSnap.exists()) {
         const commande = docSnap.data();
 
-        // ⚪ STATUT 1 : EN ATTENTE DU CLIENT (Nouveau !)
+        // ⚪ STATUT 1 : EN ATTENTE DU CLIENT
         if (commande.statut === "en_attente_client") {
-          trackingBadge.className =
-            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
+          trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
           badgeText.textContent = "En attente de votre arrivée";
 
-          iconContainer.className =
-            "w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
-          icon.className =
-            "fas fa-car text-5xl text-gray-500 transition-transform duration-500 animate-pulse";
+          iconContainer.className = "w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+          icon.className = "fas fa-car text-5xl text-gray-500 transition-transform duration-500 animate-pulse";
           title.textContent = "Commande reçue !";
           title.className = "text-3xl font-black text-gray-900 tracking-tight";
-          subtitle.innerHTML =
-            "Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.";
+          subtitle.innerHTML = "Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.";
 
-          // On transforme le bouton pour l'action !
           if (actionBtn) {
-            actionBtn.innerHTML =
-              "<i class='fas fa-car mr-2' aria-hidden='true'></i> Je suis à 5 min / Sur place";
-            actionBtn.className =
-              "w-full bg-blue-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
-
-            // 🤖 MISE À JOUR POUR LES ROBOTS
-            actionBtn.setAttribute(
-              "aria-label",
-              "Signaler mon arrivée au restaurant pour lancer la cuisson",
-            );
-            actionBtn.onclick = () => window.notifyArrival(orderId);
+            actionBtn.innerHTML = "<i class='fas fa-car mr-2' aria-hidden='true'></i> Je suis à 5 min / Sur place";
+            actionBtn.className = "w-full bg-blue-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
+            actionBtn.setAttribute("aria-label", "Signaler mon arrivée au restaurant pour lancer la cuisson");
+            
+            // 🪄 LA MAGIE DE L'EVENT DELEGATION EST ICI :
+            actionBtn.removeAttribute("onclick"); // Par sécurité
+            actionBtn.setAttribute("data-action", "notify-arrival"); // Nouvelle action !
+            actionBtn.setAttribute("data-id", orderId); // On glisse l'ID de la commande
           }
         }
-        // 🟡 STATUT 2 : NOUVELLE (En préparation par le chef)
+        // 🟡 STATUT 2 : NOUVELLE (En préparation)
         else if (commande.statut === "nouvelle") {
-          trackingBadge.className =
-            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
+          trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
           badgeText.textContent = "Commande en cours";
 
-          iconContainer.className =
-            "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
-          icon.className =
-            "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
+          iconContainer.className = "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+          icon.className = "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
           title.textContent = "En cuisine !";
           title.className = "text-3xl font-black text-gray-900 tracking-tight";
           subtitle.textContent = "Le chef prépare votre commande.";
 
-          // On remet le bouton en mode "Fermeture" normal
           if (actionBtn) {
             actionBtn.textContent = "Super, j'attends !";
-            actionBtn.className =
-              "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
-
-            // 🤖 ON REMET LE LABEL INITIAL POUR LES ROBOTS
-            actionBtn.setAttribute(
-              "aria-label",
-              "Fermer la fenêtre de suivi de commande",
-            );
-            actionBtn.onclick = window.closeTrackingModal;
+            actionBtn.className = "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
+            actionBtn.setAttribute("aria-label", "Fermer la fenêtre de suivi de commande");
+            
+            // 🪄 RETOUR AU COMPORTEMENT NORMAL
+            actionBtn.removeAttribute("onclick");
+            actionBtn.setAttribute("data-action", "close-tracking-modal");
+            actionBtn.removeAttribute("data-id");
           }
         }
 
         // 🟢 STATUT : PRÊTE
         else if (commande.statut === "prete") {
-          // Le badge devient Vert et vibre !
-          trackingBadge.className =
-            "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
+          trackingBadge.className = "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
           badgeText.textContent = "C'EST PRÊT !";
 
-          // La modale passe au vert
-          iconContainer.className =
-            "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
-          icon.className =
-            "fas fa-check text-5xl text-green-600 transition-transform duration-500";
+          iconContainer.className = "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
+          icon.className = "fas fa-check text-5xl text-green-600 transition-transform duration-500";
           title.textContent = "C'est prêt !";
           title.className = "text-4xl font-black text-green-600 tracking-tight";
           subtitle.textContent = "Présentez-vous au comptoir pour la récupérer.";
 
-          // 🪄 LE BOUTON FINAL !
           if (actionBtn) {
-            actionBtn.innerHTML =
-              "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
-            actionBtn.className =
-              "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
-            actionBtn.setAttribute(
-              "aria-label",
-              "Fermer la fenêtre. Commande prête à être retirée.",
-            );
-            actionBtn.onclick = window.closeTrackingModal;
+            actionBtn.innerHTML = "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
+            actionBtn.className = "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
+            actionBtn.setAttribute("aria-label", "Fermer la fenêtre. Commande prête à être retirée.");
+            
+            actionBtn.removeAttribute("onclick");
+            actionBtn.setAttribute("data-action", "close-tracking-modal");
+            actionBtn.removeAttribute("data-id");
           }
 
-          // Alertes système
           window.showToast("🔔 DING ! Votre commande est PRÊTE !", "success");
           if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
-          // On ouvre la modale automatiquement pour être sûr qu'il le voie !
           openTrackingModal();
         }
 
-        // ⚪ STATUT : TERMINÉE (L'archive)
+        // ⚪ STATUT : TERMINÉE
         else if (commande.statut === "terminee") {
           window.showToast("Bon appétit ! À bientôt.", "success");
-
-          // 1. On oublie la commande en cours
           localStorage.removeItem("activeOrderId");
 
-          // 2. On cache le bouton jaune qui flotte
-          if (trackingBadge) {
-            trackingBadge.className = "hidden";
-          }
+          if (trackingBadge) trackingBadge.className = "hidden";
 
-          // 3. ON FERME LA MODALE DE SUIVI
-          if (typeof window.closeTrackingModal === "function") {
-            window.closeTrackingModal();
-          }
+          // 🧹 PLUS DE TYPEOF, APPEL DIRECT !
+          try { closeTrackingModal(); } catch (e) {}
 
-          // 4. On coupe l'écouteur Firebase pour ne pas facturer pour rien
           if (unsubscribeClientRadar) {
             unsubscribeClientRadar();
             unsubscribeClientRadar = null;
           }
         }
       }
-    },
+    }
   );
-};
+}
 
 // ==========================================
 // 🔄 AUTOMATISATION : PAUSE / REPRISE DU RADAR
@@ -2371,17 +2416,48 @@ window.addEventListener('popstate', (event) => {
         const fullMenu = document.getElementById("full-menu");
         if (fullMenu && !fullMenu.classList.contains("hidden")) {
             // On appelle switchView('home') en lui disant de ne pas retoucher à l'historique
-            window.switchView('home', true); 
+            switchView('home', true); 
         }
     }
 
     // Ferme la Modale Produit
-    if (typeof window.closeProductModal === "function") window.closeProductModal(true);
-    
-    // Ferme le Panier
-    if (typeof window.closeCartModal === "function") window.closeCartModal(true);
-    
-    // Ferme le tracking de commande
-    if (typeof window.closeTrackingModal === "function") window.closeTrackingModal(true);
+   try {
+    closeProductModal(true);
+    closeCartModal(true);
+    closeTrackingModal(true);
+} catch (e) {
+    console.log(e);
+}
 });
 
+// ==========================================
+// 🎁 GESTION CARTE FIDÉLITÉ & NOTIFS (UI)
+// ==========================================
+
+function closeClientCard() {
+    const modal = document.getElementById("client-card-modal");
+    if (!modal) return;
+    
+    // Animation de fermeture
+    modal.classList.add("opacity-0");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }, 300);
+}
+
+function requestNotif() {
+    // 🚧 Logique Firebase Cloud Messaging à venir...
+    window.showToast("Les notifications arrivent bientôt !", "success");
+    if (typeof window.triggerVibration === "function") window.triggerVibration("light");
+}
+
+function closeAdminScanner() {
+    const modal = document.getElementById("admin-scanner-modal");
+    if (!modal) return;
+    
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    
+    // 🚧 Plus tard, on mettra ici la fonction pour éteindre la caméra de Html5Qrcode
+}
