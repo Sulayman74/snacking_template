@@ -59,6 +59,22 @@ function updateUI(user) {
   const reviewIcon = document.getElementById("review-modal-icon");
   const navLogo = document.getElementById("nav-logo");
 
+if (cfg.identity) {
+    // Écrase le titre de l'onglet
+    document.title = cfg.identity.name;
+    
+    // Écrase la balise meta description
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute("content", cfg.identity.description);
+
+    // Écrase la couleur du thème mobile
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor && cfg.theme.colors.primary) {
+        // Optionnel: mapper la classe Tailwind (bg-purple-900) vers du HEX si tu veux être précis
+        // Mais en général, on gère ça au lancement
+    }
+}
+
   if (cfg.identity && cfg.identity.logoUrl) {
     if (pwaIcon) pwaIcon.src = cfg.identity.logoUrl;
     if (reviewIcon) reviewIcon.src = cfg.identity.logoUrl;
@@ -230,19 +246,19 @@ function updateUI(user) {
     socialsContainer.className = "flex gap-5 text-3xl mt-4 pt-4 border-t border-gray-700/50";
     if (s.instagram) {
       socialsContainer.innerHTML += `
-        <a href="https://instagram.com/${s.instagram.replace("@", "")}" target="_blank" aria-label="Notre page Instagram" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
+        <a href="${s.instagram.replace("@", "")}" target="_blank" aria-label="Notre page Instagram" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
             <i class="fab fa-instagram bg-linear-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-transparent bg-clip-text"></i>
         </a>`;
     }
     if (s.facebook) {
       socialsContainer.innerHTML += `
-        <a href="https://facebook.com/${s.facebook}" target="_blank" aria-label="Notre page Facebook" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
+        <a href="${s.facebook}" target="_blank" aria-label="Notre page Facebook" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300">
             <i class="fab fa-facebook text-[#1877F2]"></i>
         </a>`;
     }
     if (s.tiktok) {
       socialsContainer.innerHTML += `
-        <a href="https://tiktok.com/@${s.tiktok.replace("@", "")}" target="_blank" aria-label="Notre page Tiktok" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300 group">
+        <a href="@${s.tiktok.replace("@", "")}" target="_blank" aria-label="Notre page Tiktok" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform duration-300 group">
             <i class="fab fa-tiktok text-white group-hover:drop-shadow-[2px_2px_0_#ff0050] transition-all"></i>
         </a>`;
     }
