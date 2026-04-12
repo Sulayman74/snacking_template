@@ -11,36 +11,18 @@
 // ============================================================================
 window.applySaaSThemeToHTML = () => {
   const cfg = window.snackConfig;
-  if (!cfg || !cfg.theme) return;
+  if (!cfg?.theme?.colors) return;
 
-  const { primary, accent, textOnPrimary, border, blurBg } = cfg.theme.colors;
+  const { primaryHex, accentHex, lightHex, onPrimaryHex } = cfg.theme.colors;
+  const root = document.documentElement;
 
-  const primaryButtons = [
-    "auth-submit-btn",
-    "pwa-install-btn",
-    "btn-review-google",
-    "checkout-btn",
-    "loyalty-main-btn",     // Le bouton de la section fidélité
-    "btn-submit-form",      // Le bouton du formulaire de contact
-    "tracking-action-btn",  // Le bouton de la modale de tracking
-    "submit-payment-btn"    // Le bouton Stripe
-  ];
-  primaryButtons.forEach((id) => {
-    const btn = document.getElementById(id);
-    if (btn) {
-      btn.className = btn.className
-        .replace(/bg-[a-z]+-\d+/g, "")
-        .replace("text-white", "")
-        .replace("text-black", "");
-      btn.className += ` ${primary} ${textOnPrimary}`;
-    }
-  });
-
-  const loyaltyCard = document.getElementById("loyalty-card");
-  if (loyaltyCard && border) loyaltyCard.classList.add(border);
-
-  const loyaltyIcon = document.querySelector("#loyalty .fa-gift");
-  if (loyaltyIcon && accent) loyaltyIcon.classList.add(accent);
+  // Injecte les 4 tokens de couleur — tous les utilitaires Tailwind (bg-primary,
+  // text-accent, border-accent, peer-checked:bg-primary-light, etc.) se mettent
+  // à jour automatiquement sans toucher au DOM.
+  root.style.setProperty("--color-primary",       primaryHex);
+  root.style.setProperty("--color-accent",        accentHex);
+  root.style.setProperty("--color-primary-light", lightHex);
+  root.style.setProperty("--color-on-primary",    onPrimaryHex);
 };
 
 // ============================================================================
@@ -50,9 +32,6 @@ function updateUI(user) {
   const cfg = window.snackConfig;
   if (!cfg) return;
 
-  const primaryBg = cfg.theme.colors.primary;
-  const textOnPrimary = cfg.theme.colors.textOnPrimary;
-  const accentText = cfg.theme.colors.accent;
 
   // Logos dans les modales
   const pwaIcon = document.getElementById("pwa-banner-icon");
@@ -69,9 +48,8 @@ if (cfg.identity) {
 
     // Écrase la couleur du thème mobile
     const themeColor = document.querySelector('meta[name="theme-color"]');
-    if (themeColor && cfg.theme.colors.primary) {
-        // Optionnel: mapper la classe Tailwind (bg-purple-900) vers du HEX si tu veux être précis
-        // Mais en général, on gère ça au lancement
+    if (themeColor && cfg.theme.colors.primaryHex) {
+      themeColor.setAttribute("content", cfg.theme.colors.primaryHex);
     }
 }
 
@@ -147,7 +125,7 @@ if (cfg.identity) {
         mobileCtaBtn.setAttribute("data-action", "open-cart");
         mobileCtaBtn.removeAttribute("data-phone");
         mobileCtaBtn.removeAttribute("data-url");
-        mobileCtaBtn.classList.add(primaryBg.split(" ")[0], textOnPrimary);
+        mobileCtaBtn.classList.add("bg-primary", "text-on-primary");
         mobileCtaIcon.className = "fas fa-shopping-bag text-2xl";
       }
       if (desktopCtaBtn) {
@@ -155,7 +133,7 @@ if (cfg.identity) {
         desktopCtaBtn.removeAttribute("data-phone");
         desktopCtaBtn.removeAttribute("data-url");
         desktopCtaBtn.innerHTML = '<i class="fas fa-shopping-bag mr-2"></i> Commander';
-        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition ${primaryBg} ${textOnPrimary}`;
+        desktopCtaBtn.className = "ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-primary text-on-primary";
         if (mobileBurgerCallBtn) mobileBurgerCallBtn.classList.add("hidden");
       }
     } else if (isDelivery) {
@@ -163,7 +141,7 @@ if (cfg.identity) {
         mobileCtaBtn.setAttribute("data-action", "open-delivery");
         mobileCtaBtn.setAttribute("data-url", cfg.deliveryUrl || "");
         mobileCtaBtn.removeAttribute("data-phone");
-        mobileCtaBtn.classList.add(primaryBg.split(" ")[0], textOnPrimary);
+        mobileCtaBtn.classList.add("bg-primary", "text-on-primary");
         mobileCtaIcon.className = "fas fa-motorcycle text-2xl";
       }
       if (desktopCtaBtn) {
@@ -171,7 +149,7 @@ if (cfg.identity) {
         desktopCtaBtn.setAttribute("data-url", cfg.deliveryUrl || "");
         desktopCtaBtn.removeAttribute("data-phone");
         desktopCtaBtn.innerHTML = '<i class="fas fa-motorcycle mr-2"></i> Commander en livraison';
-        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition ${primaryBg} ${textOnPrimary}`;
+        desktopCtaBtn.className = "ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-primary text-on-primary";
       }
       if (mobileBurgerCallBtn) mobileBurgerCallBtn.classList.add("hidden");
     } else {
@@ -179,7 +157,7 @@ if (cfg.identity) {
         mobileCtaBtn.setAttribute("data-action", "call-phone");
         mobileCtaBtn.setAttribute("data-phone", phoneClean || "");
         mobileCtaBtn.removeAttribute("data-url");
-        mobileCtaBtn.classList.add(primaryBg.split(" ")[0], textOnPrimary);
+        mobileCtaBtn.classList.add("bg-primary", "text-on-primary");
         mobileCtaIcon.className = "fas fa-phone text-2xl animate-pulse";
       }
       if (desktopCtaBtn) {
@@ -187,7 +165,7 @@ if (cfg.identity) {
         desktopCtaBtn.setAttribute("data-phone", phoneClean || "");
         desktopCtaBtn.removeAttribute("data-url");
         desktopCtaBtn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> ${cfg.contact?.phone || "Appeler"}`;
-        desktopCtaBtn.className = `ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition ${primaryBg} ${textOnPrimary}`;
+        desktopCtaBtn.className = "ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition bg-primary text-on-primary";
       }
       if (mobileBurgerCallBtn) {
         mobileBurgerCallBtn.href = phoneClean ? `tel:${phoneClean}` : "#";
@@ -201,15 +179,15 @@ if (cfg.identity) {
   // Footer (Adresse & Tél)
   const findUs = document.getElementById("find-us");
   const oClock = document.getElementById("o-clock");
-  if (findUs) findUs.classList.add(accentText);
-  if (oClock) oClock.classList.add(accentText);
+  if (findUs) findUs.classList.add("text-accent");
+  if (oClock) oClock.classList.add("text-accent");
 
   const footerPhone = document.getElementById("footer-phone");
   if (footerPhone && cfg.contact.phone) {
     const phoneClean = cfg.contact.phone.replace(/\s/g, "");
     footerPhone.innerHTML = `
       <a href="tel:${phoneClean}" aria-label="Appeler le restaurant" class="flex items-center gap-2">
-          <i class="fas fa-phone ${accentText}"></i>
+          <i class="fas fa-phone text-accent"></i>
           <span>${cfg.contact.phone}</span>
       </a>`;
   } else if (footerPhone) {
@@ -231,7 +209,7 @@ if (cfg.identity) {
       const iconClass = isApple ? "fa-map" : "fa-location-dot";
       footerAddr.innerHTML = `
         <a href="${mapLink}" target="_blank" class="flex items-start gap-2">
-            <i class="fas ${iconClass} mt-1 ${accentText}"></i>
+            <i class="fas ${iconClass} mt-1 text-accent"></i>
             <span>${a.street}<br>${a.zip || ""} ${a.city || ""}</span>
         </a>`;
     } else {
@@ -277,7 +255,7 @@ if (cfg.identity) {
       const isToday = index === todayMap;
       const li = document.createElement("li");
       const textColor = isToday
-        ? `${accentText} font-bold hover:-translate-y-1 transition-transform duration-300`
+        ? "text-accent font-bold hover:-translate-y-1 transition-transform duration-300"
         : "text-gray-200";
       li.className = textColor;
       li.innerHTML = `<span class="inline-block w-24">${h.day}</span> ${h.closed ? "Fermé" : h.open + " - " + h.close}`;

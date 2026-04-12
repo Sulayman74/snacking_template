@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   🎨 DESIGN TOKENS SAAS — Variables CSS pilotées par JS au runtime
+   Tailwind v4 génère bg-primary, text-accent, border-primary,
+   peer-checked:border-accent, bg-primary/40, shadow-primary, etc.
+   L'override JS : document.documentElement.style.setProperty('--color-primary', '#a855f7')
+   ============================================================================ */
+@theme {
+  --color-primary:       #dc2626; /* ruby par défaut — écrasé par applySaaSThemeToHTML */
+  --color-accent:        #dc2626;
+  --color-primary-light: #fee2e2;
+  --color-on-primary:    #ffffff;
+}
+
 /* Effet visuel quand l'app est offline */
 body.is-offline {
     filter: grayscale(0.3);

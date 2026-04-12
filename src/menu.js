@@ -12,12 +12,6 @@ function createProductCard(item, cfg) {
       : "bg-white shadow-lg border text-black border-gray-100";
   const textColor =
     cfg.theme.templateId === "classic" ? "text-white" : "text-gray-900";
-  const secondaryBg =
-    cfg.theme.colors && cfg.theme.colors.lightBg
-      ? cfg.theme.colors.lightBg
-      : "bg-yellow-400";
-  const priceColor = cfg.theme.colors.accent;
-  const textOnPrimary = cfg.theme.colors.textOnPrimary || "bg-gray-500";
 
   const isAvailable = item.isAvailable !== false;
   const imageOpacity = isAvailable
@@ -53,13 +47,13 @@ function createProductCard(item, cfg) {
   const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
 
   const fallbackHtml = `
-      <div class="absolute inset-0 flex items-center justify-center ${secondaryBg} z-0 transition duration-700 ${imageOpacity}">
+      <div class="absolute inset-0 flex items-center justify-center bg-primary-light z-0 transition duration-700 ${imageOpacity}">
           <i class="fas fa-hamburger text-6xl text-black opacity-50"></i>
       </div>`;
 
   const imageHtml = imageUrl
     ? `<img src="${imageUrl}" alt="${nomAffiche}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full object-cover transition duration-700 ${imageOpacity} z-0">
-       <div style="display: none;" class="absolute inset-0 items-center justify-center ${secondaryBg} z-0 transition duration-700 ${imageOpacity}">
+       <div style="display: none;" class="absolute inset-0 items-center justify-center bg-primary-light z-0 transition duration-700 ${imageOpacity}">
            <i class="fas fa-hamburger text-6xl text-black opacity-50"></i>
        </div>`
     : fallbackHtml;
@@ -67,7 +61,7 @@ function createProductCard(item, cfg) {
   return `
     <div class="${cardBg} h-full flex flex-col rounded-2xl overflow-hidden group ${cardOpacity} transition-all duration-300 hover:shadow-2xl" ${clickAction}>
 
-        <div class="h-48 shrink-0 relative overflow-hidden ${secondaryBg}">
+        <div class="h-48 shrink-0 relative overflow-hidden bg-primary-light">
             ${imageHtml}
             ${tagHtml}
         </div>
@@ -76,12 +70,12 @@ function createProductCard(item, cfg) {
             <div>
                 <div class="flex justify-between items-start mb-2 gap-2">
                     <h2 class="text-lg font-bold ${textColor} leading-tight">${nomAffiche}</h2>
-                    <span class="text-xl font-black ${priceColor} whitespace-nowrap">${parseFloat(prixAffiche).toFixed(2)}${devise}</span>
+                    <span class="text-xl font-black text-accent whitespace-nowrap">${parseFloat(prixAffiche).toFixed(2)}${devise}</span>
                 </div>
                 <p class="text-sm text-gray-400 mb-6 line-clamp-2">${item.description || ""}</p>
             </div>
 
-            <button class="w-full py-3 mt-auto rounded-xl border border-gray-300 dark:border-gray-600 ${textColor} hover:${isAvailable ? cfg.theme.colors.primary : ""} hover:border-transparent hover:text-white transition-all font-bold flex items-center justify-center gap-2">
+            <button class="w-full py-3 mt-auto rounded-xl border border-gray-300 dark:border-gray-600 ${textColor} ${isAvailable ? "hover:bg-primary hover:text-on-primary" : ""} hover:border-transparent transition-all font-bold flex items-center justify-center gap-2">
                 ${isAvailable ? '<i class="fas fa-eye"></i> Détails' : '<i class="fas fa-ban"></i> Indisponible'}
             </button>
         </div>
@@ -208,7 +202,7 @@ window.chargerMenuComplet = async () => {
                     <div class="sticky top-0 z-30 bg-gray-300/80 backdrop-blur-md py-4 flex items-center mb-6 shadow-sm -mx-4 px-4 md:mx-1 md:shadow-none rounded-full md:p-2">
                         <span class="md:text-4xl text-lg text-black mr-1">${cat.icon}</span>
                         <h3 class="text-xl md:text-3xl font-bold font-oswald text-gray-800 uppercase tracking-wider">${cat.title}</h3>
-                        <div class="flex-grow h-px ${cfg.theme.colors.primary} ml-4 opacity-50"></div>
+                        <div class="grow h-px bg-primary ml-4 opacity-50"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 `;

@@ -12,24 +12,6 @@ function openProductModal(itemId) {
   const item = window.menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
   if (!item) return;
 
-  // 🎨 Extraction et création des couleurs dynamiques SaaS
-  const accentText = cfg.theme.colors.accent || "text-red-600";
-  const primaryBg = cfg.theme.colors.primary || "bg-blue-600";
-  const textOnPrimary = cfg.theme.colors.textOnPrimary || "bg-gray-500";
-  const primaryText = primaryBg.replace("bg-", "text-");
-  const accentBg = accentText.replace("text-", "bg-").replace("600", "500");
-  const accentLightBg = accentText.replace("text-", "bg-").replace("600", "50");
-  const accentBorder = accentText
-    .replace("text-", "border-")
-    .replace("600", "500");
-  const primaryBorder = accentText
-    .replace("text-", "border-")
-    .replace("600", "500");
-  const primaryRing = accentText
-    .replace("text-", "border-")
-    .replace("600", "500");
-  const accentRing = accentText.replace("text-", "ring-").replace("600", "500");
-
   // 1. Initialisation du produit en mémoire
   currentProduct = {
     id: item.id,
@@ -109,7 +91,7 @@ function openProductModal(itemId) {
                   <fieldset class="mb-8">
                       <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
                       <span>1. Choisissez la taille</span>
-                      <span class="text-xs font-bold ${primaryBg} ${textOnPrimary} px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
+                      <span class="text-xs font-bold bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
                       </legend>
                       <div class="grid grid-cols-2 gap-3">
                       ${item.tailles
@@ -117,9 +99,9 @@ function openProductModal(itemId) {
                           (taille, index) => `
                           <label class="relative cursor-pointer group">
                               <input type="radio" name="taille_produit" value="${taille.nom}" data-prix="${taille.prix}" ${index === 0 ? "checked" : ""}  class="sr-only peer">
-                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex flex-col items-center justify-center text-center">
+                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center justify-center text-center">
                                   <span class="font-bold text-gray-900 mb-1">${taille.nom}</span>
-                                  <span class="font-black ${accentText} text-sm">${taille.prix.toFixed(2)} ${devise}</span>
+                                  <span class="font-black text-accent text-sm">${taille.prix.toFixed(2)} ${devise}</span>
                               </div>
                           </label>
                       `,
@@ -144,13 +126,13 @@ function openProductModal(itemId) {
                   <fieldset class="mb-8">
                       <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
                       <span>1. Formule</span>
-                      <span class="text-xs font-bold ${primaryBg} ${textOnPrimary} px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
+                      <span class="text-xs font-bold bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
                       </legend>
                       <div class="grid grid-cols-2 gap-3">
                           <label class="relative cursor-pointer">
                               <input type="radio" name="formule" value="seul" checked class="sr-only peer">
-                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center">
-                                  <i class="fas fa-hamburger text-2xl text-gray-400 mb-2 peer-checked:${accentText}"></i>
+                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center">
+                                  <i class="fas fa-hamburger text-2xl text-gray-400 mb-2 peer-checked:text-accent"></i>
                                   <span class="font-bold text-gray-900">Seul</span>
                                   <span class="font-black text-gray-500 mt-1">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
                               </div>
@@ -158,15 +140,15 @@ function openProductModal(itemId) {
 
                           <label class="relative cursor-pointer">
                               <input type="radio" name="formule" value="menu" class="sr-only peer">
-                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:${accentBorder} peer-checked:${accentLightBg} hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center relative overflow-hidden">
-                                  <div class="absolute -right-6 -top-6 w-16 h-16 ${accentBg} rounded-full opacity-10"></div>
+                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center relative overflow-hidden">
+                                  <div class="absolute -right-6 -top-6 w-16 h-16 bg-accent rounded-full opacity-10"></div>
                                   <div class="flex gap-1 mb-2">
-                                      <i class="fas fa-hamburger text-xl text-gray-400 peer-checked:${accentText}"></i>
-                                      <i class="fas fa-plus text-xs text-gray-300 ml-2 mt-1 ${primaryText}"></i>
-                                      <i class="fas fa-fries text-xl text-gray-400 peer-checked:${accentText}"></i>
+                                      <i class="fas fa-hamburger text-xl text-gray-400 peer-checked:text-accent"></i>
+                                      <i class="fas fa-plus text-xs text-primary ml-2 mt-1"></i>
+                                      <i class="fas fa-fries text-xl text-gray-400 peer-checked:text-accent"></i>
                                   </div>
                                   <span class="font-bold text-gray-900">En Menu</span>
-                                  <span class="font-black ${accentText} mt-1">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
+                                  <span class="font-black text-accent mt-1">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
                               </div>
                           </label>
                       </div>
@@ -175,7 +157,7 @@ function openProductModal(itemId) {
                   <fieldset id="drink-section" class="mb-8 hidden opacity-0 transition-all duration-300 transform translate-y-4">
                       <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
                       <span>2. Votre Boisson</span>
-                      <span class="text-xs font-bold ${primaryBg} ${textOnPrimary} px-2 py-1 rounded uppercase tracking-wider shadow-sm">Choix requis</span>
+                      <span class="text-xs font-bold bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-wider shadow-sm">Choix requis</span>
                       </legend>
                       <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                           ${listeBoissons
@@ -183,9 +165,9 @@ function openProductModal(itemId) {
                               (boisson, index) => `
                               <label class="relative cursor-pointer">
                                   <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="sr-only peer">
-                                  <div class="p-3 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex items-center gap-3">
-                                      <div class="w-8 h-8 flex items-center justify-center peer-checked:${primaryBg} transition-colors">
-                                          <i class="fas fa-glass-water shadow-sm ${accentText}"></i>
+                                  <div class="p-3 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex items-center gap-3">
+                                      <div class="w-8 h-8 flex items-center justify-center peer-checked:bg-primary transition-colors">
+                                          <i class="fas fa-glass-water shadow-sm text-accent"></i>
                                       </div>
                                       <span class="font-bold text-gray-800 text-sm leading-tight">${boisson.nom}</span>
                                   </div>
@@ -253,7 +235,7 @@ function openProductModal(itemId) {
                               (sauce) => `
                               <label class="relative cursor-pointer block">
                                   <input type="checkbox" name="sauce" value="${sauce}" data-max="${maxSauces}" class="sr-only peer sauce-checkbox">
-                                  <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:${accentBorder} peer-checked:${accentLightBg} transition-all flex items-center justify-center text-center">
+                                  <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex items-center justify-center text-center">
                                       <span class="font-bold text-gray-800 text-sm leading-tight">${sauce}</span>
                                   </div>
                               </label>
@@ -283,11 +265,11 @@ function openProductModal(itemId) {
       btn.setAttribute("data-action", "add-to-cart");
     } else if (!cfg.features?.enableOnlineOrder) {
       btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true"></i> Fermer`;
-      btn.className = `w-full py-4 rounded-full font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 border ${accentBorder} hover:border-gray-400 transition-all flex justify-center items-center gap-2`;
+      btn.className = "w-full py-4 rounded-full font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 border border-accent hover:border-gray-400 transition-all flex justify-center items-center gap-2";
       btn.setAttribute("data-action", "close-product-modal");
     } else if (cfg.features?.enableDelivery) {
       btn.innerHTML = `<i class="fas fa-motorcycle mr-2"></i> Commander en livraison`;
-      btn.className = `w-full py-4 rounded-full font-bold ${textOnPrimary} text-center shadow-lg text-lg ${primaryBg} hover:opacity-90 hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
+      btn.className = "w-full py-4 rounded-full font-bold text-on-primary text-center shadow-lg text-lg bg-primary hover:opacity-90 hover:-translate-y-1 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => {
         if (
           cfg.deliveryUrl &&
@@ -305,7 +287,7 @@ function openProductModal(itemId) {
         ? cfg.contact.phone.replace(/\s/g, "")
         : "";
       btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
-      btn.className = `w-full py-4 rounded-full font-bold ${textOnPrimary} text-center shadow-lg text-lg ${primaryBg} hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
+      btn.className = "w-full py-4 rounded-full font-bold text-on-primary text-center shadow-lg text-lg bg-primary hover:-translate-y-1 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => {
         if (phone) {
           window.location.href = `tel:${phone}`;

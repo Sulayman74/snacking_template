@@ -14,13 +14,5 @@
     "heroUrl": "",
     "theme_color": "#2E0854",
     "shadowClass": "shadow-purple-600/40"
-  },
-  "REMPLACER_SNACK_ID_CLIENT3": {
-    "title": "NOM_CLIENT3 | Click & Collect",
-    "desc": "Commandez en ligne et récupérez votre repas en quelques minutes.",
-    "logoUrl": "/assets/logo.webp",
-    "heroUrl": "",
-    "theme_color": "#15803d",
-    "shadowClass": "shadow-green-600/40"
   }
 }

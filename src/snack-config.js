@@ -1,47 +1,15 @@
 // ============================================================================
 // 🎨 LE DICTIONNAIRE DES THÈMES SAAS (Design System Curaté)
 // ============================================================================
+// Couleurs en HEX — injectées dans les CSS custom properties via applySaaSThemeToHTML.
+// Les utilitaires Tailwind bg-primary / text-accent / border-accent / bg-primary-light
+// / text-on-primary sont générés par le bloc @theme dans styles.css.
 const SAAS_THEMES = {
-  "ruby": {
-      primary: "bg-red-600",
-      textOnPrimary: "text-white",
-      accent: "text-red-600",
-      lightBg: "bg-red-100",
-      border: "border-red-600",    // NOUVEAU
-      blurBg: "bg-red-600/60"
-  },
-  "ocean": {
-      primary: "bg-blue-600",
-      textOnPrimary: "text-white",
-      accent: "text-blue-500",
-      lightBg: "bg-blue-100",
-      border: "border-blue-600",    // NOUVEAU
-      blurBg: "bg-blue-600/60"
-  },
-  "forest": {
-      primary: "bg-green-600",
-      textOnPrimary: "text-white",
-      accent: "text-green-600",
-      lightBg: "bg-green-100",
-      border: "border-green-600",    // NOUVEAU
-      blurBg: "bg-green-600/60"
-  },
-  "midnight": {
-      primary: "bg-purple-500",
-      textOnPrimary: "text-white",
-      accent: "text-purple-400",
-      lightBg: "bg-purple-100",
-      border: "border-purple-600",    // NOUVEAU
-      blurBg: "bg-purple-600/60"
-  },
-  "sunflower": {
-      primary: "bg-yellow-400",
-      textOnPrimary: "text-gray-900", // Contraste WCAG respecté !
-      accent: "text-yellow-500",
-      lightBg: "bg-yellow-100",
-      border: "border-yellow-600",    // NOUVEAU
-      blurBg: "bg-yellow-600/60"
-  }
+  "ruby":      { primaryHex: "#dc2626", accentHex: "#dc2626", lightHex: "#fee2e2", onPrimaryHex: "#ffffff" },
+  "ocean":     { primaryHex: "#2563eb", accentHex: "#3b82f6", lightHex: "#dbeafe", onPrimaryHex: "#ffffff" },
+  "forest":    { primaryHex: "#16a34a", accentHex: "#16a34a", lightHex: "#dcfce7", onPrimaryHex: "#ffffff" },
+  "midnight":  { primaryHex: "#a855f7", accentHex: "#c084fc", lightHex: "#f3e8ff", onPrimaryHex: "#ffffff" },
+  "sunflower": { primaryHex: "#eab308", accentHex: "#ca8a04", lightHex: "#fef9c3", onPrimaryHex: "#111827" },
 };
 
 window.loadSnackConfig = async (db, snackId) => {
@@ -92,14 +60,12 @@ try {
         templateId: data.templateId || "classic",
         colorPalette: paletteKey,
         fontFamily: data.fontFamily || "font-sans",
-        // 🔥 LES COULEURS SONT MAINTENANT PILOTÉES PAR LE DICTIONNAIRE
+        // 🔥 LES COULEURS SONT MAINTENANT DES HEX — injectées dans CSS vars par applySaaSThemeToHTML
         colors: {
-          primary: selectedTheme.primary,
-          textOnPrimary: selectedTheme.textOnPrimary,
-          accent: selectedTheme.accent,
-          lightBg: selectedTheme.lightBg,
-          border: selectedTheme.border, 
-          blurBg: selectedTheme.blurBg  
+          primaryHex:   selectedTheme.primaryHex,
+          accentHex:    selectedTheme.accentHex,
+          lightHex:     selectedTheme.lightHex,
+          onPrimaryHex: selectedTheme.onPrimaryHex,
         },
       },
      // 🚨 APPLICATION DU BOUCLIER SUR TOUS LES FEATURE FLAGS
@@ -121,7 +87,7 @@ try {
       loyalty: {
         programName: data.loyaltyProgramName || "Club Fidélité",
         cardDesign: {
-          backgroundGradient: data.cardGradient || `from-${selectedTheme.primary.replace('bg-', '')} to-gray-900`,
+          backgroundGradient: data.cardGradient || "from-primary to-gray-900",
         },
       },
     };

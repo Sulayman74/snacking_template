@@ -10,12 +10,10 @@
 
     "build:tacos": "SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 vite build",
     "build:pizza": "SNACK_ID=PsobiuoeUzNmHnwGtaRu vite build",
-    "build:client3": "SNACK_ID=REMPLACER_SNACK_ID_CLIENT3 vite build",
-    "build:all": "npm run build:tacos && npm run build:pizza && npm run build:client3",
+    "build:all": "npm run build:tacos && npm run build:pizza",
 
     "deploy:tacos": "npm run build:tacos && firebase deploy --only hosting:demo-tacos",
     "deploy:pizza": "npm run build:pizza && firebase deploy --only hosting:demo-pizza",
-    "deploy:client3": "npm run build:client3 && firebase deploy --only hosting:demo-client3",
     "deploy:all": "npm run build:all && firebase deploy --only hosting"
   },
   "repository": {
