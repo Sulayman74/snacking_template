@@ -75,7 +75,7 @@ function createProductCard(item, cfg) {
                 <p class="text-sm text-gray-400 mb-6 line-clamp-2">${item.description || ""}</p>
             </div>
 
-            <button class="w-full py-3 mt-auto rounded-xl border border-gray-300 dark:border-gray-600 ${textColor} ${isAvailable ? "hover:bg-primary hover:text-on-primary" : ""} hover:border-transparent transition-all font-bold flex items-center justify-center gap-2">
+            <button class="w-full py-3 mt-auto rounded-xl border border-primary dark:border-gray-600 ${textColor} ${isAvailable ? "hover:bg-primary hover:text-on-primary" : ""} hover:border-transparent transition-all font-bold flex items-center justify-center gap-2">
                 ${isAvailable ? '<i class="fas fa-eye"></i> Détails' : '<i class="fas fa-ban"></i> Indisponible'}
             </button>
         </div>

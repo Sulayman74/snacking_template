@@ -7,69 +7,89 @@
    L'override JS : document.documentElement.style.setProperty('--color-primary', '#a855f7')
    ============================================================================ */
 @theme {
-  --color-primary:       #dc2626; /* ruby par défaut — écrasé par applySaaSThemeToHTML */
-  --color-accent:        #dc2626;
+  --color-primary: #dc2626; /* ruby par défaut — écrasé par applySaaSThemeToHTML */
+  --color-accent: #dc2626;
   --color-primary-light: #fee2e2;
-  --color-on-primary:    #ffffff;
+  --color-on-primary: #ffffff;
 }
 
 /* Effet visuel quand l'app est offline */
 body.is-offline {
-    filter: grayscale(0.3);
-    pointer-events: none; /* Désactive les clics sur les boutons sensibles */
+  filter: grayscale(0.3);
+  pointer-events: none; /* Désactive les clics sur les boutons sensibles */
 }
 
-body.is-offline #navbar, 
+body.is-offline #navbar,
 body.is-offline #bestsellers {
-    pointer-events: auto; /* Laisse la navigation et la consultation actives */
+  pointer-events: auto; /* Laisse la navigation et la consultation actives */
 }
 /* Effet Liquid Glass pour la barre de navigation mobile */
 .glass-nav {
-    background-color: rgba(17, 24, 39, 0.65); /* Gris très foncé semi-transparent */
-    backdrop-filter: blur(20px); /* Le flou standard */
-    -webkit-backdrop-filter: blur(20px); /* LE SECRET POUR IPHONE/SAFARI */
-    border-top: 1px solid rgba(255, 255, 255, 0.1); /* La bordure lumineuse */
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3); /* L'ombre douce */
+  background-color: rgba(94, 95, 98, 0.65); /* Grisfoncé semi-transparent */
+  backdrop-filter: blur(20px); /* Le flou standard */
+  -webkit-backdrop-filter: blur(20px); /* LE SECRET POUR IPHONE/SAFARI */
+  border-top: 1px solid rgba(255, 255, 255, 0.1); /* La bordure lumineuse */
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3); /* L'ombre douce */
 }
 /* ==========================================================================
    ✨ ANIMATIONS PERSONNALISÉES (SaaS MVP)
    ========================================================================== */
-.grecaptcha-badge { 
-    visibility: hidden !important; 
+.grecaptcha-badge {
+  visibility: hidden !important;
 }
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px); /* Part d'en bas */
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0); /* Remonte à sa place */
-    }
+  from {
+    opacity: 0;
+    transform: translateY(30px); /* Part d'en bas */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0); /* Remonte à sa place */
+  }
 }
 
 /* Animation de "pop" pour l'icône quand elle devient active */
 /* 1. La pilule avec effet ressort */
 #nav-indicator {
   transition: transform 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  opacity: 0.3; /* Effet translucide élégant */
 }
 
 /* 2. L'icône qui "pop" quand elle est sélectionnée */
-.nav-active i {
-  animation: jumping-icon 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+.group.is-active i {
+  color: var(--color-primary) !important;
+  transition: color 0.3s ease;
+}
+
+
+.group.is-active i {
+  animation: jumping-icon 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 @keyframes jumping-icon {
-  0% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-5px) scale(1.2); }
-  100% { transform: translateY(0) scale(1); }
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.2);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 /* La classe que tu vas utiliser dans ton HTML */
 .animate-fade-in-up {
-    animation: fadeInUp 0.6s ease-out forwards;
+  animation: fadeInUp 0.6s ease-out forwards;
 }
 
 /* Bonus : Si tu veux faire apparaître les éléments un par un (effet cascade) */
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
+.delay-100 {
+  animation-delay: 100ms;
+}
+.delay-200 {
+  animation-delay: 200ms;
+}
+.delay-300 {
+  animation-delay: 300ms;
+}

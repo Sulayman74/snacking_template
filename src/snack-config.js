@@ -8,7 +8,7 @@ const SAAS_THEMES = {
   "ruby":      { primaryHex: "#dc2626", accentHex: "#dc2626", lightHex: "#fee2e2", onPrimaryHex: "#ffffff" },
   "ocean":     { primaryHex: "#2563eb", accentHex: "#3b82f6", lightHex: "#dbeafe", onPrimaryHex: "#ffffff" },
   "forest":    { primaryHex: "#16a34a", accentHex: "#16a34a", lightHex: "#dcfce7", onPrimaryHex: "#ffffff" },
-  "midnight":  { primaryHex: "#a855f7", accentHex: "#c084fc", lightHex: "#f3e8ff", onPrimaryHex: "#ffffff" },
+  "midnight":  { primaryHex: "#a855f7", accentHex: "#c084fc", lightHex: "#f3e9ff", onPrimaryHex: "#ffffff" },
   "sunflower": { primaryHex: "#eab308", accentHex: "#ca8a04", lightHex: "#fef9c3", onPrimaryHex: "#111827" },
 };
 

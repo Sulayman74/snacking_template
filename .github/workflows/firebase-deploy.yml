@@ -17,7 +17,11 @@ jobs:
     strategy:
       fail-fast: false # Si un resto plante au build, on déploie quand même les autres
       matrix:
-        snack_id: [Ym1YiO4Ue5Fb5UXlxr06] # 👈 Ta liste de clients s'allongera ici !
+        include:
+          - site_name: snacking-template
+            snack_db_id: Ym1YiO4Ue5Fb5UXlxr06
+          - site_name: o-bois-pizza
+            snack_db_id: PsobiuoeUzNmHnwGtaRu # 👈 Ta liste de clients s'allongera ici !
 
     steps:
       - name: 📥 Checkout repository
