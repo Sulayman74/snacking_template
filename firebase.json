@@ -1,13 +1,13 @@
 {
   "hosting": [
     {
-      "site": "snacking-template", 
+      "target": "Ym1YiO4Ue5Fb5UXlxr06",
       "public": "dist/Ym1YiO4Ue5Fb5UXlxr06",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [{ "source": "**", "destination": "/index.html" }]
     },
     {
-      "site": "o-bois-pizza", 
+      "target": "PsobiuoeUzNmHnwGtaRu",
       "public": "dist/PsobiuoeUzNmHnwGtaRu",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [{ "source": "**", "destination": "/index.html" }]

@@ -301,6 +301,8 @@ function openProductModal(itemId) {
 
   // 🔗 LOGIQUE DU BOUTON PARTAGE VIRAL
   const shareBtn = document.getElementById("modal-share-btn");
+  // URL de partage : format deep-link géré par pwa.js (?action=product&id=)
+  const shareUrl = `${window.location.origin}${window.location.pathname}?action=product&id=${currentProduct.id}`;
   if (shareBtn) {
     if (cfg.features?.enableViralShare === true) {
       shareBtn.classList.remove("hidden");
@@ -312,11 +314,12 @@ function openProductModal(itemId) {
             .share({
               title: `Découvre le ${currentProduct.nom} !`,
               text: `Regarde ce que j'ai trouvé chez ${cfg.identity.name} : ${currentProduct.nom}`,
-              url: window.location.href,
+              url: shareUrl,
             })
             .then(() => console.log("Partage réussi"))
             .catch((error) => console.log("Erreur de partage", error));
         } else {
+          navigator.clipboard.writeText(shareUrl);
           window.showToast("Le partage n'est pas supporté ici", "error");
         }
       };

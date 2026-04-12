@@ -215,6 +215,8 @@ window.chargerMenuComplet = async () => {
           fullMenuContainer.innerHTML += sectionHTML;
         });
     }
+    // Signal pour les deep links : le menu est prêt, les modales peuvent s'ouvrir
+    window.dispatchEvent(new CustomEvent("snack:menu:ready"));
   } catch (error) {
     console.error("🔥 Erreur lors du rendu du menu :", error);
   } finally {

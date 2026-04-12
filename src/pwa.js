@@ -184,6 +184,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const targetId = urlParams.get("id");
 
   if (pwaAction) {
+    // Nettoyer l'URL immédiatement pour éviter une réouverture sur refresh
+    window.history.replaceState({}, document.title, window.location.pathname);
+
     setTimeout(() => {
       if (pwaAction === "menu") {
         window.switchView("menu");
@@ -195,12 +198,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } else if (pwaAction === "product" && targetId) {
         window.switchView("menu");
-        setTimeout(() => {
-          window.openProductModal(targetId);
-        }, 600);
-      }
 
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }, 1000);
+        const doOpen = () => window.openProductModal(targetId);
+
+        // Si le menu est déjà chargé (retour dans l'app), ouvrir directement
+        if (window.menuGlobal && window.menuGlobal.length > 0) {
+          setTimeout(doOpen, 300);
+        } else {
+          // Sinon attendre que menu.js ait fini de charger Firestore
+          window.addEventListener("snack:menu:ready", () => setTimeout(doOpen, 200), { once: true });
+        }
+      }
+    }, 800);
   }
 });

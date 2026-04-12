@@ -139,7 +139,8 @@ export default defineConfig(() => {
         input: {
           main: resolve(__dirname, 'index.html'),
           admin: resolve(__dirname, 'admin.html'),
-          superadmin: resolve(__dirname, 'superadmin.html')
+          superadmin: resolve(__dirname, 'superadmin.html'),
+          legal: resolve(__dirname, 'legal.html')
         },
         output: {
           manualChunks: {

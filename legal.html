@@ -13,7 +13,7 @@
 
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-3xl mx-auto px-4 py-4 flex items-center">
-            <a href="index.html" class="text-gray-500 hover:text-red-600 transition mr-4" aria-label="Retour à l'accueil">
+            <a href="/" onclick="if(history.length>1){event.preventDefault();window.close();}" class="text-gray-500 hover:text-red-600 transition mr-4" aria-label="Fermer">
                 <i class="fas fa-arrow-left text-xl"></i>
             </a>
             <h1 class="text-xl font-bold text-gray-900">Mentions Légales & CGU</h1>

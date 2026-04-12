@@ -39,6 +39,9 @@ jobs:
         env:
           SNACK_ID: ${{ matrix.snack_id }}
         run: npm run build
+      - name: 🎯 Apply Firebase Target
+        run: |
+          npx firebase-tools target:apply hosting ${{ matrix.snack_db_id }} ${{ matrix.site_name }}
 
       - name: 🚀 Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
