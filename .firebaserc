@@ -5,9 +5,8 @@
   "targets": {
     "snacking-template": {
       "hosting": {
-        "snacking-template": [
-          "snacking-template"
-        ]
+        "snacking-template": ["snacking-template"],
+        "o-bois-pizza":      ["o-bois-pizza"]
       }
     }
   },

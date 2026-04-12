@@ -16,9 +16,9 @@ jobs:
         include:
           - target: snacking-template
             snack_id: Ym1YiO4Ue5Fb5UXlxr06
-          # ── Décommenter quand le site Firebase Hosting est créé + .firebaserc mis à jour ──
-          # - target: demo-pizza
-          #   snack_id: PsobiuoeUzNmHnwGtaRu
+          - target: o-bois-pizza
+            snack_id: PsobiuoeUzNmHnwGtaRu
+          # ── Ajouter un client ici quand son site Firebase Hosting est créé ──
           # - target: demo-client3
           #   snack_id: REMPLACER_SNACK_ID_CLIENT3
 

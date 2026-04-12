@@ -3,6 +3,7 @@
     "title": "O'Tacos Fusion Bonneville | Click & Collect",
     "desc": "Découvrez le menu digital : Burgers, Tacos, Sandwich",
     "logoUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
+    "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/heroImg.webp?alt=media&token=a3de102d-b619-4a43-9601-cad75f7f82d2",
     "theme_color": "#1E2938",
     "shadowClass": "shadow-red-600/40"
@@ -11,6 +12,7 @@
     "title": "O'Bois Pizza Bonneville | Click & Collect",
     "desc": "Découvrez le menu digital : Pizza au feu de bois Halal",
     "logoUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2FPsobiuoeUzNmHnwGtaRu%2Fobois.webp?alt=media&token=bb15c940-77ff-4b82-9ce6-39e716d528bc",
+    "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2FPsobiuoeUzNmHnwGtaRu%2Fobois.webp?alt=media&token=bb15c940-77ff-4b82-9ce6-39e716d528bc",
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2FPsobiuoeUzNmHnwGtaRu%2FheroImgpizza.webp?alt=media&token=52fccba1-fa06-4692-b01a-75a07efcfbac",
     "theme_color": "#4c1d95",
     "shadowClass": "shadow-purple-600/40"

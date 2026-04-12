@@ -23,6 +23,7 @@ const seoPath = resolve(__dirname, 'snacks-seo.json');
 export default defineConfig(() => {
   const currentSnackId = process.env.SNACK_ID || 'Ym1YiO4Ue5Fb5UXlxr06'
   const seoData = snacksSeo[currentSnackId] || snacksSeo["Ym1YiO4Ue5Fb5UXlxr06"];
+  const iconUrl = seoData.iconUrl || seoData.logoUrl;
 
   return {
     plugins: [
@@ -43,6 +44,7 @@ export default defineConfig(() => {
             .replace(/\{\{SHADOW_CLASS\}\}/g, seoData.shadowClass)
             .replace(/\{\{HERO_URL\}\}/g, seoData.heroUrl || '')
             .replace('{{HERO_PRELOAD}}', heroPreload)
+            .replace(/\{\{ICON_URL\}\}/g, iconUrl)
         }
       },
       // 👇 2. LA CONFIGURATION DE LA PWA
@@ -62,12 +64,12 @@ export default defineConfig(() => {
           display: 'standalone',
           icons: [
             {
-              src: 'assets/icon-192.webp',
+              src: iconUrl,
               sizes: '192x192',
               type: 'image/webp'
             },
             {
-              src: 'assets/icon-512.webp',
+              src: iconUrl,
               sizes: '512x512',
               type: 'image/webp',
               purpose: 'any maskable'
@@ -78,15 +80,15 @@ export default defineConfig(() => {
               name: "Voir la carte",
               short_name: "Commander",
               description: "Ouvrir le menu complet pour commander",
-              url: "/?action=menu", // L'URL magique qu'on va intercepter
-              icons: [{ src: "/assets/icon-192.webp", sizes: "192x192" }]
+              url: "/?action=menu",
+              icons: [{ src: iconUrl, sizes: "192x192" }]
             },
             {
               name: "Ma Carte Fidélité",
               short_name: "Fidélité",
               description: "Afficher mon QR Code",
-              url: "/?action=loyalty", // L'URL magique qu'on va intercepter
-              icons: [{ src: "/assets/icon-192.webp", sizes: "192x192" }]
+              url: "/?action=loyalty",
+              icons: [{ src: iconUrl, sizes: "192x192" }]
             }
           ]
         },
