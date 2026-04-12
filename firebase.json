@@ -1,18 +1,10 @@
 {
-  "hosting": [
-    {
-      "target": "Ym1YiO4Ue5Fb5UXlxr06",
-      "public": "dist/Ym1YiO4Ue5Fb5UXlxr06",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [{ "source": "**", "destination": "/index.html" }]
-    },
-    {
-      "target": "PsobiuoeUzNmHnwGtaRu",
-      "public": "dist/PsobiuoeUzNmHnwGtaRu",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [{ "source": "**", "destination": "/index.html" }]
-    }
-  ],
+  "hosting": {
+    "target": "current-snack",
+    "public": "dist-deploy",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  },
   "functions": [
     {
       "source": "functions",

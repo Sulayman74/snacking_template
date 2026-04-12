@@ -23,7 +23,7 @@ jobs:
           - site_name: o-bois-pizza
             snack_db_id: PsobiuoeUzNmHnwGtaRu # 👈 Ta liste de clients s'allongera ici !
 
-    steps:
+steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
@@ -33,15 +33,16 @@ jobs:
           node-version: 24
 
       - name: 📦 Install dependencies
-        run: npm ci # 'ci' est plus rapide et propre pour les serveurs CI/CD
+        run: npm ci
 
-      - name: 🏗️ Build project pour ${{ matrix.snack_id }}
+      - name: 🏗️ Build project
         env:
-          SNACK_ID: ${{ matrix.snack_id }}
-        run: npm run build
-      - name: 🎯 Apply Firebase Target
+          SNACK_ID: ${{ matrix.snack_db_id }}
         run: |
-          npx firebase-tools target:apply hosting ${{ matrix.snack_db_id }} ${{ matrix.site_name }}
+          npm run build
+          # 💡 ÉTAPE CLÉ : On renomme le dossier de build vers un nom générique 
+          # pour que firebase.json le trouve à chaque fois
+          mv dist/${{ matrix.snack_db_id }} dist-deploy
 
       - name: 🚀 Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -50,4 +51,8 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_SNACKING_TEMPLATE }}"
           channelId: live
           projectId: snacking-template
-          target: ${{ matrix.snack_id }}
+          # 💡 On dit à l'action quel SITE réel correspond à notre target "current-snack"
+          target: current-snack
+        env:
+          # On fait le lien entre la target et le site réel (ex: o-bois-pizza)
+          FIREBASE_CLI_PREDEPLOY: npx firebase target:apply hosting current-snack ${{ matrix.site_name }}
