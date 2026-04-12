@@ -1,32 +1,27 @@
-name: Deploy to Firebase Hosting on PR
-'on':
-  push:
-    branches:
-      - main
+# ⚠️ Workflow auto-généré par Firebase CLI — désactivé (trigger corrigé).
+# Réactiver uniquement pour des preview channels sur les Pull Requests.
+# Nécessite un seul site de déploiement (multi-clients non supporté ici).
+
+name: Deploy PR preview to Firebase Hosting (désactivé)
+on:
+  workflow_dispatch:
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      # 1. On installe Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
-      # 2. On installe les paquets (Vite, Tailwind...)
+          cache: npm
       - name: Install Dependencies
-        run: npm install
-
-      # 3. On compile le projet (Création du dossier dist/)
+        run: npm ci
       - name: Build Project
         run: npm run build
-
-      # 4. On envoie le dossier dist/ chez Firebase
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SNACKING_TEMPLATE }}'
-          channelId: live
           projectId: snacking-template

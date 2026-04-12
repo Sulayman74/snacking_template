@@ -1,4 +1,4 @@
-name: 🚀 CI/CD - Déploiement Firebase (Fast & Furious)
+name: 🚀 CI/CD — Deploy Firebase Hosting (multi-clients)
 
 on:
   push:
@@ -6,53 +6,47 @@ on:
       - main
 
 jobs:
-  # =========================================================
-  # 📦 DÉPLOIEMENT MATRIX (MULTI-CLIENTS)
-  # =========================================================
   deploy:
-    name: 🚀 Déploiement (${{ matrix.snack_id }})
-    # 🛑 On a retiré le "needs: test" ici ! Le job se lance tout de suite.
+    name: 🚀 Deploy ${{ matrix.target }}
     runs-on: ubuntu-latest
-    
+
     strategy:
-      fail-fast: false # Si un resto plante au build, on déploie quand même les autres
+      fail-fast: false   # si tacos plante, pizza continue quand même
       matrix:
         include:
-          - site_name: snacking-template
-            snack_db_id: Ym1YiO4Ue5Fb5UXlxr06
-          - site_name: o-bois-pizza
-            snack_db_id: PsobiuoeUzNmHnwGtaRu # 👈 Ta liste de clients s'allongera ici !
+          - target: demo-tacos
+            snack_id: Ym1YiO4Ue5Fb5UXlxr06
+          # ── Décommenter quand le site Firebase Hosting est créé + .firebaserc mis à jour ──
+          # - target: demo-pizza
+          #   snack_id: PsobiuoeUzNmHnwGtaRu
+          # - target: demo-client3
+          #   snack_id: REMPLACER_SNACK_ID_CLIENT3
 
-steps:
-      - name: 📥 Checkout repository
+    steps:
+      - name: 📥 Checkout
         uses: actions/checkout@v4
 
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
 
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🏗️ Build project
+      # Build avec SNACK_ID → dist/<snack_id>/ (utilisé tel quel par firebase.json)
+      - name: 🏗️ Build — ${{ matrix.snack_id }}
         env:
-          SNACK_ID: ${{ matrix.snack_db_id }}
-        run: |
-          npm run build
-          # 💡 ÉTAPE CLÉ : On renomme le dossier de build vers un nom générique 
-          # pour que firebase.json le trouve à chaque fois
-          mv dist/${{ matrix.snack_db_id }} dist-deploy
+          SNACK_ID: ${{ matrix.snack_id }}
+        run: npm run build
 
-      - name: 🚀 Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
+      # Auth via le service account stocké dans les secrets GitHub
+      - name: 🔑 Google auth
+        uses: google-github-actions/auth@v2
         with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_SNACKING_TEMPLATE }}"
-          channelId: live
-          projectId: snacking-template
-          # 💡 On dit à l'action quel SITE réel correspond à notre target "current-snack"
-          target: current-snack
-        env:
-          # On fait le lien entre la target et le site réel (ex: o-bois-pizza)
-          FIREBASE_CLI_PREDEPLOY: npx firebase target:apply hosting current-snack ${{ matrix.site_name }}
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SNACKING_TEMPLATE }}
+
+      # Déploie uniquement le site correspondant au target de la matrice
+      - name: 🚀 Firebase deploy — ${{ matrix.target }}
+        run: npx firebase-tools@latest deploy --only hosting:${{ matrix.target }} --project snacking-template

@@ -5,11 +5,11 @@
   "targets": {
     "snacking-template": {
       "hosting": {
-        "demo-tacos": [
+        "snacking-template": [
           "snacking-template"
         ],
-        "demo-pizza": [
-          "REMPLACER_SITE_ID_FIREBASE_PIZZA"
+        "o-bois-pizza": [
+          "o-bois-pizza"
         ],
         "demo-client3": [
           "REMPLACER_SITE_ID_FIREBASE_CLIENT3"
