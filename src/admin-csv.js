@@ -53,7 +53,7 @@ window.importProductsCSV = async (event) => {
         continue;
       }
 
-      const [nom, description, prixRaw, categorieId] = parts;
+      const [nom, description, prixRaw, categorieId,imageUrl] = parts;
 
       if (!nom || !categorieId) {
         errorCount++;
@@ -72,6 +72,7 @@ window.importProductsCSV = async (event) => {
           categorieId: categorieId.toLowerCase().trim(),
           isAvailable: true,
           allowMenu: true,
+          imageUrl: imageUrl || "",
           tags: [],
           createdAt: serverTimestamp(),
         });

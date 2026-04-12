@@ -31,6 +31,9 @@ export default defineConfig(() => {
         name: 'html-transform',
         enforce: 'pre',
         transformIndexHtml(html) {
+          const heroPreload = seoData.heroUrl
+            ? `<link rel="preload" as="image" fetchpriority="high" href="${seoData.heroUrl}">`
+            : '';
           return html
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)
             .replace(/\{\{SEO_DESC\}\}/g, seoData.desc)
@@ -38,6 +41,8 @@ export default defineConfig(() => {
             .replace(/\{\{SNACK_ID\}\}/g, currentSnackId)
             .replace(/\{\{LOGO_URL\}\}/g, seoData.logoUrl)
             .replace(/\{\{SHADOW_CLASS\}\}/g, seoData.shadowClass)
+            .replace(/\{\{HERO_URL\}\}/g, seoData.heroUrl || '')
+            .replace('{{HERO_PRELOAD}}', heroPreload)
         }
       },
       // 👇 2. LA CONFIGURATION DE LA PWA
@@ -57,12 +62,12 @@ export default defineConfig(() => {
           display: 'standalone',
           icons: [
             {
-              src: '/assets/icon-192.webp',
+              src: 'assets/icon-192.webp',
               sizes: '192x192',
               type: 'image/webp'
             },
             {
-              src: '/assets/icon-512.webp',
+              src: 'assets/icon-512.webp',
               sizes: '512x512',
               type: 'image/webp',
               purpose: 'any maskable'
@@ -89,6 +94,7 @@ export default defineConfig(() => {
         // B. LA GESTION DU CACHE (WORKBOX)
         workbox: {
           importScripts: ['/firebase-messaging-sw.js'],
+          dontCacheBustURLsMatching: /\.[0-9a-f]{8}\./,
           // Vite mettra automatiquement en cache tous tes HTML, JS et CSS du dossier /dist
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
           
@@ -121,19 +127,26 @@ export default defineConfig(() => {
         }
       })
     ],
+    // Expose le snackId courant dans le bundle JS (accessible via __SNACK_ID__)
+    define: {
+      __SNACK_ID__: JSON.stringify(currentSnackId),
+    },
     build: {
+      // Si SNACK_ID est défini (build client ciblé) → dist/<snackId>
+      // Sinon (npm run build générique) → dist (rétro-compatible)
+      outDir: process.env.SNACK_ID ? `dist/${currentSnackId}` : 'dist',
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'index.html'),
           admin: resolve(__dirname, 'admin.html'),
           superadmin: resolve(__dirname, 'superadmin.html')
-        }, 
+        },
         output: {
           manualChunks: {
             firebase: [
-              'firebase/app', 
-              'firebase/firestore', 
-              'firebase/auth', 
+              'firebase/app',
+              'firebase/firestore',
+              'firebase/auth',
               'firebase/storage',
               'firebase/analytics'
             ],
@@ -142,5 +155,5 @@ export default defineConfig(() => {
         }
       }
     }
-  } 
+  }
 }); 

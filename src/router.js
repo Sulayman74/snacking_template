@@ -2,7 +2,7 @@
 // 🎮 ROUTEUR D'ÉVÉNEMENTS (Event Delegation)
 // ============================================================================
 
-document.addEventListener("click", (event) => {
+document.addEventListener("click", async (event) => {
   const target = event.target.closest("[data-action]");
   if (!target) return;
 
@@ -47,6 +47,9 @@ document.addEventListener("click", (event) => {
       break;
 
     case "process-checkout":
+      if (!window.processCheckout) {
+        await import("./checkout.js");
+      }
       window.processCheckout();
       break;
 

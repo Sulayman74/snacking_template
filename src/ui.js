@@ -94,9 +94,10 @@ if (cfg.identity) {
   const heroDesc = document.getElementById("hero-desc");
   if (heroDesc) heroDesc.innerText = cfg.identity.description;
 
-  const heroSection = document.getElementById("hero");
-  if (heroSection && cfg.identity.heroImg) {
-    heroSection.style.backgroundImage = `url('${cfg.identity.heroImg}')`;
+  // Mise à jour de l'image hero depuis Firestore (override du src baked au build)
+  const heroImg = document.getElementById("hero-img");
+  if (heroImg && cfg.identity.heroImg) {
+    heroImg.src = cfg.identity.heroImg;
   }
 
   // Bouton Déconnexion

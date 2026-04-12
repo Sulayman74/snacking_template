@@ -13,5 +13,4 @@ import "./ui.js";
 import "./menu.js";
 import "./cart.js";
 import "./product-modal.js";
-import "./checkout.js";
 import "./router.js";

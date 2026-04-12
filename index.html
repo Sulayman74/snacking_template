@@ -291,7 +291,7 @@
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     /></noscript>
-    <!-- <link rel="preload" as="image" href="https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/heroImg.webp?alt=media&token=a3de102d-b619-4a43-9601-cad75f7f82d2"> -->
+    {{HERO_PRELOAD}}
     <link
       rel="preconnect"
       href="https://firebasestorage.googleapis.com"
@@ -508,8 +508,17 @@
 
       <header
         id="hero"
-        class="relative h-[80vh] flex items-center justify-center bg-gray-800 bg-cover bg-center transition-all duration-700"
+        class="relative h-[80vh] flex items-center justify-center bg-gray-800 overflow-hidden transition-all duration-700"
       >
+        <img
+          id="hero-img"
+          src="{{HERO_URL}}"
+          fetchpriority="high"
+          loading="eager"
+          decoding="async"
+          alt=""
+          class="absolute inset-0 w-full h-full object-cover object-center"
+        />
         <div class="absolute inset-0 bg-black/50"></div>
         <div
           class="relative z-10 text-center px-4 max-w-4xl w-full mx-auto text-white flex flex-col items-center"

@@ -1,10 +1,22 @@
 {
   "hosting": [
     {
-      "target": "Ym1YiO4Ue5Fb5UXlxr06",
-      "public": "dist",
+      "target": "demo-tacos",
+      "public": "dist/Ym1YiO4Ue5Fb5UXlxr06",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [ { "source": "**", "destination": "/index.html" } ]
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    },
+    {
+      "target": "demo-pizza",
+      "public": "dist/PsobiuoeUzNmHnwGtaRu",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    },
+    {
+      "target": "demo-client3",
+      "public": "dist/REMPLACER_SNACK_ID_CLIENT3",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
     }
   ],
   "functions": [
