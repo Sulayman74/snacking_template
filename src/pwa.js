@@ -54,52 +54,77 @@ function setupPullToRefresh() {
   const scrollArea = document.getElementById("full-menu");
   const ptrIndicator = document.getElementById("ptr-indicator");
   const ptrIcon = document.getElementById("ptr-icon");
-  let touchStartY = 0;
-  let isPulling = false;
 
   if (!scrollArea || !ptrIndicator) return;
 
+  const THRESHOLD = 72;   // px tirés pour déclencher
+  const MAX_PULL  = 96;   // px max affichés (résistance)
+
+  let startY     = 0;
+  let pulling    = false;
+  let triggered  = false;
+
+  function resistance(raw) {
+    // Courbe logarithmique : rapide au début, ralentit en approchant MAX_PULL
+    return Math.min(MAX_PULL, raw * (MAX_PULL / (MAX_PULL + raw * 0.6)));
+  }
+
+  function setIndicator(progress) {
+    // progress : 0 (caché) → 1 (seuil atteint)
+    const clipped = Math.min(progress, 1.15);
+    ptrIndicator.style.transform = `translateX(-50%) translateY(${-100 + clipped * 100}%)`;
+    ptrIcon.style.transform      = `rotate(${clipped * 180}deg)`;
+    ptrIndicator.style.opacity   = Math.min(clipped * 2, 1);
+  }
+
   scrollArea.addEventListener("touchstart", (e) => {
-    if (scrollArea.scrollTop === 0) {
-      touchStartY = e.touches[0].clientY;
-      isPulling = true;
-      ptrIndicator.style.transition = "none";
-    }
+    if (scrollArea.scrollTop !== 0) return;
+    startY   = e.touches[0].clientY;
+    pulling  = true;
+    triggered = false;
+    ptrIndicator.style.transition = "none";
+    ptrIcon.className = "fas fa-arrow-down text-xl";
   }, { passive: true });
 
+  // passive: false pour pouvoir bloquer le scroll natif pendant le PTR
   scrollArea.addEventListener("touchmove", (e) => {
-    if (!isPulling) return;
-    const pullDistance = e.touches[0].clientY - touchStartY;
+    if (!pulling) return;
+    const raw = e.touches[0].clientY - startY;
+    if (raw <= 0 || scrollArea.scrollTop > 0) { pulling = false; return; }
 
-    if (pullDistance > 0 && scrollArea.scrollTop === 0) {
-      const translateY = Math.min(pullDistance / 2, 60);
-      ptrIndicator.style.transform = `translate(-50%, calc(-100% + ${translateY}px))`;
-      ptrIcon.style.transform = `rotate(${Math.min(pullDistance * 2, 180)}deg)`;
+    e.preventDefault();   // bloque le scroll + PTR natif Chrome
 
-      if (translateY >= 50 && ptrIcon.classList.contains("fa-arrow-down")) {
-        ptrIcon.classList.replace("fa-arrow-down", "fa-arrow-up");
-        if (typeof window.triggerVibration === "function")
-          window.triggerVibration("light");
-      }
+    const pull     = resistance(raw);
+    const progress = pull / THRESHOLD;
+    setIndicator(progress);
+
+    if (progress >= 1 && !triggered) {
+      triggered = true;
+      if (typeof window.triggerVibration === "function")
+        window.triggerVibration("light");
     }
-  }, { passive: true });
+  }, { passive: false });
 
   scrollArea.addEventListener("touchend", async () => {
-    if (!isPulling) return;
-    isPulling = false;
-    ptrIndicator.style.transition = "transform 0.3s ease-out";
+    if (!pulling) return;
+    pulling = false;
 
-    if (ptrIcon.classList.contains("fa-arrow-up")) {
-      ptrIcon.className = "fas fa-spinner fa-spin text-red-600 text-xl";
+    ptrIndicator.style.transition = "transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease";
+
+    if (triggered) {
+      // Maintenir l'indicateur visible pendant le reload
+      ptrIndicator.style.transform = "translateX(-50%) translateY(-10%)";
+      ptrIcon.className = "fas fa-spinner fa-spin text-xl";
       if (typeof window.triggerVibration === "function")
         window.triggerVibration("success");
 
       await window.chargerMenuComplet();
     }
 
-    ptrIndicator.style.transform = "translate(-50%, -100%)";
+    // Masquer l'indicateur
+    setIndicator(0);
     setTimeout(() => {
-      ptrIcon.className = "fas fa-arrow-down text-gray-400 text-xl";
+      ptrIcon.className = "fas fa-arrow-down text-xl";
     }, 300);
   });
 }

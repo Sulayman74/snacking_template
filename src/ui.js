@@ -342,6 +342,7 @@ window.initAppVisuals = async () => {
   // Mode maintenance
   if (cfg.features && cfg.features.maintenanceMode === true) {
     console.log("🛑 Site en maintenance ! Arrêt du chargement visuel.");
+    window.dispatchEvent(new CustomEvent("snack:app:ready"));
     document.body.innerHTML = `
       <div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white px-4 text-center">
           <i class="fas fa-tools text-6xl text-red-500 mb-6 animate-pulse"></i>

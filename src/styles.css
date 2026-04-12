@@ -50,6 +50,21 @@ body {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+  animation: splash-logo-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes splash-logo-in {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Pull-to-refresh */
+#ptr-indicator {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-100%);
+}
+#ptr-icon {
+  color: var(--color-primary);
 }
 
 /* Effet visuel quand l'app est offline */

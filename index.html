@@ -91,35 +91,45 @@
     </script>
     <!-- SCRIPT DE TRANSITION APP SHELL -->
     <script>
+      window.CURRENT_SNACK_ID = "{{SNACK_ID}}";
+      const _splashStart = Date.now();
+      const MIN_SPLASH   = 1200;   // ms minimum affiché
+      const MAX_SPLASH   = 4000;   // ms max avant de forcer la fermeture
+
+      let _splashDone    = false;
+
       function removeBootSplash() {
+        if (_splashDone) return;
+        _splashDone = true;
+
         const boot = document.getElementById("boot-splash");
         if (!boot) return;
 
+        const inner = boot.querySelector(".splash-inner");
+        // Animation sortie : logo scale up + fade — feeling app native
+        boot.style.transition  = "opacity 0.4s ease";
+        if (inner) {
+          inner.style.transition = "transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease";
+          inner.style.transform  = "scale(1.08)";
+          inner.style.opacity    = "0";
+        }
         boot.style.opacity = "0";
 
-        setTimeout(() => {
-          boot.remove();
-        }, 350);
+        setTimeout(() => boot.remove(), 420);
       }
 
-      window.CURRENT_SNACK_ID = "{{SNACK_ID}}";
-      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      function _tryRemoveSplash() {
+        const elapsed = Date.now() - _splashStart;
+        const wait    = Math.max(0, MIN_SPLASH - elapsed);
+        setTimeout(removeBootSplash, wait);
+      }
 
-      window.addEventListener("load", () => {
-        const boot = document.getElementById("boot-splash");
-
-        if (!boot) return;
-
-        if (isIOS) {
-          setTimeout(() => {
-            removeBootSplash();
-          }, 150);
-        } else {
-          requestAnimationFrame(() => {
-            removeBootSplash();
-          });
-        }
-      });
+      // Fermeture dès que le menu est prêt
+      window.addEventListener("snack:menu:ready", _tryRemoveSplash, { once: true });
+      // Fermeture dès que l'app signale qu'elle est prête (maintenance mode, erreur, etc.)
+      window.addEventListener("snack:app:ready",  _tryRemoveSplash, { once: true });
+      // Fallback : force la fermeture après MAX_SPLASH quoi qu'il arrive
+      setTimeout(removeBootSplash, MAX_SPLASH);
     </script>
   </head>
   <body class="bg-gray-50 text-gray-800">
