@@ -156,8 +156,7 @@ if (btnGoogleLogin) {
         await setDoc(userRef, {
           email: user.email,
           nom: user.displayName || "Gourmand",
-          points: 0,
-          snackId: window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06",
+          pointsBySnack: {},
           dateCreation: serverTimestamp(),
           role: "client",
         });

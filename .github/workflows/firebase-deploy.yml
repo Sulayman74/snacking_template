@@ -18,6 +18,8 @@ jobs:
             snack_id: Ym1YiO4Ue5Fb5UXlxr06
           - target: o-bois-pizza
             snack_id: PsobiuoeUzNmHnwGtaRu
+          - target: pizzeriadelagare
+            snack_id: 4L9THuI6hIAqKjjZUn4s
           # ── Ajouter un client ici quand son site Firebase Hosting est créé ──
           # - target: demo-client3
           #   snack_id: REMPLACER_SNACK_ID_CLIENT3

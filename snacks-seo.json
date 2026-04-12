@@ -2,6 +2,7 @@
   "Ym1YiO4Ue5Fb5UXlxr06": {
     "title": "O'Tacos Fusion Bonneville | Click & Collect",
     "desc": "Découvrez le menu digital : Burgers, Tacos, Sandwich",
+    "canonicalUrl": "https://snacking-template.web.app",
     "logoUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
     "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/heroImg.webp?alt=media&token=a3de102d-b619-4a43-9601-cad75f7f82d2",
@@ -11,10 +12,21 @@
   "PsobiuoeUzNmHnwGtaRu": {
     "title": "O'Bois Pizza Bonneville | Click & Collect",
     "desc": "Découvrez le menu digital : Pizza au feu de bois Halal",
+    "canonicalUrl": "https://o-bois-pizza.web.app",
     "logoUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2FPsobiuoeUzNmHnwGtaRu%2Fobois.webp?alt=media&token=bb15c940-77ff-4b82-9ce6-39e716d528bc",
     "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2FPsobiuoeUzNmHnwGtaRu%2Fobois.webp?alt=media&token=bb15c940-77ff-4b82-9ce6-39e716d528bc",
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2FPsobiuoeUzNmHnwGtaRu%2FheroImgpizza.webp?alt=media&token=52fccba1-fa06-4692-b01a-75a07efcfbac",
     "theme_color": "#4c1d95",
     "shadowClass": "shadow-purple-600/40"
+  },
+  "4L9THuI6hIAqKjjZUn4s": {
+    "title": "Pizzeria de la Gare Bonneville | Pizza Calzone",
+    "desc": "Découvrez le menu digital : Pizzas sur Bonneville Halal",
+    "canonicalUrl": "https://pizzeriadelagare.web.app",
+    "logoUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2F4L9THuI6hIAqKjjZUn4s%2Flagare.webp?alt=media&token=cda7f98d-ecc9-4122-8edb-40d2a49c63db",
+    "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2F4L9THuI6hIAqKjjZUn4s%2Flagare.webp?alt=media&token=cda7f98d-ecc9-4122-8edb-40d2a49c63db",
+    "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2F4L9THuI6hIAqKjjZUn4s%2FheroGare.webp?alt=media&token=cfc812e0-b90d-45fa-9ed8-c634b3cc7e59",
+    "theme_color": "#1e3a8a",
+    "shadowClass": "shadow-blue-600/40"
   }
 }

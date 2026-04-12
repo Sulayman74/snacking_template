@@ -59,9 +59,10 @@ function openClientCard() {
 
   if (typeof unsubscribeClientCard === "function") unsubscribeClientCard();
 
+  const currentSnackId = window.snackConfig?.identity?.id;
   unsubscribeClientCard = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
     if (docSnap.exists()) {
-      const points = docSnap.data().points || 0;
+      const points = (docSnap.data().pointsBySnack || {})[currentSnackId] || 0;
       animerCarteFidelite(points);
     }
   });

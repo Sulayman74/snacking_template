@@ -11,6 +11,12 @@
       "public": "dist/PsobiuoeUzNmHnwGtaRu",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    },
+    {
+      "target": "pizzeriadelagare",
+      "public": "dist/4L9THuI6hIAqKjjZUn4s",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
     }
   ],
   "functions": [

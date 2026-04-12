@@ -172,7 +172,7 @@ onAuthStateChanged(auth, async (user) => {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const data = userDoc.exists()
         ? userDoc.data()
-        : { points: 0, role: "client" };
+        : { pointsBySnack: {}, role: "client" };
 
       if (data.role === "admin") {
         loyaltyBtn?.setAttribute("data-action", "open-admin-scanner");

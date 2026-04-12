@@ -80,19 +80,15 @@ async function onScanSuccess(decodedText) {
     }
 
     const clientData = clientDoc.data();
-    if (clientData.snackId !== adminSnackId) {
-      window.showToast("⚠️ Ce client appartient à un autre établissement !", "error");
-      return;
-    }
-
-    const currentPoints = clientDoc.data().points || 0;
+    const currentPoints = (clientData.pointsBySnack || {})[adminSnackId] || 0;
     const maxPoints = 10;
+    const pointField = `pointsBySnack.${adminSnackId}`;
 
     if (currentPoints >= maxPoints) {
-      await updateDoc(clientRef, { points: 0 });
+      await updateDoc(clientRef, { [pointField]: 0 });
       window.showToast("🎉 BINGO ! Donnez un Menu Gratuit ! (Carte remise à 0)", "success");
     } else {
-      await updateDoc(clientRef, { points: increment(1) });
+      await updateDoc(clientRef, { [pointField]: increment(1) });
       const newTotal = currentPoints + 1;
       if (newTotal === maxPoints) {
         window.showToast(`✅ Point ajouté ! Le client gagne son menu ! 🎁`, "success");
