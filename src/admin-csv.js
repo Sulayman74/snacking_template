@@ -8,99 +8,70 @@
 // ============================================================================
 window.importProductsCSV = async (event) => {
   const file = event.target.files[0];
-  if (!file) return;
+  if (!file || !window.currentAdminSnackId) return;
 
-  if (!window.currentAdminSnackId) {
-    return window.showToast("Erreur : Aucun Snack ID détecté.", "error");
-  }
-
-  window.showToast("⏳ Importation en cours...", "info");
+  window.showToast("⏳ Analyse du fichier...", "info");
 
   try {
     const text = await file.text();
+    const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+    if (lines.length < 2) return;
 
-    // 🛡️ Anti-RTF
-    if (text.includes("{\\rtf1") || text.includes("\\f0\\fs24")) {
-      window.showToast(
-        "❌ Erreur : Fichier RTF détecté. Veuillez enregistrer en 'Texte Brut' ou exporter en vrai CSV.",
-        "error",
-      );
-      event.target.value = "";
-      return;
-    }
+    // 1. Détection dynamique du séparateur et des headers
+    const firstLine = lines[0];
+    const separator = firstLine.includes(";") ? ";" : ",";
+    const headers = firstLine.split(separator).map(h => h.trim().toLowerCase());
 
-    const lines = text.split(/\r?\n/);
     const { addDoc, collection, serverTimestamp } = window.fs;
-
-    // On ignore la 1ère ligne (header)
-    const dataLines = lines.slice(1).filter((line) => line.trim() !== "");
-
-    if (dataLines.length === 0) {
-      window.showToast("Le fichier CSV semble vide ou mal formaté.", "error");
-      return;
-    }
-
     let successCount = 0;
-    let errorCount = 0;
 
-    for (const line of dataLines) {
-      // Séparateur : ";" ou ","
-      const separator = line.includes(";") ? ";" : ",";
-      const parts = line.split(separator).map((p) => p.replace(/^"|"$/g, "").trim());
+    // 2. Traitement des données
+    for (let i = 1; i < lines.length; i++) {
+      const parts = lines[i].split(separator).map(p => p.replace(/^"|"$/g, "").trim());
+      
+      // Création d'un objet temporaire basé sur les headers présents
+      const row = {};
+      headers.forEach((header, index) => {
+        row[header] = parts[index];
+      });
 
-      if (parts.length < 4) {
-        errorCount++;
-        continue;
+      if (!row.nom || !row.categorie) continue;
+
+      // 3. Logique métier : "Est-ce que ce produit peut être en menu ?"
+      // On définit les catégories qui n'ont JAMAIS de menu (boissons, desserts, pizzas, sides)
+      const noMenuCategories = ['pizzas', 'drinks', 'deserts', 'sides', 'boissons', 'desserts'];
+      const categoryClean = row.categorie.toLowerCase().trim();
+      
+      // Par défaut : true sauf si dans la liste noire OU si spécifié "non" dans le CSV
+      let allowMenu = !noMenuCategories.includes(categoryClean);
+      
+      // Si une colonne "menu" existe dans le CSV, elle est prioritaire
+      if (row.menu) {
+        allowMenu = (row.menu.toLowerCase() === 'oui' || row.menu === '1');
       }
 
-      const [nom, description, prixRaw, categorieId,imageUrl] = parts;
+      const prix = parseFloat(String(row.prix).replace(",", ".")) || 0;
 
-      if (!nom || !categorieId) {
-        errorCount++;
-        continue;
-      }
-
-      // Nettoyer le prix : remplacer la virgule par un point
-      const prix = parseFloat(prixRaw.replace(",", ".")) || 0;
-
-      try {
-        await addDoc(collection(window.db, "produits"), {
-          snackId: window.currentAdminSnackId,
-          nom: nom.substring(0, 100),
-          description: (description || "").substring(0, 300),
-          prix,
-          categorieId: categorieId.toLowerCase().trim(),
-          isAvailable: true,
-          allowMenu: true,
-          imageUrl: imageUrl || "",
-          tags: [],
-          createdAt: serverTimestamp(),
-        });
-        successCount++;
-      } catch (lineError) {
-        errorCount++;
-      }
+      await addDoc(collection(window.db, "produits"), {
+        snackId: window.currentAdminSnackId,
+        nom: row.nom,
+        description: row.description || "",
+        prix: prix,
+        categorieId: categoryClean,
+        image: row.image || "", 
+        isAvailable: true,
+        allowMenu: allowMenu, // Dynamique !
+        menuPriceAdd: parseFloat(row.surplus_menu) || 2.5,
+        createdAt: serverTimestamp(),
+      });
+      successCount++;
     }
 
-    event.target.value = "";
-
-    if (successCount > 0) {
-      window.showToast(
-        `✅ ${successCount} produit(s) importé(s) avec succès !${errorCount > 0 ? ` (${errorCount} ignoré(s))` : ""}`,
-        "success",
-      );
-      if (typeof window.loadAdminProducts === "function")
-        window.loadAdminProducts();
-    } else {
-      window.showToast(
-        "Aucun produit importé. Vérifiez le format de votre fichier.",
-        "error",
-      );
-    }
+    window.showToast(`✅ ${successCount} produits synchronisés !`, "success");
+    window.loadAdminProducts();
   } catch (error) {
-    console.error("Erreur importation CSV :", error);
-    window.showToast("Erreur lors de la lecture du fichier.", "error");
-    event.target.value = "";
+    console.error(error);
+    window.showToast("Erreur lors de l'import.", "error");
   }
 };
 
@@ -116,34 +87,67 @@ window.openCsvInfoModal = () => {
   modal.style.cssText =
     "position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(17,24,39,0.8);backdrop-filter:blur(4px);z-index:999999;display:flex;justify-content:center;align-items:center;padding:1rem;";
 
-  modal.innerHTML = `
-        <div class="bg-white w-full max-w-2xl rounded-3xl p-6 relative shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto">
-            <button onclick="document.getElementById('csv-info-modal-js').remove()" class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-gray-100 rounded-full transition flex justify-center items-center">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-            <h3 class="text-2xl font-black text-gray-900 mb-2 border-b border-gray-100 pb-4">
-                <i class="fas fa-file-csv text-blue-500 mr-2"></i> Guide d'importation CSV
-            </h3>
-            <p class="text-gray-600 mb-6 mt-4">Pour importer votre carte en un clic, votre fichier doit respecter un format strict. Téléchargez notre modèle, remplissez-le, puis importez-le.</p>
-            <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 mb-6">
-                <h4 class="font-bold text-blue-900 mb-2">Structure requise (4 colonnes) :</h4>
-                <ul class="list-disc pl-5 text-sm text-blue-800 space-y-1">
-                    <li><strong>Nom :</strong> Le nom exact du produit (ex: <i>Tacos XL</i>)</li>
-                    <li><strong>Description :</strong> Les ingrédients (ex: <i>Frites, Viande hachée</i>)</li>
-                    <li><strong>Prix :</strong> Le prix de base (ex: <i>8,50</i> ou <i>8.50</i>)</li>
-                    <li><strong>Categorie :</strong> L'ID de la catégorie en minuscules (ex: <i>tacos, burgers</i>)</li>
-                </ul>
+// Remplace le bloc modal.innerHTML par celui-ci :
+modal.innerHTML = `
+    <div class="bg-white w-full max-w-2xl rounded-3xl p-6 relative shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto font-sans">
+        <button onclick="document.getElementById('csv-info-modal-js').remove()" class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-gray-100 rounded-full transition flex justify-center items-center">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        
+        <h3 class="text-2xl font-black text-gray-900 mb-2 border-b border-gray-100 pb-4">
+            <i class="fas fa-file-csv text-blue-500 mr-2"></i> Guide d'importation
+        </h3>
+
+        <p class="text-gray-600 mb-6 mt-4">Importez toute votre carte en une seconde. Utilisez un fichier <strong>.csv</strong> avec le point-virgule (;) comme séparateur.</p>
+
+        <div class="overflow-x-auto mb-6 border border-gray-100 rounded-xl">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-gray-50 text-gray-500 uppercase">
+                    <tr>
+                        <th class="px-3 py-2">Nom</th>
+                        <th class="px-3 py-2">Prix</th>
+                        <th class="px-3 py-2">Categorie</th>
+                        <th class="px-3 py-2">Menu</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700">
+                    <tr class="border-t border-gray-50">
+                        <td class="px-3 py-2 font-bold">Burger Bacon</td>
+                        <td class="px-3 py-2">9.50</td>
+                        <td class="px-3 py-2">burgers</td>
+                        <td class="px-3 py-2 text-green-600 font-bold">Oui</td>
+                    </tr>
+                    <tr class="border-t border-gray-50">
+                        <td class="px-3 py-2 font-bold">Pizza Regina</td>
+                        <td class="px-3 py-2">12.00</td>
+                        <td class="px-3 py-2">pizzas</td>
+                        <td class="px-3 py-2 text-red-500 font-bold">Non</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
+            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <h4 class="font-bold text-blue-900 mb-1">Obligatoire</h4>
+                <p class="text-blue-800">Nom, Prix, Categorie (tacos, burgers, pizzas, drinks, sides, deserts).</p>
             </div>
-            <div class="flex flex-col sm:flex-row gap-3 mt-8">
-                <button onclick="window.downloadCsvTemplate()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2">
-                    <i class="fas fa-download"></i> Télécharger le Modèle
-                </button>
-                <button onclick="document.getElementById('csv-info-modal-js').remove()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition">
-                    J'ai compris
-                </button>
+            <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                <h4 class="font-bold text-green-900 mb-1">Optionnel</h4>
+                <p class="text-green-800">Description, Image (URL), Menu (Oui/Non), Surplus_Menu (ex: 3.00).</p>
             </div>
         </div>
-    `;
+
+        <div class="flex flex-col sm:flex-row gap-3 mt-8">
+            <button onclick="window.downloadCsvTemplate()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-download"></i> Télécharger le modèle
+            </button>
+            <button onclick="document.getElementById('csv-info-modal-js').remove()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 rounded-xl transition">
+                J'ai compris
+            </button>
+        </div>
+    </div>
+`;
 
   document.body.appendChild(modal);
 };
@@ -160,11 +164,13 @@ window.closeCsvInfoModal = () => {
 };
 
 window.downloadCsvTemplate = () => {
-  const content =
-    "Nom;Description;Prix;Categorie\nBurger Classique;Pain brioché, steak 150g, cheddar, salade, tomate, sauce secrète;8,50;burgers\nCoca-Cola 33cl;Canette bien fraîche;2,00;drinks\nFrites Cheddar Bacon;Portion de frites avec sauce cheddar et bacon croustillant;4,50;sides";
-  const blob = new Blob(["\ufeff" + content], {
-    type: "text/csv;charset=utf-8;",
-  });
+  // On ajoute "Menu" et "Surplus_Menu" comme colonnes optionnelles
+  const content = "Nom;Description;Prix;Categorie;Menu;Surplus_Menu;Image\n" +
+    "Burger XL;Double steak, cheddar;9.50;burgers;Oui;3.00;\n" +
+    "Pizza Regina;Tomate, mozza, jambon;12.00;pizzas;Non;0;\n" +
+    "Coca 33cl;Fraîcheur intense;2.00;drinks;Non;0;";
+  
+  const blob = new Blob(["\ufeff" + content], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);

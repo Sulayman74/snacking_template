@@ -518,6 +518,22 @@ function populateCategoryDropdown(selectedCategory = "burgers") {
 }
 
 document.getElementById("edit-category")?.addEventListener("change", (e) => {
+  const cat = e.target.value;
+  const menuCheckbox = document.getElementById("edit-allow-menu");
+  
+  // Liste des catégories exclues du menu
+  const excludeFromMenu = ['drinks', 'deserts', 'pizzas', 'sides'];
+
+if (menuCheckbox) {
+  if (excludeFromMenu.includes(cat)) {
+    menuCheckbox.checked = false;
+  } else {
+    // Optionnel : ne l'activer par défaut que si c'est un nouveau produit
+    if (!currentEditingProductId) menuCheckbox.checked = true;
+  }
+  menuCheckbox.dispatchEvent(new Event("change"));
+}
+  
   const newCategoryInput = document.getElementById("edit-new-category");
   if (e.target.value === "NEW") {
     newCategoryInput.classList.remove("hidden");
