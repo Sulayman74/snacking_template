@@ -1,20 +1,14 @@
 {
   "hosting": [
     {
-      "target": "demo-tacos",
+      "target": "snacking-template",
       "public": "dist/Ym1YiO4Ue5Fb5UXlxr06",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [{ "source": "**", "destination": "/index.html" }]
     },
     {
-      "target": "demo-pizza",
+      "target": "o-bois-pizza",
       "public": "dist/PsobiuoeUzNmHnwGtaRu",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [{ "source": "**", "destination": "/index.html" }]
-    },
-    {
-      "target": "demo-client3",
-      "public": "dist/REMPLACER_SNACK_ID_CLIENT3",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [{ "source": "**", "destination": "/index.html" }]
     }
