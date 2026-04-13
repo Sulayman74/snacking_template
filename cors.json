@@ -2,8 +2,11 @@
   {
     "origin": [
       "https://snacking-template.web.app",
+      "https://snacking-template.firebaseapp.com",
+      "https://o-bois-pizza.firebaseapp.com",
       "https://o-bois-pizza.web.app",
       "https://pizzeriadelagare.web.app",
+      "https://pizzeriadelagare.firebaseapp.com",
       "http://localhost:5173",
       "http://localhost:5001"
     ],

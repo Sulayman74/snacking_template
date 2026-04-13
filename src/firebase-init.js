@@ -14,7 +14,6 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { ReCaptchaV3Provider, initializeAppCheck } from "firebase/app-check";
 // 1. LES IMPORTS (TOUJOURS TOUT EN HAUT !)
 import {
   Timestamp,
@@ -68,13 +67,6 @@ export const db = initializeFirestore(app, {
 });
 const storage = getStorage(app);
 const functions = getFunctions(app, "europe-west1");
-// 🛡️ INITIALISATION DU BOUCLIER APP CHECK (reCAPTCHA v3)
-// if (typeof window !== "undefined") {
-//     const appCheck = initializeAppCheck(app, {
-//         provider: new ReCaptchaV3Provider('6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo'),
-//         isTokenAutoRefreshEnabled: true
-//     });
-// }
 // ============================================================================
 // 🚀 OPTIMISATION : CHARGEMENT DIFFÉRÉ DE FIREBASE ANALYTICS
 // ============================================================================
@@ -153,6 +145,12 @@ window.authTools = {
 // 🕵️‍♂️ ÉCOUTEUR D'ÉTAT (LE VIGILE)
 // ============================================================================
 onAuthStateChanged(auth, async (user) => {
+  const isAdminPage = window.location.pathname.includes("admin.html") ||
+                      window.location.pathname.includes("superadmin.html");
+
+  // Sur les pages admin/superadmin, firebase-init ne gère pas l'auth — chaque page a son propre handler
+  if (isAdminPage) return;
+
   const urlParams = new URLSearchParams(window.location.search);
   let snackIdToLoad =
     urlParams.get("s") || window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
@@ -166,7 +164,6 @@ onAuthStateChanged(auth, async (user) => {
 
     // 3. Gestion du bouton de fidélité
     const loyaltyBtn = document.getElementById("loyalty-main-btn");
-    const loyaltyDesc = document.getElementById("loyalty-desc");
 
     if (user) {
       const userDoc = await getDoc(doc(db, "users", user.uid));
@@ -174,16 +171,16 @@ onAuthStateChanged(auth, async (user) => {
         ? userDoc.data()
         : { pointsBySnack: {}, role: "client" };
 
-      if (data.role === "admin") {
-        loyaltyBtn?.setAttribute("data-action", "open-admin-scanner");
-        if (loyaltyBtn)
-          loyaltyBtn.innerHTML = '<i class="fas fa-camera"></i> Scanner';
+      if (data.role === "superadmin") {
+        window.location.href = "/superadmin.html";
+        return;
+      } else if (data.role === "admin") {
+        window.location.href = "/admin.html";
+        return;
       } else {
         loyaltyBtn?.setAttribute("data-action", "open-client-card");
         if (loyaltyBtn)
           loyaltyBtn.innerHTML = '<i class="fas fa-qrcode"></i> Ma Carte';
-        if (loyaltyDesc)
-          loyaltyDesc.innerHTML = `Membre : <strong>${data.points || 0} points</strong>`;
       }
     } else {
       loyaltyBtn?.setAttribute("data-action", "toggle-auth-modal");

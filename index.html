@@ -76,19 +76,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <script src="https://js.stripe.com/v3/"></script>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo"></script>
-    <script src="https://www.google.com/recaptcha/enterprise.js?render=6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo"></script>
-    <script>
-      function onClick(e) {
-        e.preventDefault();
-        grecaptcha.enterprise.ready(async () => {
-          const token = await grecaptcha.enterprise.execute(
-            "6LdsQpwsAAAAAFrZ9uQw6ucGG6ECo0DE9HUJLmfo",
-            { action: "LOGIN" },
-          );
-        });
-      }
-    </script>
     <!-- SCRIPT DE TRANSITION APP SHELL -->
     <script>
       window.CURRENT_SNACK_ID = "{{SNACK_ID}}";
