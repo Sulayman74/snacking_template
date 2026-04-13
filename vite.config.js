@@ -35,9 +35,10 @@ export default defineConfig(() => {
           const heroPreload = seoData.heroUrl
             ? `<link rel="preload" as="image" fetchpriority="high" href="${seoData.heroUrl}">`
             : '';
-          const splashStyle = `<style>:root{--color-primary:${seoData.theme_color};--logo-url:url("${iconUrl}")}</style>`;
+          // Injecté en premier dans <head> : avant tout CSS externe, avant tout rendu
+          const splashStyle = `<style>:root,html,body{background:${seoData.theme_color}}:root{--color-primary:${seoData.theme_color};--logo-url:url("${iconUrl}")}</style>`;
           return html
-            .replace('</head>', `${splashStyle}\n  </head>`)
+            .replace('<head>', `<head>\n    ${splashStyle}`)
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)
             .replace(/\{\{SEO_DESC\}\}/g, seoData.desc)
             .replace(/\{\{THEME_COLOR\}\}/g, seoData.theme_color)
