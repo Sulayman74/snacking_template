@@ -155,23 +155,34 @@ onAuthStateChanged(auth, async (user) => {
     urlParams.get("s") || window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
 
   try {
+    // 1. Chargement de la config SaaS (Crucial pour la suite)
     await window.loadSnackConfig(db, snackIdToLoad);
 
-    // 1. Récupération du rôle
+    // Sécurité : Si pour une raison X ou Y la config n'est pas là, on arrête
+    if (!window.snackConfig) throw new Error("Config SaaS introuvable");
+
+    // 2. Récupération du rôle
     let role = "client";
     if (user) {
+      const { getDoc, doc } = window.fs;
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
         role = userDoc.data().role;
       }
     }
 
-    // 2. Mise à jour de l'UI (le rôle pilote le bouton Scanner vs Ma Carte)
-    if (typeof window.updateUI === "function") window.updateUI(user, role);
+    // 3. Mise à jour de l'UI (le rôle pilote le bouton Scanner vs Ma Carte)
+    if (typeof window.updateUI === "function") {
+        window.updateUI(user, role);
+    } else {
+        // Fallback si ui.js n'est pas encore prêt (très rare avec type="module")
+        window.addEventListener('load', () => window.updateUI?.(user, role), { once: true });
+    }
 
-    // 3. Initialisation visuelle
-    if (typeof window.initAppVisuals === "function")
+    // 4. Initialisation visuelle
+    if (typeof window.initAppVisuals === "function") {
       await window.initAppVisuals();
+    }
       
   } catch (error) {
     console.error("❌ Erreur Initialisation :", error);

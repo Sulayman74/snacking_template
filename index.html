@@ -6,16 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <!-- <meta name="robots" content="noindex, nofollow"> -->
     <title>{{SEO_TITLE}}</title>
-    <!-- <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self'; 
-        script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://www.gstatic.com https://unpkg.com; 
-        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; 
-        img-src 'self' data: blob: https://api.qrserver.com https://firebasestorage.googleapis.com; 
-        font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; 
-        connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com;
-    "> -->
     <meta name="description" content="{{SEO_DESC}}" />
     <meta name="theme-color" content="{{THEME_COLOR}}" id="theme-color-meta" />
     <meta property="og:title"       content="{{SEO_TITLE}}" />
@@ -28,30 +19,14 @@
     <meta name="twitter:description" content="{{SEO_DESC}}" />
     <meta name="twitter:image"      content="{{HERO_URL}}" />
 
-    <link
-      rel="icon"
-      type="image/webp"
-      sizes="192x192"
-      href="{{ICON_URL}}"
-    />
-    <link
-      rel="icon"
-      type="image/webp"
-      sizes="512x512"
-      href="{{ICON_URL}}"
-    />
+    <link rel="icon" type="image/webp" sizes="192x192" href="{{ICON_URL}}" />
+    <link rel="icon" type="image/webp" sizes="512x512" href="{{ICON_URL}}" />
 
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="{{APP_SHORT_NAME}}" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-icon" href="{{ICON_URL}}" />
-
-    <!-- STARTUP IMAGES iOS : générées automatiquement par iOS 15.4+
-         depuis apple-touch-icon + theme-color + apple-mobile-web-app-title -->
 
     <link
       rel="stylesheet"
@@ -65,35 +40,26 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     /></noscript>
     {{HERO_PRELOAD}}
-    <link
-      rel="preconnect"
-      href="https://firebasestorage.googleapis.com"
-      crossorigin
-    />
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin />
     <link rel="preload" as="image" href="{{LOGO_URL}}" />
     <link rel="modulepreload" href="/src/app.js" />
     <link rel="stylesheet" href="/src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <script src="https://js.stripe.com/v3/"></script>
-    <!-- SCRIPT DE TRANSITION APP SHELL -->
     <script>
       window.CURRENT_SNACK_ID = "{{SNACK_ID}}";
       const _splashStart = Date.now();
-      const MIN_SPLASH   = 1200;   // ms minimum affiché
-      const MAX_SPLASH   = 4000;   // ms max avant de forcer la fermeture
-
+      const MIN_SPLASH   = 1200;
+      const MAX_SPLASH   = 4000;
       let _splashDone    = false;
 
       function removeBootSplash() {
         if (_splashDone) return;
         _splashDone = true;
-
         const boot = document.getElementById("boot-splash");
         if (!boot) return;
-
         const inner = boot.querySelector(".splash-inner");
-        // Animation sortie : logo scale up + fade — feeling app native
         boot.style.transition  = "opacity 0.4s ease";
         if (inner) {
           inner.style.transition = "transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease";
@@ -101,7 +67,6 @@
           inner.style.opacity    = "0";
         }
         boot.style.opacity = "0";
-
         setTimeout(() => boot.remove(), 420);
       }
 
@@ -110,12 +75,8 @@
         const wait    = Math.max(0, MIN_SPLASH - elapsed);
         setTimeout(removeBootSplash, wait);
       }
-
-      // Fermeture dès que le menu est prêt
       window.addEventListener("snack:menu:ready", _tryRemoveSplash, { once: true });
-      // Fermeture dès que l'app signale qu'elle est prête (maintenance mode, erreur, etc.)
       window.addEventListener("snack:app:ready",  _tryRemoveSplash, { once: true });
-      // Fallback : force la fermeture après MAX_SPLASH quoi qu'il arrive
       setTimeout(removeBootSplash, MAX_SPLASH);
     </script>
   </head>
@@ -127,940 +88,293 @@
       </div>
     </div>
     <main>
-      <nav
-        id="navbar"
-        class="fixed w-full z-50 top-0 transition-all duration-300 bg-linear-to-b backdrop-blur-sm from-black/90 to-transparent"
-      >
-        <div
-          class="container mx-auto px-4 py-3 flex justify-between items-center"
-        >
+      <nav id="navbar" class="fixed w-full z-50 top-0 transition-all duration-300 bg-linear-to-b backdrop-blur-sm from-black/90 to-transparent">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
           <a href="#" class="flex items-center gap-2">
-            <img
-              id="nav-logo"
-              src=""
-              alt="Logo"
-              class="h-10 w-10 object-contain rounded-xl hidden"
-            />
-            <span
-              id="nav-name"
-              class="text-xl font-bold uppercase tracking-wider text-white drop-shadow-md"
-            ></span>
+            <img id="nav-logo" src="" alt="Logo" class="h-10 w-10 object-contain rounded-xl hidden" />
+            <span id="nav-name" class="text-xl font-bold uppercase tracking-wider text-white drop-shadow-md"></span>
           </a>
-
-          <button
-            aria-label="Bouton du Menu"
-            id="mobile-menu-btn"
-            class="md:hidden text-2xl text-white focus:outline-none transition-transform duration-300 drop-shadow-md"
-          >
+          <button aria-label="Bouton du Menu" id="mobile-menu-btn" class="md:hidden text-2xl text-white focus:outline-none transition-transform duration-300 drop-shadow-md">
             <i class="fas fa-bars"></i>
           </button>
-
           <div class="hidden md:flex items-center gap-4">
-            <a
-              href="#"
-              data-action="switch-menu"
-              class="text-white hover:text-primary font-medium transition drop-shadow-md"
-              >La Carte</a
-            >
-            <a
-              href="#loyalty"
-              id="nav-loyalty-link"
-              class="hidden text-white hover:text-primary font-medium transition drop-shadow-md"
-              >Fidélité</a
-            >
-            <a
-              href="#infos"
-              class="text-white hover:text-primary font-medium transition drop-shadow-md"
-              >Infos</a
-            >
-            <a
-              href="/admin.html"
-              id="nav-admin-btn"
-              class="hidden text-red-500 hover:text-red-400 font-bold transition drop-shadow-md"
-              ><i class="fas fa-cog"></i> Admin</a
-            >
-            <a
-              href="#"
-              id="cta-nav"
-              class="ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition"
-            >
-              Commander
-            </a>
-            <button
-              aria-label="Déconnexion"
-              type="button"
-              data-action="logout-user"
-              id="nav-logout-btn"
-              class="hidden bg-accent/10 backdrop-blur-sm text-gray-200 hover:bg-accent px-4 py-2 rounded-full font-bold transition flex items-center gap-2"
-            >
+            <a href="#" data-action="switch-menu" class="text-white hover:text-primary font-medium transition drop-shadow-md">La Carte</a>
+            <a href="#loyalty" id="nav-loyalty-link" class="hidden text-white hover:text-primary font-medium transition drop-shadow-md">Fidélité</a>
+            <a href="#infos" class="text-white hover:text-primary font-medium transition drop-shadow-md">Infos</a>
+            <a href="/admin.html" id="nav-admin-btn" class="hidden text-red-500 hover:text-red-400 font-bold transition drop-shadow-md"><i class="fas fa-cog"></i> Admin</a>
+            <a href="#" id="cta-nav" class="ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition">Commander</a>
+            <button aria-label="Déconnexion" type="button" data-action="logout-user" id="nav-logout-btn" class="hidden bg-accent/10 backdrop-blur-sm text-gray-200 hover:bg-accent px-4 py-2 rounded-full font-bold transition flex items-center gap-2">
               <i class="fas fa-sign-out-alt"></i> Quitter
             </button>
           </div>
         </div>
-
-        <div
-          id="mobile-menu-overlay"
-          class="fixed h-screen inset-0 z-40 bg-gray-900 hidden flex-col items-center justify-center space-y-10 opacity-0 transition-opacity duration-300"
-        >
-          <a
-            href="#"
-            data-action="switch-menu"
-            class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110"
-            >La Carte</a
-          >
-          <a
-            href="#loyalty"
-            class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110"
-            id="mobile-link-loyalty"
-            >Fidélité</a
-          >
-          <a
-            href="#infos"
-            class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110"
-            >Infos</a
-          >
-          <a
-            href="/admin.html"
-            id="mobile-admin-btn"
-            class="hidden mobile-link text-4xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110"
-            >Admin</a
-          >
-          <a
-            href="#contact"
-            class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110"
-            >Contact</a
-          >
-          <a
-            href="#"
-            id="mobile-burger-call-btn"
-            class="hidden mobile-link text-2xl font-black bg-green-600 text-white px-8 py-4 rounded-full hover:bg-green-700 transition transform hover:scale-105 mt-6 shadow-lg shadow-green-600/30"
-          >
+        <div id="mobile-menu-overlay" class="fixed h-screen inset-0 z-40 bg-gray-900 hidden flex-col items-center justify-center space-y-10 opacity-0 transition-opacity duration-300">
+          <a href="#" data-action="switch-menu" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">La Carte</a>
+          <a href="#loyalty" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110" id="mobile-link-loyalty">Fidélité</a>
+          <a href="#infos" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">Infos</a>
+          <a href="/admin.html" id="mobile-admin-btn" class="hidden mobile-link text-4xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110">Admin</a>
+          <a href="#contact" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">Contact</a>
+          <a href="#" id="mobile-burger-call-btn" class="hidden mobile-link text-2xl font-black bg-green-600 text-white px-8 py-4 rounded-full hover:bg-green-700 transition transform hover:scale-105 mt-6 shadow-lg shadow-green-600/30">
             <i class="fas fa-phone mr-2 animate-pulse"></i> Appeler
           </a>
-          <a
-            href="#"
-            data-action="logout-user"
-            id="mobile-logout-btn"
-            class="mobile-link text-xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110 mt-8"
-          >
-            Déconnexion
-          </a>
+          <a href="#" data-action="logout-user" id="mobile-logout-btn" class="mobile-link text-xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110 mt-8">Déconnexion</a>
         </div>
       </nav>
 
-      <header
-        id="hero"
-        class="relative h-[80vh] flex items-center justify-center bg-gray-800 overflow-hidden transition-all duration-700"
-      >
-        <img
-          id="hero-img"
-          src="{{HERO_URL}}"
-          fetchpriority="high"
-          loading="eager"
-          decoding="async"
-          alt=""
-          class="absolute inset-0 w-full h-full object-cover object-center"
-        />
+      <header id="hero" class="relative h-[80vh] flex items-center justify-center bg-gray-800 overflow-hidden transition-all duration-700">
+        <img id="hero-img" src="{{HERO_URL}}" fetchpriority="high" loading="eager" decoding="async" alt="" class="absolute inset-0 w-full h-full object-cover object-center" />
         <div class="absolute inset-0 bg-black/50"></div>
-        <div
-          class="relative z-10 text-center px-4 max-w-4xl w-full mx-auto text-white flex flex-col items-center"
-        >
-          <!-- L'attribut empty: va créer des blocs gris clignotants automatiquement si la balise est vide ! -->
-          <span
-            id="hero-status"
-            class="inline-block px-3 py-1 mb-4 text-sm font-bold uppercase tracking-widest border border-white/30 rounded-full backdrop-blur-sm empty:bg-white/20 empty:block empty:w-32 empty:h-8 empty:animate-pulse empty:border-transparent"
-          ></span>
-          <h1
-            id="hero-title"
-            class="text-5xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg empty:bg-white/20 empty:block empty:mx-auto empty:rounded-2xl empty:w-3/4 empty:h-16 md:empty:h-24 empty:animate-pulse"
-          ></h1>
-          <p
-            id="hero-desc"
-            class="text-xl md:text-2xl mb-8 font-light text-gray-200 drop-shadow-md empty:bg-white/20 empty:block empty:mx-auto empty:rounded-xl empty:w-1/2 empty:h-8 empty:animate-pulse"
-          ></p>
+        <div class="relative z-10 text-center px-4 max-w-4xl w-full mx-auto text-white flex flex-col items-center">
+          <span id="hero-status" class="inline-block px-3 py-1 mb-4 text-sm font-bold uppercase tracking-widest border border-white/30 rounded-full backdrop-blur-sm empty:bg-white/20 empty:block empty:w-32 empty:h-8 empty:animate-pulse empty:border-transparent"></span>
+          <h1 id="hero-title" class="text-5xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg empty:bg-white/20 empty:block empty:mx-auto empty:rounded-2xl empty:w-3/4 empty:h-16 md:empty:h-24 empty:animate-pulse"></h1>
+          <p id="hero-desc" class="text-xl md:text-2xl mb-8 font-light text-gray-200 drop-shadow-md empty:bg-white/20 empty:block empty:mx-auto empty:rounded-xl empty:w-1/2 empty:h-8 empty:animate-pulse"></p>
         </div>
       </header>
 
       <section id="bestsellers" class="py-16 bg-gray-50">
         <div class="container mx-auto px-4">
           <div class="text-center mb-10">
-            <h2
-              class="text-4xl text-black uppercase font-bold mb-3 tracking-tight"
-            >
-              Nos Stars
-            </h2>
-            <p class="text-gray-500 text-lg">
-              Les favoris du moment, validés par la team.
-            </p>
+            <h2 class="text-4xl text-black uppercase font-bold mb-3 tracking-tight">Nos Stars</h2>
+            <p class="text-gray-500 text-lg">Les favoris du moment, validés par la team.</p>
           </div>
-
-          <!-- APP SHELL : On met des Skeleton Loaders directement dans le container par défaut -->
-          <div
-            id="bestsellers-container"
-            class="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-auto md:px-0"
-          >
-            <!-- SKELETON CARD 1 -->
-            <div
-              class="min-w-[280px] md:min-w-0 snap-center bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100 animate-pulse"
-            >
-              <div
-                class="h-48 bg-gray-200 w-full flex items-center justify-center"
-              >
-                <i class="fas fa-image text-gray-300 text-4xl"></i>
-              </div>
-              <div class="p-6">
-                <div class="h-6 bg-gray-200 rounded-md w-2/3 mb-3"></div>
-                <div class="h-4 bg-gray-100 rounded-md w-full mb-2"></div>
-                <div class="flex justify-between items-center">
-                  <div class="h-6 bg-gray-200 rounded-md w-1/4"></div>
-                  <div class="h-10 w-10 bg-gray-200 rounded-full"></div>
-                </div>
-              </div>
-            </div>
-            <!-- SKELETON CARD 2 -->
-            <div
-              class="min-w-[280px] md:min-w-0 snap-center bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100 animate-pulse"
-            >
-              <div
-                class="h-48 bg-gray-200 w-full flex items-center justify-center"
-              >
-                <i class="fas fa-image text-gray-300 text-4xl"></i>
-              </div>
-              <div class="p-6">
-                <div class="h-6 bg-gray-200 rounded-md w-3/4 mb-3"></div>
-                <div class="h-4 bg-gray-100 rounded-md w-full mb-2"></div>
-                <div class="flex justify-between items-center">
-                  <div class="h-6 bg-gray-200 rounded-md w-1/3"></div>
-                  <div class="h-10 w-10 bg-gray-200 rounded-full"></div>
-                </div>
-              </div>
-            </div>
+          <div id="bestsellers-container" class="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-auto md:px-0">
+            <!-- SKELETONS INJECTÉS PAR JS -->
           </div>
-
           <div class="text-center">
-            <button
-              data-action="switch-menu"
-              class="bg-gray-800 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300"
-            >
-              Voir toute la carte
-              <i class="fas fa-arrow-right ml-2 text-primary"></i>
+            <button data-action="switch-menu" class="bg-gray-800 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300">
+              Voir toute la carte <i class="fas fa-arrow-right ml-2 text-primary"></i>
             </button>
           </div>
         </div>
       </section>
 
-      <section
-        id="full-menu"
-        class="hidden h-full w-full bg-gray-50 fixed inset-0 z-50 overflow-y-auto"
-      >
-        <div
-          id="ptr-indicator"
-          class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md z-[70]"
-        >
-          <i
-            class="fas fa-arrow-down text-gray-300 text-xl transition-transform"
-            id="ptr-icon"
-          ></i>
+      <section id="full-menu" class="hidden h-full w-full bg-gray-50 fixed inset-0 z-50 overflow-y-auto">
+        <div id="ptr-indicator" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md z-[70]">
+          <i class="fas fa-arrow-down text-gray-300 text-xl transition-transform" id="ptr-icon"></i>
         </div>
-
-        <!-- STICKY HEADER DU MENU -->
         <div class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm">
           <div class="container mx-auto px-4 py-3 flex items-center gap-3">
             <div class="relative flex-1">
-              <input
-                type="text"
-                id="menu-search-input"
-                placeholder="Un p'tit creux ?"
-                class="w-full pl-10 pr-10 py-3 bg-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all text-gray-800 font-medium text-sm"
-              />
+              <input type="text" id="menu-search-input" placeholder="Un p'tit creux ?" class="w-full pl-10 pr-10 py-3 bg-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all text-gray-800 font-medium text-sm" />
               <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
               <button id="clear-search-btn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600">
                 <i class="fas fa-times-circle text-lg"></i>
               </button>
             </div>
-            <button
-              data-action="switch-home"
-              class="w-11 h-11 shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
-            >
+            <button data-action="switch-home" class="w-11 h-11 shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
               <i class="fas fa-times text-lg"></i>
             </button>
           </div>
-
-          <!-- BARRE DE CATÉGORIES (Mobile First Horizontal Scroll) -->
-          <div id="menu-categories-nav" class="container mx-auto px-4 pb-2 flex gap-2 overflow-x-auto scrollbar-hide no-scrollbar -webkit-overflow-scrolling-touch">
-            <!-- Injecté par menu.js -->
-          </div>
+          <div id="menu-categories-nav" class="container mx-auto px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar -webkit-overflow-scrolling-touch"></div>
         </div>
-
         <div class="container mx-auto px-4 pt-6">
           <div id="full-menu-container" class="pb-32 md:pb-12"></div>
         </div>
       </section>
 
-<section id="loyalty" class="py-5 hidden bg-white">
-  <div class="container mx-auto px-4">
-    <h2 class="text-4xl text-center font-black text-gray-900 mb-4 tracking-tight">
-      Bons plans
-    </h2>
-    
-<div
-  id="loyalty-card"
-  class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-black border shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
-  style="border-color: var(--color-primary)" 
->
-  <div
-    id="loyalty-blur"
-    class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full blur-[80px] opacity-30 pointer-events-none"
-    style="background-color: var(--color-accent);"
-  ></div>
-
-  <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-    <div class="text-center md:text-left flex-1">
-      <h3 class="text-4xl font-bold mb-4 tracking-tight" id="loyalty-title">
-        Club Fidélité
-      </h3>
-      <p class="mb-8 text-lg opacity-90 font-light" id="loyalty-desc">
-        Gagnez des points à chaque commande !
-      </p>
-      <div class="flex gap-4 justify-center md:justify-start">
-        <button
-          type="button"
-          id="loyalty-main-btn"
-          data-action="toggle-auth-modal"
-          class="bg-white px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 active:scale-95"
-          style="color: var(--color-primary);"
-        >
-          Connexion
-        </button>
-      </div>
-    </div>
-    
-<div class="relative text-8xl md:text-9xl">
-  <i class="fas fa-gift absolute inset-0 blur-2xl opacity-40" 
-     style="color: var(--color-accent);"></i>
-  
-  <i class="fas fa-gift relative animate-bounce text-primary opacity-60 drop-shadow-2xl"></i>
-</div>
-  </div>
-</div>
-  </div>
-</section>
-
-      <section id="reviews" class="py-8 bg-white">
+      <section id="loyalty" class="py-5 hidden bg-white">
         <div class="container mx-auto px-4">
-          <h2
-            class="md:text-4xl text-2xl text-center font-black text-gray-900 mb-2 tracking-tight"
-          >
-            Donnez-nous votre avis
-          </h2>
-          <div
-            class="bg-gray-100 rounded-2xl p-8 text-center max-w-lg mx-auto border border-accent shadow-sm"
-          >
-            <h3 class="text-xl text-black font-bold mb-4">
-              Et vous, c'était comment ?
-            </h3>
-            <div
-              class="flex justify-center items-center gap-3 text-4xl cursor-pointer"
-              id="interactive-stars"
-            >
-              <i
-                class="far fa-star text-gray-300 hover:text-yellow-400 transition"
-                data-value="1"
-              ></i>
-              <i
-                class="far fa-star text-gray-300 hover:text-yellow-400 transition"
-                data-value="2"
-              ></i>
-              <i
-                class="far fa-star text-gray-300 hover:text-yellow-400 transition"
-                data-value="3"
-              ></i>
-              <i
-                class="far fa-star text-gray-300 hover:text-yellow-400 transition"
-                data-value="4"
-              ></i>
-              <i
-                class="far fa-star text-gray-300 hover:text-yellow-400 transition"
-                data-value="5"
-              ></i>
+          <h2 class="text-4xl text-center font-black text-gray-900 mb-4 tracking-tight">Bons plans</h2>
+          <div id="loyalty-card" class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-black border shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]" style="border-color: var(--color-primary)">
+            <div id="loyalty-blur" class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full blur-[80px] opacity-30 pointer-events-none" style="background-color: var(--color-accent);"></div>
+            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div class="text-center md:text-left flex-1">
+                <h3 class="text-4xl font-bold mb-4 tracking-tight" id="loyalty-title">Club Fidélité</h3>
+                <p class="mb-8 text-lg opacity-90 font-light" id="loyalty-desc">Gagnez des points à chaque commande !</p>
+                <div class="flex gap-4 justify-center md:justify-start">
+                  <button type="button" id="loyalty-main-btn" data-action="toggle-auth-modal" class="bg-white px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 active:scale-95" style="color: var(--color-primary);">Connexion</button>
+                </div>
+              </div>
+              <div class="relative text-8xl md:text-9xl">
+                <i class="fas fa-gift absolute inset-0 blur-2xl opacity-40" style="color: var(--color-accent);"></i>
+                <i class="fas fa-gift relative animate-bounce text-primary opacity-60 drop-shadow-2xl"></i>
+              </div>
             </div>
-            <p
-              id="rating-feedback"
-              class="text-gray-600 font-medium min-h-[1.5rem]"
-            ></p>
           </div>
         </div>
       </section>
 
-      <section id="contact" class="py-5 bg-gray-100">
-        <div class="container mx-auto px-4 max-w-2xl">
-          <div class="text-center mb-5">
-            <h2
-              id="form-title"
-              class="text-4xl font-black text-gray-900 mb-4 tracking-tight"
-            >
-              Une question ?
-            </h2>
-            <p id="form-desc" class="text-gray-600 text-lg">
-              Nous sommes là pour vous répondre.
-            </p>
+      <section id="reviews" class="py-8 bg-white">
+        <div class="container mx-auto px-4 text-center">
+          <h2 class="md:text-4xl text-2xl font-black text-gray-900 mb-6 tracking-tight">Donnez-nous votre avis</h2>
+          <div class="bg-gray-100 rounded-3xl p-8 max-w-lg mx-auto border border-accent shadow-sm">
+            <h3 class="text-xl text-black font-bold mb-4">Et vous, c'était comment ?</h3>
+            <div class="flex justify-center items-center gap-3 text-4xl mb-4 cursor-pointer" id="interactive-stars">
+              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="1"></i>
+              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="2"></i>
+              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="3"></i>
+              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="4"></i>
+              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="5"></i>
+            </div>
+            <p id="rating-feedback" class="text-gray-600 font-medium min-h-[1.5rem]"></p>
           </div>
+        </div>
+      </section>
 
-          <form
-            id="contact-form"
-            action="https://formspree.io/f/mykdrzlq"
-            method="POST"
-            aria-label="Formulaire de contact"
-            class="space-y-3 md:space-y-6 bg-white p-4 md:p-10 rounded-3xl shadow-xl border border-gray-100"
-          >
-            <input
-              type="hidden"
-              name="source_avis"
-              id="source-avis"
-              value="contact_direct"
-            />
-
+      <section id="contact" class="py-10 bg-gray-100">
+        <div class="container mx-auto px-4 max-w-2xl">
+          <div class="text-center mb-8">
+            <h2 id="form-title" class="text-4xl font-black text-gray-900 mb-4 tracking-tight">Une question ?</h2>
+            <p id="form-desc" class="text-gray-600 text-lg">Nous sommes là pour vous répondre.</p>
+          </div>
+          <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-4 bg-white p-6 md:p-10 rounded-3xl shadow-xl">
+            <input type="hidden" name="source_avis" id="source-avis" value="contact_direct" />
             <div>
-              <label for="contact-field" class="sr-only"
-                >Email ou Téléphone</label
-              >
-              <input
-                type="text"
-                name="contact"
-                id="contact-field"
-                required
-                aria-required="true"
-                placeholder="Votre Email ou Téléphone"
-                class="w-full text-black px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition"
-              />
+              <input type="text" name="contact" id="contact-field" required placeholder="Email ou Téléphone" class="w-full text-black px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition" />
             </div>
-
             <div>
-              <label for="message-field" class="sr-only">Votre message</label>
-              <textarea
-                name="message"
-                id="message-field"
-                rows="4"
-                required
-                aria-required="true"
-                placeholder="Une suggestion ?"
-                class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"
-              ></textarea>
+              <textarea name="message" id="message-field" rows="4" required placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition text-black"></textarea>
             </div>
-
-            <button
-              type="submit"
-              id="btn-submit-form"
-              class="w-full py-4 rounded-xl font-bold text-gray-100 shadow-lg bg-primary hover:bg-accent transition transform hover:-translate-y-1 active:scale-95"
-            >
-              Envoyer le message
-            </button>
+            <button type="submit" id="btn-submit-form" class="w-full py-4 rounded-xl font-bold text-white shadow-lg bg-primary hover:bg-accent transition transform hover:-translate-y-1">Envoyer le message</button>
           </form>
         </div>
       </section>
 
-      <footer
-        id="infos"
-        class="relative overflow-hidden bg-gray-900 text-white pt-20 pb-32 md:pb-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]"
-      >
-        <div
-  class="liquid-blob absolute -top-24 -left-24 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-40"
-  style="background-color: var(--color-accent);"
-></div>
-<div
-  class="liquid-blob absolute -bottom-24 -right-24 w-96 h-96 rounded-full blur-3xl pointer-events-none animation-delay-2000 opacity-20"
-  style="background-color: var(--color-primary);"
-></div>
+      <footer id="infos" class="relative overflow-hidden bg-gray-900 text-white pt-20 pb-32 md:pb-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
+        <div class="liquid-blob absolute -top-24 -left-24 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-40" style="background-color: var(--color-accent);"></div>
+        <div class="liquid-blob absolute -bottom-24 -right-24 w-96 h-96 rounded-full blur-3xl pointer-events-none animation-delay-2000 opacity-20" style="background-color: var(--color-primary);"></div>
 
-        <div
-          class="relative z-10 container mx-auto px-4 grid md:grid-cols-2 gap-12 max-w-6xl mb-16"
-        >
-          <div
-            class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50"
-          >
-            <h4
-              class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2"
-            >
+        <div class="relative z-10 container mx-auto px-4 grid md:grid-cols-2 gap-12 max-w-6xl mb-16">
+          <div class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50">
+            <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2">
               <i id="find-us" class="fas fa-map-marker-alt"></i> Nous trouver
             </h4>
-            <p
-              id="footer-address"
-              class="text-lg mb-4 font-light text-gray-200"
-            ></p>
+            <p id="footer-address" class="text-lg mb-4 font-light text-gray-200"></p>
             <p id="footer-phone" class="text-lg mb-6 font-bold text-white"></p>
-            <div
-              id="socials-container"
-              class="flex gap-4 text-2xl mt-4 pt-4 border-t border-gray-700/50"
-            ></div>
+            <div id="socials-container" class="flex gap-4 text-2xl mt-4 pt-4 border-t border-gray-700/50"></div>
           </div>
-
-          <div
-            class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50"
-          >
-            <h4
-              class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2"
-            >
+          <div class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50">
+            <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2">
               <i id="o-clock" class="fas fa-clock"></i> Horaires
             </h4>
             <ul id="hours-list" class="space-y-3 font-light text-gray-300"></ul>
           </div>
         </div>
-        <div
-          class="relative z-10 max-w-6xl mx-auto px-4 border-t border-gray-800 pt-8"
-        >
-          <div
-            class="flex flex-col md:flex-row justify-between items-center gap-8"
-          >
-            <div class="flex flex-col items-center md:items-start space-y-4">
-              <p class="text-gray-300 text-xs tracking-wide">
-                &copy; 2026
-                <span class="text-gray-300 font-medium">Tacos Fusion</span> •
-                Tous droits réservés.
-              </p>
 
-              <nav
-                class="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2"
-                aria-label="Liens secondaires"
-              >
-                <a
-                  href="legal.html"
-                  target="_blank"
-                  rel="noopener"
-                  class="text-gray-300 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4"
-                >
-                  Mentions Légales
-                </a>
-                <a
-                  href="legal.html#cgu"
-                  target="_blank"
-                  rel="noopener"
-                  class="text-gray-300 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4"
-                >
-                  CGU & Ventes
-                </a>
-                <a
-                  href="legal.html#rgpd"
-                  target="_blank"
-                  rel="noopener"
-                  class="text-gray-300 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4"
-                >
-                  Confidentialité
-                </a>
+        <div class="relative z-10 max-w-6xl mx-auto px-4 border-t border-gray-800 pt-8">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex flex-col items-center md:items-start space-y-4 text-center md:text-left">
+              <p class="text-gray-300 text-xs tracking-wide">
+                &copy; 2026 <span id="footer-copy-name" class="text-white font-medium">Resto</span> • Tous droits réservés.
+              </p>
+              <nav class="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2">
+                <a href="legal.html" target="_blank" class="text-gray-400 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4">Mentions Légales</a>
+                <a href="legal.html#cgu" target="_blank" class="text-gray-400 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4">CGU & Ventes</a>
+                <a href="legal.html#rgpd" target="_blank" class="text-gray-400 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4">Confidentialité</a>
               </nav>
             </div>
 
-            <div
-              class="text-center md:text-right flex flex-col justify-center items-center md:items-end group"
-            >
-              <p
-                class="text-gray-300 text-[10px] uppercase tracking-[0.2em] mb-2"
-              >
-                Architecture Digitale
-              </p>
-              <a
-                href="https://sulayman74.github.io/portfolio_Sirikone/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex items-center gap-2 text-gray-300 text-xs font-light bg-gray-800/30 hover:bg-gray-800/60 px-4 py-2 rounded-full backdrop-blur-sm border border-gray-700/50 transition-all duration-300 hover:border-red-500/30"
-              >
+            <div class="text-center md:text-right flex flex-col justify-center items-center md:items-end group">
+              <p class="text-gray-500 text-[10px] uppercase tracking-[0.2em] mb-2">Architecture Digitale</p>
+              <a href="https://sulayman74.github.io/portfolio_Sirikone/" target="_blank" rel="noopener" class="flex items-center gap-2 text-gray-300 text-xs font-light bg-gray-800/30 hover:bg-gray-800/60 px-4 py-2 rounded-full border border-gray-700/50 transition-all hover:border-red-500/30">
                 <span class="opacity-70">Propulsé par</span>
-                <span
-                  class="text-white font-bold tracking-tight group-hover:text-red-500 transition-colors"
-                  >CodeCrafters™</span
-                >
+                <span class="text-white font-bold tracking-tight group-hover:text-red-500 transition-colors">CodeCrafters™</span>
               </a>
-              <p class="text-sm text-gray-300 mb-2">
-                © 2026 Tous droits réservés.
-              </p>
-              <!-- <p class="text-[10px] text-gray-400 text-center mt-4">
-                Ce site est protégé par reCAPTCHA. Les
-                <a
-                  href="https://policies.google.com/privacy"
-                  target="_blank"
-                  class="underline"
-                  >Règles de confidentialité</a
-                >
-                et les
-                <a
-                  href="https://policies.google.com/terms"
-                  target="_blank"
-                  class="underline"
-                  >Conditions d'utilisation</a
-                >
-                de Google s'appliquent.
-              </p> -->
-
-              <a
-                href="admin.html"
-                class="text-xs text-gray-300 hover:text-gray-800 transition-colors duration-300"
-              >
-                Portail <span id="footer-resto-name">Partenaire</span>
-              </a>
+              <div class="mt-6 text-[10px] text-gray-500 max-w-[280px] leading-relaxed">
+                Ce site est protégé par reCAPTCHA. Les <a href="https://policies.google.com/privacy" target="_blank" class="underline hover:text-gray-300">Règles de confidentialité</a> et les <a href="https://policies.google.com/terms" target="_blank" class="underline hover:text-gray-300">Conditions d'utilisation</a> de Google s'appliquent.
+              </div>
             </div>
           </div>
         </div>
       </footer>
     </main>
-    <nav
-      id="mobile-nav-container"
-      aria-label="Menu de navigation principal mobile"
-      class="md:hidden fixed bottom-6 inset-x-0 z-[60] flex justify-center pointer-events-none pb-[env(safe-area-inset-bottom)]"
-    >
-      <div
-        id="mobile-nav"
-        class="w-full isolate max-w-md pointer-events-auto relative rounded-4xl p-1.5 transition-all duration-300 mx-4"
-        role="tablist"
-      >
-        <div
-          class="absolute inset-0 bg-gray-900/80 backdrop-blur-2xl rounded-4xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-0"
-        ></div>
 
-        <div
-          id="mobile-nav-grid"
-          class="relative z-10 grid grid-cols-3 h-14 gap-1 transition-all duration-300"
-        >
-          <div
-            id="nav-indicator"
-            class="absolute top-0 bottom-0 left-0 w-[calc(100%/3)] bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_4px_15px_rgba(255,255,255,0.05)] rounded-3xl transition-transform duration-300 pointer-events-none z-0"
-            style="
-              transition-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
-            "
-          ></div>
-
-          <button
-            data-action="switch-home"
-            id="nav-btn-home"
-            role="tab"
-            aria-selected="true"
-            aria-label="Retour à l'accueil"
-            class="cursor-pointer group is-active relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
-          >
-            <i
-              class="fas fa-home text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none"
-              aria-hidden="true"
-            ></i>
-            <span class="sr-only">Accueil</span>
-            <span
-              class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1 pointer-events-none"
-            >
-              Accueil
-            </span>
+    <!-- NAVIGATION MOBILE -->
+    <nav id="mobile-nav-container" class="md:hidden fixed bottom-6 inset-x-0 z-[60] flex justify-center pointer-events-none pb-[env(safe-area-inset-bottom)]">
+      <div id="mobile-nav" class="w-full isolate max-w-md pointer-events-auto relative rounded-4xl p-1.5 transition-all duration-300 mx-4">
+        <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-2xl rounded-4xl border border-white/10 shadow-2xl z-0"></div>
+        <div id="mobile-nav-grid" class="relative z-10 grid grid-cols-3 h-14 gap-1">
+          <div id="nav-indicator" class="absolute top-0 bottom-0 left-0 w-[calc(100%/3)] bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl transition-transform duration-300 pointer-events-none z-0"></div>
+          <button data-action="switch-home" id="nav-btn-home" class="cursor-pointer group is-active relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 rounded-3xl outline-none">
+            <i class="fas fa-home text-xl mb-0.5 transition-transform group-[.is-active]:-translate-y-1"></i>
+            <span class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-[.is-active]:opacity-100 transition-opacity absolute bottom-1">Accueil</span>
           </button>
-
-          <div
-            class="relative flex w-full h-full justify-center items-center pointer-events-none"
-          >
-<button
-  id="mobile-cta-btn"
-  role="button"
-  aria-label="Passer commande ou appeler"
-  class="cursor-pointer hidden absolute -top-8 pointer-events-auto text-on-primary w-14 h-14 rounded-full items-center justify-center shadow-lg shadow-primary/40 transform active:scale-90 transition-all border-[4px] border-gray-900 bg-primary focus:outline-none focus:ring-4 focus:ring-primary/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
->
-  <i id="mobile-cta-icon" class="fas fa-utensils text-xl pointer-events-none" aria-hidden="true"></i>
-  
-  <span id="mobile-cart-badge" class="absolute -top-1 -right-1 bg-white text-primary text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-md hidden border-2 border-gray-900 z-10 pointer-events-none transition-transform duration-300">0</span>
-</button>
+          <div class="relative flex w-full h-full justify-center items-center pointer-events-none">
+            <button id="mobile-cta-btn" class="cursor-pointer hidden absolute -top-8 pointer-events-auto text-on-primary w-14 h-14 rounded-full items-center justify-center shadow-lg border-[4px] border-gray-900 bg-primary active:scale-90 transition-all">
+              <i id="mobile-cta-icon" class="fas fa-utensils text-xl"></i>
+              <span id="mobile-cart-badge" class="absolute -top-1 -right-1 bg-white text-primary text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-md hidden border-2 border-gray-900">0</span>
+            </button>
           </div>
-
-          <button
-            data-action="switch-menu"
-            id="nav-btn-menu"
-            role="tab"
-            aria-selected="false"
-            aria-label="Voir la carte du restaurant"
-            class="cursor-pointer group relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 hover:text-white transition-all active:scale-95 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-white/50 touch-manipulation select-none [-webkit-tap-highlight-color:transparent]"
-          >
-            <i
-              class="fas fa-book-open text-xl mb-0.5 transition-transform group-hover:-translate-y-1 group-[.is-active]:-translate-y-1 pointer-events-none"
-              aria-hidden="true"
-            ></i>
-            <span class="sr-only">Menu</span>
-            <span
-              class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 group-[.is-active]:opacity-100 transition-opacity duration-200 absolute bottom-1 pointer-events-none"
-            >
-              Menu
-            </span>
+          <button data-action="switch-menu" id="nav-btn-menu" class="cursor-pointer group relative z-10 flex w-full h-full flex-col items-center justify-center text-gray-200 rounded-3xl outline-none">
+            <i class="fas fa-book-open text-xl mb-0.5 transition-transform group-[.is-active]:-translate-y-1"></i>
+            <span class="text-[9px] uppercase font-bold tracking-widest opacity-0 group-[.is-active]:opacity-100 transition-opacity absolute bottom-1">Menu</span>
           </button>
         </div>
       </div>
     </nav>
 
-    <div
-      id="auth-modal"
-      class="fixed inset-0 bg-gray-900/80 z-[100] hidden items-center justify-center p-4 backdrop-blur-md opacity-0 transition-opacity duration-300"
-    >
-      <div
-        class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95 md:scale-100"
-      >
-        <button
-          data-action="toggle-auth-modal"
-          aria-label="Fermer la fenêtre de connexion"
-          type="button"
-          class="absolute top-4 right-4 text-gray-300 hover:text-black bg-gray-100 p-2 rounded-full transition"
-        >
-          <i
-            class="fas fa-times text-xl w-5 h-5 flex justify-center items-center"
-          ></i>
+    <!-- MODALES (Auth, Snack, Card, Scanner, etc.) -->
+    <div id="auth-modal" class="fixed inset-0 bg-gray-900/80 z-[100] hidden items-center justify-center p-4 backdrop-blur-md opacity-0 transition-opacity duration-300">
+      <div class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95">
+        <button data-action="toggle-auth-modal" class="absolute top-4 right-4 text-gray-300 hover:text-black bg-gray-100 p-2 rounded-full transition">
+          <i class="fas fa-times"></i>
         </button>
-
         <div class="text-center mb-6">
-          <h3
-            id="auth-title"
-            class="text-3xl font-black text-gray-900 tracking-tight"
-          >
-            Bienvenue !
-          </h3>
-          <p id="auth-subtitle" class="text-gray-500 mt-2">
-            Connectez-vous pour votre carte de fidélité.
-          </p>
+          <h3 id="auth-title" class="text-3xl font-black text-gray-900 tracking-tight">Bienvenue !</h3>
+          <p id="auth-subtitle" class="text-gray-500 mt-2">Connectez-vous pour votre fidélité.</p>
         </div>
-
-        <button
-          type="button"
-          id="btn-google-login"
-          class="w-full flex items-center justify-center gap-3 px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition shadow-sm mb-6"
-        >
-          <img
-            src="https://www.svgrepo.com/show/475656/google-color.svg"
-            class="w-5 h-5"
-            alt="Google"
-          />
-          Continuer avec Google
+        <button type="button" id="btn-google-login" class="w-full flex items-center justify-center gap-3 px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition shadow-sm mb-6">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google" /> Continuer avec Google
         </button>
-
-        <div class="flex items-center mb-6">
-          <div class="grow border-t border-gray-200"></div>
-          <span class="mx-4 text-gray-400 text-sm font-medium">OU</span>
-          <div class="grow border-t border-gray-200"></div>
-        </div>
-
+        <div class="flex items-center mb-6"><div class="grow border-t"></div><span class="mx-4 text-gray-400 text-sm font-medium">OU</span><div class="grow border-t"></div></div>
         <form id="auth-form" class="space-y-5">
-          <div>
-            <label class="block text-sm sr-only font-bold text-gray-700 mb-2"
-              >Email</label
-            >
-            <input
-              type="email"
-              id="auth-email"
-              required
-              class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"
-              placeholder="Email"
-            />
-          </div>
-
+          <input type="email" id="auth-email" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 outline-none transition text-black" placeholder="Email" />
           <div class="relative">
-            <label class="block text-sm sr-only font-bold text-gray-700 mb-2"
-              >Mot de passe</label
-            >
-            <input
-              type="password"
-              id="auth-password"
-              required
-              class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black pr-12"
-              placeholder="Mot de passe"
-            />
-            <button
-              type="button"
-              id="toggle-password"
-              class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition focus:outline-none"
-            >
-              <i class="fas fa-eye" id="eye-icon"></i>
-            </button>
+            <input type="password" id="auth-password" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 outline-none transition text-black pr-12" placeholder="Mot de passe" />
+            <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><i class="fas fa-eye" id="eye-icon"></i></button>
           </div>
-          <div class="text-right mt-1 mb-4">
-            <button
-              type="button"
-              data-action="reset-password"
-              class="text-sm text-gray-500 hover:text-red-600 hover:underline transition"
-            >
-              Mot de passe oublié ?
-            </button>
-          </div>
-
-          <button
-            aria-label="Connexion compte fidélité"
-            type="submit"
-            id="auth-submit-btn"
-            class="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2"
-          >
-            Se connecter
-          </button>
+          <div class="text-right"><button type="button" data-action="reset-password" class="text-sm text-gray-500 hover:text-red-600 transition">Oublié ?</button></div>
+          <button type="submit" id="auth-submit-btn" class="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2">Se connecter</button>
         </form>
-
         <div class="mt-8 text-center text-sm bg-gray-50 p-4 rounded-xl">
-          <span id="auth-switch-text" class="text-gray-600"
-            >Pas encore de compte ?</span
-          >
-          <button
-            data-action="switch-auth-mode"
-            aria-label="Basculer entre connexion et inscription"
-            type="button"
-            id="auth-switch-btn"
-            class="text-red-600 font-bold ml-1 hover:underline"
-          >
-            S'inscrire
-          </button>
+          <span id="auth-switch-text" class="text-gray-600">Pas encore de compte ?</span>
+          <button data-action="switch-auth-mode" type="button" id="auth-switch-btn" class="text-red-600 font-bold ml-1">S'inscrire</button>
         </div>
       </div>
     </div>
 
-    <div
-      id="snackbar"
-      class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-full shadow-2xl z-[200] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 w-max max-w-[90vw]"
-    >
-      <i
-        id="snackbar-icon"
-        class="fas fa-check-circle text-green-400 text-2xl"
-      ></i>
-      <span id="snackbar-message" class="font-medium text-sm md:text-base"
-        >Message ici</span
-      >
+    <div id="snackbar" class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-full shadow-2xl z-[200] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 w-max max-w-[90vw]">
+      <i id="snackbar-icon" class="fas fa-check-circle text-green-400 text-2xl"></i>
+      <span id="snackbar-message" class="font-medium text-sm md:text-base">Message ici</span>
     </div>
 
-    <div
-      id="client-card-modal"
-      class="fixed inset-0 bg-gray-900/90 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300 opacity-0"
-    >
-      <div
-        id="virtual-card"
-        class="w-full max-w-sm rounded-3xl relative shadow-2xl overflow-hidden transform transition-transform scale-95 border border-white/20"
-      >
-        <div
-          id="card-bg-gradient"
-          class="absolute inset-0 bg-linear-to-br from-red-500 to-orange-600 z-0"
-        ></div>
-
-        <div
-          class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/20 blur-3xl z-0 pointer-events-none"
-        ></div>
-        <div
-          class="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-black/20 blur-2xl z-0 pointer-events-none"
-        ></div>
-
+    <div id="client-card-modal" class="fixed inset-0 bg-gray-900/90 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300 opacity-0">
+      <div id="virtual-card" class="w-full max-w-sm rounded-3xl relative shadow-2xl overflow-hidden transform transition-transform scale-95 border border-white/20">
+        <div id="card-bg-gradient" class="absolute inset-0 bg-linear-to-br from-red-500 to-orange-600 z-0"></div>
         <div class="relative z-10 p-6 text-white flex flex-col h-full">
           <div class="flex justify-between items-start mb-6">
-            <div>
-              <h3
-                id="card-program-name"
-                class="text-xl font-black uppercase tracking-widest opacity-90 drop-shadow-md"
-              >
-                Team Fusion
-              </h3>
-            </div>
+            <h3 id="card-program-name" class="text-xl font-black uppercase tracking-widest opacity-90">Team Fusion</h3>
             <i class="fas fa-wifi text-white/60 rotate-90 text-3xl"></i>
           </div>
-
-          <div
-            class="flex items-center justify-between bg-white/10 rounded-2xl p-4 backdrop-blur-md mb-6 border border-white/20 shadow-inner"
-          >
+          <div class="flex items-center justify-between bg-white/10 rounded-2xl p-4 backdrop-blur-md mb-6 border border-white/20">
             <div class="flex flex-col">
-              <span class="text-xs uppercase tracking-widest opacity-80 mb-1"
-                >Fidélité</span
-              >
-              <div
-                id="points-display-container"
-                class="flex items-baseline gap-1 transition-colors duration-500"
-              >
-                <span
-                  id="card-points"
-                  class="text-5xl font-black drop-shadow-lg"
-                  >0</span
-                >
-                <span class="text-xl font-bold opacity-70">/10</span>
-              </div>
+              <span class="text-xs uppercase tracking-widest opacity-80 mb-1">Fidélité</span>
+              <div id="points-display-container" class="flex items-baseline gap-1"><span id="card-points" class="text-5xl font-black">0</span><span class="text-xl font-bold opacity-70">/10</span></div>
             </div>
-
-            <div
-              class="bg-white p-2 rounded-xl shadow-lg w-24 h-24 flex items-center justify-center transform hover:scale-105 transition-transform bg-blend-lighten"
-            >
-              <img
-                id="card-qr-img"
-                src=""
-                alt="QR Code"
-                class="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-
-          <div class="w-full mt-2">
-            <div class="flex justify-between text-xs font-bold mb-2">
-              <span
-                id="progress-text"
-                class="text-white/90 uppercase tracking-wider"
-                >Encore 10 points avant ta récompense</span
-              >
-              <i class="fas fa-gift text-yellow-300 text-lg" id="gift-icon"></i>
-            </div>
-            <div
-              class="w-full bg-black/30 rounded-full h-3 overflow-hidden shadow-inner border border-white/10"
-            >
-              <div
-                id="card-progress-bar"
-                class="bg-linear-to-r from-yellow-400 to-yellow-200 h-full rounded-full transition-all duration-1000 ease-out w-[0%]"
-              ></div>
-            </div>
+            <div class="bg-white p-2 rounded-xl w-24 h-24 flex items-center justify-center"><img id="card-qr-img" src="" alt="QR" class="w-full h-full object-contain" /></div>
           </div>
           <div class="w-full mt-2">
-            <button
-              id="promo-notif-btn"
-              aria-label="Autorisation push notifications"
-              data-action="request-notif"
-              class="mt-4 w-full bg-accent/10 hover:bg-primary/20 text-white text-xs font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 border border-white/20 hidden backdrop-blur-sm"
-            >
-              <i class="fas fa-bell animate-pulse"></i> Activer les
-              notifications
-            </button>
+            <div class="flex justify-between text-xs font-bold mb-2"><span id="progress-text" class="text-white/90 uppercase">Encore 10 points avant récompense</span><i class="fas fa-gift text-yellow-300 text-lg"></i></div>
+            <div class="w-full bg-black/30 rounded-full h-3 overflow-hidden shadow-inner border border-white/10"><div id="card-progress-bar" class="bg-linear-to-r from-yellow-400 to-yellow-200 h-full rounded-full transition-all duration-1000 ease-out w-[0%]"></div></div>
           </div>
-          <p
-            id="card-user-email"
-            class="text-[10px] opacity-60 mt-4 text-center font-mono w-full truncate"
-          ></p>
+          <p id="card-user-email" class="text-[10px] opacity-60 mt-4 text-center font-mono w-full truncate"></p>
         </div>
       </div>
-
-      <button
-        data-action="close-client-card"
-        aria-label="Fermeture carte"
-        class="mt-8 text-white/70 hover:text-white flex flex-col items-center gap-2 transition-transform hover:scale-110"
-      >
-        <i class="fas fa-times-circle text-5xl drop-shadow-lg"></i>
-        <span class="uppercase tracking-widest text-xs font-bold drop-shadow-md"
-          >Fermer la carte</span
-        >
+      <button data-action="close-client-card" class="mt-8 text-white/70 hover:text-white flex flex-col items-center gap-2 transition-transform hover:scale-110">
+        <i class="fas fa-times-circle text-5xl"></i><span class="uppercase tracking-widest text-xs font-bold">Fermer la carte</span>
       </button>
     </div>
 
-<div
-      id="admin-scanner-modal"
-      class="fixed inset-0 bg-gray-900/95 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md"
-    >
-      <div
-        class="w-full max-w-lg h-[85vh] md:h-auto bg-white rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] relative flex flex-col"
-      >
+    <div id="admin-scanner-modal" class="fixed inset-0 bg-gray-900/95 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
+      <div class="w-full max-w-lg h-[85vh] md:h-auto bg-white rounded-3xl overflow-hidden shadow-2xl relative flex flex-col">
         <div class="p-5 bg-gray-900 text-white flex justify-between items-center z-10 shadow-md shrink-0">
-          <h3 class="font-bold text-lg">
-            <i class="fas fa-qrcode text-red-500 mr-2 animate-pulse"></i>
-            Scanner Client
-          </h3>
-          <button
-            aria-label="Fermeture scanner"
-            data-action="close-admin-scanner"
-            class="text-gray-300 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600"
-          >
-            <i class="fas fa-times w-5 h-5 flex items-center justify-center"></i>
-          </button>
+          <h3 class="font-bold text-lg"><i class="fas fa-qrcode text-red-500 mr-2 animate-pulse"></i>Scanner Client</h3>
+          <button data-action="close-admin-scanner" class="text-gray-300 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600"><i class="fas fa-times w-5 h-5 flex items-center justify-center"></i></button>
         </div>
-
         <div class="relative w-full flex-1 bg-black flex items-center justify-center overflow-hidden min-h-[50vh]">
-          <div
-            id="reader"
-            class="w-full h-full absolute inset-0 [&>video]:object-cover"
-          ></div>
-
+          <div id="reader" class="w-full h-full absolute inset-0 [&>video]:object-cover"></div>
           <div class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
-            <div
-              class="w-[80%] max-w-[320px] aspect-square border-4 border-red-500 rounded-3xl shadow-[0_0_0_4000px_rgba(0,0,0,0.7)] relative"
-            >
+            <div class="w-[80%] max-w-[320px] aspect-square border-4 border-red-500 rounded-3xl shadow-[0_0_0_4000px_rgba(0,0,0,0.7)] relative">
               <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-2xl -mt-1 -ml-1"></div>
               <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-2xl -mt-1 -mr-1"></div>
               <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-2xl -mb-1 -ml-1"></div>
@@ -1068,418 +382,39 @@
             </div>
           </div>
         </div>
-
-        <div class="p-6 bg-white text-center z-10 shrink-0">
-          <p class="text-gray-900 font-black text-xl mb-1 tracking-tight">
-            Visez le QR Code
-          </p>
-          <p class="text-sm text-gray-500 font-medium">
-            La caméra s'adapte automatiquement.
-          </p>
-        </div>
+        <div class="p-6 bg-white text-center z-10 shrink-0"><p class="text-gray-900 font-black text-xl mb-1 tracking-tight">Visez le QR Code</p><p class="text-sm text-gray-500 font-medium">La caméra s'adapte automatiquement.</p></div>
       </div>
     </div>
 
-    <div
-      id="pwa-install-banner"
-      class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700"
-    >
-      <div class="flex items-center gap-3">
-        <img
-          id="pwa-banner-icon"
-          src="{{ICON_URL}}"
-          class="w-12 h-12 rounded-xl shadow-md"
-          alt="App Icon"
-        />
-        <div>
-          <p class="font-bold text-sm">Garde-nous dans ta poche !</p>
-          <p class="text-xs text-gray-300">Installe l'app pour tes points 🎁</p>
-        </div>
-      </div>
-      <button
-        aria-label="bouton installation pwa"
-        id="pwa-install-btn"
-        class="bg-primary hover:bg-accent text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg"
-      >
-        Installer
-      </button>
-      <button
-        id="pwa-close-btn"
-        aria-label="Fermeture modal"
-        class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md"
-      >
-        <i class="fas fa-times"></i>
-      </button>
+    <div id="pwa-install-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700">
+      <div class="flex items-center gap-3"><img id="pwa-banner-icon" src="{{ICON_URL}}" class="w-12 h-12 rounded-xl" alt="Icon" /><div><p class="font-bold text-sm">Garde-nous dans ta poche !</p><p class="text-xs text-gray-300">Installe l'app pour tes points 🎁</p></div></div>
+      <button id="pwa-install-btn" class="bg-primary hover:bg-accent text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg">Installer</button>
+      <button id="pwa-close-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md"><i class="fas fa-times"></i></button>
     </div>
 
-    <div
-      id="app-review-modal"
-      class="fixed inset-0 bg-gray-900/60 z-200 hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0"
-    >
-      <div
-        class="bg-white w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl transform transition-transform scale-95 border border-gray-100 relative overflow-hidden"
-      >
-        <div
-          class="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 rounded-full bg-red-500/10 blur-xl"
-        ></div>
-
-        <img
-          id="review-modal-icon"
-          src="{{ICON_URL}}"
-          alt="App Icon"
-          class="w-16 h-16 mx-auto rounded-2xl shadow-md mb-4 relative z-10 border border-gray-100"
-        />
-
-        <h3 class="text-xl font-black text-gray-900 mb-2 tracking-tight">
-          Vous aimez manger chez nous ?
-        </h3>
-        <p class="text-sm text-gray-500 mb-6 font-medium">
-          Votre soutien nous aide à régaler encore plus de monde ! 🍔🚀
-        </p>
-
-        <div class="flex flex-col gap-3 relative z-10">
-          <button
-            aria-label="Laisser un avis"
-            id="btn-review-google"
-            class="w-full bg-primary hover:bg-accent text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_15px_rgba(220,38,38,0.3)] transform hover:-translate-y-1 flex items-center justify-center gap-2"
-          >
-            <i class="fab fa-google text-lg"></i> Laisser 5 étoiles
-          </button>
-
-          <button
-            aria-label="Faire une suggestion"
-            id="btn-review-contact"
-            class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition"
-          >
-            Faire une suggestion
-          </button>
-
-          <button
-            aria-label="Donner son avis plus tard"
-            id="btn-review-later"
-            class="w-full text-gray-300 hover:text-gray-600 font-bold py-2 text-sm mt-1 transition"
-          >
-            Plus tard
-          </button>
-        </div>
-      </div>
-    </div>
-
-<div
-  id="floating-cart-container"
-  class="hidden fixed bottom-14 left-1/2 transform -translate-x-1/2 z-50"
->
-  <button
-    data-action="open-cart"
-    aria-label="Ouvrir le panier"
-    class="text-on-primary w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 shadow-primary/30 border-white relative hover:scale-105 transition bg-primary"
-  >
-    <i class="fas fa-shopping-bag text-2xl"></i>
-    <span
-      id="cart-badge"
-      class="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden"
-      >0</span
-    >
-  </button>
-</div>
-
-    <div
-      id="product-modal-backdrop"
-      data-action="close-product-modal"
-      class="fixed inset-0 bg-gray-900/70 z-70 hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"
-    ></div>
-
-    <div
-      id="product-modal"
-      class="fixed bottom-0 left-0 md:left-1/2 w-full md:max-w-2xl bg-white rounded-t-3xl md:rounded-3xl shadow-2xl z-[80] transform md:-translate-x-1/2 translate-y-full md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:pointer-events-none md:scale-95 md:h-auto md:bottom-auto transition-all duration-300 max-h-[90vh] overflow-y-auto"
-    >
-      <button
-        data-action="close-product-modal"
-        aria-label="Fermer la modale"
-        type="button"
-        aria-label="Fermeture de la modal"
-        class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg z-20 text-gray-800 hover:bg-gray-100 hover:scale-110 transition"
-      >
-        <i
-          class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"
-        ></i>
-      </button>
-
+    <div id="product-modal-backdrop" data-action="close-product-modal" class="fixed inset-0 bg-gray-900/70 z-70 hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
+    <div id="product-modal" class="fixed bottom-0 left-0 md:left-1/2 w-full md:max-w-2xl bg-white rounded-t-3xl md:rounded-3xl shadow-2xl z-[80] transform md:-translate-x-1/2 translate-y-full md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:pointer-events-none md:scale-95 md:h-auto transition-all duration-300 max-h-[90vh] overflow-y-auto">
+      <button data-action="close-product-modal" class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg z-20 text-gray-800 hover:bg-gray-100 transition"><i class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i></button>
       <div class="relative flex flex-col md:flex-row">
-        <div class="h-54 md:h-auto md:w-2/5 relative">
-          <img
-            id="modal-img"
-            alt="image item"
-            src=""
-            class="w-full h-full object-cover rounded-t-3xl md:rounded-t-none md:rounded-l-3xl"
-          />
-        </div>
-
+        <div class="h-54 md:h-auto md:w-2/5 relative"><img id="modal-img" alt="item" src="" class="w-full h-full object-cover rounded-t-3xl md:rounded-t-none md:rounded-l-3xl" /></div>
         <div class="p-3 md:p-8 pb-24 md:pb-8 flex-1 flex flex-col">
-          <h3
-            id="modal-title"
-            class="text-3xl font-black text-gray-900 tracking-tight leading-none mb-4"
-          ></h3>
-          <p
-            id="modal-desc"
-            class="text-gray-600 text-lg mb-6 leading-relaxed flex-grow"
-          ></p>
-          <button
-            id="modal-share-btn"
-            aria-label="Partager ce produit"
-            class="hidden w-full py-3 my-2 text-black rounded-full bg-accent/20 font-bold hover:bg-gray-200 active:scale-95 transition-all justify-center items-center"
-          >
-            <i class="fas fa-share-nodes text-black mr-1"></i> Partager à un pote
-          </button>
-          <div
-            id="modal-allergens-container"
-            class="mb-3 p-4 bg-gray-50 border border-dashed border-blue-200 rounded-xl hidden"
-          >
-            <h4
-              class="font-bold text-xs text-gray-500 uppercase tracking-widest mb-2"
-            >
-              <i class="fas fa-info-circle mr-1"></i> Infos & Allergènes
-            </h4>
-            <p
-              id="modal-allergens"
-              class="text-gray-700 text-sm font-medium"
-            ></p>
-          </div>
-
-          <div id="modal-options-container" class="mb-1 hidden">
-            <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">
-              1. Choisissez votre formule
-            </h4>
-            <div class="space-y-2 mb-2">
-              <label
-                class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50"
-              >
-                <div class="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="formule"
-                    value="seul"
-                    checked
-                    class="w-4 h-4 text-red-600 focus:ring-red-500"
-                  />
-                  <span class="font-medium text-gray-900 text-sm">Seul</span>
-                </div>
-                <span
-                  id="modal-price-seul"
-                  class="text-gray-500 font-bold text-sm"
-                ></span>
-              </label>
-              <label
-                class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-red-50"
-              >
-                <div class="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="formule"
-                    value="menu"
-                    class="w-4 h-4 text-red-600 focus:ring-red-500"
-                  />
-                  <div>
-                    <span class="font-medium text-gray-900 text-sm block"
-                      >En Menu</span
-                    >
-                    <span class="text-[10px] text-red-500 uppercase font-bold"
-                      >Frites + Boisson</span
-                    >
-                  </div>
-                </div>
-                <span
-                  id="modal-price-menu"
-                  class="text-red-600 font-bold text-sm"
-                ></span>
-              </label>
-            </div>
-
-            <div
-              id="drink-section"
-              class="hidden opacity-0 transition-opacity duration-300"
-            >
-              <h4 class="font-bold text-sm text-gray-900 mb-2 border-b pb-1">
-                2. Choix de la boisson
-              </h4>
-              <div class="grid grid-cols-2 gap-2" id="drinks-container"></div>
-            </div>
-          </div>
-
-          <div class="mt-auto">
-            <button type="button" id="modal-cta">
-              <i class="fas fa-spinner fa-spin"></i> Chargement...
-            </button>
-          </div>
+          <h3 id="modal-title" class="text-3xl font-black text-gray-900 tracking-tight mb-4"></h3>
+          <p id="modal-desc" class="text-gray-600 text-lg mb-6 flex-grow"></p>
+          <button id="modal-share-btn" class="hidden w-full py-3 my-2 text-black rounded-full bg-accent/20 font-bold hover:bg-gray-200 transition-all justify-center items-center"><i class="fas fa-share-nodes mr-1"></i> Partager à un pote</button>
+          <div id="modal-allergens-container" class="mb-3 p-4 bg-gray-50 border border-dashed border-blue-200 rounded-xl hidden"><h4 class="font-bold text-xs text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-info-circle mr-1"></i> Infos & Allergènes</h4><p id="modal-allergens" class="text-gray-700 text-sm font-medium"></p></div>
+          <div id="modal-options-container" class="mb-1 hidden"></div>
+          <div class="mt-auto"><button type="button" id="modal-cta"></button></div>
         </div>
       </div>
     </div>
 
-    <div
-      id="cart-backdrop"
-      data-action="close-cart"
-      class="fixed inset-0 bg-gray-900/60 z-90 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm"
-    ></div>
-
-    <div
-      id="cart-modal"
-      class="fixed bottom-0 left-0 w-full bg-white rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] flex flex-col max-h-[85vh]"
-    >
-      <div
-        class="flex justify-between items-center p-6 border-b border-gray-100"
-      >
-        <h2 class="text-xl font-bold text-gray-900">Mon Panier 🛒</h2>
-        <button
-          data-action="close-cart"
-          class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"
-        >
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <div
-        id="cart-items-container"
-        class="p-6 overflow-y-auto flex-1 space-y-4"
-      ></div>
-
-      <div
-        class="p-6 bg-gray-50 rounded-t-3xl border-t border-gray-200 pb-safe"
-      >
-        <div class="flex justify-between items-center mb-4">
-          <span class="text-gray-500 font-medium">Total à payer </span>
-          <span id="cart-total-price" class="text-2xl font-bold text-gray-900"
-            >0,00 €</span
-          >
-        </div>
-
-        <button
-          id="checkout-btn"
-          data-action="process-checkout"
-          class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-primary/30 hover:bg-primary/90 active:scale-95 transition-all flex justify-center items-center"
-        >
-          <span>Valider ma commande</span>
-        </button>
-      </div>
+    <div id="cart-backdrop" data-action="close-cart" class="fixed inset-0 bg-gray-900/60 z-90 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm"></div>
+    <div id="cart-modal" class="fixed bottom-0 left-0 w-full bg-white rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="flex justify-between items-center p-6 border-b"><h2 class="text-xl font-bold text-gray-900">Mon Panier 🛒</h2><button data-action="close-cart" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"><i class="fas fa-times"></i></button></div>
+      <div id="cart-items-container" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
+      <div class="p-6 bg-gray-50 rounded-t-3xl border-t border-gray-200 pb-safe"><div class="flex justify-between items-center mb-4"><span class="text-gray-500 font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-gray-900">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center">Valider ma commande</button></div>
     </div>
-    <button
-      id="order-tracking-badge"
-      data-action="open-tracking-modal"
-      class="hidden fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black flex items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce"
-    >
-      <i class="fas fa-bell animate-pulse"></i>
-      <span id="badge-text">Commande en cours</span>
-    </button>
 
-    <div
-      id="order-tracking-modal"
-      class="fixed inset-0 bg-gray-900/80 z-100 hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0 duration-300"
-    >
-      <div
-        class="bg-white w-full max-w-md rounded-3xl p-6 relative shadow-2xl transform transition-transform scale-95"
-      >
-        <button
-          id="tracking-close-btn"
-          data-action="close-tracking-modal"
-          class="absolute top-4 right-4 text-gray-300 hover:text-black bg-gray-100 p-2 rounded-full transition w-10 h-10 flex items-center justify-center z-10"
-        >
-          <i class="fas fa-times text-xl"></i>
-        </button>
-
-        <div class="text-center mb-6 mt-4">
-          <div
-            id="tracking-icon-container"
-            class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500"
-          >
-            <i
-              id="tracking-icon"
-              class="fas fa-fire text-5xl text-yellow-500 transition-transform duration-500"
-            ></i>
-          </div>
-          <h2
-            class="text-3xl font-black text-gray-900 tracking-tight"
-            id="tracking-title"
-          >
-            En cuisine !
-          </h2>
-          <p class="text-gray-500 font-bold mt-2" id="tracking-subtitle">
-            Le chef prépare votre commande.
-          </p>
-        </div>
-
-        <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100 mb-6">
-          <div
-            class="flex justify-between items-center border-b border-gray-200 pb-3 mb-3"
-          >
-            <span
-              class="text-gray-500 font-bold text-sm uppercase tracking-wider"
-              >N° de Ticket</span
-            >
-            <span
-              class="font-black text-gray-900 font-mono text-lg"
-              id="tracking-order-id"
-              >#...</span
-            >
-          </div>
-          <div class="flex justify-between items-center">
-            <span
-              class="text-gray-500 font-bold text-sm uppercase tracking-wider"
-              >Service</span
-            >
-            <span
-              class="font-black text-green-600 bg-green-100 px-3 py-1 rounded-lg"
-              >Click & Collect</span
-            >
-          </div>
-        </div>
-
-        <button
-          type="button"
-          id="tracking-action-btn"
-          data-action="close-tracking-modal"
-          aria-label="Fermer la fenêtre de suivi de commande"
-          aria-controls="order-tracking-modal"
-          class="w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95"
-        >
-          Fermer la fenêtre
-        </button>
-      </div>
-    </div>
-    <div
-      id="payment-bottom-sheet"
-      class="fixed inset-0 bg-gray-900/80 z-200 hidden flex flex-col justify-end transition-opacity"
-    >
-      <div
-        class="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-6 relative transform translate-y-full transition-transform duration-300"
-        id="payment-sheet-content"
-      >
-        <button
-          data-action="close-payment-sheet"
-          class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 p-2 rounded-full"
-        >
-          <i class="fas fa-times"></i>
-        </button>
-
-        <h3 class="text-2xl font-black mb-4">Paiement</h3>
-        <p class="text-gray-500 mb-6 font-bold" id="payment-amount-display">
-          Total : 0,00 €
-        </p>
-
-        <div id="payment-element" class="mb-6"></div>
-
-        <button
-          id="submit-payment-btn"
-          data-action="submit-stripe-payment"
-          class="w-full bg-black text-white py-4 rounded-xl font-bold shadow-lg flex justify-center items-center disabled:opacity-50"
-        >
-          Payer maintenant
-        </button>
-
-        <div
-          id="payment-message"
-          class="hidden text-red-500 text-sm mt-4 text-center font-bold"
-        ></div>
-      </div>
-    </div>
     <script type="module" src="/src/app.js"></script>
   </body>
 </html>

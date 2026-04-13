@@ -35,8 +35,12 @@ export default defineConfig(() => {
           const heroPreload = seoData.heroUrl
             ? `<link rel="preload" as="image" fetchpriority="high" href="${seoData.heroUrl}">`
             : '';
-          // Injecté en premier dans <head> : avant tout CSS externe, avant tout rendu
-          const splashStyle = `<style>:root,html,body{background:${seoData.theme_color}}:root{--color-primary:${seoData.theme_color};--logo-url:url("${iconUrl}")}</style>`;
+          // Injecté en premier dans <head> : suppression absolue du flash blanc
+          const splashStyle = `<style>
+            :root,html,body{background:${seoData.theme_color} !important; color-scheme: light dark;}
+            :root{--color-primary:${seoData.theme_color};--logo-url:url("${iconUrl}")}
+          </style>`;
+          
           return html
             .replace('<head>', `<head>\n    ${splashStyle}`)
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)
@@ -52,20 +56,16 @@ export default defineConfig(() => {
             .replace(/\{\{CANONICAL_URL\}\}/g, seoData.canonicalUrl || '')
         }
       },
-      // 👇 2. LA CONFIGURATION DE LA PWA
       VitePWA({
-        registerType: 'autoUpdate', // Met à jour l'app en arrière-plan automatiquement
-        injectRegister: 'auto', // Injecte le script de SW tout seul dans l'HTML
-        
-        // A. LE MANIFEST GÉNÉRÉ DYNAMIQUEMENT POUR CHAQUE SNACK !
+        registerType: 'autoUpdate',
+        injectRegister: 'auto',
         manifest: {
           name: seoData.title,
-          short_name: seoData.title.split('|')[0].trim(), // Prend juste la 1ère partie du titre
+          short_name: seoData.title.split('|')[0].trim(),
           description: seoData.desc,
           theme_color: seoData.theme_color,
-          background_color: '#ffffff',
-          orientation: 'portrait-primary', // 📱 BONUS : Bloque l'app en mode portrait !
-          categories: ['food', 'shopping'], // 📱 BONUS : Aide Android à classer ton app dans le tiroir d'applications
+          background_color: seoData.theme_color, // 👈 FIX : Élimine le flash blanc au démarrage PWA
+          orientation: 'portrait-primary',
           display: 'standalone',
           icons: [
             {
@@ -79,68 +79,14 @@ export default defineConfig(() => {
               type: 'image/webp',
               purpose: 'any maskable'
             }
-          ],
-          shortcuts: [
-            {
-              name: "Voir la carte",
-              short_name: "Commander",
-              description: "Ouvrir le menu complet pour commander",
-              url: "/?action=menu",
-              icons: [{ src: iconUrl, sizes: "192x192" }]
-            },
-            {
-              name: "Ma Carte Fidélité",
-              short_name: "Fidélité",
-              description: "Afficher mon QR Code",
-              url: "/?action=loyalty",
-              icons: [{ src: iconUrl, sizes: "192x192" }]
-            }
-          ]
-        },
-
-        // B. LA GESTION DU CACHE (WORKBOX)
-        workbox: {
-          importScripts: ['/firebase-messaging-sw.js'],
-          dontCacheBustURLsMatching: /\.[0-9a-f]{8}\./,
-          // Vite mettra automatiquement en cache tous tes HTML, JS et CSS du dossier /dist
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-          
-          // On ajoute la logique pour les serveurs externes (Google Fonts & Firebase Storage)
-          runtimeCaching: [
-            {
-              // 🍔 Mettre en cache les images de Firebase Storage (Tes burgers !)
-              urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
-              handler: 'CacheFirst', // On regarde le cache avant d'aller sur le réseau
-              options: {
-                cacheName: 'snack-images-cache',
-                expiration: {
-                  maxEntries: 100, // Garde les 100 dernières images vues
-                  maxAgeSeconds: 60 * 60 * 24 * 30 // Garde pendant 30 jours
-                },
-                cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
-            },
-            {
-              // 🔤 Mettre en cache les polices Google Fonts et FontAwesome
-              urlPattern: /^https:\/\/(fonts\.googleapis\.com|cdnjs\.cloudflare\.com)\/.*/i,
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'external-fonts-cache',
-              }
-            }
           ]
         }
       })
     ],
-    // Expose le snackId courant dans le bundle JS (accessible via __SNACK_ID__)
     define: {
       __SNACK_ID__: JSON.stringify(currentSnackId),
     },
     build: {
-      // Si SNACK_ID est défini (build client ciblé) → dist/<snackId>
-      // Sinon (npm run build générique) → dist (rétro-compatible)
       outDir: process.env.SNACK_ID ? `dist/${currentSnackId}` : 'dist',
       rollupOptions: {
         input: {
@@ -148,20 +94,8 @@ export default defineConfig(() => {
           admin: resolve(__dirname, 'admin.html'),
           superadmin: resolve(__dirname, 'superadmin.html'),
           legal: resolve(__dirname, 'legal.html')
-        },
-        output: {
-          manualChunks: {
-            firebase: [
-              'firebase/app',
-              'firebase/firestore',
-              'firebase/auth',
-              'firebase/storage',
-              'firebase/analytics'
-            ],
-            qrcode: ['html5-qrcode']
-          }
         }
       }
     }
   }
-}); 
+});
