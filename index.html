@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr" class="scroll-smooth">
+<html lang="fr" class="scroll-smooth" style="background:{{THEME_COLOR}}">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -132,8 +132,8 @@
       setTimeout(removeBootSplash, MAX_SPLASH);
     </script>
   </head>
-  <body class="bg-gray-50 text-gray-800">
-    <div id="boot-splash">
+  <body class="bg-gray-50 text-gray-800" style="background:{{THEME_COLOR}}">
+    <div id="boot-splash" style="position:fixed;inset:0;background:{{THEME_COLOR}};z-index:9999;display:flex;align-items:center;justify-content:center">
       <div class="splash-inner">
         <div class="splash-logo"></div>
         <p class="text-white text-xs my-1 uppercase">{{SEO_TITLE}}</p>
