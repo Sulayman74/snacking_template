@@ -148,7 +148,6 @@ onAuthStateChanged(auth, async (user) => {
   const isAdminPage = window.location.pathname.includes("admin.html") ||
                       window.location.pathname.includes("superadmin.html");
 
-  // Sur les pages admin/superadmin, firebase-init ne gère pas l'auth — chaque page a son propre handler
   if (isAdminPage) return;
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -156,40 +155,24 @@ onAuthStateChanged(auth, async (user) => {
     urlParams.get("s") || window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
 
   try {
-    // 1. On charge la config SaaS en premier !
     await window.loadSnackConfig(db, snackIdToLoad);
 
-    // 2. On injecte les textes, logos et thèmes → ui.js
-    if (typeof window.updateUI === "function") window.updateUI(user);
-
-    // 3. Gestion du bouton de fidélité
-    const loyaltyBtn = document.getElementById("loyalty-main-btn");
-
+    // 1. Récupération du rôle
+    let role = "client";
     if (user) {
       const userDoc = await getDoc(doc(db, "users", user.uid));
-      const data = userDoc.exists()
-        ? userDoc.data()
-        : { pointsBySnack: {}, role: "client" };
-
-      if (data.role === "superadmin") {
-        window.location.href = "/superadmin.html";
-        return;
-      } else if (data.role === "admin") {
-        window.location.href = "/admin.html";
-        return;
-      } else {
-        loyaltyBtn?.setAttribute("data-action", "open-client-card");
-        if (loyaltyBtn)
-          loyaltyBtn.innerHTML = '<i class="fas fa-qrcode"></i> Ma Carte';
+      if (userDoc.exists()) {
+        role = userDoc.data().role;
       }
-    } else {
-      loyaltyBtn?.setAttribute("data-action", "toggle-auth-modal");
-      if (loyaltyBtn) loyaltyBtn.innerHTML = "Connexion";
     }
 
-    // 4. On lance les visuels (Menu, Pull-to-refresh...)
+    // 2. Mise à jour de l'UI (le rôle pilote le bouton Scanner vs Ma Carte)
+    if (typeof window.updateUI === "function") window.updateUI(user, role);
+
+    // 3. Initialisation visuelle
     if (typeof window.initAppVisuals === "function")
       await window.initAppVisuals();
+      
   } catch (error) {
     console.error("❌ Erreur Initialisation :", error);
   }
@@ -200,5 +183,3 @@ onMessage(messaging, (payload) => {
   const message = payload.notification?.body || "";
   window.showToast(`🔔 ${titre} : ${message}`, "success");
 });
-
-// closeClientCard est gérée dans loyalty.js (avec gestion de unsubscribeClientCard)

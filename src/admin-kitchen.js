@@ -169,7 +169,8 @@ function startKitchenRadar() {
           newOrdersContainer.appendChild(newTicket);
         if (commande.statut === "prete" && readyOrdersContainer)
           readyOrdersContainer.appendChild(newTicket);
-        if (commande.statut === "nouvelle" && !isFirstLoad) ringTheBell = true;
+        // Sonner à l'arrivée du ticket (paiement confirmé), pas au forçage cuisson
+        if (commande.statut === "en_attente_client" && !isFirstLoad) ringTheBell = true;
       } else if (change.type === "modified") {
         if (existingTicket) existingTicket.remove();
         const updatedTicket = createTicketElement(id, commande);
@@ -179,7 +180,7 @@ function startKitchenRadar() {
           newOrdersContainer.appendChild(updatedTicket);
         if (commande.statut === "prete" && readyOrdersContainer)
           readyOrdersContainer.appendChild(updatedTicket);
-        if (commande.statut === "nouvelle" && !isFirstLoad) ringTheBell = true;
+        // Pas de son sur modified — le ticket change de colonne, c'est tout
       } else if (change.type === "removed") {
         if (existingTicket) existingTicket.remove();
       }

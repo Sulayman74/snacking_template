@@ -332,7 +332,79 @@ exports.createPaymentIntent = onCall(
 );
 
 // ============================================================================
-// 🔔 FONCTION 5 : NOTIFICATION "COMMANDE PRÊTE" (V2)
+// 💳 FONCTION 5 : FINALISATION COMMANDE (vérification Stripe côté serveur)
+// ============================================================================
+exports.finalizeOrder = onCall(
+  { region: "europe-west1" },
+  async (request) => {
+    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+    // 1. Authentification obligatoire
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentification requise.");
+    }
+    const uid = request.auth.uid;
+
+    const { paymentIntentId, snackId, cartItems, clientEmail, clientNom, totalCents } = request.data;
+
+    if (!paymentIntentId || !snackId || !cartItems?.length) {
+      throw new HttpsError("invalid-argument", "Données de commande incomplètes.");
+    }
+
+    // 2. Vérifier le PaymentIntent côté Stripe (le client ne peut pas falsifier ça)
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    } catch (e) {
+      throw new HttpsError("not-found", "PaymentIntent introuvable.");
+    }
+
+    if (paymentIntent.status !== "succeeded") {
+      throw new HttpsError("failed-precondition", `Paiement non confirmé (statut: ${paymentIntent.status}).`);
+    }
+
+    // 3. Vérifier que le montant Stripe correspond au panier (anti-manipulation prix)
+    if (Math.abs(paymentIntent.amount - totalCents) > 10) {
+      throw new HttpsError("invalid-argument", "Montant incohérent avec le panier.");
+    }
+
+    // 4. Idempotence — éviter une double commande si le client relance
+    const existing = await db.collection("commandes")
+      .where("paiement.stripeSessionId", "==", paymentIntentId)
+      .limit(1).get();
+    if (!existing.empty) {
+      return { orderId: existing.docs[0].id };
+    }
+
+    // 5. Créer la commande dans Firestore (uniquement si tout est vérifié)
+    const newOrder = {
+      snackId,
+      userId: uid,
+      clientNom: clientNom || clientEmail.split("@")[0],
+      clientEmail,
+      date: admin.firestore.FieldValue.serverTimestamp(),
+      statut: "en_attente_client",
+      items: cartItems,
+      total: paymentIntent.amount / 100,
+      paiement: {
+        methode: "carte_bancaire",
+        statut: "paye",
+        stripeSessionId: paymentIntentId,
+      },
+    };
+
+    const docRef = await db.collection("commandes").add(newOrder);
+
+    await db.collection("users").doc(uid).update({
+      lastOrderDate: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { orderId: docRef.id };
+  }
+);
+
+// ============================================================================
+// 🔔 FONCTION 6 : NOTIFICATION "COMMANDE PRÊTE" (V2)
 // ============================================================================
 exports.onOrderStatusChange = onDocumentUpdated(
   "commandes/{orderId}",

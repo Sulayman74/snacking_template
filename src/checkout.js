@@ -175,13 +175,12 @@ async function submitStripePayment() {
 }
 
 async function finalizeOrderInFirestore(stripePaymentId) {
-  const currentSnackId =
-    window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
+  const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
   const currentUser = window.auth?.currentUser;
-  const { addDoc, collection, serverTimestamp, updateDoc, doc } = window.fs;
+  const { httpsCallable, functions } = window.fs;
 
   try {
-    const orderItems = window.cart.map((item) => ({
+    const cartItems = window.cart.map((item) => ({
       id: item.id,
       productId: item.productId || item.id.split("-")[0],
       nom: item.nom,
@@ -195,38 +194,30 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       quantity: item.quantity,
     }));
 
-    const newOrder = {
+    // Montant en centimes pour vérification côté serveur
+    const totalCents = Math.round(window.getCartTotal() * 100);
+
+    const finalizeOrder = httpsCallable(functions, "finalizeOrder");
+    const result = await finalizeOrder({
+      paymentIntentId: stripePaymentId,
       snackId: currentSnackId,
-      userId: currentUser.uid,
-      clientNom: currentUser.displayName || currentUser.email.split("@")[0],
+      cartItems,
+      totalCents,
       clientEmail: currentUser.email,
-      date: serverTimestamp(),
-      statut: "en_attente_client",
-      items: orderItems,
-      total: window.getCartTotal(),
-      paiement: {
-        methode: "carte_bancaire",
-        statut: "paye",
-        stripeSessionId: stripePaymentId,
-      },
-    };
-
-    const docRef = await addDoc(collection(window.db, "commandes"), newOrder);
-
-    await updateDoc(doc(window.db, "users", currentUser.uid), {
-      lastOrderDate: serverTimestamp(),
+      clientNom: currentUser.displayName || currentUser.email.split("@")[0],
     });
 
-    // On vide le panier
+    const orderId = result.data.orderId;
+
     window.cart.splice(0, window.cart.length);
     window.triggerVibration?.("jackpot");
 
     if (window.snackConfig?.features?.enableClickAndCollect) {
-      localStorage.setItem("activeOrderId", docRef.id);
-      window.startOrderTracking(docRef.id);
+      localStorage.setItem("activeOrderId", orderId);
+      window.startOrderTracking(orderId);
     }
   } catch (err) {
-    console.error("Erreur Firebase après paiement :", err);
+    console.error("Erreur finalisation commande :", err);
     window.showToast(
       "Paiement réussi, mais erreur d'envoi du ticket. Contactez le restaurant.",
       "error",

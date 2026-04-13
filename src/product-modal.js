@@ -88,8 +88,8 @@ function openProductModal(itemId) {
           currentProduct.tailleChoisie = item.tailles[0].nom;
 
           allOptionsHTML += `
-                  <fieldset class="mb-8">
-                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                  <fieldset class="mb-2">
+                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
                       <span>1. Choisissez la taille</span>
                       <span class="text-xs font-bold bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
                       </legend>
@@ -108,7 +108,7 @@ function openProductModal(itemId) {
                         )
                         .join("")}
                       </div>
-                      ${item.ingredients ? `<p class="text-sm text-gray-500 font-medium mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100"><i class="fas fa-leaf mr-2 text-green-500"></i> ${item.ingredients.join(", ")}</p>` : ""}
+                      ${item.ingredients ? `<p class="text-sm text-gray-500 font-medium mt-1 bg-gray-50 p-3 rounded-xl border border-gray-100"><i class="fas fa-leaf mr-2 text-green-500"></i> ${item.ingredients.join(", ")}</p>` : ""}
                   </fieldset>
                   `;
         }
@@ -123,8 +123,8 @@ function openProductModal(itemId) {
               : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
 
           allOptionsHTML += `
-                  <fieldset class="mb-8">
-                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                  <fieldset class="mb-2">
+                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
                       <span>1. Formule</span>
                       <span class="text-xs font-bold bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
                       </legend>
@@ -154,8 +154,8 @@ function openProductModal(itemId) {
                       </div>
                   </fieldset>
 
-                  <fieldset id="drink-section" class="mb-8 hidden opacity-0 transition-all duration-300 transform translate-y-4">
-                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                  <fieldset id="drink-section" class="mb-2 hidden opacity-0 transition-all duration-300 transform translate-y-4">
+                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
                       <span>2. Votre Boisson</span>
                       <span class="text-xs font-bold bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-wider shadow-sm">Choix requis</span>
                       </legend>
@@ -187,12 +187,12 @@ function openProductModal(itemId) {
               ? item.crudites
               : ["Salade", "Tomate", "Oignon"];
           allOptionsHTML += `
-                  <fieldset class="mb-8">
-                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                  <fieldset class="mb-2">
+                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
                       <span>Garniture</span>
                       <span class="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded uppercase tracking-wider">Inclus</span>
                       </legend>
-                      <p class="text-sm text-gray-500 mb-3 font-medium">Décochez pour retirer un ingrédient.</p>
+                      <p class="text-sm text-gray-500 mb-1 font-medium">Décochez pour retirer un ingrédient.</p>
                       <div class="flex flex-wrap gap-3">
                           ${listeCrudites
                             .map(
@@ -222,8 +222,8 @@ function openProductModal(itemId) {
           ];
           const maxSauces = item.choixSauces.max || 2;
           allOptionsHTML += `
-                  <fieldset class="mb-8">
-                      <legend class="text-lg font-black text-gray-900 mb-3 flex justify-between w-full items-center">
+                  <fieldset class="mb-2">
+                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
                       <span>Sauces</span>
                       <span class="text-xs font-bold bg-gray-900 text-white px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                           <span id="sauce-counter-ui">0</span> / ${maxSauces} max

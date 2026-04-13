@@ -5,79 +5,80 @@
 
 import { escapeHTML } from "./utils.js";
 
-function createProductCard(item, cfg) {
-  const cardBg =
-    cfg.theme.templateId === "classic"
-      ? "bg-gray-800"
-      : "bg-white shadow-lg border text-black border-gray-100";
-  const textColor =
-    cfg.theme.templateId === "classic" ? "text-white" : "text-gray-900";
+// Verrou pour éviter les conflits entre clic manuel et Scroll Spy
+let isManualScrolling = false;
+
+function createProductCard(item, cfg, isLarge = false) {
+  const isClassic = cfg.theme.templateId === "classic";
+  const cardBg = isClassic ? "bg-gray-800" : "bg-white";
+  const textColor = isClassic ? "text-white" : "text-gray-900";
+  const secondaryTextColor = isClassic ? "text-gray-400" : "text-gray-500";
 
   const isAvailable = item.isAvailable !== false;
-  const imageOpacity = isAvailable
-    ? "group-hover:scale-110"
-    : "opacity-50 grayscale";
-  const cardOpacity = isAvailable
-    ? "cursor-pointer"
-    : "cursor-not-allowed opacity-70";
   const clickAction = isAvailable
     ? `data-action="open-product-modal" data-id="${item.id || item.nom}"`
     : `data-action="error-toast" data-message="Produit momentanément indisponible"`;
 
-  let tagHtml = "";
-  if (!isAvailable) {
-    tagHtml = `<span class="absolute top-3 right-3 z-10 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full uppercase shadow-lg tracking-wider">Épuisé</span>`;
-  } else if (item.tags) {
-    let tagText = "";
-    if (Array.isArray(item.tags) && item.tags.length > 0) {
-      tagText = escapeHTML(item.tags[0]);
-    } else if (typeof item.tags === "string" && item.tags.trim() !== "") {
-      tagText = escapeHTML(item.tags);
-    }
-    if (tagText) {
-      tagHtml = `<span class="absolute top-3 right-3 z-10 ${cardBg} ${textColor} text-xs font-bold px-3 py-1.5 rounded-full uppercase shadow-lg tracking-wider">${tagText}</span>`;
-    }
-  }
-
   const devise = item.devise || cfg.identity.currency || "€";
-  const prixAffiche = item.prix || item.price || 0;
+  const prixAffiche = parseFloat(item.prix || item.price || 0).toFixed(2);
   const nomAffiche = escapeHTML(item.nom || item.name);
   const descriptionAffiche = escapeHTML(item.description || "");
-
+  const categoryAffiche = escapeHTML(item.categorieTitre || item.categorieId || "");
   const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
 
-  const fallbackHtml = `
-      <div class="absolute inset-0 flex items-center justify-center bg-primary-light z-0 transition duration-700 ${imageOpacity}">
-          <i class="fas fa-hamburger text-6xl text-black opacity-50"></i>
-      </div>`;
+  const searchTerms = `${nomAffiche} ${descriptionAffiche} ${categoryAffiche}`.toLowerCase();
 
-  const imageHtml = imageUrl
-    ? `<img src="${imageUrl}" alt="${nomAffiche}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="absolute inset-0 w-full h-full object-cover transition duration-700 ${imageOpacity} z-0">
-       <div style="display: none;" class="absolute inset-0 items-center justify-center bg-primary-light z-0 transition duration-700 ${imageOpacity}">
-           <i class="fas fa-hamburger text-6xl text-black opacity-50"></i>
-       </div>`
-    : fallbackHtml;
+  let badgeHtml = "";
+  if (!isAvailable) {
+    badgeHtml = `<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase">Épuisé</span>`;
+  } else if (item.tags) {
+    const tag = Array.isArray(item.tags) ? item.tags[0] : item.tags;
+    if (tag) badgeHtml = `<span class="bg-primary text-on-primary text-[10px] font-black px-2 py-1 rounded-md uppercase">${escapeHTML(tag)}</span>`;
+  }
+
+  const fallbackIcon = `<div class="w-full h-full flex items-center justify-center bg-gray-100 text-primary/30"><i class="fas fa-hamburger text-3xl"></i></div>`;
+
+  const layoutClass = isLarge 
+    ? `flex-col min-w-[280px] md:min-w-0 snap-center` 
+    : `flex md:flex-col items-center gap-4 p-3 md:p-0 border border-gray-100 md:border-transparent`;
+  
+  const imgClass = isLarge
+    ? `w-full h-48`
+    : `w-24 h-24 md:w-full md:h-48 rounded-2xl md:rounded-none`;
+
+  const infoPadding = isLarge ? `p-5` : `flex-1 md:p-4`;
 
   return `
-    <div class="${cardBg} h-full flex flex-col rounded-2xl overflow-hidden group ${cardOpacity} transition-all duration-300 hover:shadow-2xl" ${clickAction}>
-
-        <div class="h-48 shrink-0 relative overflow-hidden bg-primary-light">
-            ${imageHtml}
-            ${tagHtml}
+    <div class="${cardBg} flex ${layoutClass} rounded-3xl md:rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-xl shadow-sm" 
+         ${clickAction} 
+         data-search="${searchTerms}">
+        
+        <div class="${imgClass} shrink-0 relative overflow-hidden bg-gray-100">
+            ${imageUrl 
+              ? `<img src="${imageUrl}" alt="${nomAffiche}" loading="lazy" 
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                  class="w-full h-full object-cover transition duration-500 group-hover:scale-110 ${!isAvailable ? 'grayscale opacity-50' : ''}">
+                 <div style="display: none;" class="w-full h-full items-center justify-center bg-gray-100 text-primary/30">${fallbackIcon}</div>`
+              : fallbackIcon
+            }
+            ${!isAvailable ? '<div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>' : ''}
         </div>
 
-        <div class="p-5 flex-1 flex flex-col justify-between">
+        <div class="${infoPadding} flex flex-col justify-between h-full w-full">
             <div>
-                <div class="flex justify-between items-start mb-2 gap-2">
-                    <h2 class="text-lg font-bold ${textColor} leading-tight">${nomAffiche}</h2>
-                    <span class="text-xl font-black text-accent whitespace-nowrap">${parseFloat(prixAffiche).toFixed(2)}${devise}</span>
+                <div class="flex items-center gap-2 mb-1">
+                    ${badgeHtml}
+                    <h3 class="text-base md:text-lg font-bold ${textColor} leading-tight line-clamp-1">${nomAffiche}</h3>
                 </div>
-                <p class="text-sm text-gray-400 mb-6 line-clamp-2">${item.description || ""}</p>
+                <p class="text-xs ${secondaryTextColor} line-clamp-2 md:mb-4">${descriptionAffiche}</p>
             </div>
 
-            <button class="w-full py-3 mt-auto rounded-xl border border-primary dark:border-gray-600 ${textColor} ${isAvailable ? "hover:bg-primary hover:text-on-primary" : ""} hover:border-transparent transition-all font-bold flex items-center justify-center gap-2">
-                ${isAvailable ? '<i class="fas fa-eye"></i> Détails' : '<i class="fas fa-ban"></i> Indisponible'}
-            </button>
+            <div class="flex items-center justify-between mt-2 md:mt-auto">
+                <span class="text-lg font-black text-primary">${prixAffiche}${devise}</span>
+                <button class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-900 text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-transform">
+                    <i class="fas ${isAvailable ? 'fa-plus' : 'fa-ban text-xs'}"></i>
+                </button>
+            </div>
         </div>
     </div>`;
 }
@@ -85,25 +86,18 @@ function createProductCard(item, cfg) {
 window.chargerMenuComplet = async () => {
   const fullMenuContainer = document.getElementById("full-menu-container");
   const bestSellersContainer = document.getElementById("bestsellers-container");
-  const spinner = document.getElementById("loading-spinner");
+  const categoriesNav = document.getElementById("menu-categories-nav");
+  const scrollContainer = document.getElementById("full-menu");
   const snackId = window.snackConfig?.identity?.id;
 
   if (!snackId) return;
-  if (spinner) spinner.classList.remove("hidden");
 
   try {
     const { query, collection, where, getDocs } = window.fs;
-    const db = window.db;
-
-    const q = query(
-      collection(db, "produits"),
-      where("snackId", "==", snackId),
-    );
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(query(collection(window.db, "produits"), where("snackId", "==", snackId)));
 
     let tousLesProduits = [];
     window.menuGlobal.length = 0;
-
     snapshot.forEach((doc) => {
       const item = { id: doc.id, ...doc.data() };
       tousLesProduits.push(item);
@@ -112,197 +106,155 @@ window.chargerMenuComplet = async () => {
 
     const cfg = window.snackConfig;
 
-    // 🏆 AFFICHER LES BEST SELLERS (Méthode Hybride)
     if (bestSellersContainer) {
-      bestSellersContainer.innerHTML = "";
-
-      const top3 = [...tousLesProduits]
-        .sort((a, b) => {
-          const aTags = Array.isArray(a.tags)
-            ? a.tags.join(" ").toLowerCase()
-            : (a.tags || "").toLowerCase();
-          const bTags = Array.isArray(b.tags)
-            ? b.tags.join(" ").toLowerCase()
-            : (b.tags || "").toLowerCase();
-
-          const isAStar =
-            aTags.includes("star") ||
-            aTags.includes("populaire") ||
-            aTags.includes("nouveau");
-          const isBStar =
-            bTags.includes("star") ||
-            bTags.includes("populaire") ||
-            bTags.includes("nouveau");
-
-          if (isAStar && !isBStar) return -1;
-          if (!isAStar && isBStar) return 1;
-
-          return (b.ventes || 0) - (a.ventes || 0);
-        })
-        .slice(0, 3);
-
+      const top3 = [...tousLesProduits].sort((a, b) => (b.ventes || 0) - (a.ventes || 0)).slice(0, 3);
       if (top3.length > 0) {
-        top3.forEach((item, index) => {
-          bestSellersContainer.innerHTML += `
-                        <div class="animate-fade-in-up" style="animation-fill-mode: both; animation-delay: ${index * 150}ms;">
-                            ${createProductCard(item, cfg)}
-                        </div>`;
-        });
+        bestSellersContainer.innerHTML = top3.map(item => `<div>${createProductCard(item, cfg, true)}</div>`).join("");
       } else {
-        bestSellersContainer.innerHTML =
-          "<p class='text-gray-500'>Aucun best-seller.</p>";
+        bestSellersContainer.innerHTML = "<p class='text-gray-400 col-span-full text-center py-10'>Découvrez nos produits ci-dessous.</p>";
       }
     }
 
-    // 🌮 AFFICHER LE MENU PAR CATÉGORIES (Version 100% Dynamique SaaS)
     if (fullMenuContainer) {
-      fullMenuContainer.innerHTML = "";
+        const categoriesMap = new Map();
+        tousLesProduits.forEach(p => {
+          if (!p.categorieId) return;
+          if (!categoriesMap.has(p.categorieId)) {
+            const rawTitle = p.categorieTitre || p.categorieId;
+            const cleanTitle = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
+            categoriesMap.set(p.categorieId, { id: p.categorieId, title: cleanTitle, icon: p.icon || "🍽️", items: [] });
+          }
+          categoriesMap.get(p.categorieId).items.push(p);
+        });
 
-      const categoriesMap = new Map();
+        const menuCategories = Array.from(categoriesMap.values()).sort((a, b) => {
+          const ordre = ["tacos", "burgers", "wraps", "pizzas", "sides", "drinks", "deserts"];
+          return (ordre.indexOf(a.id) === -1 ? 99 : ordre.indexOf(a.id)) - (ordre.indexOf(b.id) === -1 ? 99 : ordre.indexOf(b.id));
+        });
 
-      tousLesProduits.forEach((produit) => {
-        if (!produit.categorieId) return;
+        // Helper pour mettre à jour l'UI des boutons
+        const updateActivePill = (catId) => {
+            if (!categoriesNav) return;
+            const activeBtn = categoriesNav.querySelector(`[data-target="cat-${catId}"]`);
+            if (activeBtn) {
+                categoriesNav.querySelectorAll('.cat-pill').forEach(b => {
+                    b.classList.remove('bg-gray-900', 'text-white', 'border-primary');
+                    b.classList.add('bg-gray-100', 'text-gray-600');
+                });
+                activeBtn.classList.add('bg-gray-900', 'text-white', 'border-primary');
+                activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
+                activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        };
 
-        if (!categoriesMap.has(produit.categorieId)) {
-          categoriesMap.set(produit.categorieId, {
-            id: produit.categorieId,
-            title: produit.categorieTitre || produit.categorieId,
-            icon: produit.icon || "🍽️",
-            items: [],
+        if (categoriesNav) {
+          categoriesNav.innerHTML = menuCategories.map(cat => `
+            <button data-target="cat-${cat.id}" class="cat-pill whitespace-nowrap px-4 py-2 rounded-xl bg-gray-100 text-gray-600 font-bold text-sm transition-all active:scale-95 flex items-center gap-2 border-2 border-transparent">
+                <span>${cat.icon}</span>
+                <span>${cat.title}</span>
+            </button>
+          `).join("");
+
+          categoriesNav.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const targetId = btn.getAttribute('data-target');
+              const targetEl = document.getElementById(targetId);
+              
+              if (targetEl && scrollContainer) {
+                // On active immédiatement le bouton pour un feedback visuel instantané
+                isManualScrolling = true;
+                const catId = targetId.replace('cat-', '');
+                updateActivePill(catId);
+
+                // Calcul précis du scroll
+                const headerHeight = document.querySelector('#full-menu .sticky')?.offsetHeight || 120;
+                const targetPos = (targetEl.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top) + scrollContainer.scrollTop - headerHeight - 10;
+                
+                scrollContainer.scrollTo({ top: targetPos, behavior: 'smooth' });
+
+                // On libère le Scroll Spy après l'animation (environ 600ms)
+                setTimeout(() => { isManualScrolling = false; }, 800);
+              }
+            });
           });
         }
 
-        categoriesMap.get(produit.categorieId).items.push(produit);
-      });
+        fullMenuContainer.innerHTML = menuCategories.map(cat => `
+          <div id="cat-${cat.id}" class="menu-section mb-10 pt-4" data-cat-id="${cat.id}" style="scroll-margin-top: 140px;">
+              <div class="flex items-center gap-3 mb-6">
+                  <span class="text-2xl">${cat.icon}</span>
+                  <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight">${cat.title}</h2>
+                  <div class="flex-1 h-px bg-gray-100"></div>
+                  <span class="text-xs font-bold text-gray-400">${cat.items.length} items</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  ${cat.items.map(item => createProductCard(item, cfg, false)).join("")}
+              </div>
+          </div>
+        `).join("");
 
-      let menuCategories = Array.from(categoriesMap.values());
+        const observerOptions = {
+          root: scrollContainer,
+          rootMargin: '-130px 0px -70% 0px',
+          threshold: 0
+        };
 
-      const ordreVoulu = [
-        "tacos",
-        "burgers",
-        "wraps",
-        "pizzas",
-        "sides",
-        "drinks",
-        "deserts",
-      ];
-      menuCategories.sort((a, b) => {
-        let indexA = ordreVoulu.indexOf(a.id);
-        let indexB = ordreVoulu.indexOf(b.id);
-        if (indexA === -1) indexA = 999;
-        if (indexB === -1) indexB = 999;
-        return indexA - indexB;
-      });
+        const observer = new IntersectionObserver((entries) => {
+          if (isManualScrolling) return; // Ne pas interférer pendant un clic
 
-      menuCategories
-        .filter((c) => c.items.length > 0)
-        .forEach((cat, catIndex) => {
-          let sectionHTML = `
-                <div class="mb-12 animate-fade-in-up" style="animation-fill-mode: both; animation-delay: ${catIndex * 200}ms;">
-                    <div class="sticky top-0 z-30 bg-gray-300/80 backdrop-blur-md py-4 flex items-center mb-6 shadow-sm -mx-4 px-4 md:mx-1 md:shadow-none rounded-full md:p-2">
-                        <span class="md:text-4xl text-lg text-black mr-1">${cat.icon}</span>
-                        <h3 class="text-xl md:text-3xl font-bold font-oswald text-gray-800 uppercase tracking-wider">${cat.title}</h3>
-                        <div class="grow h-px bg-primary ml-4 opacity-50"></div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                `;
+          const isAtBottom = scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50;
+          if (isAtBottom) return;
 
-          cat.items.forEach((item) => {
-            sectionHTML += createProductCard(item, cfg);
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              updateActivePill(entry.target.getAttribute('data-cat-id'));
+            }
           });
+        }, observerOptions);
 
-          sectionHTML += `</div></div>`;
-          fullMenuContainer.innerHTML += sectionHTML;
-        });
+        fullMenuContainer.querySelectorAll('.menu-section').forEach(section => observer.observe(section));
+
+        scrollContainer.addEventListener('scroll', () => {
+            if (isManualScrolling) return;
+            const isAtBottom = scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 20;
+            if (isAtBottom && menuCategories.length > 0) {
+                updateActivePill(menuCategories[menuCategories.length - 1].id);
+            }
+        }, { passive: true });
     }
-    // Signal pour les deep links : le menu est prêt, les modales peuvent s'ouvrir
+
     window.dispatchEvent(new CustomEvent("snack:menu:ready"));
   } catch (error) {
-    console.error("🔥 Erreur lors du rendu du menu :", error);
-  } finally {
-    if (spinner) spinner.classList.add("hidden");
+    console.error("🔥 Erreur Menu :", error);
   }
 };
 
 // ============================================================================
-// 🔍 MOTEUR DE RECHERCHE EN MÉMOIRE (0 FIRESTORE)
+// 🔍 RECHERCHE & UX
 // ============================================================================
 document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("menu-search-input");
   const clearSearchBtn = document.getElementById("clear-search-btn");
   const fullMenuContainer = document.getElementById("full-menu-container");
-  const bestSellersContainer = document.getElementById("bestsellers-container");
-
-  let searchResultsContainer = document.getElementById(
-    "search-results-container",
-  );
-  if (!searchResultsContainer && fullMenuContainer) {
-    searchResultsContainer = document.createElement("div");
-    searchResultsContainer.id = "search-results-container";
-    searchResultsContainer.className =
-      "hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12";
-    fullMenuContainer.parentNode.insertBefore(
-      searchResultsContainer,
-      fullMenuContainer,
-    );
-  }
 
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
-      const searchTerm = e.target.value.toLowerCase().trim();
-      const cfg = window.snackConfig;
+      const term = e.target.value.toLowerCase().trim();
+      clearSearchBtn.classList.toggle("hidden", term.length === 0);
 
-      if (searchTerm.length > 0) {
-        clearSearchBtn.classList.remove("hidden");
+      const items = fullMenuContainer?.querySelectorAll('[data-id]');
+      if (!items) return;
+      
+      items.forEach(card => {
+        const searchPool = card.getAttribute('data-search') || "";
+        const isMatch = searchPool.includes(term);
+        card.style.display = isMatch ? "" : "none";
+      });
 
-        if (fullMenuContainer) fullMenuContainer.classList.add("hidden");
-        if (bestSellersContainer && bestSellersContainer.parentElement) {
-          bestSellersContainer.parentElement.classList.add("hidden");
-        }
-
-        searchResultsContainer.classList.remove("hidden");
-
-        const resultats = window.menuGlobal.filter((produit) => {
-          const nom = produit.nom ? produit.nom.toLowerCase() : "";
-          const desc = produit.description
-            ? produit.description.toLowerCase()
-            : "";
-          const tags = produit.tags
-            ? (Array.isArray(produit.tags)
-                ? produit.tags.join(" ")
-                : produit.tags
-              ).toLowerCase()
-            : "";
-
-          return (
-            nom.includes(searchTerm) ||
-            desc.includes(searchTerm) ||
-            tags.includes(searchTerm)
-          );
-        });
-
-        if (resultats.length === 0) {
-          searchResultsContainer.innerHTML = `
-                        <div class="col-span-full text-center py-12">
-                            <div class="text-6xl mb-4">🕵️‍♂️</div>
-                            <h3 class="text-xl font-black text-gray-800">Aucun résultat</h3>
-                            <p class="text-gray-500 mt-2">Nous n'avons rien trouvé pour "${e.target.value}"</p>
-                        </div>
-                    `;
-        } else {
-          searchResultsContainer.innerHTML = resultats
-            .map((item) => createProductCard(item, cfg))
-            .join("");
-        }
-      } else {
-        clearSearchBtn.classList.add("hidden");
-        if (fullMenuContainer) fullMenuContainer.classList.remove("hidden");
-        if (bestSellersContainer && bestSellersContainer.parentElement) {
-          bestSellersContainer.parentElement.classList.remove("hidden");
-        }
-        searchResultsContainer.classList.add("hidden");
-        searchResultsContainer.innerHTML = "";
-      }
+      fullMenuContainer.querySelectorAll('.menu-section').forEach(section => {
+        const visibleCards = section.querySelectorAll('[data-id]:not([style*="display: none"])');
+        section.style.display = visibleCards.length > 0 ? "" : "none";
+      });
     });
 
     clearSearchBtn.addEventListener("click", () => {

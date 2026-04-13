@@ -28,7 +28,7 @@ window.applySaaSThemeToHTML = () => {
 // ============================================================================
 // 🎭 MISE À JOUR DE L'UI (SaaS — textes, logos, thème, horaires, SEO)
 // ============================================================================
-function updateUI(user) {
+function updateUI(user, role = "client") {
   const cfg = window.snackConfig;
   if (!cfg) return;
 
@@ -78,15 +78,42 @@ if (cfg.identity) {
     heroImg.src = cfg.identity.heroImg;
   }
 
-  // Bouton Déconnexion
+  // Bouton Déconnexion & Admin
   const navLogoutBtn = document.getElementById("nav-logout-btn");
   const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
+  const navAdminBtn = document.getElementById("nav-admin-btn");
+
   if (user) {
     navLogoutBtn?.classList.remove("hidden");
     mobileLogoutBtn?.classList.remove("hidden");
+    
+    // Affichage du bouton admin si le rôle est correct
+    if (role === "admin" || role === "superadmin") {
+      navAdminBtn?.classList.remove("hidden");
+    } else {
+      navAdminBtn?.classList.add("hidden");
+    }
   } else {
     navLogoutBtn?.classList.add("hidden");
     mobileLogoutBtn?.classList.add("hidden");
+    navAdminBtn?.classList.add("hidden");
+  }
+
+  // Gestion du bouton de fidélité (Ma Carte / Connexion / Scanner pour Admin)
+  const loyaltyBtn = document.getElementById("loyalty-main-btn");
+  if (loyaltyBtn) {
+    if (user) {
+      if (role === "admin" || role === "superadmin") {
+        loyaltyBtn.setAttribute("data-action", "open-admin-scanner");
+        loyaltyBtn.innerHTML = '<i class="fas fa-camera mr-2"></i> Scanner Code';
+      } else {
+        loyaltyBtn.setAttribute("data-action", "open-client-card");
+        loyaltyBtn.innerHTML = '<i class="fas fa-qrcode mr-2"></i> Ma Carte';
+      }
+    } else {
+      loyaltyBtn.setAttribute("data-action", "toggle-auth-modal");
+      loyaltyBtn.innerHTML = "Connexion";
+    }
   }
 
   // Liens d'appel (Mobile CTA, Desktop CTA)

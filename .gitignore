@@ -42,6 +42,7 @@ firebase-debug.*.log*
 # --- DIVERS ---
 .eslintcache
 .node_repl_history
+.vscode
 *.tgz
 .claude
 # Playwright

@@ -169,60 +169,63 @@ window.switchAdminTab = (tabName) => {
 // ============================================================================
 // 🔐 AUTH ADMIN
 // ============================================================================
-setTimeout(() => {
-  onAuthStateChanged(window.auth, async (user) => {
-    const loginSection = document.getElementById("admin-login-section");
-    const startBtn = document.getElementById("start-shift-btn");
-    const startupIcon = document.getElementById("startup-icon");
-    const startupTitle = document.getElementById("startup-title");
-    const startupDesc = document.getElementById("startup-desc");
+onAuthStateChanged(window.auth, async (user) => {
+  const loginSection = document.getElementById("admin-login-section");
+  const startBtn = document.getElementById("start-shift-btn");
+  const startupIcon = document.getElementById("startup-icon");
+  const startupTitle = document.getElementById("startup-title");
+  const startupDesc = document.getElementById("startup-desc");
+  const backHomeBtn = document.getElementById("back-home-btn");
 
-    if (user) {
-      const { getDoc, doc } = window.fs;
-      const userDoc = await getDoc(doc(window.db, "users", user.uid));
+  if (user) {
+    const { getDoc, doc } = window.fs;
+    const userDoc = await getDoc(doc(window.db, "users", user.uid));
 
-      if (
-        userDoc.exists() &&
-        (userDoc.data().role === "admin" ||
-          userDoc.data().role === "superadmin")
-      ) {
-        window.currentAdminSnackId = userDoc.data().snackId;
-        if (document.getElementById("admin-email"))
-          document.getElementById("admin-email").innerText = user.email;
+    if (
+      userDoc.exists() &&
+      (userDoc.data().role === "admin" ||
+        userDoc.data().role === "superadmin")
+    ) {
+      window.currentAdminSnackId = userDoc.data().snackId;
+      if (document.getElementById("admin-email"))
+        document.getElementById("admin-email").innerText = user.email;
 
-        if (window.snackConfig?.features?.enablePushNotifs) {
-          document
-            .getElementById("tab-marketing-desktop")
-            ?.classList.remove("hidden");
-          document
-            .getElementById("tab-marketing-mobile")
-            ?.classList.remove("hidden");
-        }
-
-        loginSection.classList.add("hidden");
-        startupIcon.className =
-          "fas fa-check-circle text-6xl mb-6 text-green-500 animate-bounce";
-        startupTitle.innerText = "Accès Autorisé";
-        startupDesc.innerText =
-          "Cliquez ci-dessous pour activer le radar de cuisine.";
-        startBtn.classList.remove("hidden");
-      } else {
-        window.auth.signOut();
-        refuseAccess(
-          "Accès refusé. Vous n'avez pas les droits d'administration.",
-        );
+      if (window.snackConfig?.features?.enablePushNotifs) {
+        document
+          .getElementById("tab-marketing-desktop")
+          ?.classList.remove("hidden");
+        document
+          .getElementById("tab-marketing-mobile")
+          ?.classList.remove("hidden");
       }
-    } else {
-      startupIcon.className = "fas fa-lock text-6xl mb-6 text-gray-300";
-      startupTitle.innerText = "Espace Sécurisé";
+
+      loginSection.classList.add("hidden");
+      startupIcon.className =
+        "fas fa-check-circle text-6xl mb-6 text-green-500 animate-bounce";
+      startupTitle.innerText = "Accès Autorisé";
       startupDesc.innerText =
-        "Veuillez vous identifier pour accéder au terminal.";
-      startBtn.classList.add("hidden");
-      loginSection.classList.remove("hidden");
-      loginSection.classList.add("flex");
+        "Cliquez ci-dessous pour activer le radar de cuisine.";
+      startBtn.classList.remove("hidden");
+      
+      // On affiche toujours le bouton retour accueil pour ne pas bloquer l'admin
+      backHomeBtn?.classList.remove("hidden");
+    } else {
+      window.auth.signOut();
+      refuseAccess(
+        "Accès refusé. Vous n'avez pas les droits d'administration.",
+      );
     }
-  });
-}, 500);
+  } else {
+    startupIcon.className = "fas fa-lock text-6xl mb-6 text-gray-300";
+    startupTitle.innerText = "Espace Sécurisé";
+    startupDesc.innerText =
+      "Veuillez vous identifier pour accéder au terminal.";
+    startBtn.classList.add("hidden");
+    loginSection.classList.remove("hidden");
+    loginSection.classList.add("flex");
+    backHomeBtn?.classList.remove("hidden");
+  }
+});
 
 const adminLoginForm = document.getElementById("admin-login-form");
 if (adminLoginForm) {
