@@ -490,20 +490,6 @@ window.switchView = (viewName) => {
   }
 };
 
-window.showToast = (message, type = "success") => {
-  const snack = document.getElementById("snackbar");
-  const msgEl = document.getElementById("snackbar-message");
-  if (!snack || !msgEl) return;
-  msgEl.textContent = message;
-  snack.classList.remove("translate-y-24", "opacity-0");
-  setTimeout(() => snack.classList.add("translate-y-24", "opacity-0"), 3000);
-};
-
-window.triggerVibration = (type = "light") => {
-  if ("vibrate" in navigator)
-    navigator.vibrate(type === "light" ? 40 : [100, 50, 100]);
-};
-
 document.addEventListener("DOMContentLoaded", () => {
   setupMobileMenu();
   if (!navigator.onLine) document.body.classList.add("is-offline");

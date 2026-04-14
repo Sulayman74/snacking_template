@@ -42,6 +42,7 @@ function createTicketElement(id, commande) {
     : "";
 
   const safeClientName = escapeHTML(commande.clientNom || "Client Anonyme");
+  const secretCode = commande.secretCode || "---";
 
   let itemsHtml = commande.items
     .map((item) => {
@@ -114,7 +115,10 @@ function createTicketElement(id, commande) {
   ticketDiv.innerHTML = `
         <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
             <div>
-                <h3 class="font-black text-2xl text-gray-900">${safeClientName}</h3>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-black text-2xl text-gray-900">${safeClientName}</h3>
+                  <span class="bg-gray-900 text-white px-2 py-0.5 rounded text-sm font-mono font-bold">${secretCode}</span>
+                </div>
                 <p class="text-sm text-gray-500 font-bold mt-1"><i class="far fa-clock"></i> ${timeString}</p>
             </div>
             <div class="flex flex-col items-end">
@@ -136,8 +140,21 @@ let unsubscribeKitchenRadar = null;
 let isFirstLoad = true;
 
 function startKitchenRadar() {
-  if (unsubscribeKitchenRadar) unsubscribeKitchenRadar();
+  if (unsubscribeKitchenRadar) {
+    unsubscribeKitchenRadar();
+    unsubscribeKitchenRadar = null;
+  }
+  
   requestWakeLock();
+
+  const waitingOrdersContainer = document.getElementById("orders-waiting");
+  const newOrdersContainer = document.getElementById("orders-new");
+  const readyOrdersContainer = document.getElementById("orders-ready");
+  
+  // 🧹 NETTOYAGE : On vide les colonnes avant de relancer l'écoute pour éviter les doublons
+  if (waitingOrdersContainer) waitingOrdersContainer.innerHTML = "";
+  if (newOrdersContainer) newOrdersContainer.innerHTML = "";
+  if (readyOrdersContainer) readyOrdersContainer.innerHTML = "";
 
   const { query, collection, where, orderBy, onSnapshot } = window.fs;
 
@@ -148,9 +165,6 @@ function startKitchenRadar() {
     orderBy("date", "asc"),
   );
 
-  const waitingOrdersContainer = document.getElementById("orders-waiting");
-  const newOrdersContainer = document.getElementById("orders-new");
-  const readyOrdersContainer = document.getElementById("orders-ready");
   const bell = document.getElementById("kitchen-bell");
 
   unsubscribeKitchenRadar = onSnapshot(q, (snapshot) => {
@@ -162,6 +176,7 @@ function startKitchenRadar() {
       const existingTicket = document.getElementById(`ticket-${id}`);
 
       if (change.type === "added") {
+        if (existingTicket) existingTicket.remove();
         const newTicket = createTicketElement(id, commande);
         if (commande.statut === "en_attente_client" && waitingOrdersContainer)
           waitingOrdersContainer.appendChild(newTicket);
@@ -180,7 +195,6 @@ function startKitchenRadar() {
           newOrdersContainer.appendChild(updatedTicket);
         if (commande.statut === "prete" && readyOrdersContainer)
           readyOrdersContainer.appendChild(updatedTicket);
-        // Pas de son sur modified — le ticket change de colonne, c'est tout
       } else if (change.type === "removed") {
         if (existingTicket) existingTicket.remove();
       }
@@ -211,16 +225,8 @@ function stopKitchenRadar() {
   }
 }
 
-// Pause/reprise automatique sur changement d'onglet navigateur
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    stopKitchenRadar();
-  } else {
-    if (window.currentAdminTab === "cuisine" && window.currentAdminSnackId) {
-      startKitchenRadar();
-    }
-  }
-});
+// Pause/reprise automatique pilotée par l'orchestrateur global
+// (Suppression de l'écouteur local visibilitychange)
 
 // ============================================================================
 // 💳 ACTIONS MÉTIER : STATUT COMMANDE & CAISSE

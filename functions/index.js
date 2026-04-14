@@ -126,8 +126,17 @@ exports.optimizeImage = onObjectFinalized(
 );
 
 // ============================================================================
-// 🛠️ OUTIL : DÉCOUPEUR DE TABLEAUX (POUR LES BATCHS PUSH)
+// 🛠️ OUTILS : GÉNÉRATEUR DE CODE ET DÉCOUPEUR
 // ============================================================================
+function generateSecretCode(length = 6) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 function chunkArray(array, size) {
   const chunked = [];
   for (let i = 0; i < array.length; i += size) {
@@ -382,6 +391,7 @@ exports.finalizeOrder = onCall(
       userId: uid,
       clientNom: clientNom || clientEmail.split("@")[0],
       clientEmail,
+      secretCode: generateSecretCode(6),
       date: admin.firestore.FieldValue.serverTimestamp(),
       statut: "en_attente_client",
       items: cartItems,

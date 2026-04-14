@@ -1,9 +1,34 @@
 // ============================================================================
-// 📲 PWA : INSTALLATION, PULL-TO-REFRESH, SMART REVIEW, DEEP LINKING
+// 📲 PWA : SW, INSTALLATION, PULL-TO-REFRESH, SMART REVIEW, DEEP LINKING
 // ============================================================================
 // Dépendances : window.snackConfig, window.triggerVibration, window.chargerMenuComplet
 //               window.switchView, window.auth
 //               window.openClientCard, window.toggleAuthModal, window.openProductModal
+
+// ============================================================================
+// ⚙️ SERVICE WORKER (OFFLINE ASSETS)
+// ============================================================================
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => console.log("🚀 PWA: Service Worker prêt !", reg.scope))
+      .catch((err) => console.error("❌ PWA: Échec SW", err));
+  });
+}
+
+// ============================================================================
+// 🌐 DÉTECTION CONNEXION (ONLINE / OFFLINE)
+// ============================================================================
+window.addEventListener("online", () => {
+  document.body.classList.remove("is-offline");
+  window.showToast("Vous êtes de nouveau en ligne ! 🟢", "success");
+});
+
+window.addEventListener("offline", () => {
+  document.body.classList.add("is-offline");
+  window.showToast("Mode hors-ligne activé. 🟠", "error");
+});
 
 // ============================================================================
 // 📲 GESTION DE L'INSTALLATION PWA (A2HS)

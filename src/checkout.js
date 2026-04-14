@@ -98,11 +98,11 @@ function openPaymentSheet() {
   const sheet = document.getElementById("payment-bottom-sheet");
   const content = document.getElementById("payment-sheet-content");
 
-  if (!sheet)
-    return console.error("❌ Modale Stripe introuvable dans le HTML !");
-
   sheet.classList.remove("hidden");
   sheet.classList.add("flex");
+  
+  // Bloque le scroll du site en arrière-plan
+  document.body.style.overflow = "hidden"; 
 
   setTimeout(() => {
     sheet.classList.remove("opacity-0");
@@ -114,18 +114,15 @@ function closePaymentSheet() {
   const sheet = document.getElementById("payment-bottom-sheet");
   const content = document.getElementById("payment-sheet-content");
 
-  if (!sheet) return;
-
   sheet.classList.add("opacity-0");
   content.classList.add("translate-y-full");
+  
+  // Libère le scroll
+  document.body.style.overflow = ""; 
 
   setTimeout(() => {
     sheet.classList.add("hidden");
     sheet.classList.remove("flex");
-
-    const paymentElementDiv = document.getElementById("payment-element");
-    if (paymentElementDiv) paymentElementDiv.innerHTML = "";
-    stripeElements = null;
   }, 300);
 }
 
@@ -216,6 +213,9 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       localStorage.setItem("activeOrderId", orderId);
       window.startOrderTracking(orderId);
     }
+    setTimeout(() => {
+    window.openTrackingModal();
+  }, 500);
   } catch (err) {
     console.error("Erreur finalisation commande :", err);
     window.showToast(

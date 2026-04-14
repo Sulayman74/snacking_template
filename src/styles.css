@@ -18,6 +18,9 @@ body {
   margin: 0;
   padding: 0;
   background: var(--color-primary);
+  min-height: 100%;
+  /* Empêche les rebonds bizarres sur mobile lors du scroll */
+  overscroll-behavior-y: none;
 }
 
 #boot-splash {
@@ -70,13 +73,33 @@ body {
 /* Effet visuel quand l'app est offline */
 body.is-offline {
   filter: grayscale(0.3);
-  pointer-events: none; /* Désactive les clics sur les boutons sensibles */
 }
 
-body.is-offline #navbar,
-body.is-offline #bestsellers {
-  pointer-events: auto; /* Laisse la navigation et la consultation actives */
+body.is-offline::after {
+  content: "MODE HORS-LIGNE";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #ef4444;
+  color: white;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 0;
+  z-index: 10000;
+  letter-spacing: 0.1em;
 }
+
+/* Fix Positionnement Mobile (Barre de nav et Panier) */
+#mobile-nav-container {
+  bottom: calc(1.5rem + env(safe-area-inset-bottom));
+}
+
+#cart-modal {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Effet Liquid Glass pour la barre de navigation mobile */
 .glass-nav {
   background-color: var(--color-accent); /* Gris semi-transparent */

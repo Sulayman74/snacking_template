@@ -437,6 +437,102 @@
       <div class="p-6 bg-gray-50 rounded-t-3xl border-t border-gray-200 pb-safe"><div class="flex justify-between items-center mb-4"><span class="text-gray-500 font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-gray-900">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center">Valider ma commande</button></div>
     </div>
 
+<div id="payment-bottom-sheet" class="fixed inset-0 z-[100] hidden items-end justify-center bg-black/60 opacity-0 transition-opacity duration-300 backdrop-blur-sm">
+  
+  <div class="absolute inset-0" onclick="closePaymentSheet()"></div>
+  
+  <div id="payment-sheet-content" 
+       class="relative w-full max-w-lg translate-y-full transform rounded-t-3xl bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col max-h-[92vh]">
+    
+    <div class="mx-auto mb-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"></div>
+
+    <div class="overflow-y-auto pr-1 custom-scrollbar">
+      <div class="mb-6 text-center">
+        <h3 class="text-xl font-black text-gray-900">Paiement Sécurisé</h3>
+        <p id="payment-amount-display" class="text-lg font-bold text-red-600">Total : 0.00 €</p>
+      </div>
+
+      <div id="payment-element" class="min-h-[250px]">
+        </div>
+
+      <div id="payment-message" class="mt-4 hidden rounded-lg bg-red-50 p-3 text-center text-sm font-medium text-red-600"></div>
+    </div>
+
+    <div class="mt-6 flex flex-col gap-3 flex-shrink-0 pb-4 md:pb-0">
+      <button id="submit-payment-btn" onclick="submitStripePayment()" 
+              class="flex w-full items-center justify-center rounded-xl bg-green-600 py-4 text-lg font-black text-white shadow-lg transition active:scale-95 hover:bg-green-700">
+        <i class="fas fa-lock mr-2"></i> Confirmer le paiement
+      </button>
+      
+      <button onclick="closePaymentSheet()" class="w-full py-2 text-sm font-bold text-gray-400 hover:text-gray-600">
+        Annuler la commande
+      </button>
+    </div>
+
+    <div class="mt-4 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest text-gray-400 pb-2">
+      <i class="fas fa-shield-alt"></i>
+      <span>Paiement crypté SSL par Stripe</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================================ -->
+<!-- 📡 RADAR CLICK & COLLECT — UI TRACKING -->
+<!-- ============================================================================ -->
+
+<!-- 🟡 LE BADGE DE SUIVI (FLOTTANT) -->
+<div id="order-tracking-badge" 
+     onclick="openTrackingModal()"
+     class="hidden fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl font-black items-center gap-3 z-[60] cursor-pointer transition-all hover:scale-105 active:scale-95 group">
+    <div class="relative flex h-3 w-3">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+    </div>
+    <span id="badge-text" class="text-sm tracking-tight uppercase">Suivi de votre commande</span>
+    <span class="text-gray-400 font-mono text-xs opacity-50 group-hover:opacity-100 transition-opacity" id="tracking-order-id">#----</span>
+</div>
+
+<!-- 📦 LA MODALE DE SUIVI EN TEMPS RÉEL -->
+<div id="order-tracking-modal" 
+     class="fixed inset-0 z-[100] hidden items-end md:items-center justify-center p-0 md:p-6 bg-gray-900/90 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+    
+    <div class="bg-white w-full max-w-lg rounded-t-[40px] md:rounded-[40px] p-8 md:p-12 shadow-2xl transform scale-95 transition-transform duration-300 relative overflow-hidden">
+        
+        <!-- Décoration de fond subtile -->
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-gray-50 rounded-full opacity-50 blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-gray-50 rounded-full opacity-50 blur-3xl"></div>
+
+        <!-- Bouton Fermer (Mobile pull bar) -->
+        <div class="md:hidden w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8 cursor-pointer" onclick="closeTrackingModal()"></div>
+        <button onclick="closeTrackingModal()" class="hidden md:block absolute top-6 right-6 text-gray-300 hover:text-gray-900 transition-colors p-2">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+
+        <!-- Contenu Radar -->
+        <div class="text-center relative z-10">
+            <div id="tracking-icon-container" class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner transition-all duration-500">
+                <i id="tracking-icon" class="fas fa-car text-5xl text-gray-500 transition-all duration-500"></i>
+            </div>
+
+            <h2 id="tracking-title" class="text-4xl font-black text-gray-900 mb-4 tracking-tight leading-tight">Suivi de commande</h2>
+            
+            <div id="tracking-subtitle" class="text-gray-500 text-lg font-medium leading-relaxed mb-10 px-4">
+                Initialisation du radar...
+            </div>
+
+            <div class="space-y-4 pt-4 border-t border-gray-100">
+                <button id="tracking-action-btn" 
+                        class="w-full bg-gray-900 text-white font-black py-5 rounded-2xl text-xl shadow-lg hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <i class="fas fa-car"></i> Je suis là !
+                </button>
+                <button onclick="closeTrackingModal()" class="w-full py-3 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors">
+                    Masquer la fenêtre
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <script type="module" src="/src/app.js"></script>
   </body>
 </html>

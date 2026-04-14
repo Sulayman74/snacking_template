@@ -10,7 +10,11 @@ function openProductModal(itemId) {
   window.history.pushState(null, null, "#modal");
   const cfg = window.snackConfig;
   const item = window.menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
-  if (!item) return;
+  
+  if (!item) {
+    console.error("Produit non trouvé :", itemId);
+    return;
+  }
 
   // 1. Initialisation du produit en mémoire
   currentProduct = {
@@ -27,48 +31,54 @@ function openProductModal(itemId) {
 
   // 2. Gestion de l'Image et des Textes
   const modalImg = document.getElementById("modal-img");
-  const imgContainer = modalImg.parentElement;
+  const imgContainer = modalImg ? modalImg.parentElement : null;
   const oldFallback = document.getElementById("modal-img-fallback");
   if (oldFallback) oldFallback.remove();
 
-  if (currentProduct.image && currentProduct.image.trim() !== "") {
-    modalImg.style.display = "block";
-    modalImg.src = currentProduct.image;
-    modalImg.onerror = function () {
-      this.style.display = "none";
-      if (!document.getElementById("modal-img-fallback")) {
-        imgContainer.insertAdjacentHTML(
-          "beforeend",
-          `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-black opacity-50"></i></div>`,
-        );
-      }
-    };
-  } else {
-    modalImg.style.display = "none";
-    imgContainer.insertAdjacentHTML(
-      "beforeend",
-      `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-black opacity-50"></i></div>`,
-    );
+  if (modalImg && imgContainer) {
+    if (currentProduct.image && currentProduct.image.trim() !== "") {
+      modalImg.style.display = "block";
+      modalImg.src = currentProduct.image;
+      modalImg.onerror = function () {
+        this.style.display = "none";
+        if (!document.getElementById("modal-img-fallback")) {
+          imgContainer.insertAdjacentHTML(
+            "beforeend",
+            `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-black opacity-50"></i></div>`,
+          );
+        }
+      };
+    } else {
+      modalImg.style.display = "none";
+      imgContainer.insertAdjacentHTML(
+        "beforeend",
+        `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-black opacity-50"></i></div>`,
+      );
+    }
   }
 
-  document.getElementById("modal-title").textContent = currentProduct.nom;
-  document.getElementById("modal-desc").textContent = item.description || "";
+  const titleEl = document.getElementById("modal-title");
+  const descEl = document.getElementById("modal-desc");
+  if (titleEl) titleEl.textContent = currentProduct.nom;
+  if (descEl) descEl.textContent = item.description || "";
 
   // 3. Allergènes
-  const allergenContainer = document.getElementById(
-    "modal-allergens-container",
-  );
-  if (item.allergenes && item.allergenes.length > 0) {
-    allergenContainer.classList.remove("hidden");
-    document.getElementById("modal-allergens").textContent =
-      item.allergenes.join(", ");
-  } else {
-    allergenContainer.classList.add("hidden");
+  const allergenContainer = document.getElementById("modal-allergens-container");
+  const allergenText = document.getElementById("modal-allergens");
+  if (allergenContainer && allergenText) {
+    if (item.allergenes && item.allergenes.length > 0) {
+      allergenContainer.classList.remove("hidden");
+      allergenText.textContent = item.allergenes.join(", ");
+    } else {
+      allergenContainer.classList.add("hidden");
+    }
   }
 
   // 4. L'AIGUILLAGE MAGIQUE DES OPTIONS
   const btn = document.getElementById("modal-cta");
   const optionsContainer = document.getElementById("modal-options-container");
+
+  if (!btn) return;
 
   if (item.isAvailable === false) {
     if (optionsContainer) optionsContainer.classList.add("hidden");
@@ -332,17 +342,19 @@ function openProductModal(itemId) {
   // 5. Affichage final
   const backdrop = document.getElementById("product-modal-backdrop");
   const sheet = document.getElementById("product-modal");
-  backdrop.classList.remove("hidden");
-  setTimeout(() => {
-    backdrop.classList.remove("opacity-0");
-    sheet.classList.remove(
-      "translate-y-full",
-      "md:opacity-0",
-      "md:pointer-events-none",
-      "md:scale-95",
-    );
-  }, 10);
-  document.body.style.overflow = "hidden";
+  if (backdrop && sheet) {
+    backdrop.classList.remove("hidden");
+    setTimeout(() => {
+      backdrop.classList.remove("opacity-0");
+      sheet.classList.remove(
+        "translate-y-full",
+        "md:opacity-0",
+        "md:pointer-events-none",
+        "md:scale-95",
+      );
+    }, 10);
+    document.body.style.overflow = "hidden";
+  }
 }
 
 // ============================================================================
@@ -495,16 +507,18 @@ function closeProductModal() {
   const backdrop = document.getElementById("product-modal-backdrop");
   const sheet = document.getElementById("product-modal");
 
-  sheet.classList.add(
-    "translate-y-full",
-    "md:opacity-0",
-    "md:pointer-events-none",
-    "md:scale-95",
-  );
-  backdrop.classList.add("opacity-0");
+  if (sheet) {
+    sheet.classList.add(
+      "translate-y-full",
+      "md:opacity-0",
+      "md:pointer-events-none",
+      "md:scale-95",
+    );
+  }
+  if (backdrop) backdrop.classList.add("opacity-0");
 
   setTimeout(() => {
-    backdrop.classList.add("hidden");
+    if (backdrop) backdrop.classList.add("hidden");
     document.body.style.overflow = "";
   }, 300);
 }

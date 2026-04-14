@@ -76,7 +76,8 @@ window.closeModal = (modalId) => {
   if (!modal) return;
 
   modal.classList.add("opacity-0");
-  modal.querySelector(".bg-white").classList.add("scale-95");
+  const inner = modal.querySelector(".bg-white");
+  if (inner) inner.classList.add("scale-95");
 
   setTimeout(() => {
     modal.classList.add("hidden");
@@ -86,26 +87,24 @@ window.closeModal = (modalId) => {
 };
 
 // ============================================================================
-// 🍞 NOTIFICATIONS TOAST
+// 🔄 ORCHESTRATEUR DE CYCLE DE VIE (Admin)
 // ============================================================================
-window.showToast = function (message, type = "success") {
-  const snackbar = document.getElementById("admin-snackbar");
-  if (!snackbar) {
-    alert(message);
-    return;
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    if (typeof window.stopKitchenRadar === "function") {
+      window.stopKitchenRadar();
+    }
+  } else {
+    // Reprise du radar cuisine uniquement si on est sur le bon onglet
+    if (window.currentAdminTab === "cuisine" && window.currentAdminSnackId && typeof window.startKitchenRadar === "function") {
+      // On vérifie aussi que l'overlay de démarrage est caché (shift démarré)
+      const overlay = document.getElementById("startup-overlay");
+      if (overlay && overlay.classList.contains("hidden")) {
+        window.startKitchenRadar();
+      }
+    }
   }
-  const msgEl = document.getElementById("admin-snackbar-message");
-  const iconEl = document.getElementById("admin-snackbar-icon");
-
-  msgEl.innerText = message;
-  iconEl.className =
-    type === "error"
-      ? "fas fa-exclamation-circle text-red-500 text-xl"
-      : "fas fa-check-circle text-green-400 text-xl";
-
-  snackbar.classList.remove("translate-y-24", "opacity-0");
-  setTimeout(() => snackbar.classList.add("translate-y-24", "opacity-0"), 3000);
-};
+});
 
 // ============================================================================
 // 3. ONGLETS ET NAVIGATION
