@@ -184,8 +184,8 @@ window.chargerMenuComplet = async () => {
               <div class="flex items-center gap-3 mb-6">
                   <span class="text-2xl">${cat.icon}</span>
                   <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight">${cat.title}</h2>
-                  <div class="flex-1 h-px bg-gray-100"></div>
-                  <span class="text-xs font-bold text-gray-400">${cat.items.length} items</span>
+                  <div class="flex-1 h-px bg-accent"></div>
+                  <span class="text-xs font-bold text-black">${cat.items.length} items</span>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   ${cat.items.map(item => createProductCard(item, cfg, false)).join("")}

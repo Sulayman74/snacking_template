@@ -78,7 +78,7 @@ function updateCartUI() {
     if (mobileBadge) mobileBadge.classList.add("hidden");
 
     if (desktopCtaBtn && desktopCtaBtn.getAttribute("data-action") === "open-cart") {
-        desktopCtaBtn.innerHTML = `<i class="fas fa-shopping-bag mr-2"></i> Commander`;
+        desktopCtaBtn.innerHTML = `<i class="fas fa-shopping-bag mr-2 "></i> Commander`;
     }
   }
 }

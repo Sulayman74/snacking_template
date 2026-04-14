@@ -102,7 +102,7 @@
             <a href="#loyalty" id="nav-loyalty-link" class="hidden text-white hover:text-primary font-medium transition drop-shadow-md">Fidélité</a>
             <a href="#infos" class="text-white hover:text-primary font-medium transition drop-shadow-md">Infos</a>
             <a href="/admin.html" id="nav-admin-btn" class="hidden text-red-500 hover:text-red-400 font-bold transition drop-shadow-md"><i class="fas fa-cog"></i> Admin</a>
-            <a href="#" id="cta-nav" class="ml-4 px-6 py-2 rounded-full font-bold shadow-lg transform hover:scale-105 transition">Commander</a>
+            <a href="#" id="cta-nav" class="ml-4 bg-primary px-6 py-2 rounded-full font-bold text-on-primary shadow-lg transform hover:scale-105 transition">Commander</a>
             <button aria-label="Déconnexion" type="button" data-action="logout-user" id="nav-logout-btn" class="hidden bg-accent/10 backdrop-blur-sm text-gray-200 hover:bg-accent px-4 py-2 rounded-full font-bold transition flex items-center gap-2">
               <i class="fas fa-sign-out-alt"></i> Quitter
             </button>
@@ -148,11 +148,11 @@
         </div>
       </section>
 
-      <section id="full-menu" class="hidden h-full w-full bg-gray-50 fixed inset-0 z-50 overflow-y-auto">
+      <section id="full-menu" class="hidden h-full w-full bg-gray-300 fixed inset-0 z-50 overflow-y-auto">
         <div id="ptr-indicator" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md z-[70]">
           <i class="fas fa-arrow-down text-gray-300 text-xl transition-transform" id="ptr-icon"></i>
         </div>
-        <div class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm">
+        <div class="sticky top-0 z-50 bg-accent/40 backdrop-blur-xl border-b border-gray-400 shadow-sm">
           <div class="container mx-auto px-4 py-3 flex items-center gap-3">
             <div class="relative flex-1">
               <input type="text" id="menu-search-input" placeholder="Un p'tit creux ?" class="w-full pl-10 pr-10 py-3 bg-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all text-gray-800 font-medium text-sm" />
@@ -161,8 +161,8 @@
                 <i class="fas fa-times-circle text-lg"></i>
               </button>
             </div>
-            <button data-action="switch-home" class="w-11 h-11 shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
-              <i class="fas fa-times text-lg"></i>
+            <button data-action="switch-home" class="w-11 h-11 shrink-0 bg-white border border-accent rounded-2xl shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
+              <i class="fas fa-times text-red-500 text-lg"></i>
             </button>
           </div>
           <div id="menu-categories-nav" class="container mx-auto px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar -webkit-overflow-scrolling-touch"></div>

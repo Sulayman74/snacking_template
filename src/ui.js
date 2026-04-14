@@ -324,6 +324,22 @@ window.switchView = (viewName) => {
   fullMenu?.classList.toggle("hidden", !isMenu);
   document.body.style.overflow = isMenu ? "hidden" : "";
   if (viewName === "home") window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Mise à jour de la navigation mobile (active & pilule)
+  const navBtnHome = document.getElementById("nav-btn-home");
+  const navBtnMenu = document.getElementById("nav-btn-menu");
+  const navIndicator = document.getElementById("nav-indicator");
+
+  if (navBtnHome && navBtnMenu && navIndicator) {
+    navBtnHome.classList.toggle("is-active", viewName === "home");
+    navBtnMenu.classList.toggle("is-active", viewName === "menu");
+    
+    if (viewName === "home") {
+      navIndicator.style.transform = "translateX(0)";
+    } else if (viewName === "menu") {
+      navIndicator.style.transform = "translateX(200%)";
+    }
+  }
 };
 
 window.showToast = (message, type = "success") => {
