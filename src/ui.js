@@ -180,26 +180,39 @@ function setupCtaAction(mobileBtn, mobileIcon, desktopBtn, action, iconClass, te
   }
 }
 
-// 🕒 HELPER : Vérifie si c'est ouvert actuellement
-function checkCurrentOpeningStatus(h) {
-  if (!h || h.closed) return false;
+// 🕒 HELPER : Vérifie le statut d'ouverture (Ouvert, Fermé, Bientôt ouvert, Bientôt fermé)
+function getOpeningStatus(h) {
+  if (!h || h.closed) return { status: "ferme", label: "Fermé actuellement", classes: "border-red-500 bg-red-500/50" };
   
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   
-  // On parse "HH:mm"
   const [openH, openM] = h.open.split(':').map(Number);
   const [closeH, closeM] = h.close.split(':').map(Number);
   
   const openMinutes = openH * 60 + openM;
   let closeMinutes = closeH * 60 + closeM;
   
-  // Gestion fermeture après minuit (ex: 02:00)
   if (closeMinutes <= openMinutes) {
     closeMinutes += 24 * 60;
   }
+
+  // 1. Ouvert
+  if (currentMinutes >= openMinutes && currentMinutes < closeMinutes) {
+    // Reste-t-il moins de 30 min ?
+    if (closeMinutes - currentMinutes <= 30) {
+      return { status: "bientot-ferme", label: `Ferme bientôt : ${h.close}`, classes: "border-orange-500 bg-orange-500/50 animate-pulse" };
+    }
+    return { status: "ouvert", label: `Ouvert : ${h.open} - ${h.close}`, classes: "border-green-500 bg-green-600/50" };
+  }
   
-  return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  // 2. Fermé
+  // Est-ce qu'on ouvre dans moins de 30 min ?
+  if (openMinutes - currentMinutes > 0 && openMinutes - currentMinutes <= 30) {
+    return { status: "bientot-ouvert", label: `Ouvre bientôt : ${h.open}`, classes: "border-yellow-500 bg-yellow-500/50 animate-pulse" };
+  }
+
+  return { status: "ferme", label: "Fermé actuellement", classes: "border-red-500 bg-red-500/50" };
 }
 
 function updateFooterAndStatusUI(cfg) {
@@ -249,11 +262,9 @@ function updateFooterAndStatusUI(cfg) {
       const textColor = isToday ? "text-accent font-bold" : "text-gray-300";
       
       if (isToday && heroStatus) {
-        const isOpenRightNow = checkCurrentOpeningStatus(h);
-        heroStatus.innerText = isOpenRightNow ? `Ouvert : ${h.open} - ${h.close}` : "Fermé actuellement";
-        heroStatus.className = isOpenRightNow
-          ? "inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border border-green-500 rounded-full bg-green-600/50 backdrop-blur-md text-white"
-          : "inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border border-red-500 rounded-full backdrop-blur-md bg-red-500/50 text-white";
+        const statusInfo = getOpeningStatus(h);
+        heroStatus.innerText = statusInfo.label;
+        heroStatus.className = `inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border rounded-full backdrop-blur-md text-white ${statusInfo.classes}`;
       }
 
       return `<li class="flex justify-between ${textColor}"><span>${h.day}</span><span>${h.closed ? "Fermé" : h.open + " - " + h.close}</span></li>`;
