@@ -47,6 +47,7 @@ try {
         heroImg: data.heroImg || "./assets/logo.webp",
         currency: data.currency || "€",
       },
+      promoPhrase: data.promoPhrase || "",
       contact: {
         phone: data.phoneNumber || "",
         email: data.email || "",

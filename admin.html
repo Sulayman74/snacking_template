@@ -52,7 +52,7 @@
       >
       <div
         id="admin-login-section"
-        class="hidden w-full max-w-sm mx-auto flex-col items-center mt-6"
+        class="hidden w-full max-w-sm mx-auto flex-col items-center mt-2"
       >
         <h2 class="text-2xl text-gray-300 mb-6">Accès Équipe</h2>
         <form id="admin-login-form" class="w-full flex flex-col gap-4">
@@ -109,17 +109,24 @@
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Marketing Push</span>
             </button>
             <button onclick="switchAdminTab('compta')" id="tab-compta-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
-                <i class="fas fa-file-invoice-dollar text-green-500 text-xl w-8 text-center shrink-0"></i>
-                <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Comptabilité</span>
+              <i class="fas fa-file-invoice-dollar text-green-500 text-xl w-8 text-center shrink-0"></i>
+              <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Comptabilité</span>
+            </button>
+            <button onclick="switchAdminTab('config')" id="tab-config-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
+                <i class="fas fa-cog text-gray-500 text-xl w-8 text-center shrink-0"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Configuration</span>
             </button>
         </nav>
 
         <div class="p-4 border-t border-gray-800 bg-gray-900 shrink-0">
             <div class="flex items-center bg-gray-800 p-2 rounded-xl whitespace-nowrap">
-                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold shrink-0 ml-1">AD</div>
+                <div id="admin-initials" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold shrink-0 ml-1"></div>
+                <a  href="index.html" class="text-accent hover:text-green-500 transition p-2 ml-2" aria-label="Se déconnecter">
+                    <i class="fa-solid fa-door-open"></i>
+                </a>
                 <div class="ml-3 flex-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden flex justify-between items-center">
-                    <span id="admin-email-desktop" class="font-mono text-xs text-gray-300 truncate w-24">admin@...</span>
-                    <button onclick="logoutAdmin()" class="text-gray-400 hover:text-red-500 transition p-2 ml-2" aria-label="Se déconnecter">
+                    <span id="admin-email-desktop" class="font-mono text-xs text-gray-300 truncate w-24"></span>
+                    <button onclick="logoutAdmin()" class="text-primary hover:text-red-500 transition p-2 ml-2" aria-label="Se déconnecter">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
@@ -132,14 +139,19 @@
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <h1 class="text-xl font-black uppercase tracking-widest">Admin <span class="text-red-500">Fusion</span></h1>
             </div>
-            <button onclick="logoutAdmin()" class="text-gray-400 hover:text-red-500 transition">
-                <i class="fas fa-sign-out-alt text-xl"></i>
-            </button>
+            <div>
+              <a  href="index.html" class="text-gray-400 hover:text-green-500 transition p-2 ml-2" aria-label="Se déconnecter">
+                <i class="fa-solid fa-door-open text-lg"></i>
+              </a>
+              <button onclick="logoutAdmin()" class="text-gray-400 hover:text-red-500 transition">
+                <i class="fas fa-sign-out-alt text-lg"></i>
+              </button>
+            </div>
         </header>
 
-    <div class="flex-1 overflow-y-auto pb-24 md:pb-0"> 
+    <div class="flex-1 overflow-y-auto pb-2 md:pb-0"> 
         
-        <section id="view-cuisine" class="flex flex-col md:flex-row gap-6 p-4 md:p-6 h-full">
+        <section id="view-cuisine" class="flex flex-col md:flex-row gap-6 p-4 pb-20 md:p-6 h-full min-h-full">
             <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
                     <h2 class="text-xl font-black text-gray-600 uppercase"><i class="fas fa-car text-gray-500 mr-2"></i> Attente Client</h2>
@@ -233,7 +245,7 @@
             </div>
         </section>
         
-        <section id="view-compta" class="hidden flex-col h-full overflow-y-auto p-4 md:p-6">
+        <section id="view-compta" class="hidden flex-col h-full pb-20 min-h-full overflow-y-auto p-4 md:p-6">
             <div class="max-w-5xl mx-auto w-full space-y-6">
 
                 <!-- En-tête -->
@@ -320,7 +332,56 @@
 
     </div>
 
-    <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center p-2 pb-safe z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] fixed bottom-0 w-full">
+        <section id="view-config" class="hidden p-4 md:p-6 bg-gray-100 min-h-full pb-20 overflow-y-auto h-full">
+            <div class="max-w-4xl mx-auto space-y-2 pb-20">
+                <div>
+                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">Configuration Générale</h2>
+                    <p class="text-gray-500">Gérez l'identité de votre établissement, vos horaires et vos promotions.</p>
+                </div>
+
+                <div class="bg-white p-2 rounded-3xl shadow-sm border border-gray-200">
+                    <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
+                        <i class="fas fa-id-card text-blue-500"></i> Identité & Promo
+                    </h3>
+                    <form id="config-identity-form" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Description courte (Hero)</label>
+                            <textarea id="config-description" rows="2" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="Ex: Les meilleurs burgers de la ville..."></textarea>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                            <label class="block text-sm font-bold text-blue-800 mb-2">
+                                <i class="fas fa-tag mr-1"></i> Promo Phare (S'affiche en haut du site)
+                            </label>
+                            <input type="text" id="config-promo" class="w-full px-4 py-3 rounded-xl bg-white border border-blue-200 focus:border-blue-500 outline-none transition font-bold text-blue-900" placeholder="Ex: 2 Pizzas achetées = la 3ème OFFERTE !">
+                            <p class="text-[10px] text-blue-400 mt-2 italic">Laissez vide pour masquer le bandeau promo.</p>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 transition flex items-center gap-2">
+                                <i class="fas fa-save"></i> Enregistrer l'identité
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        <i class="fas fa-clock text-green-500"></i> Horaires d'ouverture
+                    </h3>
+                    <form id="config-hours-form" class="space-y-4 ">
+                        <div id="config-hours-grid" class="space-y-3">
+                            <!-- Injecté par JS : 7 lignes (Lundi-Dimanche) -->
+                        </div>
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-green-700 transition flex items-center gap-2">
+                                <i class="fas fa-save"></i> Mettre à jour les horaires
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center p-2 pb-[env(safe-area-inset-bottom) z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] fixed bottom-0 w-full">
         <button onclick="switchAdminTab('cuisine')" id="tab-cuisine-mobile" class="flex flex-col items-center gap-1 p-2 text-red-600 w-16">
             <i class="fas fa-fire text-xl"></i>
             <span class="text-[10px] font-bold">Cuisine</span>
@@ -334,8 +395,12 @@
             <span class="text-[10px] font-bold">Push</span>
         </button>
         <button onclick="switchAdminTab('compta')" id="tab-compta-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
-            <i class="fas fa-file-invoice-dollar text-xl"></i>
-            <span class="text-[10px] font-bold">Compta</span>
+          <i class="fas fa-file-invoice-dollar text-xl"></i>
+          <span class="text-[10px] font-bold">Compta</span>
+        </button>
+        <button onclick="switchAdminTab('config')" id="tab-config-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
+            <i class="fas fa-cog text-xl"></i>
+            <span class="text-[10px] font-bold">Réglages</span>
         </button>
     </nav>
 </main>

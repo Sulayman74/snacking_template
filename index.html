@@ -81,6 +81,15 @@
     </script>
   </head>
   <body class="text-gray-800" style="background:{{THEME_COLOR}}">
+    <!-- BANDEAU PROMO DYNAMIQUE -->
+    <div id="promo-banner" class="hidden bg-primary text-on-primary py-2.5 px-4 text-center text-sm font-black uppercase tracking-widest shadow-md sticky top-0 z-[60] animate-fade-in">
+      <div class="container mx-auto flex justify-center items-center gap-3">
+        <i class="fas fa-utensils animate-bounce"></i>
+        <span id="promo-text"></span>
+        <i class="fas fa-utensils animate-bounce"></i>
+      </div>
+    </div>
+
     <div id="boot-splash" style="position:fixed;inset:0;background:{{THEME_COLOR}};z-index:9999;display:flex;align-items:center;justify-content:center">
       <div class="splash-inner">
         <div class="splash-logo"></div>
@@ -230,53 +239,66 @@
         </div>
       </section>
 
-      <footer id="infos" class="relative overflow-hidden bg-gray-900 text-white pt-20 pb-32 md:pb-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
-        <div class="liquid-blob absolute -top-24 -left-24 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-40" style="background-color: var(--color-accent);"></div>
-        <div class="liquid-blob absolute -bottom-24 -right-24 w-96 h-96 rounded-full blur-3xl pointer-events-none animation-delay-2000 opacity-20" style="background-color: var(--color-primary);"></div>
+<footer id="infos" class="relative overflow-hidden bg-gray-900 text-white pt-16 pb-32 md:pb-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
+  
+  <div class="liquid-blob absolute -top-24 -left-24 w-64 h-64 md:w-96 md:h-96 rounded-full blur-3xl pointer-events-none opacity-40" style="background-color: var(--color-accent);"></div>
+  <div class="liquid-blob absolute -bottom-24 -right-24 w-64 h-64 md:w-96 md:h-96 rounded-full blur-3xl pointer-events-none opacity-20" style="background-color: var(--color-primary);"></div>
 
-        <div class="relative z-10 container mx-auto px-4 grid md:grid-cols-2 gap-12 max-w-6xl mb-16">
-          <div class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50">
-            <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2">
-              <i id="find-us" class="fas fa-map-marker-alt"></i> Nous trouver
-            </h4>
-            <p id="footer-address" class="text-lg mb-4 font-light text-gray-200"></p>
-            <p id="footer-phone" class="text-lg mb-6 font-bold text-white"></p>
-            <div id="socials-container" class="flex gap-4 text-2xl mt-4 pt-4 border-t border-gray-700/50"></div>
+  <div class="relative z-10 container mx-auto px-6 max-w-6xl">
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-16">
+      
+      <div class="bg-gray-800/40 p-6 md:p-8 rounded-2xl backdrop-blur-md border border-gray-700/30 flex flex-col items-center md:items-start text-center md:text-left">
+        <h4 class="text-sm md:text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-3">
+          <i id="find-us" class="fas fa-map-marker-alt text-accent"></i> Nous trouver
+        </h4>
+        <p id="footer-address" class="text-base md:text-lg mb-4 font-light text-gray-200 leading-relaxed"></p>
+        <p id="footer-phone" class="text-lg md:text-xl font-bold text-white mb-6 hover:scale-105 transition-transform"></p>
+        
+        <div id="socials-container" class="flex gap-6 text-2xl pt-6 border-t border-gray-700/50 w-full justify-center md:justify-start">
           </div>
-          <div class="bg-gray-800/50 p-6 rounded-2xl backdrop-blur-sm border border-gray-700/50">
-            <h4 class="text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-2">
-              <i id="o-clock" class="fas fa-clock"></i> Horaires
-            </h4>
-            <ul id="hours-list" class="space-y-3 font-light text-gray-300"></ul>
+      </div>
+
+      <div class="bg-gray-800/40 p-6 md:p-8 rounded-2xl backdrop-blur-md border border-gray-700/30">
+        <h4 class="text-sm md:text-xl font-bold mb-6 text-gray-300 uppercase tracking-widest flex items-center gap-3 justify-center md:justify-start">
+          <i id="o-clock" class="fas fa-clock text-accent"></i> Horaires
+        </h4>
+        <ul id="hours-list" class="space-y-3 font-light text-gray-300">
+          </ul>
+      </div>
+
+    </div>
+
+    <div class="border-t border-gray-800 pt-10">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-10">
+        
+        <div class="flex flex-col items-center md:items-start space-y-6 text-center md:text-left order-2 md:order-1">
+          <p class="text-gray-400 text-xs tracking-wide">
+            &copy; 2026 <span id="footer-copy-name" class="text-white font-medium">Resto</span> • Tous droits réservés.
+          </p>
+          <nav class="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-3">
+            <a href="legal.html" class="text-gray-500 hover:text-white text-[10px] uppercase tracking-widest transition-colors underline decoration-gray-800 underline-offset-4">Mentions Légales</a>
+            <a href="legal.html#cgu" class="text-gray-500 hover:text-white text-[10px] uppercase tracking-widest transition-colors underline decoration-gray-800 underline-offset-4">CGU</a>
+            <a href="legal.html#rgpd" class="text-gray-500 hover:text-white text-[10px] uppercase tracking-widest transition-colors underline decoration-gray-800 underline-offset-4">Confidentialité</a>
+          </nav>
+        </div>
+
+        <div class="flex flex-col items-center md:items-end group order-1 md:order-2">
+          <p class="text-gray-600 text-[9px] uppercase tracking-[0.3em] mb-3">Architecture Digitale</p>
+          <a href="https://sulayman74.github.io/portfolio_Sirikone/" target="_blank" rel="noopener" 
+             class="flex items-center gap-3 text-gray-300 text-xs font-light bg-white/5 hover:bg-white/10 px-5 py-2.5 rounded-full border border-gray-700/50 transition-all hover:border-accent/50">
+            <span class="opacity-60">Propulsé par</span>
+            <span class="text-white font-bold tracking-tighter group-hover:text-accent transition-colors">CodeCrafters™</span>
+          </a>
+          <div class="mt-6 text-[9px] text-gray-600 max-w-[250px] leading-relaxed text-center md:text-right">
+            Protégé par reCAPTCHA. <a href="#" class="hover:text-gray-400">Privacy</a> & <a href="#" class="hover:text-gray-400">Terms</a>.
           </div>
         </div>
 
-        <div class="relative z-10 max-w-6xl mx-auto px-4 border-t border-gray-800 pt-8">
-          <div class="flex flex-col md:flex-row justify-between items-center gap-8">
-            <div class="flex flex-col items-center md:items-start space-y-4 text-center md:text-left">
-              <p class="text-gray-300 text-xs tracking-wide">
-                &copy; 2026 <span id="footer-copy-name" class="text-white font-medium">Resto</span> • Tous droits réservés.
-              </p>
-              <nav class="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2">
-                <a href="legal.html" target="_blank" class="text-gray-400 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4">Mentions Légales</a>
-                <a href="legal.html#cgu" target="_blank" class="text-gray-400 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4">CGU & Ventes</a>
-                <a href="legal.html#rgpd" target="_blank" class="text-gray-400 hover:text-white text-[11px] uppercase tracking-widest transition-colors underline decoration-gray-700 underline-offset-4">Confidentialité</a>
-              </nav>
-            </div>
-
-            <div class="text-center md:text-right flex flex-col justify-center items-center md:items-end group">
-              <p class="text-gray-500 text-[10px] uppercase tracking-[0.2em] mb-2">Architecture Digitale</p>
-              <a href="https://sulayman74.github.io/portfolio_Sirikone/" target="_blank" rel="noopener" class="flex items-center gap-2 text-gray-300 text-xs font-light bg-gray-800/30 hover:bg-gray-800/60 px-4 py-2 rounded-full border border-gray-700/50 transition-all hover:border-red-500/30">
-                <span class="opacity-70">Propulsé par</span>
-                <span class="text-white font-bold tracking-tight group-hover:text-red-500 transition-colors">CodeCrafters™</span>
-              </a>
-              <div class="mt-6 text-[10px] text-gray-500 max-w-[280px] leading-relaxed">
-                Ce site est protégé par reCAPTCHA. Les <a href="https://policies.google.com/privacy" target="_blank" class="underline hover:text-gray-300">Règles de confidentialité</a> et les <a href="https://policies.google.com/terms" target="_blank" class="underline hover:text-gray-300">Conditions d'utilisation</a> de Google s'appliquent.
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      </div>
+    </div>
+  </div>
+</footer>
     </main>
 
     <!-- NAVIGATION MOBILE -->

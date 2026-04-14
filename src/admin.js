@@ -10,8 +10,7 @@ import "./admin-products.js";
 import "./admin-marketing.js";
 import "./admin-csv.js";
 import "./admin-compta.js";
-
-import { escapeHTML } from "./utils.js";
+import "./admin-config.js";
 
 const { onAuthStateChanged, signInWithEmailAndPassword, signOut } =
   window.authTools;
@@ -113,7 +112,7 @@ window.showToast = function (message, type = "success") {
 // ============================================================================
 window.switchAdminTab = (tabName) => {
   window.currentAdminTab = tabName;
-  const tabs = ["cuisine", "menu", "marketing", "compta"];
+  const tabs = ["cuisine", "menu", "marketing", "config", "compta"];
 
   tabs.forEach((t) => {
     const btnDesktop = document.getElementById(`tab-${t}-desktop`);
@@ -126,7 +125,7 @@ window.switchAdminTab = (tabName) => {
     }
     if (btnMobile) {
       btnMobile.className =
-        "flex flex-col items-center gap-1 px-4 py-2 text-gray-400 font-bold text-xs transition";
+        "flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16";
     }
     if (view) view.classList.add("hidden");
   });
@@ -140,7 +139,7 @@ window.switchAdminTab = (tabName) => {
       "w-full flex items-center px-6 py-4 text-white bg-gray-800 rounded-r-2xl font-bold border-l-4 border-red-500 transition";
   if (activeBtnMobile)
     activeBtnMobile.className =
-      "flex flex-col items-center gap-1 px-4 py-2 text-red-500 font-bold text-xs transition";
+      "flex flex-col items-center gap-1 p-2 text-red-600 w-16";
 
   if (activeView) activeView.classList.remove("hidden");
 
@@ -162,9 +161,12 @@ window.switchAdminTab = (tabName) => {
       }
     }
 
+    if (tabName === "config") window.loadConfigView();
+
     if (tabName === "compta") window.loadComptaDashboard();
   }
 };
+
 
 // ============================================================================
 // 🔐 AUTH ADMIN
@@ -181,10 +183,20 @@ onAuthStateChanged(window.auth, async (user) => {
     const { getDoc, doc } = window.fs;
     const userDoc = await getDoc(doc(window.db, "users", user.uid));
 
+    const initialsDiv = document.getElementById("admin-initials");
+
+    if (initialsDiv) {
+      initialsDiv.innerText = getInitialsFromEmail(user.email) || "?";
+    }
+
+    const emailSpan = document.getElementById("admin-email-desktop");
+    if (emailSpan) {
+      emailSpan.innerText = user.email;
+    }
+
     if (
       userDoc.exists() &&
-      (userDoc.data().role === "admin" ||
-        userDoc.data().role === "superadmin")
+      (userDoc.data().role === "admin" || userDoc.data().role === "superadmin")
     ) {
       window.currentAdminSnackId = userDoc.data().snackId;
       if (document.getElementById("admin-email"))
@@ -206,7 +218,7 @@ onAuthStateChanged(window.auth, async (user) => {
       startupDesc.innerText =
         "Cliquez ci-dessous pour activer le radar de cuisine.";
       startBtn.classList.remove("hidden");
-      
+
       // On affiche toujours le bouton retour accueil pour ne pas bloquer l'admin
       backHomeBtn?.classList.remove("hidden");
     } else {
@@ -314,3 +326,18 @@ window.logoutAdmin = async () => {
   await signOut(window.auth);
   window.location.href = "index.html";
 };
+
+function getInitialsFromEmail(email) {
+  if (!email) return "";
+
+  const namePart = email.split("@")[0]; // avant le @
+
+  // cas : prenom.nom@gmail.com
+  if (namePart.includes(".")) {
+    const parts = namePart.split(".");
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  // cas simple : john@gmail.com → JO
+  return namePart.substring(0, 2).toUpperCase();
+}
