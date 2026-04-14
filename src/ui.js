@@ -146,7 +146,13 @@ function updateUI(user, role = "client") {
     }
   }
 
-  // 5. CTA Dynamiques
+  // 5. Pré-remplissage du formulaire de contact si connecté
+  const contactField = document.getElementById("contact-field");
+  if (contactField && user?.email && !contactField.value) {
+    contactField.value = user.email;
+  }
+
+  // 6. CTA Dynamiques
   updateCTAs(cfg);
 
   // 6. Footer & Hero Status (Calcul dynamique)
@@ -493,4 +499,42 @@ window.switchView = (viewName) => {
 document.addEventListener("DOMContentLoaded", () => {
   setupMobileMenu();
   if (!navigator.onLine) document.body.classList.add("is-offline");
+
+  // ============================================================================
+  // 📬 FORMULAIRE CONTACT — Envoi en arrière-plan (pas de navigation)
+  // ============================================================================
+  const contactForm = document.getElementById("contact-form");
+  if (contactForm) {
+    contactForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const btn = document.getElementById("btn-submit-form");
+      const originalText = btn?.innerHTML;
+      if (btn) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Envoi...';
+        btn.disabled = true;
+      }
+
+      fetch(contactForm.action, {
+        method: "POST",
+        body: new FormData(contactForm),
+        headers: { Accept: "application/json" },
+      })
+        .then((res) => {
+          if (res.ok) {
+            window.showToast("Message envoyé ! On vous répond bientôt. 👋", "success");
+            contactForm.reset();
+          } else {
+            window.showToast("Erreur lors de l'envoi. Réessayez.", "error");
+          }
+        })
+        .catch(() => window.showToast("Pas de connexion. Réessayez.", "error"))
+        .finally(() => {
+          if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          }
+        });
+    });
+  }
 });
