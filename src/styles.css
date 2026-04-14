@@ -71,9 +71,7 @@ body {
 }
 
 /* Effet visuel quand l'app est offline */
-body.is-offline {
-  filter: grayscale(0.3);
-}
+/* Note: pas de filter sur body — ça casse le stacking context des position:fixed (modales, panier) */
 
 body.is-offline::after {
   content: "MODE HORS-LIGNE";
