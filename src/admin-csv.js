@@ -39,7 +39,7 @@ window.importProductsCSV = async (event) => {
 
       // 3. Logique métier : "Est-ce que ce produit peut être en menu ?"
       // On définit les catégories qui n'ont JAMAIS de menu (boissons, desserts, pizzas, sides)
-      const noMenuCategories = ['pizzas', 'drinks', 'deserts', 'sides', 'boissons', 'desserts'];
+      const noMenuCategories = ['pizzas', 'drinks', 'sides', 'boissons', 'desserts'];
       const categoryClean = row.categorie.toLowerCase().trim();
       
       // Par défaut : true sauf si dans la liste noire OU si spécifié "non" dans le CSV
@@ -130,7 +130,7 @@ modal.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
             <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
                 <h4 class="font-bold text-blue-900 mb-1">Obligatoire</h4>
-                <p class="text-blue-800">Nom, Prix, Categorie (tacos, burgers, pizzas, drinks, sides, deserts).</p>
+                <p class="text-blue-800">Nom, Prix, Categorie (tacos, burgers, pizzas, drinks, sides, desserts).</p>
             </div>
             <div class="bg-green-50 p-4 rounded-xl border border-green-100">
                 <h4 class="font-bold text-green-900 mb-1">Optionnel</h4>

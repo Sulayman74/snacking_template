@@ -170,7 +170,7 @@ async function openEditModal(productId) {
     isMenuAllowed = product.allowMenu;
   } else if (
     product.categorieId === "drinks" ||
-    product.categorieId === "deserts"
+    product.categorieId === "desserts"
   ) {
     isMenuAllowed = false;
   }
@@ -490,7 +490,7 @@ function populateCategoryDropdown(selectedCategory = "burgers") {
     ["pizzas", "🍕 Pizzas"],
     ["sides", "🍟 Sides (Frites...)"],
     ["drinks", "🥤 Boissons"],
-    ["deserts", "🍰 Desserts"],
+    ["desserts", "🍰 Desserts"],
   ]);
 
   window.adminProducts.forEach((p) => {
@@ -522,7 +522,7 @@ document.getElementById("edit-category")?.addEventListener("change", (e) => {
   const menuCheckbox = document.getElementById("edit-allow-menu");
   
   // Liste des catégories exclues du menu
-  const excludeFromMenu = ['drinks', 'deserts', 'pizzas', 'sides'];
+  const excludeFromMenu = ['drinks', 'desserts', 'pizzas', 'sides'];
 
 if (menuCheckbox) {
   if (excludeFromMenu.includes(cat)) {

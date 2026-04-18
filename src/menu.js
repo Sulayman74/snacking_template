@@ -122,13 +122,13 @@ window.chargerMenuComplet = async () => {
           if (!categoriesMap.has(p.categorieId)) {
             const rawTitle = p.categorieTitre || p.categorieId;
             const cleanTitle = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
-            categoriesMap.set(p.categorieId, { id: p.categorieId, title: cleanTitle, icon: p.icon || "🍽️", items: [] });
+            categoriesMap.set(p.categorieId, { id: p.categorieId, title: cleanTitle, icon: p.icon || "🍽️", produits: [] });
           }
-          categoriesMap.get(p.categorieId).items.push(p);
+          categoriesMap.get(p.categorieId).produits.push(p);
         });
 
         const menuCategories = Array.from(categoriesMap.values()).sort((a, b) => {
-          const ordre = ["tacos", "burgers", "wraps", "pizzas", "sides", "drinks", "deserts"];
+          const ordre = ["tacos", "burgers", "wraps", "pizzas", "sides", "drinks", "desserts"];
           return (ordre.indexOf(a.id) === -1 ? 99 : ordre.indexOf(a.id)) - (ordre.indexOf(b.id) === -1 ? 99 : ordre.indexOf(b.id));
         });
 
@@ -185,10 +185,10 @@ window.chargerMenuComplet = async () => {
                   <span class="text-2xl">${cat.icon}</span>
                   <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight">${cat.title}</h2>
                   <div class="flex-1 h-px bg-accent"></div>
-                  <span class="text-xs font-bold text-black">${cat.items.length} items</span>
+                  <span class="text-xs font-bold text-black">${cat.produits.length} ${cat.produits.length <= 1 ? "produit" : "produits"}</span>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                  ${cat.items.map(item => createProductCard(item, cfg, false)).join("")}
+                  ${cat.produits.map(item => createProductCard(item, cfg, false)).join("")}
               </div>
           </div>
         `).join("");
