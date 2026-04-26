@@ -31,35 +31,107 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  opacity: 1;
-  transition: opacity 0.35s ease;
+  overflow: hidden;
 }
 
+.splash-curtain {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: var(--color-primary);
+  z-index: 1;
+  will-change: transform;
+}
+.splash-curtain-top    { top: 0; }
+.splash-curtain-bottom { bottom: 0; }
+
 .splash-inner {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 2rem;
-  width: 100%;
-  height: 100%;
+  gap: 1rem;
 }
 
 .splash-logo {
-  width: 130px;
-  height: 130px;
+  width: 128px;
+  height: 128px;
   background-image: var(--logo-url);
-  border-radius: 2rem;
+  border-radius: 22.5%; /* squircle iOS / Android maskable */
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  animation: splash-logo-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+  transform: scale(0.94);
+  animation: splash-logo-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes splash-logo-in {
-  from { transform: scale(0.7); opacity: 0; }
-  to   { transform: scale(1);   opacity: 1; }
+  to { opacity: 1; transform: scale(1); }
 }
+
+.splash-title {
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: splash-title-in 0.55s 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes splash-title-in {
+  from { opacity: 0; transform: translateY(6px); letter-spacing: 0.1em;  }
+  to   { opacity: 1; transform: translateY(0);   letter-spacing: 0.28em; }
+}
+
+/* === EXITS === */
+
+/* Mode 1 — fadeout */
+#boot-splash.splash-exit-1 {
+  animation: splash-out-fade 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+#boot-splash.splash-exit-1 .splash-inner {
+  animation: splash-inner-zoom-out 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes splash-out-fade       { to { opacity: 0; } }
+@keyframes splash-inner-zoom-out { to { opacity: 0; transform: scale(1.12); } }
+
+/* Mode 2 — rideau split */
+#boot-splash.splash-exit-2 .splash-curtain-top {
+  animation: splash-curtain-up   0.7s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+#boot-splash.splash-exit-2 .splash-curtain-bottom {
+  animation: splash-curtain-down 0.7s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+#boot-splash.splash-exit-2 {
+  animation: splash-bg-clear 0.1s 0.15s linear forwards;
+}
+#boot-splash.splash-exit-2 .splash-inner {
+  animation: splash-inner-fade-fast 0.3s ease forwards;
+}
+@keyframes splash-curtain-up      { to { transform: translateY(-100%); } }
+@keyframes splash-curtain-down    { to { transform: translateY(100%); } }
+@keyframes splash-bg-clear        { to { background: transparent; } }
+@keyframes splash-inner-fade-fast { to { opacity: 0; } }
+
+/* Mode 3 — iris (clip-path circle) */
+#boot-splash.splash-exit-3 {
+  animation: splash-iris-out 0.7s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+#boot-splash.splash-exit-3 .splash-inner {
+  animation: splash-inner-shrink 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes splash-iris-out {
+  from { clip-path: circle(150% at 50% 50%); }
+  to   { clip-path: circle(0%   at 50% 50%); }
+}
+@keyframes splash-inner-shrink { to { opacity: 0; transform: scale(0.85); } }
 
 /* Pull-to-refresh */
 #ptr-indicator {

@@ -50,8 +50,10 @@
     <script>
       window.CURRENT_SNACK_ID = "{{SNACK_ID}}";
       const _splashStart = Date.now();
-      const MIN_SPLASH   = 1200;
+      const MIN_SPLASH   = 1000;
       const MAX_SPLASH   = 4000;
+      const SPLASH_EXIT  = 2; // 1=fadeout, 2=rideau split, 3=iris
+      const SPLASH_EXIT_MS = { 1: 470, 2: 720, 3: 720 };
       let _splashDone    = false;
 
       function removeBootSplash() {
@@ -59,15 +61,8 @@
         _splashDone = true;
         const boot = document.getElementById("boot-splash");
         if (!boot) return;
-        const inner = boot.querySelector(".splash-inner");
-        boot.style.transition  = "opacity 0.4s ease";
-        if (inner) {
-          inner.style.transition = "transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease";
-          inner.style.transform  = "scale(1.08)";
-          inner.style.opacity    = "0";
-        }
-        boot.style.opacity = "0";
-        setTimeout(() => boot.remove(), 420);
+        boot.classList.add("splash-exit-" + SPLASH_EXIT);
+        setTimeout(() => boot.remove(), SPLASH_EXIT_MS[SPLASH_EXIT] || 500);
       }
 
       function _tryRemoveSplash() {
@@ -90,10 +85,12 @@
       </div>
     </div>
 
-    <div id="boot-splash" style="position:fixed;inset:0;background:{{THEME_COLOR}};z-index:9999;display:flex;align-items:center;justify-content:center">
+    <div id="boot-splash" style="position:fixed;inset:0;background:{{THEME_COLOR}};z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden">
+      <div class="splash-curtain splash-curtain-top" style="position:absolute;top:0;left:0;right:0;height:50%;background:{{THEME_COLOR}};z-index:1"></div>
+      <div class="splash-curtain splash-curtain-bottom" style="position:absolute;bottom:0;left:0;right:0;height:50%;background:{{THEME_COLOR}};z-index:1"></div>
       <div class="splash-inner">
         <div class="splash-logo"></div>
-        <p class="text-white text-xs my-1 uppercase">{{SEO_TITLE}}</p>
+        <p class="splash-title">{{SEO_TITLE}}</p>
       </div>
     </div>
     <main>
