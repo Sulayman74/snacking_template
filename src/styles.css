@@ -79,6 +79,8 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  text-align: center;
+  text-indent: 0.28em; /* compense l'espace fantôme du letter-spacing final */
   margin: 0;
   opacity: 0;
   transform: translateY(6px);
