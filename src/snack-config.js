@@ -4,6 +4,8 @@
 // Couleurs en HEX — injectées dans les CSS custom properties via applySaaSThemeToHTML.
 // Les utilitaires Tailwind bg-primary / text-accent / border-accent / bg-primary-light
 // / text-on-primary sont générés par le bloc @theme dans styles.css.
+import { store } from "./core/Store.js";
+
 const SAAS_THEMES = {
   "ruby":      { primaryHex: "#dc2626", accentHex: "#dc2626", lightHex: "#fee2e2", onPrimaryHex: "#ffffff" },
   "ocean": { 
@@ -20,8 +22,9 @@ const SAAS_THEMES = {
 window.loadSnackConfig = async (db, snackId) => {
 try {
   // 🚀 Cache en mémoire : évite une lecture Firestore si le snack est déjà chargé
-  if (window.snackConfig?.identity?.id === snackId) {
-    return window.snackConfig;
+  const currentConfig = store.state.config;
+  if (currentConfig?.identity?.id === snackId) {
+    return currentConfig;
   }
 
   const { doc, getDoc } = window.fs;
@@ -38,7 +41,7 @@ try {
     const selectedTheme = SAAS_THEMES[paletteKey] || SAAS_THEMES["sunflower"];
 
     // 🪄 ON REMPLACE LA CONFIG "EN DUR" PAR LES DONNÉES FIRESTORE
-    window.snackConfig = {
+    const config = {
       identity: {
         id: snackId,
         name: data.nom || "Snack Sans Nom",
@@ -98,8 +101,9 @@ try {
       },
     };
 
+    store.setConfig(config);
     console.log(`✅ SaaS : Configuration de "${data.nom}" chargée...`);
-    return window.snackConfig;
+    return config;
   } else {
     console.error("❌ Erreur : Snack ID inexistant dans Firestore.");
     return null;

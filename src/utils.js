@@ -16,31 +16,47 @@ export function escapeHTML(str) {
 }
 
 /**
- * Affiche un message temporaire (Snackbar)
+ * Affiche un message temporaire (Snackbar/Toast)
  */
 export function showToast(message, type = "success") {
-    const snack = document.getElementById("snackbar");
-    const msgEl = document.getElementById("snackbar-message");
-    const iconEl = document.getElementById("snackbar-icon");
-
-    if (!snack || !msgEl) return;
-
-    // Mise à jour du message
-    msgEl.textContent = message;
-
-    // Gestion de l'icône selon le type
-    if (iconEl) {
-        iconEl.className = type === "success" 
-            ? "fas fa-check-circle text-green-400 text-2xl" 
-            : "fas fa-exclamation-circle text-red-400 text-2xl";
+    let container = document.getElementById("toast-container");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "toast-container";
+        container.className = "fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-3 items-center pointer-events-none";
+        document.body.appendChild(container);
     }
 
-    // Animation d'entrée
-    snack.classList.remove("translate-y-24", "opacity-0");
-    
-    // Animation de sortie après 3 secondes
+    const template = document.getElementById("toast-template");
+    if (!template) {
+        alert(message);
+        return;
+    }
+
+    const clone = template.content.cloneNode(true);
+    const toast = clone.querySelector(".toast-item");
+    const icon = clone.querySelector(".toast-icon");
+    const msg = clone.querySelector(".toast-message");
+
+    msg.textContent = message;
+
+    if (type === "success") {
+        toast.classList.add("bg-gray-900", "text-white");
+        icon.className = "fas fa-check-circle text-green-400";
+    } else {
+        toast.classList.add("bg-red-600", "text-white");
+        icon.className = "fas fa-exclamation-triangle text-white";
+    }
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.remove("translate-y-24", "opacity-0");
+    });
+
     setTimeout(() => {
-        snack.classList.add("translate-y-24", "opacity-0");
+        toast.classList.add("opacity-0", "scale-95");
+        setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 

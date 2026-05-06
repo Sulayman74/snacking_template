@@ -1,266 +1,209 @@
 // ============================================================================
-// 🍔 MENU — Chargement Firestore, Rendu HTML, Recherche
+// 🍔 MENU — Rendu Réactif et Accessibilité (SOLID: Présentation)
 // ============================================================================
-// Dépendances : window.menuGlobal, window.snackConfig, window.fs, window.db
 
-import { escapeHTML } from "./utils.js";
+import { store } from "./core/Store.js";
 
-// Verrou pour éviter les conflits entre clic manuel et Scroll Spy
-let isManualScrolling = false;
-
-function createProductCard(item, cfg, isLarge = false) {
-  const isClassic = cfg.theme.templateId === "classic";
-  const cardBg = isClassic ? "bg-gray-800" : "bg-white";
-  const textColor = isClassic ? "text-white" : "text-gray-900";
-  const secondaryTextColor = isClassic ? "text-gray-400" : "text-gray-500";
-
-  const isAvailable = item.isAvailable !== false;
-  const clickAction = isAvailable
-    ? `data-action="open-product-modal" data-id="${item.id || item.nom}"`
-    : `data-action="error-toast" data-message="Produit momentanément indisponible"`;
-
-  const devise = item.devise || cfg.identity.currency || "€";
-  const prixAffiche = parseFloat(item.prix || item.price || 0).toFixed(2);
-  const nomAffiche = escapeHTML(item.nom || item.name);
-  const descriptionAffiche = escapeHTML(item.description || "");
-  const categoryAffiche = escapeHTML(item.categorieTitre || item.categorieId || "");
-  const imageUrl = item.image && item.image.trim() !== "" ? item.image : null;
-
-  const searchTerms = `${nomAffiche} ${descriptionAffiche} ${categoryAffiche}`.toLowerCase();
-
-  let badgeHtml = "";
-  if (!isAvailable) {
-    badgeHtml = `<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase">Épuisé</span>`;
-  } else if (item.tags) {
-    const tag = Array.isArray(item.tags) ? item.tags[0] : item.tags;
-    if (tag) badgeHtml = `<span class="bg-primary text-on-primary text-[10px] font-black px-2 py-1 rounded-md uppercase">${escapeHTML(tag)}</span>`;
+class MenuUI {
+  constructor() {
+    this.container = document.getElementById("full-menu-container");
+    this.bestSellersContainer = document.getElementById("bestsellers-container");
+    this.template = document.getElementById("menu-item-template");
+    this.scrollContainer = document.getElementById("full-menu");
+    
+    this.init();
   }
 
-  const fallbackIcon = `<div class="w-full h-full flex items-center justify-center bg-gray-100 text-primary/30"><i class="fas fa-hamburger text-3xl"></i></div>`;
+  init() {
+    // Écoute les mises à jour du menu dans le Store
+    store.addEventListener("menu-updated", () => this.render());
+    
+    // Gestion de la recherche
+    const searchInput = document.getElementById("menu-search-input");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => this.handleSearch(e.target.value));
+    }
 
-  const layoutClass = isLarge 
-    ? `flex-col min-w-[280px] md:min-w-0 snap-center` 
-    : `flex md:flex-col items-center gap-4 p-3 md:p-0 border border-gray-100 md:border-transparent`;
-  
-  const imgClass = isLarge
-    ? `w-full h-48`
-    : `w-24 h-24 md:w-full md:h-48 rounded-2xl md:rounded-none`;
+    // Gestion du bouton de nettoyage de recherche
+    const clearBtn = document.getElementById("clear-search-btn");
+    if (clearBtn) {
+      clearBtn.onclick = () => {
+        searchInput.value = "";
+        this.handleSearch("");
+        clearBtn.classList.add("hidden");
+      };
+    }
+  }
 
-  const infoPadding = isLarge ? `p-5` : `flex-1 md:p-4`;
+  render() {
+    const menu = store.state.menu;
+    if (!menu || menu.length === 0) return;
 
-  return `
-    <div class="${cardBg} flex ${layoutClass} rounded-3xl md:rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-xl shadow-sm" 
-         ${clickAction} 
-         data-search="${searchTerms}">
-        
-        <div class="${imgClass} shrink-0 relative overflow-hidden bg-gray-100">
-            ${imageUrl 
-              ? `<img src="${imageUrl}" alt="${nomAffiche}" loading="lazy" 
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                  class="w-full h-full object-cover transition duration-500 group-hover:scale-110 ${!isAvailable ? 'grayscale opacity-50' : ''}">
-                 <div style="display: none;" class="w-full h-full items-center justify-center bg-gray-100 text-primary/30">${fallbackIcon}</div>`
-              : fallbackIcon
-            }
-            ${!isAvailable ? '<div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>' : ''}
-        </div>
+    this.renderFullMenu(menu);
+    this.renderBestSellers(menu);
+    this.renderCategoriesNav(menu);
+  }
 
-        <div class="${infoPadding} flex flex-col justify-between h-full w-full">
-            <div>
-                <div class="flex items-center gap-2 mb-1">
-                    ${badgeHtml}
-                    <h3 class="text-base md:text-lg font-bold ${textColor} leading-tight line-clamp-1">${nomAffiche}</h3>
-                </div>
-                <p class="text-xs ${secondaryTextColor} line-clamp-2 md:mb-4">${descriptionAffiche}</p>
-            </div>
+  renderFullMenu(menu, filter = "") {
+    if (!this.container) return;
+    this.container.innerHTML = "";
 
-            <div class="flex items-center justify-between mt-2 md:mt-auto">
-                <span class="text-lg font-black text-primary">${prixAffiche}${devise}</span>
-                <button class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-900 text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-transform">
-                    <i class="fas ${isAvailable ? 'fa-plus' : 'fa-ban text-xs'}"></i>
-                </button>
-            </div>
-        </div>
-    </div>`;
+    const categories = [...new Set(menu.map((p) => p.categorieId))].filter(Boolean);
+    const fragment = document.createDocumentFragment();
+
+    categories.forEach((catId) => {
+      const catProduits = menu.filter(
+        (p) => p.categorieId === catId && 
+        (p.nom.toLowerCase().includes(filter.toLowerCase()) || (p.description || "").toLowerCase().includes(filter.toLowerCase()))
+      );
+
+      if (catProduits.length === 0) return;
+
+      const section = document.createElement("section");
+      section.className = "menu-section mb-10 pt-4 scroll-mt-32";
+      section.id = `cat-${catId}`;
+      section.setAttribute("data-cat-id", catId);
+      
+      const header = document.createElement("div");
+      header.className = "flex items-center gap-3 mb-6";
+      
+      const title = document.createElement("h2");
+      title.className = "text-2xl font-black text-gray-900 uppercase tracking-tight";
+      title.textContent = this.getCategoryName(catId);
+      
+      header.appendChild(title);
+      const divider = document.createElement("div");
+      divider.className = "flex-1 h-px bg-accent";
+      header.appendChild(divider);
+      
+      section.appendChild(header);
+
+      const grid = document.createElement("div");
+      grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
+      grid.setAttribute("role", "list");
+
+      catProduits.forEach((p) => {
+        const item = this.createMenuItem(p);
+        grid.appendChild(item);
+      });
+
+      section.appendChild(grid);
+      fragment.appendChild(section);
+    });
+
+    this.container.appendChild(fragment);
+  }
+
+  createMenuItem(p) {
+    const clone = this.template.content.cloneNode(true);
+    const root = clone.querySelector("[role='listitem']");
+    
+    root.setAttribute("data-action", "open-product-modal");
+    root.setAttribute("data-id", p.id);
+
+    const img = clone.querySelector(".menu-item-image");
+    img.src = p.image || "./assets/logo.webp";
+    img.alt = p.nom;
+    img.onerror = () => { img.src = "./assets/logo.webp"; };
+
+    clone.querySelector(".menu-item-name").textContent = p.nom;
+    clone.querySelector(".menu-item-price").textContent = `${p.prix.toFixed(2)} €`;
+    clone.querySelector(".menu-item-desc").textContent = p.description || "";
+
+    if (p.badge) {
+      const badge = clone.querySelector(".menu-item-badge");
+      badge.textContent = p.badge;
+      badge.classList.remove("hidden");
+    }
+
+    if (p.isVegan) clone.querySelector(".menu-item-tag-vegan").classList.remove("hidden");
+    if (p.isSpicy) clone.querySelector(".menu-item-tag-spicy").classList.remove("hidden");
+
+    return clone;
+  }
+
+  renderBestSellers(menu) {
+    if (!this.bestSellersContainer) return;
+    this.bestSellersContainer.innerHTML = "";
+
+    const top3 = [...menu].sort((a, b) => (b.ventes || 0) - (a.ventes || 0)).slice(0, 3);
+    const fragment = document.createDocumentFragment();
+
+    top3.forEach((p) => {
+      const item = this.createMenuItem(p);
+      // Pour les bestsellers, on ajoute une classe spécifique pour le scroll horizontal sur mobile
+      const wrapper = item.querySelector("[role='listitem']");
+      wrapper.classList.add("snap-center", "shrink-0", "w-[85%]", "md:w-auto");
+      fragment.appendChild(item);
+    });
+
+    this.bestSellersContainer.appendChild(fragment);
+  }
+
+  renderCategoriesNav(menu) {
+    const nav = document.getElementById("menu-categories-nav");
+    if (!nav) return;
+    nav.innerHTML = "";
+
+    const categories = [...new Set(menu.map((p) => p.categorieId))].filter(Boolean);
+    categories.forEach((catId) => {
+      const btn = document.createElement("button");
+      btn.className = "cat-pill whitespace-nowrap px-4 py-2 rounded-xl bg-gray-100 text-gray-600 font-bold text-sm transition-all active:scale-95 border-2 border-transparent";
+      btn.textContent = this.getCategoryName(catId);
+      btn.onclick = () => {
+        const target = document.getElementById(`cat-${catId}`);
+        if (target && this.scrollContainer) {
+            const headerHeight = document.querySelector('#full-menu .sticky')?.offsetHeight || 120;
+            const targetPos = (target.getBoundingClientRect().top - this.scrollContainer.getBoundingClientRect().top) + this.scrollContainer.scrollTop - headerHeight - 10;
+            this.scrollContainer.scrollTo({ top: targetPos, behavior: 'smooth' });
+        }
+      };
+      nav.appendChild(btn);
+    });
+  }
+
+  getCategoryName(id) {
+    const names = {
+      burgers: "🍔 Burgers",
+      tacos: "🌯 Tacos",
+      drinks: "🥤 Boissons",
+      sides: "🍟 Accompagnements",
+      desserts: "🍰 Desserts"
+    };
+    return names[id] || id.charAt(0).toUpperCase() + id.slice(1);
+  }
+
+  handleSearch(query) {
+    const clearBtn = document.getElementById("clear-search-btn");
+    if (clearBtn) {
+      if (query) clearBtn.classList.remove("hidden");
+      else clearBtn.classList.add("hidden");
+    }
+    this.renderFullMenu(store.state.menu, query);
+  }
 }
 
-window.chargerMenuComplet = async () => {
-  const fullMenuContainer = document.getElementById("full-menu-container");
-  const bestSellersContainer = document.getElementById("bestsellers-container");
-  const categoriesNav = document.getElementById("menu-categories-nav");
-  const scrollContainer = document.getElementById("full-menu");
-  const snackId = window.snackConfig?.identity?.id;
+export const menuUI = new MenuUI();
 
+// Compatibilité globale (Temps Réel)
+window.chargerMenuComplet = () => {
+  const cfg = store.state.config;
+  const snackId = cfg?.identity?.id;
   if (!snackId) return;
 
-  try {
-    const { query, collection, where, getDocs } = window.fs;
-    const snapshot = await getDocs(query(collection(window.db, "produits"), where("snackId", "==", snackId)));
+  const { query, collection, where, onSnapshot } = window.fs;
+  const q = query(collection(window.db, "produits"), where("snackId", "==", snackId));
 
+  // Écoute en temps réel les changements de produits (stocks, prix, etc.)
+  return onSnapshot(q, (snapshot) => {
     let tousLesProduits = [];
-    window.menuGlobal.length = 0;
     snapshot.forEach((doc) => {
-      const item = { id: doc.id, ...doc.data() };
-      tousLesProduits.push(item);
-      window.menuGlobal.push(item);
+      tousLesProduits.push({ id: doc.id, ...doc.data() });
     });
 
-    const cfg = window.snackConfig;
-
-    if (bestSellersContainer) {
-      const top3 = [...tousLesProduits].sort((a, b) => (b.ventes || 0) - (a.ventes || 0)).slice(0, 3);
-      if (top3.length > 0) {
-        bestSellersContainer.innerHTML = top3.map(item => `<div>${createProductCard(item, cfg, true)}</div>`).join("");
-      } else {
-        bestSellersContainer.innerHTML = "<p class='text-gray-400 col-span-full text-center py-10'>Découvrez nos produits ci-dessous.</p>";
-      }
-    }
-
-    if (fullMenuContainer) {
-        const categoriesMap = new Map();
-        tousLesProduits.forEach(p => {
-          if (!p.categorieId) return;
-          if (!categoriesMap.has(p.categorieId)) {
-            const rawTitle = p.categorieTitre || p.categorieId;
-            const cleanTitle = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
-            categoriesMap.set(p.categorieId, { id: p.categorieId, title: cleanTitle, icon: p.icon || "🍽️", produits: [] });
-          }
-          categoriesMap.get(p.categorieId).produits.push(p);
-        });
-
-        const menuCategories = Array.from(categoriesMap.values()).sort((a, b) => {
-          const ordre = ["tacos", "burgers", "wraps", "pizzas", "sides", "drinks", "desserts"];
-          return (ordre.indexOf(a.id) === -1 ? 99 : ordre.indexOf(a.id)) - (ordre.indexOf(b.id) === -1 ? 99 : ordre.indexOf(b.id));
-        });
-
-        // Helper pour mettre à jour l'UI des boutons
-        const updateActivePill = (catId) => {
-            if (!categoriesNav) return;
-            const activeBtn = categoriesNav.querySelector(`[data-target="cat-${catId}"]`);
-            if (activeBtn) {
-                categoriesNav.querySelectorAll('.cat-pill').forEach(b => {
-                    b.classList.remove('bg-gray-900', 'text-white', 'border-primary');
-                    b.classList.add('bg-gray-100', 'text-gray-600');
-                });
-                activeBtn.classList.add('bg-gray-900', 'text-white', 'border-primary');
-                activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
-                activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-            }
-        };
-
-        if (categoriesNav) {
-          categoriesNav.innerHTML = menuCategories.map(cat => `
-            <button data-target="cat-${cat.id}" class="cat-pill whitespace-nowrap px-4 py-2 rounded-xl bg-gray-100 text-gray-600 font-bold text-sm transition-all active:scale-95 flex items-center gap-2 border-2 border-transparent">
-                <span>${cat.icon}</span>
-                <span>${cat.title}</span>
-            </button>
-          `).join("");
-
-          categoriesNav.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const targetId = btn.getAttribute('data-target');
-              const targetEl = document.getElementById(targetId);
-              
-              if (targetEl && scrollContainer) {
-                // On active immédiatement le bouton pour un feedback visuel instantané
-                isManualScrolling = true;
-                const catId = targetId.replace('cat-', '');
-                updateActivePill(catId);
-
-                // Calcul précis du scroll
-                const headerHeight = document.querySelector('#full-menu .sticky')?.offsetHeight || 120;
-                const targetPos = (targetEl.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top) + scrollContainer.scrollTop - headerHeight - 10;
-                
-                scrollContainer.scrollTo({ top: targetPos, behavior: 'smooth' });
-
-                // On libère le Scroll Spy après l'animation (environ 600ms)
-                setTimeout(() => { isManualScrolling = false; }, 800);
-              }
-            });
-          });
-        }
-
-        fullMenuContainer.innerHTML = menuCategories.map(cat => `
-          <div id="cat-${cat.id}" class="menu-section mb-10 pt-4" data-cat-id="${cat.id}" style="scroll-margin-top: 140px;">
-              <div class="flex items-center gap-3 mb-6">
-                  <span class="text-2xl">${cat.icon}</span>
-                  <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight">${cat.title}</h2>
-                  <div class="flex-1 h-px bg-accent"></div>
-                  <span class="text-xs font-bold text-black">${cat.produits.length} ${cat.produits.length <= 1 ? "produit" : "produits"}</span>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                  ${cat.produits.map(item => createProductCard(item, cfg, false)).join("")}
-              </div>
-          </div>
-        `).join("");
-
-        const observerOptions = {
-          root: scrollContainer,
-          rootMargin: '-130px 0px -70% 0px',
-          threshold: 0
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-          if (isManualScrolling) return; // Ne pas interférer pendant un clic
-
-          const isAtBottom = scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50;
-          if (isAtBottom) return;
-
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              updateActivePill(entry.target.getAttribute('data-cat-id'));
-            }
-          });
-        }, observerOptions);
-
-        fullMenuContainer.querySelectorAll('.menu-section').forEach(section => observer.observe(section));
-
-        scrollContainer.addEventListener('scroll', () => {
-            if (isManualScrolling) return;
-            const isAtBottom = scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 20;
-            if (isAtBottom && menuCategories.length > 0) {
-                updateActivePill(menuCategories[menuCategories.length - 1].id);
-            }
-        }, { passive: true });
-    }
-
+    store.setMenu(tousLesProduits);
     window.dispatchEvent(new CustomEvent("snack:menu:ready"));
-  } catch (error) {
-    console.error("🔥 Erreur Menu :", error);
-  }
+  }, (err) => {
+    console.error("Erreur temps réel menu :", err);
+  });
 };
-
-// ============================================================================
-// 🔍 RECHERCHE & UX
-// ============================================================================
-document.addEventListener("DOMContentLoaded", () => {
-  const searchInput = document.getElementById("menu-search-input");
-  const clearSearchBtn = document.getElementById("clear-search-btn");
-  const fullMenuContainer = document.getElementById("full-menu-container");
-
-  if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-      const term = e.target.value.toLowerCase().trim();
-      clearSearchBtn.classList.toggle("hidden", term.length === 0);
-
-      const items = fullMenuContainer?.querySelectorAll('[data-id]');
-      if (!items) return;
-      
-      items.forEach(card => {
-        const searchPool = card.getAttribute('data-search') || "";
-        const isMatch = searchPool.includes(term);
-        card.style.display = isMatch ? "" : "none";
-      });
-
-      fullMenuContainer.querySelectorAll('.menu-section').forEach(section => {
-        const visibleCards = section.querySelectorAll('[data-id]:not([style*="display: none"])');
-        section.style.display = visibleCards.length > 0 ? "" : "none";
-      });
-    });
-
-    clearSearchBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      searchInput.dispatchEvent(new Event("input"));
-      searchInput.focus();
-    });
-  }
-});

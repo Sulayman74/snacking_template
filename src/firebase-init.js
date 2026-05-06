@@ -155,11 +155,13 @@ onAuthStateChanged(auth, async (user) => {
     urlParams.get("s") || window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
 
   try {
-    // 1. Chargement de la config SaaS (Crucial pour la suite)
-    await window.loadSnackConfig(db, snackIdToLoad);
-
-    // Sécurité : Si pour une raison X ou Y la config n'est pas là, on arrête
-    if (!window.snackConfig) throw new Error("Config SaaS introuvable");
+    // 1. Chargement de la config SaaS
+    const config = await window.loadSnackConfig(db, snackIdToLoad);
+    if (!config) throw new Error("Config SaaS introuvable");
+    
+    // Le store émettra "config-updated" -> AppUI mettra à jour l'identité/thème
+    const { store } = await import("./core/Store.js");
+    store.setConfig(config);
 
     // 2. Récupération du rôle
     let role = "client";
@@ -171,18 +173,9 @@ onAuthStateChanged(auth, async (user) => {
       }
     }
 
-    // 3. Mise à jour de l'UI (le rôle pilote le bouton Scanner vs Ma Carte)
-    if (typeof window.updateUI === "function") {
-        window.updateUI(user, role);
-    } else {
-        // Fallback si ui.js n'est pas encore prêt (très rare avec type="module")
-        window.addEventListener('load', () => window.updateUI?.(user, role), { once: true });
-    }
-
-    // 4. Initialisation visuelle
-    if (typeof window.initAppVisuals === "function") {
-      await window.initAppVisuals();
-    }
+    // 3. Mise à jour de l'utilisateur dans le Store
+    // Le store émettra "auth-updated" -> AppUI mettra à jour les boutons nav/fidélité
+    store.setUser(user, role);
       
   } catch (error) {
     console.error("❌ Erreur Initialisation :", error);

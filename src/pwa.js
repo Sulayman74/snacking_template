@@ -156,6 +156,8 @@ function setupPullToRefresh() {
 
 window.setupPullToRefresh = setupPullToRefresh;
 
+import { store } from "./core/Store.js";
+
 // ============================================================================
 // ⭐ SMART APP REVIEW PROMPT
 // ============================================================================
@@ -252,7 +254,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const doOpen = () => window.openProductModal(targetId);
 
         // Si le menu est déjà chargé (retour dans l'app), ouvrir directement
-        if (window.menuGlobal && window.menuGlobal.length > 0) {
+        const menu = store.state.menu;
+        if (menu && menu.length > 0) {
           setTimeout(doOpen, 300);
         } else {
           // Sinon attendre que menu.js ait fini de charger Firestore

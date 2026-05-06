@@ -1,0 +1,193 @@
+/**
+ * 🎨 CartUI — Gestion de l'affichage du Panier (SOLID: Présentation)
+ */
+import { escapeHTML } from "../utils.js";
+import { store } from "../core/Store.js";
+
+class CartUI {
+    constructor() {
+        this.container = document.getElementById("cart-items-container");
+        this.totalPriceEl = document.getElementById("cart-total-price");
+        this.mobileBadge = document.getElementById("mobile-cart-badge");
+        this.desktopCtaBtn = document.getElementById("cta-nav");
+        this.cartModal = document.getElementById("cart-modal");
+        this.cartBackdrop = document.getElementById("cart-backdrop");
+        this.checkoutBtn = document.getElementById("checkout-btn");
+        this.template = document.getElementById("cart-item-template");
+
+        this.init();
+    }
+
+    init() {
+        // Écoute les changements du Store
+        store.addEventListener("cart-updated", () => this.render());
+        
+        // Initialisation de l'affichage
+        document.addEventListener("DOMContentLoaded", () => this.render());
+
+        // Gestion du Focus Trap
+        this.cartModal.addEventListener('keydown', (e) => this.handleFocusTrap(e));
+    }
+
+    render() {
+        const { cart } = store.state;
+        this.renderItems(cart);
+        this.updateBadges(cart);
+        this.updateTotal(cart);
+    }
+
+    renderItems(cart) {
+        if (!this.container) return;
+        this.container.innerHTML = "";
+
+        if (cart.length === 0) {
+            this.container.innerHTML = `<p class="text-center py-10 text-gray-500">Votre panier est vide.</p>`;
+            if (this.checkoutBtn) {
+                this.checkoutBtn.disabled = true;
+                this.checkoutBtn.classList.add("opacity-50");
+            }
+            return;
+        }
+
+        if (this.checkoutBtn) {
+            this.checkoutBtn.disabled = false;
+            this.checkoutBtn.classList.remove("opacity-50");
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        cart.forEach(item => {
+            const clone = this.template.content.cloneNode(true);
+            
+            // Image
+            const img = clone.querySelector(".cart-item-image");
+            const fallback = clone.querySelector(".cart-item-fallback");
+            if (item.image && item.image.trim() !== "") {
+                img.src = item.image;
+                img.alt = item.nom;
+                img.onerror = () => {
+                    img.style.display = 'none';
+                    fallback.style.display = 'flex';
+                };
+            } else {
+                img.style.display = 'none';
+                fallback.style.display = 'flex';
+            }
+
+            // Textes
+            clone.querySelector(".cart-item-name").textContent = item.nom;
+            clone.querySelector(".cart-item-price").textContent = `${(item.prix * item.quantity).toFixed(2)} €`;
+            clone.querySelector(".cart-item-quantity").textContent = item.quantity;
+
+            // Détails (Sauces, boissons, etc.)
+            const detailsContainer = clone.querySelector(".cart-item-details");
+            const details = this.getDetailsHTML(item);
+            if (details) {
+                detailsContainer.innerHTML = details; // On utilise innerHTML car details contient des icônes/balises sécurisées par escapeHTML avant
+            } else {
+                detailsContainer.remove();
+            }
+
+            // Actions
+            clone.querySelector(".cart-item-minus").onclick = () => store.updateQuantity(item.id, -1);
+            clone.querySelector(".cart-item-plus").onclick = () => store.updateQuantity(item.id, 1);
+
+            fragment.appendChild(clone);
+        });
+
+        this.container.appendChild(fragment);
+    }
+
+    getDetailsHTML(item) {
+        let detailsText = [];
+        if (item.boisson) detailsText.push(`🥤 ${escapeHTML(item.boisson)}`);
+        if (item.sauces && item.sauces.length > 0) {
+            const safeSauces = item.sauces.map((s) => escapeHTML(s)).join(", ");
+            detailsText.push(`🥣 ${safeSauces}`);
+        }
+
+        if (item.sansCrudites && item.sansCrudites.length > 0) {
+            const safeCrudites = item.sansCrudites.map((c) => escapeHTML(c)).join(", ");
+            detailsText.push(`<span class="text-red-600 font-black">⚠️ ${safeCrudites}</span>`);
+        }
+
+        return detailsText.length > 0
+            ? detailsText.join(" <span class='text-gray-300'>|</span> ")
+            : "";
+    }
+
+    updateBadges(cart) {
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const totalAmount = cart.reduce((total, item) => total + item.prix * item.quantity, 0).toFixed(2);
+
+        if (totalItems > 0) {
+            if (this.mobileBadge) {
+                this.mobileBadge.textContent = totalItems;
+                this.mobileBadge.classList.remove("hidden");
+                this.mobileBadge.classList.add("scale-125");
+                setTimeout(() => this.mobileBadge.classList.remove("scale-125"), 200);
+            }
+
+            if (this.desktopCtaBtn && this.desktopCtaBtn.getAttribute("data-action") === "open-cart") {
+                this.desktopCtaBtn.innerHTML = `<i class="fas fa-shopping-bag mr-2"></i> ${totalAmount} €`;
+            }
+        } else {
+            if (this.mobileBadge) this.mobileBadge.classList.add("hidden");
+            if (this.desktopCtaBtn && this.desktopCtaBtn.getAttribute("data-action") === "open-cart") {
+                this.desktopCtaBtn.innerHTML = `<i class="fas fa-shopping-bag mr-2"></i> Commander`;
+            }
+        }
+    }
+
+    updateTotal(cart) {
+        const total = cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
+        if (this.totalPriceEl) {
+            this.totalPriceEl.textContent = `${total.toFixed(2)} €`;
+        }
+    }
+
+    open() {
+        this.render();
+        this.cartBackdrop.classList.remove("opacity-0", "pointer-events-none");
+        this.cartModal.classList.remove("translate-y-full");
+        this.cartModal.setAttribute('aria-hidden', 'false');
+        
+        // Focus sur le premier élément
+        setTimeout(() => {
+            const firstFocusable = this.cartModal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (firstFocusable) firstFocusable.focus();
+        }, 300);
+    }
+
+    close() {
+        this.cartBackdrop.classList.add("opacity-0", "pointer-events-none");
+        this.cartModal.classList.add("translate-y-full");
+        this.cartModal.setAttribute('aria-hidden', 'true');
+    }
+
+    handleFocusTrap(e) {
+        const focusableElements = this.cartModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.key === 'Tab') {
+            if (e.shiftKey) { // Shift + Tab
+                if (document.activeElement === firstElement) {
+                    lastElement.focus();
+                    e.preventDefault();
+                }
+            } else { // Tab
+                if (document.activeElement === lastElement) {
+                    firstElement.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+
+        if (e.key === 'Escape') {
+            this.close();
+        }
+    }
+}
+
+export const cartUI = new CartUI();

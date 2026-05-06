@@ -1,0 +1,247 @@
+import { adminStore } from "../core/AdminStore.js";
+import { confirmAction } from "../utils/ModalManager.js";
+import { showToast } from "../utils.js";
+
+class AdminProductsUI {
+    constructor() {
+        this.grid = document.getElementById("admin-products-grid");
+        this.modal = document.getElementById("edit-product-modal");
+        this.form = document.getElementById("edit-product-form");
+        this.currentEditingId = null;
+        
+        this.init();
+    }
+
+    init() {
+        adminStore.addEventListener("admin-products-updated", () => this.render());
+        if (this.form) {
+            this.form.addEventListener("submit", (e) => this.handleSubmit(e));
+        }
+    }
+
+    render() {
+        if (!this.grid) return;
+        const products = adminStore.state.products;
+        
+        if (products.length === 0) {
+            this.grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-400 font-bold">Aucun produit trouvé.</p>`;
+            return;
+        }
+
+        this.grid.innerHTML = products.map(p => this.renderProductCard(p)).join("");
+    }
+
+    renderProductCard(p) {
+        const isAvailable = p.isAvailable !== false;
+        return `
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 group ${!isAvailable ? 'opacity-75 grayscale-[0.5]' : ''}">
+                <div class="relative h-48 overflow-hidden">
+                    <img src="${p.image || './assets/logo.webp'}" alt="${p.nom}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="absolute top-4 right-4">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${isAvailable ? 'bg-green-500 text-white' : 'bg-red-500 text-white shadow-lg'}">
+                            ${isAvailable ? 'En Stock' : 'Épuisé'}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="p-6 flex-1 flex flex-col">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-black text-xl text-gray-900">${p.nom}</h4>
+                        <button data-action="toggle-product-ui" data-id="${p.id}" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAvailable ? 'bg-green-500' : 'bg-gray-200'}">
+                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isAvailable ? 'translate-x-5' : 'translate-x-0'}"></span>
+                        </button>
+                    </div>
+                    <p class="text-gray-400 text-sm font-bold mb-4 line-clamp-2">${p.description || ''}</p>
+                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
+                        <span class="text-2xl font-black text-gray-900">${p.prix.toFixed(2)} €</span>
+                        <div class="flex gap-2">
+                            <button data-action="open-edit-modal" data-id="${p.id}" class="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center">
+                                <i class="fas fa-pen text-sm"></i>
+                            </button>
+                            <button data-action="delete-product-ui" data-id="${p.id}" class="w-10 h-10 rounded-xl bg-red-50 text-red-400 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">
+                                <i class="fas fa-trash text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    async handleToggle(productId) {
+        try {
+            await adminStore.toggleProductStatus(window.db, window.fs, productId);
+            // Pas besoin de showToast, le changement visuel est immédiat via le listener
+        } catch (error) {
+            showToast("Erreur lors de la modification du statut", "error");
+        }
+    }
+
+    async handleDelete(productId) {
+        const product = adminStore.state.products.find(p => p.id === productId);
+        if (!product) return;
+
+        const confirmed = await confirmAction({
+            title: "Supprimer le produit ?",
+            message: `Êtes-vous sûr de vouloir supprimer "${product.nom}" ? Cette action est irréversible.`,
+            confirmText: "Oui, supprimer",
+            type: "danger"
+        });
+
+        if (confirmed) {
+            try {
+                const { deleteDoc, doc } = window.fs;
+                await deleteDoc(doc(window.db, "produits", productId));
+                showToast("Produit supprimé !");
+            } catch (error) {
+                showToast("Erreur lors de la suppression", "error");
+            }
+        }
+    }
+
+    openModal(productId = null) {
+        this.currentEditingId = productId;
+        const product = productId ? adminStore.state.products.find(p => p.id === productId) : null;
+        
+        if (this.form) this.form.reset();
+        
+        document.getElementById("edit-modal-title").textContent = productId ? `Modifier : ${product.nom}` : "➕ Nouveau Produit";
+        document.getElementById("save-product-btn").innerHTML = productId ? '<i class="fas fa-save mr-2"></i> Enregistrer' : '<i class="fas fa-plus mr-2"></i> Créer le produit';
+
+        if (product) {
+            document.getElementById("edit-nom").value = product.nom || "";
+            document.getElementById("edit-desc").value = product.description || "";
+            document.getElementById("edit-prix").value = product.prix || 0;
+            document.getElementById("edit-prix-menu").value = product.menuPriceAdd || 2.5;
+            document.getElementById("edit-category").value = product.categorieId || "burgers";
+            document.getElementById("edit-tags").value = product.tags?.[0] || "";
+            document.getElementById("edit-allow-menu").checked = product.allowMenu !== false;
+            
+            // Image Preview
+            const imgEl = document.getElementById("edit-preview-img");
+            const fallbackEl = document.getElementById("edit-preview-fallback");
+            if (product.image) {
+                imgEl.src = product.image;
+                imgEl.style.display = "block";
+                fallbackEl.style.display = "none";
+            } else {
+                imgEl.style.display = "none";
+                fallbackEl.style.display = "flex";
+            }
+
+            // Options (Trigger events to show/hide sections)
+            document.getElementById("edit-has-crudites").checked = !!product.hasCrudites;
+            document.getElementById("edit-has-sauces").checked = !!product.choixSauces;
+            document.getElementById("edit-has-tailles").checked = !!product.tailles?.length;
+            
+            // Triggers
+            ["edit-has-crudites", "edit-has-sauces", "edit-has-tailles", "edit-allow-menu"].forEach(id => {
+                document.getElementById(id).dispatchEvent(new Event("change"));
+            });
+
+            // Populate dynamic lists
+            if (product.crudites) document.getElementById("edit-crudites-list").value = product.crudites.join(", ");
+            if (product.choixSauces) {
+                document.getElementById("edit-sauces-list").value = product.choixSauces.liste?.join(", ") || "";
+                document.getElementById("edit-sauces-max").value = product.choixSauces.max || 2;
+            }
+            if (product.tailles) {
+                const list = document.getElementById("edit-tailles-list");
+                list.innerHTML = "";
+                product.tailles.forEach(t => window.addTailleRow(t.nom, t.prix));
+            }
+        } else {
+            // New Product defaults
+            document.getElementById("edit-preview-img").style.display = "none";
+            document.getElementById("edit-preview-fallback").style.display = "flex";
+            document.getElementById("edit-category").value = "burgers";
+            ["edit-has-crudites", "edit-has-sauces", "edit-has-tailles"].forEach(id => {
+                document.getElementById(id).checked = false;
+                document.getElementById(id).dispatchEvent(new Event("change"));
+            });
+            document.getElementById("edit-allow-menu").checked = true;
+            document.getElementById("edit-allow-menu").dispatchEvent(new Event("change"));
+        }
+
+        this.modal.classList.remove("hidden");
+        setTimeout(() => {
+            this.modal.classList.remove("opacity-0");
+            this.modal.querySelector(".bg-white").classList.remove("scale-95");
+        }, 10);
+    }
+
+    async handleSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById("save-product-btn");
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sauvegarde...';
+        btn.disabled = true;
+
+        try {
+            const productData = this.collectFormData();
+            if (this.currentEditingId) productData.id = this.currentEditingId;
+
+            // Image Upload
+            const fileInput = document.getElementById("edit-img-file");
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const { ref, uploadBytes, getDownloadURL } = window.storageTools;
+                const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
+                const storageRef = ref(window.storage, `produits/${adminStore.state.config.identity.id}/${fileName}`);
+                await uploadBytes(storageRef, file);
+                productData.image = await getDownloadURL(storageRef);
+            } else if (this.currentEditingId) {
+                // Keep old image if no new file
+                const oldProduct = adminStore.state.products.find(p => p.id === this.currentEditingId);
+                if (oldProduct?.image) productData.image = oldProduct.image;
+            }
+
+            await adminStore.saveProduct(window.db, window.fs, productData);
+            showToast("Produit enregistré !", "success");
+            window.closeModal("edit-product-modal");
+        } catch (error) {
+            showToast(error.message, "error");
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
+
+    collectFormData() {
+        const hasTailles = document.getElementById("edit-has-tailles").checked;
+        const tailles = hasTailles ? Array.from(document.querySelectorAll("#edit-tailles-list .taille-row")).map(row => ({
+            nom: row.querySelector(".edit-taille-nom").value.trim(),
+            prix: parseFloat(row.querySelector(".edit-taille-prix").value) || 0
+        })).filter(t => t.nom !== "") : [];
+
+        const hasSauces = document.getElementById("edit-has-sauces").checked;
+        const sauces = hasSauces ? {
+            liste: document.getElementById("edit-sauces-list").value.split(",").map(s => s.trim()).filter(s => s !== ""),
+            max: parseInt(document.getElementById("edit-sauces-max").value) || 2
+        } : null;
+
+        const hasCrudites = document.getElementById("edit-has-crudites").checked;
+        const crudites = hasCrudites ? document.getElementById("edit-crudites-list").value.split(",").map(s => s.trim()).filter(s => s !== "") : null;
+
+        return {
+            nom: document.getElementById("edit-nom").value.trim(),
+            description: document.getElementById("edit-desc").value.trim(),
+            prix: hasTailles && tailles.length > 0 ? tailles[0].prix : parseFloat(document.getElementById("edit-prix").value) || 0,
+            menuPriceAdd: parseFloat(document.getElementById("edit-prix-menu").value) || 2.5,
+            categorieId: document.getElementById("edit-category").value,
+            tags: document.getElementById("edit-tags").value ? [document.getElementById("edit-tags").value] : [],
+            allowMenu: hasTailles ? false : document.getElementById("edit-allow-menu").checked,
+            hasCrudites: !!hasCrudites,
+            crudites,
+            choixSauces: (sauces && sauces.liste.length > 0) ? sauces : null,
+            tailles
+        };
+    }
+}
+
+export const adminProductsUI = new AdminProductsUI();
+
+// Bridge pour l'event delegation dans admin.js
+window.handleDeleteProductUI = (id) => adminProductsUI.handleDelete(id);
+window.handleToggleProductUI = (id) => adminProductsUI.handleToggle(id);
+window.openEditModal = (id) => adminProductsUI.openModal(id);
+window.openAddProductModal = () => adminProductsUI.openModal();

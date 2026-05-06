@@ -1,531 +1,318 @@
 // ============================================================================
-// 🍔 MODALE PRODUIT — Options, Prix, Ajout panier
+// 📦 MODALE PRODUIT — Détails et Options (SOLID: Présentation)
 // ============================================================================
-// Dépendances : window.menuGlobal, window.snackConfig, window.addToCart,
-//               window.showToast, window.triggerVibration
 
-let currentProduct = null;
+import { store } from "./core/Store.js";
+import { showToast, triggerVibration } from "./utils.js";
 
-function openProductModal(itemId) {
-  window.history.pushState(null, null, "#modal");
-  const cfg = window.snackConfig;
-  const item = window.menuGlobal.find((i) => i.id === itemId || i.nom === itemId);
-  
-  if (!item) {
-    console.error("Produit non trouvé :", itemId);
-    return;
+class ProductModalUI {
+  constructor() {
+    this.backdrop = document.getElementById("product-modal-backdrop");
+    this.modal = document.getElementById("product-modal");
+    this.closeBtn = document.getElementById("close-product-modal");
+    
+    this.currentProduct = null;
+    this.#init();
   }
 
-  // 1. Initialisation du produit en mémoire
-  currentProduct = {
-    id: item.id,
-    nom: item.nom || item.name,
-    prixBase: item.prix || item.price || 0,
-    prixMenu: item.menuPriceAdd || 2.5,
-    image: item.image,
-    allowMenu: item.allowMenu !== false,
-    tailleChoisie: null,
-  };
-
-  const devise = cfg.identity.currency || "€";
-
-  // 2. Gestion de l'Image et des Textes
-  const modalImg = document.getElementById("modal-img");
-  const imgContainer = modalImg ? modalImg.parentElement : null;
-  const oldFallback = document.getElementById("modal-img-fallback");
-  if (oldFallback) oldFallback.remove();
-
-  if (modalImg && imgContainer) {
-    if (currentProduct.image && currentProduct.image.trim() !== "") {
-      modalImg.style.display = "block";
-      modalImg.src = currentProduct.image;
-      modalImg.onerror = function () {
-        this.style.display = "none";
-        if (!document.getElementById("modal-img-fallback")) {
-          imgContainer.insertAdjacentHTML(
-            "beforeend",
-            `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-black opacity-50"></i></div>`,
-          );
-        }
-      };
-    } else {
-      modalImg.style.display = "none";
-      imgContainer.insertAdjacentHTML(
-        "beforeend",
-        `<div id="modal-img-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl z-0"><i class="fas fa-hamburger text-6xl text-black opacity-50"></i></div>`,
-      );
-    }
-  }
-
-  const titleEl = document.getElementById("modal-title");
-  const descEl = document.getElementById("modal-desc");
-  if (titleEl) titleEl.textContent = currentProduct.nom;
-  if (descEl) descEl.textContent = item.description || "";
-
-  // 3. Allergènes
-  const allergenContainer = document.getElementById("modal-allergens-container");
-  const allergenText = document.getElementById("modal-allergens");
-  if (allergenContainer && allergenText) {
-    if (item.allergenes && item.allergenes.length > 0) {
-      allergenContainer.classList.remove("hidden");
-      allergenText.textContent = item.allergenes.join(", ");
-    } else {
-      allergenContainer.classList.add("hidden");
-    }
-  }
-
-  // 4. L'AIGUILLAGE MAGIQUE DES OPTIONS
-  const btn = document.getElementById("modal-cta");
-  const optionsContainer = document.getElementById("modal-options-container");
-
-  if (!btn) return;
-
-  if (item.isAvailable === false) {
-    if (optionsContainer) optionsContainer.classList.add("hidden");
-    btn.innerHTML = `<i class="fas fa-ban mr-2"></i> Épuisé`;
-    btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2`;
-    btn.onclick = null;
-  } else {
-    if (cfg.features?.enableClickAndCollect) {
-      if (optionsContainer) {
-        optionsContainer.classList.remove("hidden");
-        let allOptionsHTML = "";
-
-        // --- MODULE 1 : PIZZAS (Tailles) ---
-        if (item.tailles && item.tailles.length > 0) {
-          currentProduct.allowMenu = false;
-          currentProduct.prixBase = item.tailles[0].prix;
-          currentProduct.tailleChoisie = item.tailles[0].nom;
-
-          allOptionsHTML += `
-                  <fieldset class="mb-2">
-                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
-                      <span>1. Choisissez la taille</span>
-                      <span class="text-xs font-bold bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
-                      </legend>
-                      <div class="grid grid-cols-2 gap-3">
-                      ${item.tailles
-                        .map(
-                          (taille, index) => `
-                          <label class="relative cursor-pointer group">
-                              <input type="radio" name="taille_produit" value="${taille.nom}" data-prix="${taille.prix}" ${index === 0 ? "checked" : ""}  class="sr-only peer">
-                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center justify-center text-center">
-                                  <span class="font-bold text-gray-900 mb-1">${taille.nom}</span>
-                                  <span class="font-black text-accent text-sm">${taille.prix.toFixed(2)} ${devise}</span>
-                              </div>
-                          </label>
-                      `,
-                        )
-                        .join("")}
-                      </div>
-                      ${item.ingredients ? `<p class="text-sm text-gray-500 font-medium mt-1 bg-gray-50 p-3 rounded-xl border border-gray-100"><i class="fas fa-leaf mr-2 text-green-500"></i> ${item.ingredients.join(", ")}</p>` : ""}
-                  </fieldset>
-                  `;
-        }
-        // --- MODULE 2 : BURGERS / TACOS (Seul ou Menu) ---
-        else if (currentProduct.allowMenu) {
-          const boissonsDispo = window.menuGlobal.filter(
-            (i) => i.categorieId === "drinks" && i.isAvailable !== false,
-          );
-          const listeBoissons =
-            boissonsDispo.length > 0
-              ? boissonsDispo
-              : [{ nom: "Coca-Cola" }, { nom: "Eau" }];
-
-          allOptionsHTML += `
-                  <fieldset class="mb-2">
-                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
-                      <span>1. Formule</span>
-                      <span class="text-xs font-bold bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-wider">Obligatoire</span>
-                      </legend>
-                      <div class="grid grid-cols-2 gap-3">
-                          <label class="relative cursor-pointer">
-                              <input type="radio" name="formule" value="seul" checked class="sr-only peer">
-                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center">
-                                  <i class="fas fa-hamburger text-2xl text-gray-400 mb-2 peer-checked:text-accent"></i>
-                                  <span class="font-bold text-gray-900">Seul</span>
-                                  <span class="font-black text-gray-500 mt-1">${currentProduct.prixBase.toFixed(2)} ${devise}</span>
-                              </div>
-                          </label>
-
-                          <label class="relative cursor-pointer">
-                              <input type="radio" name="formule" value="menu" class="sr-only peer">
-                              <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light hover:border-gray-300 hover:bg-gray-50 transition-all flex flex-col items-center justify-center text-center relative overflow-hidden">
-                                  <div class="absolute -right-6 -top-6 w-16 h-16 bg-accent rounded-full opacity-10"></div>
-                                  <div class="flex gap-1 mb-2">
-                                      <i class="fas fa-hamburger text-xl text-gray-400 peer-checked:text-accent"></i>
-                                      <i class="fas fa-plus text-xs text-primary ml-2 mt-1"></i>
-                                      <i class="fas fa-fries text-xl text-gray-400 peer-checked:text-accent"></i>
-                                  </div>
-                                  <span class="font-bold text-gray-900">En Menu</span>
-                                  <span class="font-black text-accent mt-1">+ ${currentProduct.prixMenu.toFixed(2)} ${devise}</span>
-                              </div>
-                          </label>
-                      </div>
-                  </fieldset>
-
-                  <fieldset id="drink-section" class="mb-2 hidden opacity-0 transition-all duration-300 transform translate-y-4">
-                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
-                      <span>2. Votre Boisson</span>
-                      <span class="text-xs font-bold bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-wider shadow-sm">Choix requis</span>
-                      </legend>
-                      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          ${listeBoissons
-                            .map(
-                              (boisson, index) => `
-                              <label class="relative cursor-pointer">
-                                  <input type="radio" name="boisson" value="${boisson.nom}" ${index === 0 ? "checked" : ""} class="sr-only peer">
-                                  <div class="p-3 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex items-center gap-3">
-                                      <div class="w-8 h-8 flex items-center justify-center peer-checked:bg-primary transition-colors">
-                                          <i class="fas fa-glass-water shadow-sm text-accent"></i>
-                                      </div>
-                                      <span class="font-bold text-gray-800 text-sm leading-tight">${boisson.nom}</span>
-                                  </div>
-                              </label>
-                          `,
-                            )
-                            .join("")}
-                      </div>
-                  </fieldset>
-                  `;
-        }
-
-        // --- MODULE 3 : KEBABS (Crudités) ---
-        if (item.hasCrudites) {
-          const listeCrudites =
-            Array.isArray(item.crudites) && item.crudites.length > 0
-              ? item.crudites
-              : ["Salade", "Tomate", "Oignon"];
-          allOptionsHTML += `
-                  <fieldset class="mb-2">
-                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
-                      <span>Garniture</span>
-                      <span class="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded uppercase tracking-wider">Inclus</span>
-                      </legend>
-                      <p class="text-sm text-gray-500 mb-1 font-medium">Décochez pour retirer un ingrédient.</p>
-                      <div class="flex flex-wrap gap-3">
-                          ${listeCrudites
-                            .map(
-                              (c) => `
-                              <label class="relative cursor-pointer group">
-                                  <input type="checkbox" name="crudite" value="${c}" checked class="sr-only peer">
-                                  <div class="px-4 py-2 border-2 rounded-full font-bold text-sm transition-all border-red-200 bg-red-50 text-red-800 line-through opacity-70 hover:opacity-100 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-800 peer-checked:no-underline peer-checked:opacity-100 peer-checked:hover:bg-green-100">
-                                      <i class="fas fa-check mr-1 peer-checked:inline-block hidden"></i>
-                                      <i class="fas fa-times mr-1 peer-checked:hidden inline-block text-gray-400"></i>
-                                      ${c}
-                                  </div>
-                              </label>
-                          `,
-                            )
-                            .join("")}
-                      </div>
-                  </fieldset>
-                  `;
-        }
-        // --- MODULE 4 : SAUCES ---
-        if (item.choixSauces) {
-          const sauces = item.choixSauces.liste || [
-            "Blanche",
-            "Algérienne",
-            "Samouraï",
-            "Mayonnaise",
-          ];
-          const maxSauces = item.choixSauces.max || 2;
-          allOptionsHTML += `
-                  <fieldset class="mb-2">
-                      <legend class="text-lg font-black text-gray-900 mb-1 flex justify-between w-full items-center">
-                      <span>Sauces</span>
-                      <span class="text-xs font-bold bg-gray-900 text-white px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                          <span id="sauce-counter-ui">0</span> / ${maxSauces} max
-                      </span>
-                      </legend>
-                      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          ${sauces
-                            .map(
-                              (sauce) => `
-                              <label class="relative cursor-pointer block">
-                                  <input type="checkbox" name="sauce" value="${sauce}" data-max="${maxSauces}" class="sr-only peer sauce-checkbox">
-                                  <div class="h-full p-4 border-2 border-gray-100 shadow-sm rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex items-center justify-center text-center">
-                                      <span class="font-bold text-gray-800 text-sm leading-tight">${sauce}</span>
-                                  </div>
-                              </label>
-                          `,
-                            )
-                            .join("")}
-                      </div>
-                  </fieldset>
-                  `;
-        }
-
-        if (allOptionsHTML === "") {
-          optionsContainer.classList.add("hidden");
-        } else {
-          optionsContainer.innerHTML = allOptionsHTML;
-          toggleDrinkSection();
-        }
+  #init() {
+    // Fermeture Esc
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !this.modal.classList.contains("translate-y-full")) {
+        this.close();
       }
-    } else {
-      if (optionsContainer) optionsContainer.classList.add("hidden");
+    });
+
+    // Fermeture clic backdrop
+    if (this.backdrop) {
+      this.backdrop.onclick = () => this.close();
+    }
+  }
+
+  open(itemId) {
+    const { menu, config: cfg } = store.state;
+    const item = menu.find((i) => i.id === itemId || i.nom === itemId);
+    
+    if (!item) return;
+
+    window.history.pushState(null, null, "#modal");
+    
+    this.currentProduct = {
+      id: item.id,
+      nom: item.nom,
+      prixBase: item.prix,
+      prixMenu: item.menuPriceAdd || 2.5,
+      image: item.image,
+      allowMenu: item.allowMenu !== false,
+      tailleChoisie: null,
+    };
+
+    this.#renderContent(item, cfg);
+    this.#show();
+    this.#setupFocusTrap();
+  }
+
+  #renderContent(item, cfg) {
+    const devise = cfg.identity.currency || "€";
+    
+    // Images & Textes (Sécurisés via textContent)
+    const modalImg = document.getElementById("modal-img");
+    if (modalImg) {
+      modalImg.src = item.image || "./assets/logo.webp";
+      modalImg.alt = item.nom;
+      modalImg.onerror = () => { modalImg.src = "./assets/logo.webp"; };
     }
 
-    // 🎯 L'AIGUILLAGE DU BOUTON PRINCIPAL (LE CTA)
+    document.getElementById("modal-title").textContent = item.nom;
+    document.getElementById("modal-desc").textContent = item.description || "";
+
+    // Allergènes
+    const allergenContainer = document.getElementById("modal-allergens-container");
+    const allergenText = document.getElementById("modal-allergens");
+    if (item.allergenes?.length > 0) {
+      allergenContainer?.classList.remove("hidden");
+      if (allergenText) allergenText.textContent = item.allergenes.join(", ");
+    } else {
+      allergenContainer?.classList.add("hidden");
+    }
+
+    // Options
+    const optionsContainer = document.getElementById("modal-options-container");
+    const btn = document.getElementById("modal-cta");
+    
+    if (!item.isAvailable) {
+      optionsContainer?.classList.add("hidden");
+      if (btn) {
+        btn.textContent = "Épuisé";
+        btn.className = "w-full py-4 rounded-xl font-bold text-white bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2";
+        btn.onclick = null;
+      }
+      return;
+    }
+
+    this.#renderOptions(item, cfg, optionsContainer);
+    this.#updateCTA(cfg, btn);
+  }
+
+  #renderOptions(item, cfg, container) {
+    if (!cfg.features?.enableClickAndCollect) {
+        container?.classList.add("hidden");
+        return;
+    }
+
+    container?.classList.remove("hidden");
+    let html = "";
+    const devise = cfg.identity.currency || "€";
+
+    // Module Tailles (Pizzas)
+    if (item.tailles?.length > 0) {
+      this.currentProduct.allowMenu = false;
+      this.currentProduct.prixBase = item.tailles[0].prix;
+      this.currentProduct.tailleChoisie = item.tailles[0].nom;
+
+      html += `<fieldset class="mb-4">
+        <legend class="text-lg font-black text-gray-900 mb-2 flex justify-between items-center">
+            <span>Taille</span>
+            <span class="text-[10px] font-black bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-widest">Obligatoire</span>
+        </legend>
+        <div class="grid grid-cols-2 gap-3">
+            ${item.tailles.map((t, i) => `
+                <label class="relative cursor-pointer">
+                    <input type="radio" name="taille_produit" value="${t.nom}" data-prix="${t.prix}" ${i === 0 ? "checked" : ""} class="sr-only peer" onchange="window.updateProductSize(this)">
+                    <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
+                        <span class="font-bold text-gray-900">${t.nom}</span>
+                        <span class="font-black text-accent text-sm">${t.prix.toFixed(2)} ${devise}</span>
+                    </div>
+                </label>
+            `).join("")}
+        </div>
+      </fieldset>`;
+    }
+
+    // Module Menu (Burgers/Tacos)
+    else if (this.currentProduct.allowMenu) {
+      const drinks = store.state.menu.filter(i => i.categorieId === "drinks" && i.isAvailable !== false);
+      html += `<fieldset class="mb-4">
+        <legend class="text-lg font-black text-gray-900 mb-2 flex justify-between items-center">
+            <span>Formule</span>
+            <span class="text-[10px] font-black bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-widest">Obligatoire</span>
+        </legend>
+        <div class="grid grid-cols-2 gap-3">
+            <label class="relative cursor-pointer">
+                <input type="radio" name="formule" value="seul" checked class="sr-only peer" onchange="window.toggleDrinkSection()">
+                <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
+                    <span class="font-bold text-gray-900">Seul</span>
+                    <span class="text-sm font-black text-gray-500">${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>
+                </div>
+            </label>
+            <label class="relative cursor-pointer">
+                <input type="radio" name="formule" value="menu" class="sr-only peer" onchange="window.toggleDrinkSection()">
+                <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
+                    <span class="font-bold text-gray-900">En Menu</span>
+                    <span class="text-sm font-black text-accent">+ ${this.currentProduct.prixMenu.toFixed(2)} ${devise}</span>
+                </div>
+            </label>
+        </div>
+      </fieldset>
+      <fieldset id="drink-section" class="mb-4 hidden opacity-0 transition-all">
+        <legend class="text-lg font-black text-gray-900 mb-2">Votre Boisson</legend>
+        <div class="grid grid-cols-2 gap-3">
+            ${drinks.slice(0, 6).map((d, i) => `
+                <label class="relative cursor-pointer">
+                    <input type="radio" name="boisson" value="${d.nom}" ${i === 0 ? "checked" : ""} class="sr-only peer">
+                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex items-center gap-2">
+                        <i class="fas fa-glass-water text-accent"></i>
+                        <span class="font-bold text-gray-800 text-sm">${d.nom}</span>
+                    </div>
+                </label>
+            `).join("")}
+        </div>
+      </fieldset>`;
+    }
+
+    // Sauces
+    if (item.choixSauces) {
+      const max = item.choixSauces.max || 2;
+      const list = item.choixSauces.liste || ["Blanche", "Algérienne", "Samouraï", "Mayonnaise"];
+      html += `<fieldset class="mb-4">
+        <legend class="text-lg font-black text-gray-900 mb-2 flex justify-between items-center">
+            <span>Sauces (${max} max)</span>
+            <span class="text-[10px] font-black bg-gray-900 text-white px-2 py-1 rounded-full uppercase tracking-widest">
+                <span id="sauce-counter-ui">0</span> / ${max}
+            </span>
+        </legend>
+        <div class="grid grid-cols-2 gap-3">
+            ${list.map(s => `
+                <label class="relative cursor-pointer">
+                    <input type="checkbox" name="sauce" value="${s}" data-max="${max}" class="sr-only peer sauce-checkbox" onchange="window.checkSauceLimit(event, ${max})">
+                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex justify-center items-center">
+                        <span class="font-bold text-gray-800 text-sm">${s}</span>
+                    </div>
+                </label>
+            `).join("")}
+        </div>
+      </fieldset>`;
+    }
+
+    container.innerHTML = html;
+  }
+
+  #updateCTA(cfg, btn) {
+    if (!btn) return;
+    const devise = cfg.identity.currency || "€";
+
     if (cfg.features?.enableClickAndCollect) {
-      btn.className = `w-full py-4 rounded-xl font-bold text-white text-center shadow-lg text-lg bg-gray-900 hover:bg-black hover:-translate-y-1 transition-all flex justify-center items-center gap-2`;
-      btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-      btn.setAttribute("data-action", "add-to-cart");
-    } else if (!cfg.features?.enableOnlineOrder) {
-      btn.innerHTML = `<i class="fas fa-times mr-2" aria-hidden="true"></i> Fermer`;
-      btn.className = "w-full py-4 rounded-full font-bold text-gray-800 text-center shadow-md text-lg bg-gray-100 hover:bg-gray-200 border border-accent hover:border-gray-400 transition-all flex justify-center items-center gap-2";
-      btn.setAttribute("data-action", "close-product-modal");
-    } else if (cfg.features?.enableDelivery) {
-      btn.innerHTML = `<i class="fas fa-motorcycle mr-2"></i> Commander en livraison`;
-      btn.className = "w-full py-4 rounded-full font-bold text-on-primary text-center shadow-lg text-lg bg-primary hover:opacity-90 hover:-translate-y-1 transition-all flex justify-center items-center gap-2";
-      btn.onclick = () => {
-        if (
-          cfg.deliveryUrl &&
-          cfg.deliveryUrl.trim() !== "" &&
-          cfg.deliveryUrl !== "#"
-        ) {
-          window.open(cfg.deliveryUrl, "_blank");
-        } else {
-          window.showToast("Le lien de livraison n'est pas configuré.", "error");
-          window.triggerVibration?.("error");
-        }
-      };
+      btn.innerHTML = `<span>Ajouter - ${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+      btn.className = "w-full py-4 rounded-xl font-bold text-white bg-gray-900 hover:bg-black transition-all flex justify-center items-center gap-2";
+      btn.onclick = () => window.confirmAddToCart();
     } else {
-      const phone = cfg.contact?.phone
-        ? cfg.contact.phone.replace(/\s/g, "")
-        : "";
-      btn.innerHTML = `<i class="fas fa-phone mr-2 animate-pulse"></i> Appeler pour commander`;
-      btn.className = "w-full py-4 rounded-full font-bold text-on-primary text-center shadow-lg text-lg bg-primary hover:-translate-y-1 transition-all flex justify-center items-center gap-2";
-      btn.onclick = () => {
-        if (phone) {
-          window.location.href = `tel:${phone}`;
-        } else {
-          window.showToast("Numéro non renseigné", "error");
-          window.triggerVibration?.("error");
-        }
-      };
+      btn.textContent = "Fermer";
+      btn.className = "w-full py-4 rounded-xl font-bold text-gray-800 bg-gray-100 hover:bg-gray-200 transition-all flex justify-center items-center gap-2";
+      btn.onclick = () => this.close();
     }
   }
 
-  // 🔗 LOGIQUE DU BOUTON PARTAGE VIRAL
-  const shareBtn = document.getElementById("modal-share-btn");
-  // URL de partage : format deep-link géré par pwa.js (?action=product&id=)
-  const shareUrl = `${window.location.origin}${window.location.pathname}?action=product&id=${currentProduct.id}`;
-  if (shareBtn) {
-    if (cfg.features?.enableViralShare === true) {
-      shareBtn.classList.remove("hidden");
-      shareBtn.classList.add("flex");
-
-      shareBtn.onclick = () => {
-        if (navigator.share) {
-          navigator
-            .share({
-              title: `Découvre le ${currentProduct.nom} !`,
-              text: `Regarde ce que j'ai trouvé chez ${cfg.identity.name} : ${currentProduct.nom}`,
-              url: shareUrl,
-            })
-            .then(() => console.log("Partage réussi"))
-            .catch((error) => console.log("Erreur de partage", error));
-        } else {
-          navigator.clipboard.writeText(shareUrl);
-          window.showToast("Le partage n'est pas supporté ici", "error");
-        }
-      };
-    } else {
-      shareBtn.classList.add("hidden");
-      shareBtn.classList.remove("flex");
-    }
-  }
-
-  // 5. Affichage final
-  const backdrop = document.getElementById("product-modal-backdrop");
-  const sheet = document.getElementById("product-modal");
-  if (backdrop && sheet) {
-    backdrop.classList.remove("hidden");
+  #show() {
+    if (!this.backdrop || !this.modal) return;
+    this.backdrop.classList.remove("hidden");
     setTimeout(() => {
-      backdrop.classList.remove("opacity-0");
-      sheet.classList.remove(
-        "translate-y-full",
-        "md:opacity-0",
-        "md:pointer-events-none",
-        "md:scale-95",
-      );
+      this.backdrop.classList.remove("opacity-0");
+      this.modal.classList.remove("translate-y-full", "md:opacity-0", "md:scale-95");
     }, 10);
     document.body.style.overflow = "hidden";
   }
-}
 
-// ============================================================================
-// 🍹 BASCULE AFFICHAGE BOISSONS
-// ============================================================================
-function toggleDrinkSection() {
-  const formuleInput = document.querySelector('input[name="formule"]:checked');
-  const drinkSection = document.getElementById("drink-section");
-  const btn = document.getElementById("modal-cta");
-  const devise = window.snackConfig?.identity?.currency || "€";
-
-  if (!formuleInput) {
-    if (drinkSection) {
-      drinkSection.classList.remove("translate-y-0", "opacity-100");
-      drinkSection.classList.add("translate-y-4", "opacity-0");
-      setTimeout(() => drinkSection.classList.add("hidden"), 300);
-    }
-    return;
+  close() {
+    if (!this.backdrop || !this.modal) return;
+    this.modal.classList.add("translate-y-full", "md:opacity-0", "md:scale-95");
+    this.backdrop.classList.add("opacity-0");
+    setTimeout(() => {
+      this.backdrop.classList.add("hidden");
+      document.body.style.overflow = "";
+    }, 300);
   }
 
-  const isMenu = formuleInput.value === "menu";
+  #setupFocusTrap() {
+    const focusable = this.modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
 
-  window.triggerVibration?.("light");
+    this.modal.onkeydown = (e) => {
+      if (e.key === "Tab") {
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
+    };
+    setTimeout(() => first.focus(), 100);
+  }
 
-  if (isMenu) {
-    if (drinkSection) {
-      drinkSection.classList.remove("hidden");
-      setTimeout(() => {
-        drinkSection.classList.remove("translate-y-4", "opacity-0");
-        drinkSection.classList.add("translate-y-0", "opacity-100");
-      }, 20);
-    }
-    if (btn) {
-      btn.innerHTML = `<span>Ajouter - ${(currentProduct.prixBase + currentProduct.prixMenu).toFixed(2)} ${devise}</span>`;
-    }
-  } else {
-    if (drinkSection) {
-      drinkSection.classList.remove("translate-y-0", "opacity-100");
-      drinkSection.classList.add("translate-y-4", "opacity-0");
-      setTimeout(() => drinkSection.classList.add("hidden"), 300);
-    }
-    if (btn) {
-      btn.innerHTML = `<span>Ajouter - ${currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-    }
+  confirmAddToCart() {
+    const formule = document.querySelector('input[name="formule"]:checked')?.value || "seul";
+    const isMenu = formule === "menu";
+    const sauces = Array.from(document.querySelectorAll(".sauce-checkbox:checked")).map(cb => cb.value);
+    const boisson = isMenu ? document.querySelector('input[name="boisson"]:checked')?.value : null;
+    
+    if (isMenu && !boisson) return showToast("Choisissez une boisson", "error");
+
+    const uniqueId = `${this.currentProduct.id}-${formule}-${sauces.join("-")}-${this.currentProduct.tailleChoisie || ""}`;
+    
+    store.addToCart({
+      id: uniqueId,
+      productId: this.currentProduct.id,
+      nom: isMenu ? `Menu ${this.currentProduct.nom}` : this.currentProduct.nom,
+      prix: this.currentProduct.prixBase + (isMenu ? this.currentProduct.prixMenu : 0),
+      image: this.currentProduct.image,
+      sauces,
+      boisson,
+      taille: this.currentProduct.tailleChoisie
+    });
+
+    showToast("Ajouté au panier ! 🍔", "success");
+    triggerVibration("success");
+    this.close();
   }
 }
 
-// ============================================================================
-// 🛠️ HELPERS (Sauces, Tailles)
-// ============================================================================
-function checkSauceLimit(event, max) {
-  const checkedBoxes = document.querySelectorAll(".sauce-checkbox:checked");
-  const counterUI = document.getElementById("sauce-counter-ui");
+export const productModalUI = new ProductModalUI();
 
-  if (counterUI) {
-    counterUI.textContent = checkedBoxes.length;
-    if (checkedBoxes.length === max) {
-      counterUI.parentElement.classList.replace("bg-gray-900", "bg-green-600");
+// Bridge globals
+window.openProductModal = (id) => productModalUI.open(id);
+window.closeProductModal = () => productModalUI.close();
+window.confirmAddToCart = () => productModalUI.confirmAddToCart();
+window.toggleDrinkSection = () => {
+    const drinkSection = document.getElementById("drink-section");
+    const isMenu = document.querySelector('input[name="formule"]:checked')?.value === "menu";
+    if (isMenu) {
+        drinkSection?.classList.remove("hidden");
+        setTimeout(() => drinkSection?.classList.add("opacity-100"), 10);
     } else {
-      counterUI.parentElement.classList.replace("bg-green-600", "bg-gray-900");
+        drinkSection?.classList.add("hidden");
+        drinkSection?.classList.remove("opacity-100");
     }
-  }
-
-  if (checkedBoxes.length > max) {
-    event.target.checked = false;
-    if (counterUI) counterUI.textContent = max;
-    window.showToast(`Maximum ${max} sauces autorisées !`, "error");
-    window.triggerVibration?.("error");
-  } else {
-    window.triggerVibration?.("light");
-  }
-}
-
-function updateProductSize(radioBtn) {
-  const nouveauPrix = parseFloat(radioBtn.getAttribute("data-prix"));
-  currentProduct.prixBase = nouveauPrix;
-  currentProduct.tailleChoisie = radioBtn.value;
-
-  const devise = window.snackConfig.identity.currency || "€";
-  document.getElementById("modal-cta").innerHTML =
-    `<span>Ajouter - ${nouveauPrix.toFixed(2)} ${devise}</span>`;
-  window.triggerVibration?.("light");
-}
-
-// ============================================================================
-// 🛒 VALIDATION ET AJOUT AU PANIER
-// ============================================================================
-function confirmAddToCart() {
-  const formuleInput = document.querySelector('input[name="formule"]:checked');
-  const isMenu = formuleInput ? formuleInput.value === "menu" : false;
-
-  let nomFinal = currentProduct.nom;
-  let prixFinal = currentProduct.prixBase;
-  let boissonChoisie = null;
-
-  if (currentProduct.tailleChoisie) {
-    nomFinal += `${currentProduct.tailleChoisie}`;
-  }
-
-  if (isMenu) {
-    const boissonInput = document.querySelector('input[name="boisson"]:checked');
-    if (!boissonInput)
-      return window.showToast("🥤 Veuillez choisir une boisson.", "error");
-    boissonChoisie = boissonInput.value;
-    nomFinal = `Menu ${currentProduct.nom}`;
-    prixFinal += currentProduct.prixMenu;
-  }
-
-  const saucesCheckboxes = document.querySelectorAll(".sauce-checkbox:checked");
-  const saucesChoisies = Array.from(saucesCheckboxes).map((cb) => cb.value);
-
-  const cruditesCheckboxes = document.querySelectorAll('input[name="crudite"]');
-  const cruditesEnlevees = [];
-  cruditesCheckboxes.forEach((cb) => {
-    if (!cb.checked) cruditesEnlevees.push(`Sans ${cb.value}`);
-  });
-
-  const optionsString = [
-    ...saucesChoisies,
-    ...cruditesEnlevees,
-    boissonChoisie,
-    currentProduct.tailleChoisie,
-  ]
-    .filter(Boolean)
-    .join("-");
-  const uniqueId = `${currentProduct.id}-${isMenu ? "menu" : "seul"}-${optionsString.replace(/[\s\(\)]/g, "")}`;
-
-  window.addToCart({
-    id: uniqueId,
-    productId: currentProduct.id,
-    nom: nomFinal,
-    prix: prixFinal,
-    image: currentProduct.image,
-    type: isMenu ? "menu" : "seul",
-    boisson: boissonChoisie,
-    sauces: saucesChoisies,
-    sansCrudites: cruditesEnlevees,
-    tailleChoisie: currentProduct.tailleChoisie,
-    prixBase: currentProduct.prixBase,
-    prixMenuAdd: isMenu ? currentProduct.prixMenu : 0,
-  });
-
-  closeProductModal();
-}
-
-// ============================================================================
-// ❌ FERMETURE MODALE
-// ============================================================================
-function closeProductModal() {
-  const backdrop = document.getElementById("product-modal-backdrop");
-  const sheet = document.getElementById("product-modal");
-
-  if (sheet) {
-    sheet.classList.add(
-      "translate-y-full",
-      "md:opacity-0",
-      "md:pointer-events-none",
-      "md:scale-95",
-    );
-  }
-  if (backdrop) backdrop.classList.add("opacity-0");
-
-  setTimeout(() => {
-    if (backdrop) backdrop.classList.add("hidden");
-    document.body.style.overflow = "";
-  }, 300);
-}
-
-window.openProductModal = openProductModal;
-window.closeProductModal = closeProductModal;
-window.toggleDrinkSection = toggleDrinkSection;
-window.checkSauceLimit = checkSauceLimit;
-window.updateProductSize = updateProductSize;
-window.confirmAddToCart = confirmAddToCart;
+    // Update price in CTA
+    const btn = document.getElementById("modal-cta");
+    const devise = store.state.config.identity.currency || "€";
+    const prix = productModalUI.currentProduct.prixBase + (isMenu ? productModalUI.currentProduct.prixMenu : 0);
+    if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
+};
+window.checkSauceLimit = (e, max) => {
+    const checked = document.querySelectorAll(".sauce-checkbox:checked");
+    const counter = document.getElementById("sauce-counter-ui");
+    if (counter) counter.textContent = checked.length;
+    if (checked.length > max) {
+        e.target.checked = false;
+        if (counter) counter.textContent = max;
+        showToast(`Max ${max} sauces !`, "error");
+    }
+};
+window.updateProductSize = (radio) => {
+    productModalUI.currentProduct.prixBase = parseFloat(radio.getAttribute("data-prix"));
+    productModalUI.currentProduct.tailleChoisie = radio.value;
+    const btn = document.getElementById("modal-cta");
+    const devise = store.state.config.identity.currency || "€";
+    if (btn) btn.innerHTML = `<span>Ajouter - ${productModalUI.currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+};

@@ -5,7 +5,6 @@
 import "./utils.js";
 import "./firebase-init.js";
 import "./snack-config.js";
-import "./state.js";
 import "./tracking.js";
 import "./pwa.js";
 import "./auth.js";
@@ -15,6 +14,7 @@ import "./menu.js";
 import "./cart.js";
 import "./product-modal.js";
 import "./router.js";
+import { store } from "./core/Store.js";
 
 // ============================================================================
 // 🔄 ORCHESTRATEUR DE CYCLE DE VIE (Client)
@@ -29,7 +29,8 @@ document.addEventListener("visibilitychange", () => {
     }
   } else {
     // Reprise du radar si on revient sur l'app et qu'une commande est en cours
-    if (window.snackConfig?.features?.enableClickAndCollect && typeof window.startOrderTracking === "function") {
+    const cfg = store.state.config;
+    if (cfg?.features?.enableClickAndCollect && typeof window.startOrderTracking === "function") {
       window.startOrderTracking(activeOrderId);
     }
   }

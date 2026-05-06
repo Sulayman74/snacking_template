@@ -11,6 +11,11 @@ import "./admin-marketing.js";
 import "./admin-csv.js";
 import "./admin-compta.js";
 import "./admin-config.js";
+import "./ui/AdminConfigUI.js";
+import "./ui/AdminProductsUI.js";
+import "./ui/AdminMarketingUI.js";
+import "./ui/AdminComptaUI.js";
+import { confirmAction } from "./utils/ModalManager.js";
 
 const { onAuthStateChanged, signInWithEmailAndPassword, signOut } =
   window.authTools;
@@ -45,17 +50,20 @@ document.addEventListener("click", (event) => {
       window.updatePaymentStatus(id, paymentStatus);
       break;
     }
-    case "toggle-product": {
-      const currentStatus =
-        target.getAttribute("data-current-status") === "true";
-      window.toggleProductStatus(id, currentStatus);
+    case "toggle-product":
+      window.handleToggleProductUI(id);
       break;
-    }
+    case "toggle-product-ui":
+      window.handleToggleProductUI(id);
+      break;
     case "open-edit-modal":
       window.openEditModal(id);
       break;
     case "open-delete-modal":
-      window.openDeleteModal(id);
+      window.handleDeleteProductUI(id);
+      break;
+    case "delete-product-ui":
+      window.handleDeleteProductUI(id);
       break;
     case "save-product":
       window.saveProduct(event);
@@ -150,6 +158,7 @@ window.switchAdminTab = (tabName) => {
     if (tabName === "menu") window.loadAdminProducts();
 
     if (tabName === "marketing") {
+      window.loadPushHistory();
       // Si on n'a pas encore de produits en mémoire, on les charge d'abord
       if (window.adminProducts.length === 0) {
         window.loadAdminProducts().then(() => {
