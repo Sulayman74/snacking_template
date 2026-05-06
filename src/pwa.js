@@ -239,6 +239,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Nettoyer l'URL immédiatement pour éviter une réouverture sur refresh
     window.history.replaceState({}, document.title, window.location.pathname);
 
+    // 🍟 PARRAINAGE : Capture du parrain
+    if (pwaAction === "referral" && targetId) {
+      localStorage.setItem("referralBy", targetId);
+      window.showToast("Cadeau activé ! Votre première commande offrira une frite à votre parrain. 🍟", "success");
+    }
+
     setTimeout(() => {
       if (pwaAction === "menu") {
         window.switchView("menu");

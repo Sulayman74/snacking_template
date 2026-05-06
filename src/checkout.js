@@ -202,6 +202,7 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       totalCents,
       clientEmail: currentUser.email,
       clientNom: currentUser.displayName || currentUser.email.split("@")[0],
+      referrerId: localStorage.getItem("referralBy") || null
     });
 
     const orderId = result.data.orderId;

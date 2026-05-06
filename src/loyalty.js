@@ -152,6 +152,29 @@ async function requestNotif() {
   }
 }
 
+async function shareReferralLink() {
+  const user = window.auth?.currentUser;
+  if (!user) return;
+
+  const shareData = {
+    title: `🍟 Offre une frite chez ${window.snackConfig?.identity?.name || "ton snack préféré"} !`,
+    text: `Salut ! Utilise mon lien pour ta première commande et je recevrai 2 points de fidélité. Merci ! 🍟`,
+    url: `${window.location.origin}${window.location.pathname}?action=referral&by=${user.uid}`,
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else {
+      await navigator.clipboard.writeText(shareData.url);
+      window.showToast("Lien de parrainage copié ! 🍟", "success");
+    }
+  } catch (err) {
+    console.error("Erreur partage :", err);
+  }
+}
+
 window.openClientCard = openClientCard;
 window.closeClientCard = closeClientCard;
 window.requestNotif = requestNotif;
+window.shareReferralLink = shareReferralLink;

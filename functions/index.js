@@ -405,7 +405,41 @@ exports.finalizeOrder = onCall(
 
     const docRef = await db.collection("commandes").add(newOrder);
 
-    await db.collection("users").doc(uid).update({
+    // 🍟 LOGIQUE PARRAINAGE
+    const { referrerId } = request.data;
+    const userRef = db.collection("users").doc(uid);
+    const userDoc = await userRef.get();
+    
+    // On vérifie si c'est la toute première commande de l'utilisateur (lastOrderDate inexistant)
+    if (referrerId && referrerId !== uid && (!userDoc.exists() || !userDoc.data().lastOrderDate)) {
+      const referrerRef = db.collection("users").doc(referrerId);
+      const referrerDoc = await referrerRef.get();
+
+      if (referrerDoc.exists()) {
+        const fieldPath = `pointsBySnack.${snackId}`;
+        await referrerRef.update({
+          [fieldPath]: admin.firestore.FieldValue.increment(2)
+        });
+
+        // Notification au parrain
+        const referrerData = referrerDoc.data();
+        if (referrerData.fcmToken) {
+          try {
+            await getMessaging().send({
+              notification: {
+                title: "🍟 Une frite offerte !",
+                body: "Votre filleul vient de commander ! Vous avez reçu 2 points de fidélité."
+              },
+              token: referrerData.fcmToken
+            });
+          } catch (e) {
+            console.error("Erreur notif parrainage:", e);
+          }
+        }
+      }
+    }
+
+    await userRef.update({
       lastOrderDate: admin.firestore.FieldValue.serverTimestamp(),
     });
 
