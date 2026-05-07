@@ -6,7 +6,7 @@ const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const { getStorage } = require("firebase-admin/storage");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const logger = require("firebase-functions/logger");
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
@@ -453,15 +453,15 @@ exports.createPaymentIntent = onCall(
       };
       
       // 3. Optionnel : Routage Stripe Connect
-      const options = {};
+      let requestOptions = undefined;
       if (stripeAccountId) {
           if (applicationFeeAmount > 0) {
               params.application_fee_amount = applicationFeeAmount;
           }
-          options.stripeAccount = stripeAccountId;
+          requestOptions = { stripeAccount: stripeAccountId };
       }
 
-      const paymentIntent = await stripe.paymentIntents.create(params, options);
+      const paymentIntent = await stripe.paymentIntents.create(params, requestOptions);
 
       return { clientSecret: paymentIntent.client_secret };
     } catch (error) {
@@ -544,7 +544,7 @@ exports.finalizeOrder = onCall(
           stripeAccountId = snackDoc.data().stripeAccountId;
       }
 
-      const retrieveOptions = stripeAccountId ? { stripeAccount: stripeAccountId } : {};
+      const retrieveOptions = stripeAccountId ? { stripeAccount: stripeAccountId } : undefined;
       paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, retrieveOptions);
     } catch (e) {
       throw new HttpsError("not-found", "PaymentIntent introuvable.");
@@ -684,29 +684,63 @@ exports.onOrderStatusChange = onDocumentUpdated(
   },
 );
 
-// TODO ------------------------------ pour Stripe Connect
-// Aiguillage Multi-tenant (Aperçu de ta future fonction)
-// exports.createCheckoutSession = onCall({ region: "europe-west1" }, async (request) => {
-//     const { cart, snackId } = request.data;
+// ============================================================================
+// 🤖 FONCTION 7 : STRIPE WEBHOOK (SAAS BILLING B2B)
+// ============================================================================
+// Écoute les événements Stripe (ex: invoice.payment_failed) pour couper 
+// automatiquement l'accès (maintenance) en cas de non-paiement de l'abonnement.
 
-//     // 1. 🕵️‍♂️ On va chercher le compte Stripe du Snack dans Firestore
-//     const snackDoc = await admin.firestore().collection("snacks").doc(snackId).get();
-//     const connectedAccountId = snackDoc.data().stripeAccountId; // ex: "acct_1Hxyz..."
+exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, response) => {
+    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const sig = request.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-//     // 2. On prépare le ticket (identique à tout à l'heure)
-//     const lineItems = cart.map(item => ({ /* ... */ }));
+    let event;
 
-//     // 3. 🪄 LA MAGIE STRIPE CONNECT
-//     const session = await stripe.checkout.sessions.create({
-//         payment_method_types: ["card", "apple_pay", "google_pay"],
-//         mode: "payment",
-//         line_items: lineItems,
-//         success_url: "https://ton-app.com/?payment=success",
-//         cancel_url: "https://ton-app.com/?payment=cancel",
-//     }, {
-//         stripeAccount: connectedAccountId // 🎯 C'EST ICI QUE TOUT SE JOUE !
-//     });
+    try {
+        // Stripe SDK requires the raw body buffer for signature verification
+        event = stripe.webhooks.constructEvent(request.rawBody, sig, endpointSecret);
+    } catch (err) {
+        console.error(`⚠️ Webhook signature verification failed.`, err.message);
+        return response.status(400).send(`Webhook Error: ${err.message}`);
+    }
 
-//     return { url: session.url };
-// });
-// TODO ------------------------------ (Bonus de CTO : En utilisant Stripe Connect, tu pourras même ajouter une ligne application_fee_amount pour prélever automatiquement ta commission de 1€ ou 2% sur chaque commande en passant !)
+    try {
+        if (event.type === 'invoice.payment_failed' || event.type === 'customer.subscription.deleted') {
+            const invoice = event.data.object;
+            const subscriptionId = invoice.subscription || invoice.id; // if subscription deleted event
+            
+            if (subscriptionId) {
+                // Find the Snack with this subscription ID
+                const snacksSnapshot = await db.collection("snacks").where("stripeSubscriptionId", "==", subscriptionId).get();
+                
+                if (!snacksSnapshot.empty) {
+                    const snackDoc = snacksSnapshot.docs[0];
+                    await snackDoc.ref.update({ maintenanceMode: true });
+                    console.log(`🔒 LOCATAIRE SUSPENDU: Le snack ${snackDoc.id} a été mis en maintenance suite à un échec de paiement (Sub: ${subscriptionId}).`);
+                }
+            }
+        }
+        else if (event.type === 'invoice.payment_succeeded') {
+            const invoice = event.data.object;
+            const subscriptionId = invoice.subscription;
+            
+            if (subscriptionId) {
+                // Find the Snack with this subscription ID
+                const snacksSnapshot = await db.collection("snacks").where("stripeSubscriptionId", "==", subscriptionId).get();
+                
+                if (!snacksSnapshot.empty) {
+                    const snackDoc = snacksSnapshot.docs[0];
+                    // Si on veut être gentil, on le remet en ligne automatiquement.
+                    // await snackDoc.ref.update({ maintenanceMode: false });
+                    console.log(`✅ PAIEMENT SAAS REÇU: Le snack ${snackDoc.id} a payé son abonnement (Sub: ${subscriptionId}).`);
+                }
+            }
+        }
+
+        response.json({ received: true });
+    } catch (error) {
+        console.error("❌ Erreur traitement Webhook :", error);
+        response.status(500).send("Internal Server Error");
+    }
+});

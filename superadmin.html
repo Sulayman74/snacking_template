@@ -295,6 +295,12 @@
                             class="w-full px-3 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 focus:border-indigo-400 outline-none text-sm font-mono text-gray-700">
                         <p class="text-[10px] text-gray-400 mt-1">Laissez vide pour utiliser le compte de démonstration global sans commission.</p>
                     </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-600 mb-1"><i class="fas fa-sync-alt text-green-500 mr-1"></i> Stripe Subscription ID (SaaS Billing)</label>
+                        <input type="text" id="cfg-stripeSubscriptionId" placeholder="ex: sub_1Jabc..."
+                            class="w-full px-3 py-2.5 rounded-xl bg-green-50 border border-green-100 focus:border-green-400 outline-none text-sm font-mono text-gray-700">
+                        <p class="text-[10px] text-gray-400 mt-1">Laissez vide pour un accès gratuit/démo. Si renseigné, le site sera coupé si la facture échoue.</p>
+                    </div>
                 </div>
             </div>
 

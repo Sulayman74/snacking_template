@@ -304,6 +304,7 @@ window.openConfigModal = (snackId) => {
     document.getElementById("cfg-colorPalette").value = snack.colorPalette || "ruby";
     document.getElementById("cfg-domaine").value = snack.domaine || "";
     document.getElementById("cfg-stripeAccountId").value = snack.stripeAccountId || "";
+    document.getElementById("cfg-stripeSubscriptionId").value = snack.stripeSubscriptionId || "";
 
     const modal = document.getElementById("modal-config-snack");
     modal.classList.remove("hidden");
@@ -332,6 +333,7 @@ document.getElementById("btn-save-config").addEventListener("click", async () =>
     updates.colorPalette    = document.getElementById("cfg-colorPalette").value;
     updates.domaine         = document.getElementById("cfg-domaine").value.trim().toLowerCase();
     updates.stripeAccountId = document.getElementById("cfg-stripeAccountId").value.trim();
+    updates.stripeSubscriptionId = document.getElementById("cfg-stripeSubscriptionId").value.trim();
 
     try {
         await updateDoc(doc(db, "snacks", currentConfigSnackId), updates);
