@@ -377,8 +377,20 @@
             <div class="w-full bg-black/30 rounded-full h-3 overflow-hidden shadow-inner border border-white/10"><div id="card-progress-bar" class="bg-linear-to-r from-yellow-400 to-yellow-200 h-full rounded-full transition-all duration-1000 ease-out w-[0%]"></div></div>
           </div>
           
+          <!-- BOUTON ACTIVER LES NOTIFICATIONS (visible uniquement si permission "default") -->
+          <button id="promo-notif-btn" data-action="request-notif" class="hidden mt-6 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
+            <i class="fas fa-bell text-yellow-300 group-hover:animate-pulse"></i>
+            <span class="text-xs tracking-widest">ACTIVER LES NOTIFICATIONS 🔔</span>
+          </button>
+
+          <!-- INFO NOTIF BLOQUÉE (visible si permission "denied") -->
+          <div id="promo-notif-denied" class="hidden mt-6 w-full bg-red-500/20 backdrop-blur-md text-white py-3 px-4 rounded-2xl flex items-center justify-center gap-2 border border-red-300/30 text-[11px] font-bold text-center">
+            <i class="fas fa-bell-slash text-red-300"></i>
+            <span>Notifications bloquées dans votre navigateur</span>
+          </div>
+
           <!-- BOUTON PARRAINAGE -->
-          <button onclick="shareReferralLink()" class="mt-6 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
+          <button onclick="shareReferralLink()" class="mt-3 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
             <i class="fas fa-gift text-yellow-300 group-hover:animate-bounce"></i>
             <span class="text-xs tracking-widest">OFFRE UNE FRITE À UN AMI 🍟</span>
           </button>

@@ -12,6 +12,7 @@ import "./tracking.js";
 import "./pwa.js";
 import "./auth.js";
 import "./loyalty.js";
+import "./smart-review.js";
 import "./router.js";
 import "./snack-config.js";
 import "./firebase-init.js";

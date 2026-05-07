@@ -82,6 +82,9 @@ class ProductModalUI {
     document.getElementById("modal-title").textContent = item.nom;
     document.getElementById("modal-desc").textContent = item.description || "";
 
+    // Bouton partage viral (deep link vers ce produit)
+    this.#updateShareButton(item, cfg);
+
     // Allergènes
     const allergenContainer = document.getElementById("modal-allergens-container");
     const allergenText = document.getElementById("modal-allergens");
@@ -221,6 +224,39 @@ class ProductModalUI {
     }
 
     container.innerHTML = html;
+  }
+
+  #updateShareButton(item, cfg) {
+    const shareBtn = document.getElementById("modal-share-btn");
+    if (!shareBtn) return;
+
+    if (!cfg.features?.enableViralShare) {
+      shareBtn.classList.add("hidden");
+      shareBtn.onclick = null;
+      return;
+    }
+
+    shareBtn.classList.remove("hidden");
+    shareBtn.onclick = async () => {
+      const url = `${window.location.origin}${window.location.pathname}?action=product&id=${encodeURIComponent(item.id)}`;
+      const shareData = {
+        title: `🍔 ${item.nom} chez ${cfg.identity?.name || "ce snack"}`,
+        text: `Regarde ce que je viens de trouver : ${item.nom}. Tu vas adorer !`,
+        url,
+      };
+
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(url);
+          showToast("Lien copié ! 📋", "success");
+        }
+        triggerVibration?.("light");
+      } catch (err) {
+        if (err?.name !== "AbortError") console.error("Erreur partage produit :", err);
+      }
+    };
   }
 
   #updateCTA(cfg, btn) {

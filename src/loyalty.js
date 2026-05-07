@@ -13,15 +13,8 @@ function openClientCard() {
 
   const cfg = window.snackConfig;
 
-  // 🔔 GESTION DU BOUTON NOTIFICATIONS
-  const notifBtn = document.getElementById("promo-notif-btn");
-  if (notifBtn) {
-    if (Notification.permission === "default") {
-      notifBtn.classList.remove("hidden");
-    } else {
-      notifBtn.classList.add("hidden");
-    }
-  }
+  // 🔔 GESTION DES 3 ÉTATS DE PERMISSION
+  updateNotifUIState();
 
   // 🔄 Re-sync silencieux du FCM token (cas PWA réinstallée → token devenu invalide)
   syncFcmToken();
@@ -120,9 +113,51 @@ function closeClientCard() {
   }, 300);
 }
 
+// Synchronise l'UI de la carte fidélité avec l'état réel de Notification.permission.
+// 3 états : default → bouton "Activer", granted → tout caché, denied → message info.
+function updateNotifUIState() {
+  const btn = document.getElementById("promo-notif-btn");
+  const deniedInfo = document.getElementById("promo-notif-denied");
+  if (!btn || !deniedInfo) return;
+
+  if (!("Notification" in window)) {
+    btn.classList.add("hidden");
+    deniedInfo.classList.add("hidden");
+    return;
+  }
+
+  switch (Notification.permission) {
+    case "default":
+      btn.classList.remove("hidden");
+      deniedInfo.classList.add("hidden");
+      break;
+    case "denied":
+      btn.classList.add("hidden");
+      deniedInfo.classList.remove("hidden");
+      break;
+    case "granted":
+    default:
+      btn.classList.add("hidden");
+      deniedInfo.classList.add("hidden");
+      break;
+  }
+}
+
 async function requestNotif() {
+  // Cas où le navigateur a déjà mémorisé la décision : pas de popup native.
+  // On affiche un toast explicite pour que l'utilisateur comprenne ce qui se passe.
+  if ("Notification" in window && Notification.permission === "denied") {
+    window.showToast(
+      "🔕 Notifications bloquées. Activez-les dans les réglages du navigateur.",
+      "error"
+    );
+    updateNotifUIState();
+    return;
+  }
+
   try {
     const permission = await Notification.requestPermission();
+
     if (permission === "granted") {
       const registration = await navigator.serviceWorker.ready;
       const { getToken } = window.authTools;
@@ -140,18 +175,22 @@ async function requestNotif() {
         const user = window.auth.currentUser;
         if (user)
           await updateDoc(doc(db, "users", user.uid), { fcmToken: currentToken });
-
-        const notifBtn = document.getElementById("promo-notif-btn");
-        if (notifBtn) notifBtn.classList.add("hidden");
         window.showToast("🔔 Parfait ! Vous recevrez nos promos.", "success");
+      } else {
+        window.showToast(
+          "⚠️ Impossible de récupérer le jeton. Réessayez dans un instant.",
+          "error"
+        );
       }
-    } else {
+    } else if (permission === "denied") {
       window.showToast("Notifications refusées.", "error");
-      const notifBtn = document.getElementById("promo-notif-btn");
-      if (notifBtn) notifBtn.classList.add("hidden");
     }
+    // permission === "default" = popup fermée sans choix → pas de toast (silencieux)
+
+    updateNotifUIState();
   } catch (error) {
     console.error("❌ Erreur : ", error);
+    window.showToast("Erreur lors de l'activation. Réessayez.", "error");
   }
 }
 
