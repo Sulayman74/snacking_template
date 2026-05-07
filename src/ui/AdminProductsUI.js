@@ -229,10 +229,12 @@ class AdminProductsUI {
             // Image Upload
             const fileInput = document.getElementById("edit-img-file");
             if (fileInput.files.length > 0) {
+                const snackId = adminStore.state.config?.identity?.id || window.currentAdminSnackId;
+                if (!snackId) throw new Error("Snack non identifié. Recharge l'onglet Configuration.");
                 const file = fileInput.files[0];
                 const { ref, uploadBytes, getDownloadURL } = window.storageTools;
                 const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-                const storageRef = ref(window.storage, `produits/${adminStore.state.config.identity.id}/${fileName}`);
+                const storageRef = ref(window.storage, `produits/${snackId}/${fileName}`);
                 await uploadBytes(storageRef, file);
                 productData.image = await getDownloadURL(storageRef);
             } else if (this.currentEditingId) {

@@ -39,9 +39,14 @@ export class AdminStore extends EventTarget {
     }
 
     updateConfigField(path, value) {
+        if (!this.#state.config) {
+            console.warn(`updateConfigField('${path}') ignoré : config non chargée.`);
+            return;
+        }
         const keys = path.split(".");
         let current = this.#state.config;
         for (let i = 0; i < keys.length - 1; i++) {
+            if (current[keys[i]] == null) current[keys[i]] = {};
             current = current[keys[i]];
         }
         current[keys[keys.length - 1]] = value;
@@ -177,9 +182,11 @@ export class AdminStore extends EventTarget {
                 delete data.id; // On n'update pas l'ID
                 await updateDoc(doc(db, "produits", id), data);
             } else {
+                const snackId = this.#state.config?.identity?.id || window.currentAdminSnackId;
+                if (!snackId) throw new Error("Snack non identifié. Recharge l'onglet Configuration.");
                 data.createdAt = serverTimestamp();
                 data.isAvailable = true;
-                data.snackId = this.#state.config.identity.id;
+                data.snackId = snackId;
                 await addDoc(collection(db, "produits"), data);
             }
 
@@ -257,12 +264,15 @@ export class AdminStore extends EventTarget {
         const eligibility = this.getPushEligibility();
         if (!eligibility.canSend) throw new Error(eligibility.message);
 
+        const snackId = this.#state.config?.identity?.id || window.currentAdminSnackId;
+        if (!snackId) throw new Error("Snack non identifié. Recharge l'onglet Configuration.");
+
         this.setSaving(true);
         try {
             const { addDoc, collection, serverTimestamp } = fs;
             await addDoc(collection(db, "campagnes_push"), {
                 ...pushData,
-                snackId: this.#state.config.identity.id,
+                snackId,
                 dateCreation: serverTimestamp(),
                 statut: "en_attente",
                 stats: { envoye: 0, clics: 0 }
