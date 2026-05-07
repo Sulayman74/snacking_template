@@ -24,6 +24,7 @@ window.closeCartModal = () => cartUI.close();
 // Ces méthodes sont maintenant gérées par le Store, mais on garde les ponts si nécessaire
 window.addToCart = (item) => store.addToCart(item);
 window.updateQuantity = (id, delta) => store.updateQuantity(id, delta);
+window.clearCart = () => store.clearCart();
 
 // Note: updateCartUI et renderCartItems ne devraient plus être appelés manuellement 
 // car CartUI écoute les événements du Store.

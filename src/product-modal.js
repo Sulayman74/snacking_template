@@ -58,9 +58,25 @@ class ProductModalUI {
     // Images & Textes (Sécurisés via textContent)
     const modalImg = document.getElementById("modal-img");
     if (modalImg) {
-      modalImg.src = item.image || "./assets/logo.webp";
+      const applyFallback = () => {
+        modalImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='100%25' height='100%25' fill='transparent'/><text x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='bold' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle'>👨‍🍳 Photo en cours...</text></svg>";
+        modalImg.classList.remove("object-cover");
+        modalImg.classList.add("object-contain", "p-6", "bg-gray-50");
+      };
+
+      const removeFallbackStyles = () => {
+        modalImg.classList.add("object-cover");
+        modalImg.classList.remove("object-contain", "p-6", "bg-gray-50");
+      };
+
+      if (item.image) {
+        modalImg.src = item.image;
+        removeFallbackStyles();
+        modalImg.onerror = applyFallback;
+      } else {
+        applyFallback();
+      }
       modalImg.alt = item.nom;
-      modalImg.onerror = () => { modalImg.src = "./assets/logo.webp"; };
     }
 
     document.getElementById("modal-title").textContent = item.nom;
@@ -80,7 +96,8 @@ class ProductModalUI {
     const optionsContainer = document.getElementById("modal-options-container");
     const btn = document.getElementById("modal-cta");
     
-    if (!item.isAvailable) {
+    // Un produit est disponible par défaut, sauf s'il est explicitement marqué comme épuisé (false)
+    if (item.isAvailable === false) {
       optionsContainer?.classList.add("hidden");
       if (btn) {
         btn.textContent = "Épuisé";
@@ -95,7 +112,9 @@ class ProductModalUI {
   }
 
   #renderOptions(item, cfg, container) {
-    if (!cfg.features?.enableClickAndCollect) {
+    const isOrderingEnabled = cfg.features?.enableClickAndCollect !== false;
+    
+    if (!isOrderingEnabled) {
         container?.classList.add("hidden");
         return;
     }
@@ -207,8 +226,9 @@ class ProductModalUI {
   #updateCTA(cfg, btn) {
     if (!btn) return;
     const devise = cfg.identity.currency || "€";
+    const isOrderingEnabled = cfg.features?.enableClickAndCollect !== false;
 
-    if (cfg.features?.enableClickAndCollect) {
+    if (isOrderingEnabled) {
       btn.innerHTML = `<span>Ajouter - ${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
       btn.className = "w-full py-4 rounded-xl font-bold text-white bg-gray-900 hover:bg-primary hover:scale-105 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => window.confirmAddToCart();
@@ -224,14 +244,14 @@ class ProductModalUI {
     this.backdrop.classList.remove("hidden");
     setTimeout(() => {
       this.backdrop.classList.remove("opacity-0");
-      this.modal.classList.remove("translate-y-full", "md:opacity-0", "md:scale-95");
+      this.modal.classList.remove("translate-y-full", "md:opacity-0", "md:scale-95", "md:pointer-events-none");
     }, 10);
     document.body.style.overflow = "hidden";
   }
 
   close() {
     if (!this.backdrop || !this.modal) return;
-    this.modal.classList.add("translate-y-full", "md:opacity-0", "md:scale-95");
+    this.modal.classList.add("translate-y-full", "md:opacity-0", "md:scale-95", "md:pointer-events-none");
     this.backdrop.classList.add("opacity-0");
     setTimeout(() => {
       this.backdrop.classList.add("hidden");

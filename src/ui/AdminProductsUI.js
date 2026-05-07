@@ -21,7 +21,35 @@ class AdminProductsUI {
 
     render() {
         if (!this.grid) return;
-        const products = adminStore.state.products;
+        let products = adminStore.state.products;
+        
+        // --- 1. Remplir dynamiquement le select de catégories ---
+        const categorySelect = document.getElementById("admin-product-category");
+        if (categorySelect && products.length > 0) {
+            const currentCat = categorySelect.value;
+            const categories = [...new Set(products.map(p => p.categorieId).filter(Boolean))];
+            
+            // On ne reconstruit les options que si nécessaire (ou de manière basique)
+            // Pour faire simple, on les met à jour en gardant la sélection
+            categorySelect.innerHTML = `<option value="">Toutes les catégories</option>` + 
+                categories.map(cat => `<option value="${escapeHTML(cat)}" ${currentCat === cat ? 'selected' : ''}>${escapeHTML(cat)}</option>`).join("");
+        }
+
+        // --- 2. Filtrer les produits ---
+        const searchInput = document.getElementById("admin-product-search");
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : "";
+        const selectedCategory = categorySelect ? categorySelect.value : "";
+
+        if (searchTerm) {
+            products = products.filter(p => 
+                (p.nom && p.nom.toLowerCase().includes(searchTerm)) || 
+                (p.description && p.description.toLowerCase().includes(searchTerm))
+            );
+        }
+
+        if (selectedCategory) {
+            products = products.filter(p => p.categorieId === selectedCategory);
+        }
         
         if (products.length === 0) {
             this.grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-400 font-bold">Aucun produit trouvé.</p>`;
@@ -258,8 +286,17 @@ class AdminProductsUI {
 
 export const adminProductsUI = new AdminProductsUI();
 
-// Bridge pour l'event delegation dans admin.js
+// Global Bridge pour l'interface legacy
 window.handleDeleteProductUI = (id) => adminProductsUI.handleDelete(id);
 window.handleToggleProductUI = (id) => adminProductsUI.handleToggle(id);
-window.openEditModal = (id) => adminProductsUI.openModal(id);
 window.openAddProductModal = () => adminProductsUI.openModal();
+window.openEditModal = (id) => adminProductsUI.openModal(id);
+window.editAdminProduct = (id) => adminProductsUI.openModal(id); // Gardé au cas où une autre vue l'utilise
+window.closeAdminProductModal = () => {
+    const modal = document.getElementById("edit-product-modal");
+    if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+};
+window.filterAdminProducts = () => adminProductsUI.render();

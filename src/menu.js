@@ -46,12 +46,14 @@ class MenuUI {
     if (!sections.length || !nav) return;
 
     const containerRect = this.scrollContainer.getBoundingClientRect();
-    const detectionY = containerRect.top + 180; // Ligne de détection juste sous le header collant
+    // La hauteur typique du header sticky + nav est d'environ 120px-140px. On place la ligne de détection juste en dessous.
+    const detectionY = containerRect.top + 160;
 
     let activeCatId = sections[0].getAttribute("data-cat-id"); // Fallback par défaut
 
-    // Vérifier si l'utilisateur a scrollé tout en bas (Edge case de la dernière catégorie trop petite)
-    const isAtBottom = Math.ceil(this.scrollContainer.scrollTop + this.scrollContainer.clientHeight) >= this.scrollContainer.scrollHeight - 10;
+    // Vérifier si l'utilisateur a scrollé tout en bas avec une tolérance plus souple (iOS / paddings)
+    const scrollPosition = this.scrollContainer.scrollTop + this.scrollContainer.clientHeight;
+    const isAtBottom = scrollPosition >= this.scrollContainer.scrollHeight - 100;
 
     if (isAtBottom) {
       activeCatId = sections[sections.length - 1].getAttribute("data-cat-id");
@@ -173,12 +175,30 @@ class MenuUI {
     clone.querySelector(".menu-item-price").textContent = `${p.prix.toFixed(2)} €`;
     clone.querySelector(".menu-item-desc").textContent = p.description || "";
 
-    if (p.badge) {
-      const badge = clone.querySelector(".menu-item-badge");
-      badge.textContent = p.badge;
-      badge.classList.remove("hidden");
+    const badge = clone.querySelector(".menu-item-badge");
+    
+    // 1. Épuisé prend toujours la priorité visuelle absolue
+    if (p.isAvailable === false) {
+      badge.textContent = "Épuisé";
+      badge.className = "menu-item-badge absolute top-3 right-3 bg-red-600/90 backdrop-blur px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter text-white shadow-sm";
+      img.classList.add("grayscale", "opacity-50");
+      
+      const btn = clone.querySelector(".fa-plus").parentElement;
+      btn.className = "w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center";
+      btn.innerHTML = `<i class="fas fa-ban text-xs"></i>`;
+    } 
+    // 2. Sinon, on affiche le badge (string) ou le premier tag de l'array
+    else {
+      const badgeText = p.badge || (Array.isArray(p.tags) && p.tags.length > 0 ? p.tags[0] : null);
+      if (badgeText) {
+        badge.textContent = badgeText;
+        badge.classList.remove("hidden");
+      }
     }
 
+    const tagsContainer = clone.querySelector(".flex.gap-2");
+    
+    // Ancien système (isVegan, isSpicy) - conservé pour rétrocompatibilité
     if (p.isVegan) clone.querySelector(".menu-item-tag-vegan").classList.remove("hidden");
     if (p.isSpicy) clone.querySelector(".menu-item-tag-spicy").classList.remove("hidden");
 

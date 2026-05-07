@@ -207,9 +207,15 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       referrerId: localStorage.getItem("referralBy") || null
     });
 
-    const orderId = result.data.orderId;
+    // Vide le panier via le Store (ce qui va déclencher les mises à jour UI)
+    if (window.clearCart) {
+      window.clearCart();
+    } else {
+      window.cart.splice(0, window.cart.length);
+    }
+    
+    if (window.closeCartModal) window.closeCartModal();
 
-    window.cart.splice(0, window.cart.length);
     window.triggerVibration?.("jackpot");
 
     if (window.snackConfig?.features?.enableClickAndCollect) {
