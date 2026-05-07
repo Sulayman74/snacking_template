@@ -94,6 +94,31 @@ async function enforceRateLimit({ key, max, windowMs }) {
   });
 }
 
+// Détecte un token FCM devenu invalide (PWA réinstallée, désinstallation, etc.)
+function isInvalidFcmTokenError(error) {
+  const code = error?.code || error?.errorInfo?.code;
+  return (
+    code === "messaging/registration-token-not-registered" ||
+    code === "messaging/invalid-registration-token"
+  );
+}
+
+// Nettoie le fcmToken Firestore si l'erreur indique un token mort.
+// Retourne true si nettoyage effectué.
+async function cleanupInvalidFcmToken(userId, error) {
+  if (!isInvalidFcmTokenError(error)) return false;
+  try {
+    await db.collection("users").doc(userId).update({
+      fcmToken: admin.firestore.FieldValue.delete(),
+    });
+    console.log(`🧹 Token FCM invalide nettoyé pour user ${userId}`);
+    return true;
+  } catch (e) {
+    console.error(`❌ Échec cleanup token user ${userId}:`, e);
+    return false;
+  }
+}
+
 // Identifie un appelant : uid si auth, sinon hash IP (X-Forwarded-For)
 function callerKey(request, action) {
   if (request.auth?.uid) return `${action}_uid_${request.auth.uid}`;
@@ -144,6 +169,7 @@ exports.notifierMenuOffert = onDocumentUpdated(
         console.log("✅ Notification envoyée avec succès :", response);
       } catch (error) {
         console.error("❌ Erreur lors de l'envoi FCM :", error);
+        await cleanupInvalidFcmToken(userId, error);
       }
     } else {
       console.log("ℹ️ Changement ignoré (pas le palier des 10 points).");
@@ -679,6 +705,7 @@ exports.onOrderStatusChange = onDocumentUpdated(
           "❌ Erreur lors de l'envoi de la notification de commande :",
           error,
         );
+        await cleanupInvalidFcmToken(userId, error);
       }
     }
   },

@@ -211,7 +211,12 @@ onAuthStateChanged(auth, async (user) => {
     // 3. Mise à jour de l'utilisateur dans le Store
     // Le store émettra "auth-updated" -> AppUI mettra à jour les boutons nav/fidélité
     store.setUser(user, role);
-      
+
+    // 4. Re-sync silencieux du FCM token (cas token stale après réinstall PWA)
+    if (user && typeof window.syncFcmToken === "function") {
+      window.syncFcmToken();
+    }
+
   } catch (error) {
     console.error("❌ Erreur Initialisation :", error);
   }

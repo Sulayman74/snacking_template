@@ -37,6 +37,45 @@ window.openTrackingModal = openTrackingModal;
 window.closeTrackingModal = closeTrackingModal;
 
 // ============================================================================
+// 🔔 PROMPT FCM CONTEXTUEL — "M'avertir quand c'est prêt"
+// ============================================================================
+// Le timing optimal pour demander la permission notif : après paiement validé,
+// quand l'utilisateur attend sa commande. Bénéfice immédiat = meilleur opt-in.
+function renderNotifPrompt() {
+  const container = document.getElementById("tracking-notif-prompt");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "default") return;
+  if (!window.auth?.currentUser) return;
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className =
+    "w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 border-2 border-blue-100 hover:border-blue-300 active:scale-95";
+  btn.innerHTML =
+    '<i class="fas fa-bell"></i><span>M\'avertir quand c\'est prêt</span>';
+
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    btn.innerHTML =
+      '<i class="fas fa-spinner fa-spin"></i><span>Activation...</span>';
+    try {
+      if (typeof window.requestNotif === "function") {
+        await window.requestNotif();
+      }
+    } finally {
+      // Re-render : si granted/denied, le bouton disparaît automatiquement
+      renderNotifPrompt();
+    }
+  });
+
+  container.appendChild(btn);
+}
+
+// ============================================================================
 // 📡 NOTIFICATION ARRIVÉE (POUR LE CHEF)
 // ============================================================================
 async function notifyArrival(orderId) {
@@ -132,6 +171,7 @@ function startOrderTracking(orderId) {
             actionBtn.setAttribute("data-action", "notify-arrival");
             actionBtn.setAttribute("data-id", orderId);
           }
+          renderNotifPrompt();
         }
         // 🟡 STATUT 2 : NOUVELLE (En préparation)
         else if (commande.statut === "nouvelle") {
@@ -164,6 +204,7 @@ function startOrderTracking(orderId) {
             actionBtn.setAttribute("data-action", "close-tracking-modal");
             actionBtn.removeAttribute("data-id");
           }
+          renderNotifPrompt();
         }
 
         // 🟢 STATUT : PRÊTE
@@ -216,6 +257,9 @@ function startOrderTracking(orderId) {
             actionBtn.setAttribute("data-action", "close-tracking-modal");
             actionBtn.removeAttribute("data-id");
           }
+
+          const notifPrompt = document.getElementById("tracking-notif-prompt");
+          if (notifPrompt) notifPrompt.innerHTML = "";
 
           window.showToast("🔔 DING ! Votre commande est PRÊTE !", "success");
           if (typeof window.triggerVibration === "function")

@@ -23,6 +23,9 @@ function openClientCard() {
     }
   }
 
+  // 🔄 Re-sync silencieux du FCM token (cas PWA réinstallée → token devenu invalide)
+  syncFcmToken();
+
   // 1. Mise à jour des textes et du design selon la config SaaS
   if (cfg?.loyalty) {
     const progName = document.getElementById("card-program-name");
@@ -152,6 +155,44 @@ async function requestNotif() {
   }
 }
 
+// Re-fetch silencieux du FCM token. Couvre le cas où l'utilisateur a déjà
+// "granted" la permission mais où le token Firestore est devenu stale
+// (PWA réinstallée, SW changé, token invalidé par FCM puis nettoyé en base).
+async function syncFcmToken() {
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  const user = window.auth?.currentUser;
+  if (!user) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const { getToken } = window.authTools;
+    const { doc, getDoc, updateDoc } = window.fs;
+    const db = window.db;
+    const messaging = window.messaging;
+
+    const currentToken = await getToken(messaging, {
+      vapidKey:
+        "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098",
+      serviceWorkerRegistration: registration,
+    });
+
+    if (!currentToken) return;
+
+    const userRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userRef);
+    const oldToken = userDoc.exists() ? userDoc.data().fcmToken : null;
+
+    if (oldToken !== currentToken) {
+      await updateDoc(userRef, { fcmToken: currentToken });
+      console.log("🔄 FCM token resynchronisé.");
+    }
+  } catch (error) {
+    console.error("❌ Erreur sync FCM token :", error);
+  }
+}
+
 async function shareReferralLink() {
   const user = window.auth?.currentUser;
   if (!user) return;
@@ -177,4 +218,5 @@ async function shareReferralLink() {
 window.openClientCard = openClientCard;
 window.closeClientCard = closeClientCard;
 window.requestNotif = requestNotif;
+window.syncFcmToken = syncFcmToken;
 window.shareReferralLink = shareReferralLink;
