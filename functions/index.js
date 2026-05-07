@@ -401,7 +401,7 @@ exports.createPaymentIntent = onCall(
     const data = request.data;
     require_(V.isPlainObject(data), "Payload invalide.");
 
-    const { amount, currency, description, metadata } = data;
+    const { amount, currency, description, metadata, snackId } = data;
 
     require_(V.isPositiveInt(amount, 1_000_000), "Montant invalide.");
     require_(amount >= 50, "Montant inférieur au minimum (0,50 €).");
@@ -420,13 +420,48 @@ exports.createPaymentIntent = onCall(
     );
 
     try {
-      const paymentIntent = await stripe.paymentIntents.create({
+      // 1. Récupération des infos du Snack (Tenant)
+      let stripeAccountId = null;
+      let applicationFeeAmount = 0;
+
+      if (snackId) {
+        const snackDoc = await db.collection("snacks").doc(snackId).get();
+        if (snackDoc.exists) {
+          const snackData = snackDoc.data();
+          stripeAccountId = snackData.stripeAccountId;
+          
+          // Règle Métier : 0% les 6 premiers mois, puis 8%
+          if (stripeAccountId) {
+             const createdAt = snackData.createdAt?.toDate() || new Date();
+             const now = new Date();
+             const diffMonths = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
+             
+             if (diffMonths >= 6) {
+                 applicationFeeAmount = Math.round(amount * 0.08);
+             }
+          }
+        }
+      }
+
+      // 2. Préparation des paramètres du PaymentIntent
+      const params = {
         amount,
         currency: currency ? currency.toLowerCase() : "eur",
         description: description || "Commande en ligne",
         metadata: sanitizeStripeMetadata(metadata),
         automatic_payment_methods: { enabled: true },
-      });
+      };
+      
+      // 3. Optionnel : Routage Stripe Connect
+      const options = {};
+      if (stripeAccountId) {
+          if (applicationFeeAmount > 0) {
+              params.application_fee_amount = applicationFeeAmount;
+          }
+          options.stripeAccount = stripeAccountId;
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create(params, options);
 
       return { clientSecret: paymentIntent.client_secret };
     } catch (error) {
@@ -503,7 +538,14 @@ exports.finalizeOrder = onCall(
     // 2. Vérifier le PaymentIntent côté Stripe (le client ne peut pas falsifier ça)
     let paymentIntent;
     try {
-      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      let stripeAccountId = null;
+      const snackDoc = await db.collection("snacks").doc(snackId).get();
+      if (snackDoc.exists) {
+          stripeAccountId = snackDoc.data().stripeAccountId;
+      }
+
+      const retrieveOptions = stripeAccountId ? { stripeAccount: stripeAccountId } : {};
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, retrieveOptions);
     } catch (e) {
       throw new HttpsError("not-found", "PaymentIntent introuvable.");
     }

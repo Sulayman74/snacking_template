@@ -81,6 +81,37 @@
                 </table>
             </div>
         </div>
+
+        <!-- VUE LOGS / MONITORING -->
+        <div id="view-logs" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mt-8">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h2 class="text-xl font-black text-gray-800"><i class="fas fa-bug text-red-500 mr-2"></i> System Logs & Erreurs</h2>
+                <button id="btn-refresh-logs" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Actualiser
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-gray-100 shadow-sm z-10">
+                        <tr class="text-gray-500 text-xs uppercase tracking-wider">
+                            <th class="p-4 font-bold">Date</th>
+                            <th class="p-4 font-bold">Snack ID</th>
+                            <th class="p-4 font-bold">Action</th>
+                            <th class="p-4 font-bold">Message</th>
+                            <th class="p-4 font-bold text-right">Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table-body" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="5" class="p-8 text-center text-gray-500">
+                                Cliquez sur Actualiser pour charger les logs.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div id="modal-new-snack" class="fixed inset-0 bg-gray-900/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
@@ -256,6 +287,13 @@
                         <label class="block text-xs font-bold text-gray-600 mb-1">Domaine personnalisé</label>
                         <input type="text" id="cfg-domaine" placeholder="ex: monsite.fr"
                             class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-400 outline-none text-sm">
+                    </div>
+                <div class="grid grid-cols-2 gap-3 mt-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-600 mb-1"><i class="fab fa-stripe text-indigo-500 mr-1"></i> Stripe Connect Account ID</label>
+                        <input type="text" id="cfg-stripeAccountId" placeholder="ex: acct_1Hxyz..."
+                            class="w-full px-3 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 focus:border-indigo-400 outline-none text-sm font-mono text-gray-700">
+                        <p class="text-[10px] text-gray-400 mt-1">Laissez vide pour utiliser le compte de démonstration global sans commission.</p>
                     </div>
                 </div>
             </div>

@@ -116,6 +116,10 @@
                 <i class="fas fa-cog text-gray-500 text-xl w-8 text-center shrink-0"></i>
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Configuration</span>
             </button>
+            <button onclick="switchAdminTab('support')" id="tab-support-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
+                <i class="fas fa-life-ring text-blue-400 text-xl w-8 text-center shrink-0"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Support / FAQ</span>
+            </button>
         </nav>
 
         <div class="p-4 border-t border-gray-800 bg-gray-900 shrink-0">
@@ -420,6 +424,54 @@
             </div>
         </section>
 
+        <!-- VUE SUPPORT / FAQ -->
+        <section id="view-support" class="hidden p-4 md:p-8 h-full overflow-y-auto pb-24 md:pb-8 bg-gray-50">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div>
+                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">Support & FAQ</h2>
+                    <p class="text-gray-500">Besoin d'aide avec votre espace restaurateur ? Contactez l'équipe SaaS.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- FAQ -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                        <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                            <i class="fas fa-question-circle text-blue-500"></i> Questions Fréquentes
+                        </h3>
+                        <div class="space-y-4">
+                            <details class="bg-gray-50 rounded-xl p-4 cursor-pointer">
+                                <summary class="font-bold text-gray-800">Comment modifier mes horaires ?</summary>
+                                <p class="text-sm text-gray-600 mt-2">Allez dans l'onglet "Configuration" (icône engrenage), puis descendez jusqu'à "Horaires d'ouverture". N'oubliez pas d'enregistrer !</p>
+                            </details>
+                            <details class="bg-gray-50 rounded-xl p-4 cursor-pointer">
+                                <summary class="font-bold text-gray-800">Comment fonctionne le radar cuisine ?</summary>
+                                <p class="text-sm text-gray-600 mt-2">La cuisine reçoit un "ding" sonore pour chaque nouvelle commande payée en ligne. Cliquez sur "Marquer Prête" pour notifier le client sur son téléphone.</p>
+                            </details>
+                            <details class="bg-gray-50 rounded-xl p-4 cursor-pointer">
+                                <summary class="font-bold text-gray-800">Où voir mes virements bancaires ?</summary>
+                                <p class="text-sm text-gray-600 mt-2">Allez dans l'onglet "Comptabilité" et cliquez sur le bouton "Tableau de bord bancaire" pour accéder à votre espace Stripe Express.</p>
+                            </details>
+                        </div>
+                    </div>
+
+                    <!-- Contact Chat Pro -->
+                    <div class="bg-gradient-to-br from-indigo-600 to-blue-700 p-6 rounded-3xl shadow-lg text-white flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-xl font-black mb-2 flex items-center gap-2">
+                                <i class="fas fa-headset"></i> Contacter MySaaS HQ
+                            </h3>
+                            <p class="text-blue-100 text-sm mb-6">Notre équipe technique est disponible de 9h à 18h pour vous accompagner.</p>
+                        </div>
+                        
+                        <a href="mailto:support@mysaas.com" class="w-full bg-white text-indigo-700 py-4 rounded-xl font-black shadow-md hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                            <i class="fas fa-envelope"></i> Ouvrir un Ticket
+                        </a>
+                        <p class="text-center text-xs text-indigo-200 mt-3">En cas d'urgence, appelez votre chargé de compte au 01 23 45 67 89.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center p-2 pb-[env(safe-area-inset-bottom) z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] fixed bottom-0 w-full">
         <button onclick="switchAdminTab('cuisine')" id="tab-cuisine-mobile" class="flex flex-col items-center gap-1 p-2 text-red-600 w-16">
             <i class="fas fa-fire text-xl"></i>
@@ -440,6 +492,10 @@
         <button onclick="switchAdminTab('config')" id="tab-config-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
             <i class="fas fa-cog text-xl"></i>
             <span class="text-[10px] font-bold">Réglages</span>
+        </button>
+        <button onclick="switchAdminTab('support')" id="tab-support-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
+            <i class="fas fa-life-ring text-xl text-blue-400"></i>
+            <span class="text-[10px] font-bold">Support</span>
         </button>
     </nav>
 </main>

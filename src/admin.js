@@ -119,7 +119,7 @@ document.addEventListener("visibilitychange", () => {
 // ============================================================================
 window.switchAdminTab = (tabName) => {
   window.currentAdminTab = tabName;
-  const tabs = ["cuisine", "menu", "marketing", "config", "compta"];
+  const tabs = ["cuisine", "menu", "marketing", "config", "compta", "support"];
 
   tabs.forEach((t) => {
     const btnDesktop = document.getElementById(`tab-${t}-desktop`);

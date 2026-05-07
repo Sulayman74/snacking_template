@@ -132,13 +132,18 @@ function renderSnacksTable() {
             ? "text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
             : "text-gray-500 bg-gray-100 hover:bg-gray-200";
 
+        const stripeBadge = snack.stripeAccountId
+            ? `<span class="bg-indigo-50 text-indigo-700 font-black px-2 py-0.5 rounded-md text-[10px]"><i class="fab fa-stripe"></i> Connecté</span>`
+            : `<span class="bg-gray-100 text-gray-500 font-bold px-2 py-0.5 rounded-md text-[10px]">Démo / Platform</span>`;
+
         return `
             <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
                 <td class="p-4">
                     <div class="font-bold text-gray-900 text-lg">${safeNom}</div>
-                    <div class="text-xs text-gray-400 mt-1 flex items-center gap-3">
-                        <span class="font-mono">${safeId}</span>
+                    <div class="text-xs text-gray-400 mt-1 flex items-center gap-2 flex-wrap">
+                        <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded">${safeId}</span>
                         <span class="bg-green-50 text-green-700 font-black px-2 py-0.5 rounded-md">${mrrClient} €/mois</span>
+                        ${stripeBadge}
                     </div>
                 </td>
                 <td class="p-4 text-center">${statusBadge}</td>
@@ -158,6 +163,66 @@ function renderSnacksTable() {
         `;
     });
     tbody.innerHTML = rows.join("");
+}
+
+// ============================================================================
+// 🐛 3.5 LOGS & MONITORING
+// ============================================================================
+async function loadLogs() {
+    const tbody = document.getElementById("logs-table-body");
+    const btn = document.getElementById("btn-refresh-logs");
+    
+    if (!tbody || !btn) return;
+    
+    const originalBtn = btn.innerHTML;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+    btn.disabled = true;
+
+    try {
+        const { query, orderBy, limit } = window.fs;
+        const q = query(collection(db, "system_logs"), orderBy("timestamp", "desc"), limit(50));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">Aucun log enregistré.</td></tr>`;
+            return;
+        }
+
+        const rows = [];
+        snapshot.forEach(docSnap => {
+            const log = docSnap.data();
+            const dateStr = log.timestamp ? log.timestamp.toDate().toLocaleString("fr-FR") : "N/A";
+            
+            let levelClass = "text-gray-500 bg-gray-100";
+            if (log.level === "error") levelClass = "text-red-700 bg-red-50";
+            else if (log.level === "warning") levelClass = "text-yellow-700 bg-yellow-50";
+
+            rows.push(`
+                <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-0 text-sm">
+                    <td class="p-4 text-gray-500 whitespace-nowrap">${dateStr}</td>
+                    <td class="p-4 font-mono text-xs text-indigo-600">${escapeHTML(log.snackId || "N/A")}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded font-bold text-[10px] uppercase ${levelClass}">${escapeHTML(log.action || "UNKNOWN")}</span></td>
+                    <td class="p-4 font-bold text-gray-800">${escapeHTML(log.message || "")}</td>
+                    <td class="p-4 text-right">
+                        <button class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded transition" onclick="alert('${escapeHTML((log.details || "").replace(/'/g, "\\'"))}')">Détails</button>
+                    </td>
+                </tr>
+            `);
+        });
+
+        tbody.innerHTML = rows.join("");
+    } catch (e) {
+        console.error("Erreur logs :", e);
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500">Erreur lors de la lecture des logs.</td></tr>`;
+    } finally {
+        btn.innerHTML = originalBtn;
+        btn.disabled = false;
+    }
+}
+
+const btnRefreshLogs = document.getElementById("btn-refresh-logs");
+if (btnRefreshLogs) {
+    btnRefreshLogs.addEventListener("click", loadLogs);
 }
 
 // Event delegation pour remplacer les onclick inline (évite l'injection via snack.id)
@@ -238,6 +303,7 @@ window.openConfigModal = (snackId) => {
     document.getElementById("cfg-prixAbonnement").value = snack.prixAbonnement || PRIX_ABONNEMENT_MENSUEL;
     document.getElementById("cfg-colorPalette").value = snack.colorPalette || "ruby";
     document.getElementById("cfg-domaine").value = snack.domaine || "";
+    document.getElementById("cfg-stripeAccountId").value = snack.stripeAccountId || "";
 
     const modal = document.getElementById("modal-config-snack");
     modal.classList.remove("hidden");
@@ -265,6 +331,7 @@ document.getElementById("btn-save-config").addEventListener("click", async () =>
     updates.prixAbonnement  = parseFloat(document.getElementById("cfg-prixAbonnement").value) || PRIX_ABONNEMENT_MENSUEL;
     updates.colorPalette    = document.getElementById("cfg-colorPalette").value;
     updates.domaine         = document.getElementById("cfg-domaine").value.trim().toLowerCase();
+    updates.stripeAccountId = document.getElementById("cfg-stripeAccountId").value.trim();
 
     try {
         await updateDoc(doc(db, "snacks", currentConfigSnackId), updates);

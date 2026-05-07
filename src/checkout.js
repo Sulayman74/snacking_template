@@ -66,6 +66,7 @@ async function processCheckout() {
       .join(", ");
 
     const response = await createPaymentIntent({
+      snackId: cfg.identity.id || "Ym1YiO4Ue5Fb5UXlxr06",
       amount: Math.round(totalAmount * 100),
       currency: "eur",
       description: `Commande Web - ${cfg.identity.name}`,
@@ -186,6 +187,7 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       sauces: item.sauces || [],
       sansCrudites: item.sansCrudites || [],
       tailleChoisie: item.tailleChoisie || null,
+      prix: item.prix || item.prixBase || 0, // IMPORTANT: Requis par la Cloud Function
       prixBase: item.prixBase || item.prix,
       prixMenuAdd: item.prixMenuAdd || 0,
       quantity: item.quantity,

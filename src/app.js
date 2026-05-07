@@ -15,6 +15,7 @@ import "./loyalty.js";
 import "./router.js";
 import "./snack-config.js";
 import "./firebase-init.js";
+import "./logger.js";
 
 // ============================================================================
 // 🔄 ORCHESTRATEUR DE CYCLE DE VIE (Client)
