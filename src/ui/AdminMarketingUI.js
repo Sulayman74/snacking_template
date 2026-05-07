@@ -1,5 +1,5 @@
 import { adminStore } from "../core/AdminStore.js";
-import { showToast } from "../utils.js";
+import { escapeHTML, showToast } from "../utils.js";
 
 class AdminMarketingUI {
     constructor() {
@@ -37,8 +37,8 @@ class AdminMarketingUI {
                     <i class="fas ${tip.type === 'creux' ? 'fa-clock' : tip.type === 'event' ? 'fa-calendar' : 'fa-star'} text-xs"></i>
                 </div>
                 <div>
-                    <h5 class="text-xs font-black text-blue-900 mb-0.5">${tip.title}</h5>
-                    <p class="text-[10px] text-blue-700 leading-tight">${tip.message}</p>
+                    <h5 class="text-xs font-black text-blue-900 mb-0.5">${escapeHTML(tip.title || "")}</h5>
+                    <p class="text-[10px] text-blue-700 leading-tight">${escapeHTML(tip.message || "")}</p>
                 </div>
             </div>
         `).join("");
@@ -51,16 +51,17 @@ class AdminMarketingUI {
         const percentage = (eligibility.count / eligibility.limit) * 100;
         const colorClass = percentage >= 100 ? "bg-red-500" : percentage >= 50 ? "bg-orange-500" : "bg-green-500";
 
+        const safePct = Math.max(0, Math.min(100, Number(percentage) || 0));
         this.quotaContainer.innerHTML = `
             <div class="space-y-2">
                 <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
                     <span class="text-gray-400">Quota mensuel</span>
-                    <span class="${percentage >= 100 ? 'text-red-500' : 'text-gray-900'}">${eligibility.count} / ${eligibility.limit}</span>
+                    <span class="${percentage >= 100 ? 'text-red-500' : 'text-gray-900'}">${parseInt(eligibility.count) || 0} / ${parseInt(eligibility.limit) || 0}</span>
                 </div>
                 <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div class="h-full ${colorClass} transition-all duration-1000" style="width: ${percentage}%"></div>
+                    <div class="h-full ${colorClass} transition-all duration-1000" style="width: ${safePct}%"></div>
                 </div>
-                <p class="text-[10px] text-gray-500 italic">${eligibility.message || 'Utilisez vos notifications stratégiquement pour maximiser l\'impact.'}</p>
+                <p class="text-[10px] text-gray-500 italic">${escapeHTML(eligibility.message || 'Utilisez vos notifications stratégiquement pour maximiser l\'impact.')}</p>
             </div>
         `;
 

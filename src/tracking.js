@@ -190,9 +190,12 @@ function startOrderTracking(orderId) {
           
           // 🎟️ AFFICHAGE DU CODE SECRET ET NOM CLIENT
           if (subtitle) {
-            const secretCode = commande.secretCode || "---";
-            const clientDisplay = commande.clientNom || commande.clientEmail?.split("@")[0] || "Client";
-            
+            const escape = window.escapeHTML;
+            const secretCode = escape(commande.secretCode || "---");
+            const clientDisplay = escape(
+              commande.clientNom || commande.clientEmail?.split("@")[0] || "Client"
+            );
+
             subtitle.innerHTML = `
               <div class="mt-6 p-6 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
                 <p class="text-xs text-gray-400 uppercase font-black tracking-widest mb-1">Code de retrait</p>

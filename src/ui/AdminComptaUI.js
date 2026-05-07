@@ -1,5 +1,5 @@
 import { adminStore } from "../core/AdminStore.js";
-import { showToast } from "../utils.js";
+import { escapeHTML, showToast } from "../utils.js";
 
 class AdminComptaUI {
     constructor() {
@@ -79,8 +79,8 @@ class AdminComptaUI {
 
     renderTableRow(s) {
         const date = s.timestamp?.toDate ? s.timestamp.toDate() : new Date(s.timestamp);
-        const dateStr = date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStr = escapeHTML(date.toLocaleDateString([], { day: '2-digit', month: '2-digit' }));
+        const timeStr = escapeHTML(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
         return `
             <tr class="hover:bg-blue-50/30 transition-colors group">
@@ -89,14 +89,14 @@ class AdminComptaUI {
                     <p class="text-[10px] text-gray-400 font-bold">${timeStr}</p>
                 </td>
                 <td class="px-4 py-4">
-                    <p class="text-sm font-bold text-gray-700">${s.userName || "Anonyme"}</p>
+                    <p class="text-sm font-bold text-gray-700">${escapeHTML(s.userName || "Anonyme")}</p>
                 </td>
                 <td class="px-4 py-4">
                     <p class="text-sm font-black text-gray-900">${(parseFloat(s.total) || 0).toFixed(2)} €</p>
                 </td>
                 <td class="px-4 py-4">
                     <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter bg-green-100 text-green-700">
-                        ${s.statut || "payé"}
+                        ${escapeHTML(s.statut || "payé")}
                     </span>
                 </td>
                 <td class="px-4 py-4 text-right">

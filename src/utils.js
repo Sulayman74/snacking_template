@@ -15,6 +15,20 @@ export function escapeHTML(str) {
         .replace(/'/g, "&#039;");
 }
 
+// Whitelist d'origines/protocoles pour empêcher javascript:, data:, vbscript:
+const SAFE_URL_SCHEMES = /^(https?:|mailto:|tel:|\/|#|\.\/|\.\.\/)/i;
+
+/**
+ * Filtre une URL pour neutraliser les schemes XSS (javascript:, data:, vbscript:).
+ * Retourne "#" si l'URL est suspecte. Toujours combiner avec escapeHTML pour l'attribut.
+ */
+export function safeURL(url) {
+    if (!url) return "#";
+    const trimmed = String(url).trim();
+    if (!SAFE_URL_SCHEMES.test(trimmed)) return "#";
+    return escapeHTML(trimmed);
+}
+
 /**
  * Affiche un message temporaire (Snackbar/Toast)
  */
@@ -77,5 +91,6 @@ export function triggerVibration(type = "light") {
 
 // Exposition globale pour compatibilité avec les scripts existants
 window.escapeHTML = escapeHTML;
+window.safeURL = safeURL;
 window.showToast = showToast;
 window.triggerVibration = triggerVibration;

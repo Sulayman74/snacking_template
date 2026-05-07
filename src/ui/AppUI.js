@@ -3,7 +3,7 @@
  * SOLID: Présentation. Écoute le Store pour se mettre à jour.
  */
 import { store } from "../core/Store.js";
-import { showToast } from "../utils.js";
+import { escapeHTML, safeURL, showToast } from "../utils.js";
 
 class AppUI {
     constructor() {
@@ -250,7 +250,7 @@ class AppUI {
         const phoneEl = document.getElementById("footer-phone");
         if (phoneEl && cfg.contact?.phone) {
             const clean = cfg.contact.phone.replace(/\s/g, "");
-            phoneEl.innerHTML = `<a href="tel:${clean}" class="flex items-center gap-2"><i class="fas fa-phone text-accent"></i><span>${cfg.contact.phone}</span></a>`;
+            phoneEl.innerHTML = `<a href="tel:${escapeHTML(clean)}" class="flex items-center gap-2"><i class="fas fa-phone text-accent"></i><span>${escapeHTML(cfg.contact.phone)}</span></a>`;
         }
 
         const addrEl = document.getElementById("footer-address");
@@ -259,16 +259,17 @@ class AppUI {
             const full = `${a.street}, ${a.zip || ""} ${a.city || ""}`.trim();
             const isApple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
             const mapLink = a.googleMapsUrl || (isApple ? `https://maps.apple.com/?q=${encodeURIComponent(full)}` : `https://maps.google.com/?q=${encodeURIComponent(full)}`);
-            addrEl.innerHTML = `<a href="${mapLink}" target="_blank" class="flex items-start gap-2"><i class="fas ${isApple ? "fa-map" : "fa-location-dot"} mt-1 text-accent"></i><span>${a.street}<br>${a.zip || ""} ${a.city || ""}</span></a>`;
+            addrEl.innerHTML = `<a href="${safeURL(mapLink)}" target="_blank" rel="noopener noreferrer" class="flex items-start gap-2"><i class="fas ${isApple ? "fa-map" : "fa-location-dot"} mt-1 text-accent"></i><span>${escapeHTML(a.street || "")}<br>${escapeHTML(a.zip || "")} ${escapeHTML(a.city || "")}</span></a>`;
         }
 
         const socials = document.getElementById("socials-container");
         const s = cfg.contact?.socials;
         if (socials && s) {
-            socials.innerHTML = "";
-            if (s.instagram) socials.innerHTML += `<a href="${s.instagram}" target="_blank" class="hover:-translate-y-1 transition-transform"><i class="fab fa-instagram bg-linear-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-transparent bg-clip-text text-2xl"></i></a>`;
-            if (s.facebook) socials.innerHTML += `<a href="${s.facebook}" target="_blank" class="hover:-translate-y-1 transition-transform"><i class="fab fa-facebook text-[#1877F2] text-2xl"></i></a>`;
-            if (s.tiktok) socials.innerHTML += `<a href="${s.tiktok}" target="_blank" class="hover:-translate-y-1 transition-transform group"><i class="fab fa-tiktok text-white group-hover:drop-shadow-[2px_2px_0_#ff0050] transition-all text-2xl"></i></a>`;
+            const parts = [];
+            if (s.instagram) parts.push(`<a href="${safeURL(s.instagram)}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform"><i class="fab fa-instagram bg-linear-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-transparent bg-clip-text text-2xl"></i></a>`);
+            if (s.facebook) parts.push(`<a href="${safeURL(s.facebook)}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform"><i class="fab fa-facebook text-[#1877F2] text-2xl"></i></a>`);
+            if (s.tiktok) parts.push(`<a href="${safeURL(s.tiktok)}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform group"><i class="fab fa-tiktok text-white group-hover:drop-shadow-[2px_2px_0_#ff0050] transition-all text-2xl"></i></a>`);
+            socials.innerHTML = parts.join("");
         }
     }
 
@@ -282,7 +283,13 @@ class AppUI {
 
         list.innerHTML = cfg.hours.map((h, index) => {
             const isToday = index === todayIndex;
-            const hoursText = h.closed ? `<span class="text-red-500/50">Fermé</span>` : (h.hasBreak ? `${h.open}–${h.breakStart} / ${h.breakEnd}–${h.close}` : `${h.open} – ${h.close}`);
+            const safeOpen = escapeHTML(h.open || "");
+            const safeClose = escapeHTML(h.close || "");
+            const safeBreakStart = escapeHTML(h.breakStart || "");
+            const safeBreakEnd = escapeHTML(h.breakEnd || "");
+            const hoursText = h.closed
+                ? `<span class="text-red-500/50">Fermé</span>`
+                : (h.hasBreak ? `${safeOpen}–${safeBreakStart} / ${safeBreakEnd}–${safeClose}` : `${safeOpen} – ${safeClose}`);
             if (isToday && heroStatus) {
                 const status = this.getOpeningStatus(h);
                 heroStatus.innerText = status.label;
@@ -291,7 +298,7 @@ class AppUI {
             return `<li class="flex justify-between items-center py-2 ${isToday ? "text-white/90 font-medium" : "text-white/40"}">
                 <span class="flex items-center gap-2">
                     ${isToday ? `<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>` : `<span class="w-1.5 h-1.5 inline-block"></span>`}
-                    ${h.day}
+                    ${escapeHTML(h.day || "")}
                 </span>
                 <span class="tabular-nums text-xs">${hoursText}</span>
             </li>`;
@@ -360,7 +367,7 @@ class AppUI {
 
     async initAppVisuals(cfg) {
         if (cfg.features?.maintenanceMode === true) {
-            document.body.innerHTML = `<div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white text-center px-4"><i class="fas fa-tools text-6xl text-red-500 mb-6 animate-pulse"></i><h1 class="text-4xl font-black mb-4">${cfg.identity.name}</h1><p class="text-gray-400">Maintenance en cours...</p></div>`;
+            document.body.innerHTML = `<div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white text-center px-4"><i class="fas fa-tools text-6xl text-red-500 mb-6 animate-pulse"></i><h1 class="text-4xl font-black mb-4">${escapeHTML(cfg.identity?.name || "")}</h1><p class="text-gray-400">Maintenance en cours...</p></div>`;
             return;
         }
         document.body.classList.add(cfg.theme.fontFamily || "font-sans");

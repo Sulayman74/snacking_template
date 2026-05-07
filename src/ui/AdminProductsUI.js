@@ -1,6 +1,6 @@
 import { adminStore } from "../core/AdminStore.js";
 import { confirmAction } from "../utils/ModalManager.js";
-import { showToast } from "../utils.js";
+import { escapeHTML, safeURL, showToast } from "../utils.js";
 
 class AdminProductsUI {
     constructor() {
@@ -33,11 +33,16 @@ class AdminProductsUI {
 
     renderProductCard(p) {
         const isAvailable = p.isAvailable !== false;
+        const safeId = escapeHTML(p.id);
+        const safeNom = escapeHTML(p.nom || "");
+        const safeDesc = escapeHTML(p.description || "");
+        const safeImg = p.image ? safeURL(p.image) : "";
+        const prix = (parseFloat(p.prix) || 0).toFixed(2);
         return `
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 group ${!isAvailable ? 'opacity-75 grayscale-[0.5]' : ''}">
                 <div class="relative h-48 overflow-hidden bg-gray-50">
                     ${p.image ? `
-                        <img src="${p.image}" alt="${p.nom}" 
+                        <img src="${safeImg}" alt="${safeNom}"
                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                              onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
                         <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-300 hidden">
@@ -56,22 +61,22 @@ class AdminProductsUI {
                         </span>
                     </div>
                 </div>
-                
+
                 <div class="p-6 flex-1 flex flex-col">
                     <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-black text-xl text-gray-900">${p.nom}</h4>
-                        <button data-action="toggle-product-ui" data-id="${p.id}" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAvailable ? 'bg-green-500' : 'bg-gray-200'}">
+                        <h4 class="font-black text-xl text-gray-900">${safeNom}</h4>
+                        <button data-action="toggle-product-ui" data-id="${safeId}" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAvailable ? 'bg-green-500' : 'bg-gray-200'}">
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isAvailable ? 'translate-x-5' : 'translate-x-0'}"></span>
                         </button>
                     </div>
-                    <p class="text-gray-400 text-sm font-bold mb-4 line-clamp-2">${p.description || ''}</p>
+                    <p class="text-gray-400 text-sm font-bold mb-4 line-clamp-2">${safeDesc}</p>
                     <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
-                        <span class="text-2xl font-black text-gray-900">${p.prix.toFixed(2)} €</span>
+                        <span class="text-2xl font-black text-gray-900">${prix} €</span>
                         <div class="flex gap-2">
-                            <button data-action="open-edit-modal" data-id="${p.id}" class="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center">
+                            <button data-action="open-edit-modal" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center">
                                 <i class="fas fa-pen text-sm"></i>
                             </button>
-                            <button data-action="delete-product-ui" data-id="${p.id}" class="w-10 h-10 rounded-xl bg-red-50 text-red-400 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">
+                            <button data-action="delete-product-ui" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-red-50 text-red-400 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">
                                 <i class="fas fa-trash text-sm"></i>
                             </button>
                         </div>

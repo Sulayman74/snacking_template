@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { store } from "./core/Store.js";
-import { showToast, triggerVibration } from "./utils.js";
+import { escapeHTML, showToast, triggerVibration } from "./utils.js";
 
 class ProductModalUI {
   constructor() {
@@ -116,15 +116,18 @@ class ProductModalUI {
             <span class="text-[10px] font-black bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-widest">Obligatoire</span>
         </legend>
         <div class="grid grid-cols-2 gap-3">
-            ${item.tailles.map((t, i) => `
+            ${item.tailles.map((t, i) => {
+                const safeNom = escapeHTML(t.nom || "");
+                const safePrix = (parseFloat(t.prix) || 0).toFixed(2);
+                return `
                 <label class="relative cursor-pointer">
-                    <input type="radio" name="taille_produit" value="${t.nom}" data-prix="${t.prix}" ${i === 0 ? "checked" : ""} class="sr-only peer" onchange="window.updateProductSize(this)">
+                    <input type="radio" name="taille_produit" value="${safeNom}" data-prix="${safePrix}" ${i === 0 ? "checked" : ""} class="sr-only peer" onchange="window.updateProductSize(this)">
                     <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
-                        <span class="font-bold text-gray-900">${t.nom}</span>
-                        <span class="font-black text-accent text-sm">${t.prix.toFixed(2)} ${devise}</span>
+                        <span class="font-bold text-gray-900">${safeNom}</span>
+                        <span class="font-black text-accent text-sm">${safePrix} ${escapeHTML(devise)}</span>
                     </div>
                 </label>
-            `).join("")}
+            `;}).join("")}
         </div>
       </fieldset>`;
     }
@@ -157,22 +160,24 @@ class ProductModalUI {
       <fieldset id="drink-section" class="mb-4 hidden opacity-0 transition-all">
         <legend class="text-lg font-black text-gray-900 mb-2">Votre Boisson</legend>
         <div class="grid grid-cols-2 gap-3">
-            ${drinks.slice(0, 6).map((d, i) => `
+            ${drinks.slice(0, 6).map((d, i) => {
+                const safeNom = escapeHTML(d.nom || "");
+                return `
                 <label class="relative cursor-pointer">
-                    <input type="radio" name="boisson" value="${d.nom}" ${i === 0 ? "checked" : ""} class="sr-only peer">
+                    <input type="radio" name="boisson" value="${safeNom}" ${i === 0 ? "checked" : ""} class="sr-only peer">
                     <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex items-center gap-2">
                         <i class="fas fa-glass-water text-accent"></i>
-                        <span class="font-bold text-gray-800 text-sm">${d.nom}</span>
+                        <span class="font-bold text-gray-800 text-sm">${safeNom}</span>
                     </div>
                 </label>
-            `).join("")}
+            `;}).join("")}
         </div>
       </fieldset>`;
     }
 
     // Sauces
     if (item.choixSauces) {
-      const max = item.choixSauces.max || 2;
+      const max = parseInt(item.choixSauces.max) || 2;
       const list = item.choixSauces.liste || ["Blanche", "Algérienne", "Samouraï", "Mayonnaise"];
       html += `<fieldset class="mb-4">
         <legend class="text-lg font-black text-gray-900 mb-2 flex justify-between items-center">
@@ -182,14 +187,16 @@ class ProductModalUI {
             </span>
         </legend>
         <div class="grid grid-cols-2 gap-3">
-            ${list.map(s => `
+            ${list.map(s => {
+                const safe = escapeHTML(s || "");
+                return `
                 <label class="relative cursor-pointer">
-                    <input type="checkbox" name="sauce" value="${s}" data-max="${max}" class="sr-only peer sauce-checkbox" onchange="window.checkSauceLimit(event, ${max})">
+                    <input type="checkbox" name="sauce" value="${safe}" data-max="${max}" class="sr-only peer sauce-checkbox" onchange="window.checkSauceLimit(event, ${max})">
                     <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex justify-center items-center">
-                        <span class="font-bold text-gray-800 text-sm">${s}</span>
+                        <span class="font-bold text-gray-800 text-sm">${safe}</span>
                     </div>
                 </label>
-            `).join("")}
+            `;}).join("")}
         </div>
       </fieldset>`;
     }

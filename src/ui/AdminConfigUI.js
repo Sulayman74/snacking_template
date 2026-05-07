@@ -1,5 +1,5 @@
 import { adminStore } from "../core/AdminStore.js";
-import { showToast } from "../utils.js";
+import { escapeHTML, showToast } from "../utils.js";
 
 class AdminConfigUI {
     constructor() {
@@ -43,21 +43,26 @@ class AdminConfigUI {
     renderDayRow(h) {
         const isClosed = h.closed ?? false;
         const hasBreak = h.hasBreak ?? false;
+        const safeDay = escapeHTML(h.day || "");
+        const safeOpen = escapeHTML(h.open || "11:30");
+        const safeClose = escapeHTML(h.close || "22:30");
+        const safeBreakStart = escapeHTML(h.breakStart || "15:00");
+        const safeBreakEnd = escapeHTML(h.breakEnd || "17:00");
 
         return `
         <div class="day-row flex flex-col gap-2 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:border-blue-200">
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <span class="w-24 font-black text-gray-900 uppercase tracking-tight text-sm">${h.day}</span>
+                <span class="w-24 font-black text-gray-900 uppercase tracking-tight text-sm">${safeDay}</span>
 
                 <div class="flex items-center gap-2 ${isClosed ? "opacity-30 pointer-events-none" : ""}">
                     <input type="time" class="hour-open p-2 rounded-xl border border-gray-200 font-bold text-gray-700 bg-gray-50 focus:border-blue-500 outline-none"
-                        value="${h.open || "11:30"}" ${isClosed ? "disabled" : ""}>
+                        value="${safeOpen}" ${isClosed ? "disabled" : ""}>
                     <span class="text-gray-400 font-black">→</span>
                     <input type="time" class="hour-close p-2 rounded-xl border border-gray-200 font-bold text-gray-700 bg-gray-50 focus:border-blue-500 outline-none"
-                        value="${h.close || "22:30"}" ${isClosed ? "disabled" : ""}>
+                        value="${safeClose}" ${isClosed ? "disabled" : ""}>
                 </div>
 
-                <button type="button" 
+                <button type="button"
                     class="break-toggle text-[10px] px-3 py-1.5 rounded-full font-black border transition-all ${hasBreak && !isClosed ? "bg-blue-600 border-blue-600 text-white" : "bg-gray-100 border-gray-200 text-gray-400"}"
                     onclick="window.toggleBreakRow(this)"
                     ${isClosed ? "disabled" : ""}>
@@ -75,10 +80,10 @@ class AdminConfigUI {
             <div class="break-row flex items-center gap-3 pl-0 sm:pl-28 mt-2 transition-all ${hasBreak && !isClosed ? "" : "hidden opacity-0"}">
                 <span class="text-[10px] font-black text-blue-500 uppercase">Fermeture</span>
                 <input type="time" class="hour-break-start p-2 rounded-xl border border-blue-100 font-bold text-blue-700 bg-blue-50 focus:border-blue-500 outline-none"
-                    value="${h.breakStart || "15:00"}" ${isClosed ? "disabled" : ""}>
+                    value="${safeBreakStart}" ${isClosed ? "disabled" : ""}>
                 <span class="text-[10px] font-black text-blue-500 uppercase">Réouverture</span>
                 <input type="time" class="hour-break-end p-2 rounded-xl border border-blue-100 font-bold text-blue-700 bg-blue-50 focus:border-blue-500 outline-none"
-                    value="${h.breakEnd || "17:00"}" ${isClosed ? "disabled" : ""}>
+                    value="${safeBreakEnd}" ${isClosed ? "disabled" : ""}>
             </div>
         </div>`;
     }

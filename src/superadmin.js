@@ -4,6 +4,7 @@
 // import './bridge.js';
 import './snack-config.js';
 import './firebase-init.js';
+import { escapeHTML } from './utils.js';
 
 const { collection, doc, getDoc, getDocs, updateDoc, addDoc, serverTimestamp } = window.fs;
 const { onAuthStateChanged, signOut } = window.authTools;
@@ -110,7 +111,10 @@ function renderSnacksTable() {
         return;
     }
 
-    allSnacks.forEach(snack => {
+    const rows = allSnacks.map(snack => {
+        const safeId = escapeHTML(snack.id);
+        const safeNom = escapeHTML(snack.nom || "Sans Nom");
+
         const statusBadge = snack.maintenanceMode
             ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i class="fas fa-tools mr-1"></i> Maintenance</span>`
             : `<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i class="fas fa-globe mr-1"></i> En Ligne</span>`;
@@ -123,37 +127,53 @@ function renderSnacksTable() {
         if (snack.enableSmartReview)     featuresHtml += `<i class="fas fa-star text-yellow-500 mx-1" title="Smart Review"></i>`;
         if (snack.enableViralShare)      featuresHtml += `<i class="fas fa-share-nodes text-teal-500 mx-1" title="Partage Viral"></i>`;
 
-        const mrrClient = (snack.prixAbonnement || PRIX_ABONNEMENT_MENSUEL).toFixed(0);
+        const mrrClient = (parseFloat(snack.prixAbonnement) || PRIX_ABONNEMENT_MENSUEL).toFixed(0);
         const powerBtnClass = snack.maintenanceMode
             ? "text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
             : "text-gray-500 bg-gray-100 hover:bg-gray-200";
 
-        tbody.innerHTML += `
+        return `
             <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
                 <td class="p-4">
-                    <div class="font-bold text-gray-900 text-lg">${snack.nom || "Sans Nom"}</div>
+                    <div class="font-bold text-gray-900 text-lg">${safeNom}</div>
                     <div class="text-xs text-gray-400 mt-1 flex items-center gap-3">
-                        <span class="font-mono">${snack.id}</span>
+                        <span class="font-mono">${safeId}</span>
                         <span class="bg-green-50 text-green-700 font-black px-2 py-0.5 rounded-md">${mrrClient} €/mois</span>
                     </div>
                 </td>
                 <td class="p-4 text-center">${statusBadge}</td>
                 <td class="p-4 text-center text-lg">${featuresHtml || '<span class="text-gray-300 text-xs">—</span>'}</td>
                 <td class="p-4 text-right space-x-1 whitespace-nowrap">
-                    <a href="index.html?s=${snack.id}" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 hover:text-white font-bold text-sm bg-indigo-50 hover:bg-indigo-600 px-3 py-2 rounded-lg transition">
+                    <a href="index.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-indigo-600 hover:text-white font-bold text-sm bg-indigo-50 hover:bg-indigo-600 px-3 py-2 rounded-lg transition">
                         <i class="fas fa-external-link-alt text-xs"></i> Voir
                     </a>
-                    <button onclick="window.openConfigModal('${snack.id}')" class="text-gray-700 hover:text-white font-bold text-sm bg-gray-100 hover:bg-indigo-600 px-3 py-2 rounded-lg transition" title="Configurer les modules">
+                    <button data-action="open-config" data-snack-id="${safeId}" class="text-gray-700 hover:text-white font-bold text-sm bg-gray-100 hover:bg-indigo-600 px-3 py-2 rounded-lg transition" title="Configurer les modules">
                         <i class="fas fa-cog"></i>
                     </button>
-                    <button onclick="toggleMaintenance('${snack.id}', ${snack.maintenanceMode})" class="font-bold text-sm px-3 py-2 rounded-lg transition ${powerBtnClass}" title="${snack.maintenanceMode ? 'Mettre en ligne' : 'Mettre en maintenance'}">
+                    <button data-action="toggle-maintenance" data-snack-id="${safeId}" data-maintenance="${snack.maintenanceMode ? '1' : '0'}" class="font-bold text-sm px-3 py-2 rounded-lg transition ${powerBtnClass}" title="${snack.maintenanceMode ? 'Mettre en ligne' : 'Mettre en maintenance'}">
                         <i class="fas fa-power-off"></i>
                     </button>
                 </td>
             </tr>
         `;
     });
+    tbody.innerHTML = rows.join("");
 }
+
+// Event delegation pour remplacer les onclick inline (évite l'injection via snack.id)
+document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const snackId = btn.getAttribute("data-snack-id");
+    if (!snackId) return;
+    const action = btn.getAttribute("data-action");
+    if (action === "open-config") {
+        window.openConfigModal(snackId);
+    } else if (action === "toggle-maintenance") {
+        const isOn = btn.getAttribute("data-maintenance") === "1";
+        window.toggleMaintenance(snackId, isOn);
+    }
+});
 
 
 // Fonction globale pour le bouton ON/OFF rapide

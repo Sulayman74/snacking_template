@@ -46,6 +46,7 @@ import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 import { getAnalytics } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 // 2. CONFIGURATION
 const firebaseConfig = {
@@ -60,6 +61,35 @@ const firebaseConfig = {
 
 // 3. INITIALISATION
 const app = initializeApp(firebaseConfig);
+
+// 🛡️ FIREBASE APP CHECK (reCAPTCHA v3)
+// Protège Firestore, Functions et Storage contre les appels depuis des origines non autorisées.
+// 1. Crée une clé reCAPTCHA v3 sur https://www.google.com/recaptcha/admin
+// 2. Enregistre-la dans la console Firebase > App Check
+// 3. Mets la clé publique dans .env.local : VITE_APPCHECK_SITE_KEY=...
+// 4. (Dev) En local, ouvre la console et copie le debug token affiché par
+//    self.FIREBASE_APPCHECK_DEBUG_TOKEN=true (avant initializeAppCheck), puis ajoute-le
+//    dans Firebase Console > App Check > Apps > Manage debug tokens.
+const APPCHECK_SITE_KEY = import.meta.env.VITE_APPCHECK_SITE_KEY;
+if (APPCHECK_SITE_KEY) {
+  if (import.meta.env.DEV) {
+    // Active le mode debug en développement (pour les emulateurs/localhost)
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(APPCHECK_SITE_KEY),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (e) {
+    console.error("❌ Erreur init App Check :", e);
+  }
+} else if (!import.meta.env.DEV) {
+  console.warn(
+    "⚠️ VITE_APPCHECK_SITE_KEY non configurée — Firestore/Functions ne sont pas protégés par App Check."
+  );
+}
+
 const auth = getAuth(app);
 const messaging = getMessaging(app);
 // Activation du cache persistant (pour le mode offline)

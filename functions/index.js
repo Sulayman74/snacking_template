@@ -23,6 +23,91 @@ const db = admin.firestore();
 setGlobalOptions({ region: "europe-west9" });
 
 // ============================================================================
+// 🛡️ HELPERS — VALIDATION & RATE LIMITING
+// ============================================================================
+
+// --- Validation primitives ---
+const V = {
+  isString: (v) => typeof v === "string",
+  isNonEmptyString: (v, max = 1000) =>
+    typeof v === "string" && v.length > 0 && v.length <= max,
+  isInt: (v) => Number.isInteger(v),
+  isPositiveInt: (v, max = Number.MAX_SAFE_INTEGER) =>
+    Number.isInteger(v) && v > 0 && v <= max,
+  isPlainObject: (v) =>
+    v !== null && typeof v === "object" && !Array.isArray(v),
+  isArray: (v) => Array.isArray(v),
+  isEmail: (v) =>
+    typeof v === "string" && v.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+  // Firestore doc IDs : pas de "/", longueur 1..1500
+  isDocId: (v) =>
+    typeof v === "string" && v.length > 0 && v.length <= 1500 && !v.includes("/"),
+};
+
+function require_(cond, msg) {
+  if (!cond) throw new HttpsError("invalid-argument", msg);
+}
+
+// Limite la profondeur des metadata acceptés par Stripe (clés/valeurs <=500 chars)
+function sanitizeStripeMetadata(metadata) {
+  if (!V.isPlainObject(metadata)) return {};
+  const out = {};
+  let count = 0;
+  for (const [k, v] of Object.entries(metadata)) {
+    if (count++ >= 50) break;
+    if (typeof k !== "string" || k.length > 40) continue;
+    const value = v == null ? "" : String(v);
+    if (value.length > 500) continue;
+    out[k] = value;
+  }
+  return out;
+}
+
+// --- Rate limiting (sliding window via Firestore transaction) ---
+// Stocke un compteur + un début de fenêtre. Atomique — pas de race condition.
+async function enforceRateLimit({ key, max, windowMs }) {
+  const ref = db.collection("rateLimits").doc(key);
+  const now = Date.now();
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() : null;
+    const windowStart = data?.windowStart?.toMillis?.() ?? 0;
+    const count = data?.count ?? 0;
+
+    if (!data || now - windowStart > windowMs) {
+      tx.set(ref, {
+        count: 1,
+        windowStart: admin.firestore.Timestamp.fromMillis(now),
+      });
+      return;
+    }
+
+    if (count >= max) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Trop de tentatives. Réessayez dans quelques instants."
+      );
+    }
+
+    tx.update(ref, { count: count + 1 });
+  });
+}
+
+// Identifie un appelant : uid si auth, sinon hash IP (X-Forwarded-For)
+function callerKey(request, action) {
+  if (request.auth?.uid) return `${action}_uid_${request.auth.uid}`;
+  const xff = request.rawRequest?.headers?.["x-forwarded-for"];
+  const ip =
+    (typeof xff === "string" ? xff.split(",")[0].trim() : null) ||
+    request.rawRequest?.ip ||
+    "unknown";
+  // On normalise l'IP en clé Firestore safe
+  const safeIp = ip.replace(/[^a-zA-Z0-9.:_-]/g, "_").slice(0, 60);
+  return `${action}_ip_${safeIp}`;
+}
+
+// ============================================================================
 // 🎁 FONCTION 1 : CADEAU DE FIDÉLITÉ (10 POINTS)
 // ============================================================================
 exports.notifierMenuOffert = onDocumentUpdated(
@@ -304,37 +389,49 @@ exports.createPaymentIntent = onCall(
   { region: "europe-west1" },
   async (request) => {
     const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+    // 🛡️ Rate limit AVANT toute logique : 10 tentatives / 60s par utilisateur (ou IP)
+    await enforceRateLimit({
+      key: callerKey(request, "createPaymentIntent"),
+      max: 10,
+      windowMs: 60_000,
+    });
+
+    // 🛡️ Validation stricte des entrées
+    const data = request.data;
+    require_(V.isPlainObject(data), "Payload invalide.");
+
+    const { amount, currency, description, metadata } = data;
+
+    require_(V.isPositiveInt(amount, 1_000_000), "Montant invalide.");
+    require_(amount >= 50, "Montant inférieur au minimum (0,50 €).");
+    require_(
+      currency === undefined || (V.isString(currency) && /^[a-z]{3}$/i.test(currency)),
+      "Devise invalide."
+    );
+    require_(
+      description === undefined ||
+        (V.isString(description) && description.length <= 1000),
+      "Description invalide."
+    );
+    require_(
+      metadata === undefined || V.isPlainObject(metadata),
+      "Metadata invalides."
+    );
+
     try {
-      // 1. 👈 ON RÉCUPÈRE LES NOUVELLES INFOS (description et metadata)
-      const { amount, currency, description, metadata } = request.data;
-
-      // Sécurité de base
-      if (!amount || amount < 50) {
-        // Stripe refuse les paiements sous 0.50€
-        throw new HttpsError("invalid-argument", "Montant invalide.");
-      }
-
-      // 2. On crée l'intention de paiement chez Stripe
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount, // Le montant en CENTIMES (ex: 1500 pour 15.00€)
-        currency: currency || "eur",
-
-        // 🎯 LES DEUX LIGNES MAGIQUES POUR TON DASHBOARD STRIPE
+        amount,
+        currency: currency ? currency.toLowerCase() : "eur",
         description: description || "Commande en ligne",
-        metadata: metadata || {},
-
-        automatic_payment_methods: {
-          enabled: true,
-        },
+        metadata: sanitizeStripeMetadata(metadata),
+        automatic_payment_methods: { enabled: true },
       });
 
-      // 3. On renvoie le secret au téléphone du client pour qu'il affiche le formulaire
       return { clientSecret: paymentIntent.client_secret };
     } catch (error) {
       console.error("❌ Erreur Stripe PaymentIntent :", error);
-      // Si c'est déjà une erreur HttpsError (comme le montant invalide), on la renvoie telle quelle
       if (error instanceof HttpsError) throw error;
-      // Sinon, on masque l'erreur serveur critique au client
       throw new HttpsError("internal", "Impossible d'initialiser le paiement.");
     }
   },
@@ -354,10 +451,53 @@ exports.finalizeOrder = onCall(
     }
     const uid = request.auth.uid;
 
-    const { paymentIntentId, snackId, cartItems, clientEmail, clientNom, totalCents } = request.data;
+    // 🛡️ Rate limit : 5 finalisations / 60s par utilisateur (au-dessus = abus)
+    await enforceRateLimit({
+      key: callerKey(request, "finalizeOrder"),
+      max: 5,
+      windowMs: 60_000,
+    });
 
-    if (!paymentIntentId || !snackId || !cartItems?.length) {
-      throw new HttpsError("invalid-argument", "Données de commande incomplètes.");
+    // 🛡️ Validation stricte
+    const data = request.data;
+    require_(V.isPlainObject(data), "Payload invalide.");
+
+    const {
+      paymentIntentId,
+      snackId,
+      cartItems,
+      clientEmail,
+      clientNom,
+      totalCents,
+      referrerId,
+    } = data;
+
+    require_(V.isNonEmptyString(paymentIntentId, 200), "paymentIntentId invalide.");
+    require_(V.isDocId(snackId), "snackId invalide.");
+    require_(V.isArray(cartItems) && cartItems.length > 0, "cartItems vide ou invalide.");
+    require_(cartItems.length <= 100, "Panier trop volumineux.");
+    require_(V.isEmail(clientEmail), "clientEmail invalide.");
+    require_(
+      clientNom === undefined ||
+        clientNom === null ||
+        (V.isString(clientNom) && clientNom.length <= 100),
+      "clientNom invalide."
+    );
+    require_(V.isPositiveInt(totalCents, 1_000_000), "totalCents invalide.");
+    require_(
+      referrerId === undefined || referrerId === null || V.isDocId(referrerId),
+      "referrerId invalide."
+    );
+
+    // Validation détaillée de chaque item du panier
+    for (const item of cartItems) {
+      require_(V.isPlainObject(item), "Item de panier invalide.");
+      require_(V.isNonEmptyString(item.nom, 200), "Nom d'item invalide.");
+      require_(
+        typeof item.prix === "number" && item.prix >= 0 && item.prix < 10_000,
+        "Prix d'item invalide."
+      );
+      require_(V.isPositiveInt(item.quantity, 100), "Quantité d'item invalide.");
     }
 
     // 2. Vérifier le PaymentIntent côté Stripe (le client ne peut pas falsifier ça)
@@ -406,7 +546,6 @@ exports.finalizeOrder = onCall(
     const docRef = await db.collection("commandes").add(newOrder);
 
     // 🍟 LOGIQUE PARRAINAGE
-    const { referrerId } = request.data;
     const userRef = db.collection("users").doc(uid);
     const userDoc = await userRef.get();
     
