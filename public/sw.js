@@ -44,6 +44,9 @@ self.addEventListener("activate", (event) => {
 // 1. Sert le cache immédiatement
 // 2. Met à jour le cache en arrière-plan
 self.addEventListener("fetch", (event) => {
+  // On ignore les requêtes non-http (ex: chrome-extension://) pour éviter les erreurs de cache
+  if (!event.request.url.startsWith("http")) return;
+
   // On ignore les requêtes vers Firebase (gérées par le SDK Firestore) et Stripe
   if (
     event.request.url.includes("firestore.googleapis.com") ||

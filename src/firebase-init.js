@@ -14,6 +14,7 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
+import { store } from "./core/Store.js";
 // 1. LES IMPORTS (TOUJOURS TOUT EN HAUT !)
 import {
   Timestamp,
@@ -160,10 +161,14 @@ onAuthStateChanged(auth, async (user) => {
     if (!config) throw new Error("Config SaaS introuvable");
     
     // Le store émettra "config-updated" -> AppUI mettra à jour l'identité/thème
-    const { store } = await import("./core/Store.js");
     store.setConfig(config);
 
-    // 2. Récupération du rôle
+    // 2. Chargement du menu en temps réel
+    if (typeof window.chargerMenuComplet === "function") {
+      window.chargerMenuComplet();
+    }
+
+    // 3. Récupération du rôle
     let role = "client";
     if (user) {
       const { getDoc, doc } = window.fs;

@@ -3,18 +3,18 @@
 // ============================================================================
 
 import "./utils.js";
-import "./firebase-init.js";
-import "./snack-config.js";
-import "./tracking.js";
-import "./pwa.js";
-import "./auth.js";
-import "./loyalty.js";
+import { store } from "./core/Store.js";
 import "./ui.js";
 import "./menu.js";
 import "./cart.js";
 import "./product-modal.js";
+import "./tracking.js";
+import "./pwa.js";
+import "./auth.js";
+import "./loyalty.js";
 import "./router.js";
-import { store } from "./core/Store.js";
+import "./snack-config.js";
+import "./firebase-init.js";
 
 // ============================================================================
 // 🔄 ORCHESTRATEUR DE CYCLE DE VIE (Client)

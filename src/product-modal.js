@@ -203,7 +203,7 @@ class ProductModalUI {
 
     if (cfg.features?.enableClickAndCollect) {
       btn.innerHTML = `<span>Ajouter - ${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-      btn.className = "w-full py-4 rounded-xl font-bold text-white bg-gray-900 hover:bg-black transition-all flex justify-center items-center gap-2";
+      btn.className = "w-full py-4 rounded-xl font-bold text-white bg-gray-900 hover:bg-primary hover:scale-105 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => window.confirmAddToCart();
     } else {
       btn.textContent = "Fermer";

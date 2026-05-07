@@ -101,6 +101,7 @@ try {
       },
     };
 
+    window.snackConfig = config;
     store.setConfig(config);
     console.log(`✅ SaaS : Configuration de "${data.nom}" chargée...`);
     return config;

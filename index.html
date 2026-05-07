@@ -571,23 +571,27 @@
     </template>
 
     <template id="menu-item-template">
-      <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] cursor-pointer" role="listitem">
-        <div class="relative h-48 overflow-hidden">
+      <div class="bg-accent rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] cursor-pointer" role="listitem">
+        <div class="relative h-48 overflow-hidden bg-gray-50">
           <img class="menu-item-image w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
+          <div class="menu-item-placeholder absolute inset-0 flex flex-col items-center justify-center text-primary transition-opacity duration-300 hidden">
+            <i class="fas fa-pizza-slice text-4xl mb-2 opacity-20"></i>
+            <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Photo en préparation... 👨‍🍳</span>
+          </div>
           <div class="menu-item-badge absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter text-gray-900 shadow-sm hidden"></div>
         </div>
         <div class="p-5 flex flex-col flex-1">
           <div class="flex justify-between items-start mb-2 gap-2">
             <h3 class="menu-item-name text-lg font-black text-gray-900 leading-tight"></h3>
-            <span class="menu-item-price text-lg font-black text-red-600 whitespace-nowrap"></span>
+            <span class="menu-item-price text-lg font-black text-on-primary whitespace-nowrap"></span>
           </div>
-          <p class="menu-item-desc text-gray-500 text-xs font-medium leading-relaxed mb-4 line-clamp-2 flex-1"></p>
+          <p class="menu-item-desc text-on-primary text-xs font-medium leading-relaxed mb-4 line-clamp-2 flex-1"></p>
           <div class="flex items-center justify-between pt-4 border-t border-gray-50">
             <div class="flex gap-2">
               <span class="menu-item-tag-vegan px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[9px] font-bold uppercase tracking-widest hidden">Vegan</span>
               <span class="menu-item-tag-spicy px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[9px] font-bold uppercase tracking-widest hidden">Pimenté</span>
             </div>
-            <div class="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center transition-transform group-hover:scale-110 group-hover:bg-primary">
+            <div class="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center transition-transform group-hover:scale-110 group-hover:bg-blue-400">
               <i class="fas fa-plus text-xs"></i>
             </div>
           </div>

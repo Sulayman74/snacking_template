@@ -5,6 +5,8 @@
 //               window.switchView, window.auth
 //               window.openClientCard, window.toggleAuthModal, window.openProductModal
 
+import { store } from "./core/Store.js";
+
 // ============================================================================
 // ⚙️ SERVICE WORKER (OFFLINE ASSETS)
 // ============================================================================
@@ -155,8 +157,6 @@ function setupPullToRefresh() {
 }
 
 window.setupPullToRefresh = setupPullToRefresh;
-
-import { store } from "./core/Store.js";
 
 // ============================================================================
 // ⭐ SMART APP REVIEW PROMPT

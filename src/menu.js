@@ -33,6 +33,56 @@ class MenuUI {
         clearBtn.classList.add("hidden");
       };
     }
+
+    // 🕵️‍♂️ SCROLL SPY : Détection de la catégorie active au défilement
+    if (this.scrollContainer) {
+      this.scrollContainer.addEventListener("scroll", () => this.handleScrollSpy(), { passive: true });
+    }
+  }
+
+  handleScrollSpy() {
+    const sections = this.container.querySelectorAll(".menu-section");
+    const nav = document.getElementById("menu-categories-nav");
+    if (!sections.length || !nav) return;
+
+    const containerRect = this.scrollContainer.getBoundingClientRect();
+    const detectionY = containerRect.top + 180; // Ligne de détection juste sous le header collant
+
+    let activeCatId = sections[0].getAttribute("data-cat-id"); // Fallback par défaut
+
+    // Vérifier si l'utilisateur a scrollé tout en bas (Edge case de la dernière catégorie trop petite)
+    const isAtBottom = Math.ceil(this.scrollContainer.scrollTop + this.scrollContainer.clientHeight) >= this.scrollContainer.scrollHeight - 10;
+
+    if (isAtBottom) {
+      activeCatId = sections[sections.length - 1].getAttribute("data-cat-id");
+    } else {
+      // Parcourir à l'envers pour trouver la dernière section dont le haut a franchi la ligne de détection
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const rect = sections[i].getBoundingClientRect();
+        if (rect.top <= detectionY) {
+          activeCatId = sections[i].getAttribute("data-cat-id");
+          break;
+        }
+      }
+    }
+
+    if (activeCatId && activeCatId !== this.currentActiveCatId) {
+      this.currentActiveCatId = activeCatId;
+      
+      const pills = nav.querySelectorAll(".cat-pill");
+      pills.forEach((pill) => {
+        const isTarget = pill.getAttribute("data-cat-id") === activeCatId;
+        pill.classList.toggle("bg-gray-900", isTarget);
+        pill.classList.toggle("text-white", isTarget);
+        pill.classList.toggle("bg-gray-100", !isTarget);
+        pill.classList.toggle("text-gray-600", !isTarget);
+        
+        if (isTarget) {
+          // Centrer le bouton actif dans la navigation horizontale
+          pill.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        }
+      });
+    }
   }
 
   render() {
@@ -42,6 +92,9 @@ class MenuUI {
     this.renderFullMenu(menu);
     this.renderBestSellers(menu);
     this.renderCategoriesNav(menu);
+
+    // Initialisation immédiate du Scroll Spy pour la première catégorie
+    setTimeout(() => this.handleScrollSpy(), 50);
   }
 
   renderFullMenu(menu, filter = "") {
@@ -102,9 +155,19 @@ class MenuUI {
     root.setAttribute("data-id", p.id);
 
     const img = clone.querySelector(".menu-item-image");
-    img.src = p.image || "./assets/logo.webp";
-    img.alt = p.nom;
-    img.onerror = () => { img.src = "./assets/logo.webp"; };
+    const placeholder = clone.querySelector(".menu-item-placeholder");
+
+    if (p.image) {
+      img.src = p.image;
+      img.alt = p.nom;
+      img.onerror = () => {
+        img.classList.add("hidden");
+        placeholder?.classList.remove("hidden");
+      };
+    } else {
+      img.classList.add("hidden");
+      placeholder?.classList.remove("hidden");
+    }
 
     clone.querySelector(".menu-item-name").textContent = p.nom;
     clone.querySelector(".menu-item-price").textContent = `${p.prix.toFixed(2)} €`;
@@ -150,6 +213,7 @@ class MenuUI {
       const btn = document.createElement("button");
       btn.className = "cat-pill whitespace-nowrap px-4 py-2 rounded-xl bg-gray-100 text-gray-600 font-bold text-sm transition-all active:scale-95 border-2 border-transparent";
       btn.textContent = this.getCategoryName(catId);
+      btn.setAttribute("data-cat-id", catId);
       btn.onclick = () => {
         const target = document.getElementById(`cat-${catId}`);
         if (target && this.scrollContainer) {

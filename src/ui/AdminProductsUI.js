@@ -35,8 +35,21 @@ class AdminProductsUI {
         const isAvailable = p.isAvailable !== false;
         return `
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 group ${!isAvailable ? 'opacity-75 grayscale-[0.5]' : ''}">
-                <div class="relative h-48 overflow-hidden">
-                    <img src="${p.image || './assets/logo.webp'}" alt="${p.nom}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                <div class="relative h-48 overflow-hidden bg-gray-50">
+                    ${p.image ? `
+                        <img src="${p.image}" alt="${p.nom}" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                             onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-300 hidden">
+                            <i class="fas fa-pizza-slice text-4xl mb-2 opacity-20"></i>
+                            <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Photo absente... 👨‍🍳</span>
+                        </div>
+                    ` : `
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
+                            <i class="fas fa-pizza-slice text-4xl mb-2 opacity-20"></i>
+                            <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Pas de photo... 👨‍🍳</span>
+                        </div>
+                    `}
                     <div class="absolute top-4 right-4">
                         <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${isAvailable ? 'bg-green-500 text-white' : 'bg-red-500 text-white shadow-lg'}">
                             ${isAvailable ? 'En Stock' : 'Épuisé'}
