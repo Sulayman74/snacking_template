@@ -207,13 +207,16 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       referrerId: localStorage.getItem("referralBy") || null
     });
 
+    const orderId = result?.data?.orderId;
+    if (!orderId) throw new Error("Réponse serveur invalide : orderId manquant.");
+
     // Vide le panier via le Store (ce qui va déclencher les mises à jour UI)
     if (window.clearCart) {
       window.clearCart();
     } else {
       window.cart.splice(0, window.cart.length);
     }
-    
+
     if (window.closeCartModal) window.closeCartModal();
 
     window.triggerVibration?.("jackpot");
@@ -223,8 +226,8 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       window.startOrderTracking(orderId);
     }
     setTimeout(() => {
-    window.openTrackingModal();
-  }, 500);
+      window.openTrackingModal();
+    }, 500);
   } catch (err) {
     console.error("Erreur finalisation commande :", err);
     window.showToast(
