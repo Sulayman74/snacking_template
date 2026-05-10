@@ -83,6 +83,33 @@ class Store extends EventTarget {
         this.emit("cart-updated");
     }
 
+    // --- UPSELLING ---
+
+    /**
+     * Retourne jusqu'à `maxItems` suggestions d'upsell : produits du menu
+     * dont la catégorie matche desserts/sides/boissons (FR/EN, sing/plur),
+     * disponibles, et absents du panier (par productId/id).
+     *
+     * Match case-insensitive sur `categorieId` — ne dépend pas d'un flag
+     * Firestore dédié (KISS, marche pour tous les snacks existants).
+     */
+    getUpsellSuggestions(maxItems = 3) {
+        const menu = this.#state.menu || [];
+        const cart = this.#state.cart || [];
+        if (menu.length === 0) return [];
+
+        const UPSELL_RE = /(drinks?|boissons?|sides?|accompagnements?|desserts?)/i;
+        const cartProductIds = new Set(
+            cart.map((i) => i.productId || (typeof i.id === "string" ? i.id.split("-")[0] : i.id))
+        );
+
+        return menu
+            .filter((p) => p.isAvailable !== false)
+            .filter((p) => typeof p.categorieId === "string" && UPSELL_RE.test(p.categorieId))
+            .filter((p) => !cartProductIds.has(p.id))
+            .slice(0, maxItems);
+    }
+
     // --- HELPERS ---
 
     #persistCart() {
@@ -105,3 +132,8 @@ class Store extends EventTarget {
 }
 
 export const store = new Store();
+
+// 🔧 Debug helper — expose le store pour inspection console (`window.store.state`,
+// `window.store.getUpsellSuggestions(10)`). Pas utilisé en interne, c'est juste
+// un pont pour DevTools, cohérent avec window.snackConfig / window.db.
+if (typeof window !== "undefined") window.store = store;

@@ -6,7 +6,8 @@ class AdminConfigUI {
         this.hoursGrid = document.getElementById("config-hours-grid");
         this.identityForm = document.getElementById("config-identity-form");
         this.hoursForm = document.getElementById("config-hours-form");
-        
+        this.contactForm = document.getElementById("config-contact-form");
+
         this.init();
     }
 
@@ -21,6 +22,9 @@ class AdminConfigUI {
         }
         if (this.hoursForm) {
             this.hoursForm.addEventListener("submit", (e) => this.handleHoursSubmit(e));
+        }
+        if (this.contactForm) {
+            this.contactForm.addEventListener("submit", (e) => this.handleContactSubmit(e));
         }
     }
 
@@ -38,6 +42,23 @@ class AdminConfigUI {
         if (this.hoursGrid) {
             this.hoursGrid.innerHTML = cfg.hours.map(h => this.renderDayRow(h)).join("");
         }
+
+        // 3. Coordonnées & Réseaux
+        const c = cfg.contact || {};
+        const a = c.address || {};
+        const s = c.socials || {};
+        const r = cfg.reviews || {};
+        const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
+        setVal("config-phone", c.phone);
+        setVal("config-email", c.email);
+        setVal("config-street", a.street);
+        setVal("config-zipcode", a.zip);
+        setVal("config-city", a.city);
+        setVal("config-google-maps-url", a.googleMapsUrl);
+        setVal("config-google-review-url", r.googleReviewUrl);
+        setVal("config-instagram", s.instagram);
+        setVal("config-facebook", s.facebook);
+        setVal("config-tiktok", s.tiktok);
     }
 
     renderDayRow(h) {
@@ -98,6 +119,24 @@ class AdminConfigUI {
         adminStore.updateConfigField("promoPhrase", promo);
 
         this.saveToServer("Identité mise à jour !");
+    }
+
+    handleContactSubmit(e) {
+        e.preventDefault();
+        const getVal = (id) => document.getElementById(id)?.value.trim() || "";
+
+        adminStore.updateConfigField("contact.phone", getVal("config-phone"));
+        adminStore.updateConfigField("contact.email", getVal("config-email"));
+        adminStore.updateConfigField("contact.address.street", getVal("config-street"));
+        adminStore.updateConfigField("contact.address.zip", getVal("config-zipcode"));
+        adminStore.updateConfigField("contact.address.city", getVal("config-city"));
+        adminStore.updateConfigField("contact.address.googleMapsUrl", getVal("config-google-maps-url"));
+        adminStore.updateConfigField("reviews.googleReviewUrl", getVal("config-google-review-url"));
+        adminStore.updateConfigField("contact.socials.instagram", getVal("config-instagram"));
+        adminStore.updateConfigField("contact.socials.facebook", getVal("config-facebook"));
+        adminStore.updateConfigField("contact.socials.tiktok", getVal("config-tiktok"));
+
+        this.saveToServer("Coordonnées mises à jour !");
     }
 
     handleHoursSubmit(e) {

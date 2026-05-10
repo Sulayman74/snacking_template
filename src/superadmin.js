@@ -1,9 +1,10 @@
 // ============================================================================
-// 🚀 SUPERADMIN DASHBOARD - MYSAAS HQ
+// 🚀 SUPERADMIN DASHBOARD - CODECRAFTERS HQ
 // ============================================================================
 // import './bridge.js';
 import './snack-config.js';
 import './firebase-init.js';
+
 import { escapeHTML } from './utils.js';
 
 const { collection, doc, getDoc, getDocs, updateDoc, addDoc, serverTimestamp } = window.fs;
@@ -126,6 +127,7 @@ function renderSnacksTable() {
         if (snack.enablePushNotifs)      featuresHtml += `<i class="fas fa-bell text-blue-500 mx-1" title="Push Notifs"></i>`;
         if (snack.enableSmartReview)     featuresHtml += `<i class="fas fa-star text-yellow-500 mx-1" title="Smart Review"></i>`;
         if (snack.enableViralShare)      featuresHtml += `<i class="fas fa-share-nodes text-teal-500 mx-1" title="Partage Viral"></i>`;
+        if (snack.enableUpsell)          featuresHtml += `<i class="fas fa-cart-plus text-emerald-500 mx-1" title="Upsell"></i>`;
 
         const mrrClient = (parseFloat(snack.prixAbonnement) || PRIX_ABONNEMENT_MENSUEL).toFixed(0);
         const powerBtnClass = snack.maintenanceMode
@@ -261,6 +263,7 @@ const CONFIG_FLAGS = [
     "enablePushNotifs",
     "enableSmartReview",
     "enableViralShare",
+    "enableUpsell",
 ];
 
 let currentConfigSnackId = null;
@@ -422,7 +425,12 @@ if (btnOpenModal && modalNewSnack) {
                 lat: 0,
                 long: 0,
                 phoneNumber: "",
-                
+                email: "",
+
+                // Google
+                googleMapsUrl: "",
+                googleReviewUrl: "",
+
                 // Réseaux Sociaux
                 facebook: "",
                 instagram: "",
@@ -441,6 +449,7 @@ if (btnOpenModal && modalNewSnack) {
                 enablePushNotifs: false,
                 enableSmartReview: false,
                 enableViralShare: false,
+                enableUpsell: false,
                 maxPoints: 10,
                 
                 // 🕒 HORAIRES PAR DÉFAUT (Le gros morceau !)

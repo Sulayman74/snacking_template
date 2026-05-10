@@ -447,8 +447,8 @@
     </div>
 
     <div id="cart-backdrop" data-action="close-cart" class="fixed inset-0 bg-gray-900/60 z-90 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm"></div>
-    <div id="cart-modal" class="fixed bottom-0 left-0 w-full bg-white rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[85vh]">
-      <div class="flex justify-between items-center p-6 border-b"><h2 class="text-xl font-bold text-gray-900">Mon Panier 🛒</h2><button data-action="close-cart" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"><i class="fas fa-times"></i></button></div>
+    <div id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" inert class="fixed bottom-0 left-0 w-full bg-white rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="flex justify-between items-center p-6 border-b"><h2 id="cart-title" class="text-xl font-bold text-gray-900">Mon Panier 🛒</h2><button data-action="close-cart" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"><i class="fas fa-times"></i></button></div>
       <div id="cart-items-container" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
       <div class="p-6 bg-gray-50 rounded-t-3xl border-t border-gray-200 pb-safe"><div class="flex justify-between items-center mb-4"><span class="text-gray-500 font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-gray-900">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center">Valider ma commande</button></div>
     </div>
@@ -491,6 +491,62 @@
     </div>
   </div>
 </div>
+
+<!-- ============================================================================ -->
+<!-- ➕ UPSELL — Bottom-sheet de suggestions avant paiement -->
+<!-- ============================================================================ -->
+<div id="upsell-bottom-sheet"
+     role="dialog" aria-modal="true" aria-labelledby="upsell-title"
+     class="fixed inset-0 z-[110] hidden items-end justify-center bg-black/60 opacity-0 transition-opacity duration-300 backdrop-blur-sm">
+
+  <div class="absolute inset-0" data-upsell-action="cancel"></div>
+
+  <div id="upsell-sheet-content"
+       class="relative w-full max-w-lg translate-y-full transform rounded-t-3xl bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col max-h-[92vh]">
+
+    <div class="mx-auto mb-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"></div>
+
+    <div class="overflow-y-auto pr-1 custom-scrollbar">
+      <div class="mb-5 text-center">
+        <h3 id="upsell-title" class="text-xl font-black text-gray-900">Ça vous tente d'ajouter ?</h3>
+        <p class="text-sm text-gray-500">Petit extra avant de passer à la caisse 😋</p>
+      </div>
+
+      <ul id="upsell-suggestions" role="list" class="space-y-3"></ul>
+    </div>
+
+    <div class="mt-6 flex flex-col gap-3 flex-shrink-0 pb-4 md:pb-0">
+      <button data-upsell-action="continue"
+              class="flex w-full items-center justify-center rounded-xl bg-primary text-on-primary py-4 text-lg font-black shadow-lg transition active:scale-95 hover:opacity-90">
+        <i class="fas fa-arrow-right mr-2"></i> Continuer vers le paiement
+      </button>
+
+      <button data-upsell-action="cancel" class="w-full py-2 text-sm font-bold text-gray-400 hover:text-gray-600">
+        Non merci
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Template d'une suggestion d'upsell (cloné par UpsellUI) -->
+<template id="upsell-item-template">
+  <li class="flex items-center gap-3 p-3 rounded-2xl border border-gray-100 bg-gray-50">
+    <div class="upsell-item-image-wrapper relative h-14 w-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-200">
+      <img class="upsell-item-image h-full w-full object-cover" alt="" loading="lazy">
+      <div class="upsell-item-fallback hidden absolute inset-0 items-center justify-center text-gray-400">
+        <i class="fas fa-utensils"></i>
+      </div>
+    </div>
+    <div class="flex-1 min-w-0">
+      <p class="upsell-item-name font-bold text-gray-900 truncate"></p>
+      <p class="upsell-item-price text-sm font-black text-primary"></p>
+    </div>
+    <button class="upsell-add-btn shrink-0 rounded-full bg-primary text-on-primary px-4 py-2 text-sm font-black shadow-md transition active:scale-95 hover:opacity-90"
+            aria-label="Ajouter au panier">
+      <i class="fas fa-plus mr-1"></i> Ajouter
+    </button>
+  </li>
+</template>
 
 <!-- ============================================================================ -->
 <!-- 📡 RADAR CLICK & COLLECT — UI TRACKING -->

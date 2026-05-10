@@ -14,7 +14,10 @@
 
     "deploy:tacos": "npm run build:tacos && firebase deploy --only hosting:demo-tacos",
     "deploy:pizza": "npm run build:pizza && firebase deploy --only hosting:demo-pizza",
-    "deploy:all": "npm run build:all && firebase deploy --only hosting"
+    "deploy:all": "npm run build:all && firebase deploy --only hosting",
+
+    "migrate:snack-fields": "node functions/scripts/migrate-snack-fields.js",
+    "migrate:snack-fields:apply": "node functions/scripts/migrate-snack-fields.js --apply"
   },
   "repository": {
     "type": "git",

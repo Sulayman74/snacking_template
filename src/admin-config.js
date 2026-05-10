@@ -24,7 +24,25 @@ window.loadConfigView = async () => {
                 description: data.description || ""
             },
             promoPhrase: data.promoPhrase || "",
-            hours: data.hours || []
+            hours: data.hours || [],
+            contact: {
+                phone: data.phoneNumber || "",
+                email: data.email || "",
+                address: {
+                    street: data.street || "",
+                    zip: data.zipcode || "",
+                    city: data.city || "",
+                    googleMapsUrl: data.googleMapsUrl || "",
+                },
+                socials: {
+                    instagram: data.instagram || "",
+                    facebook: data.facebook || "",
+                    tiktok: data.tiktok || "",
+                },
+            },
+            reviews: {
+                googleReviewUrl: data.googleReviewUrl || "",
+            },
         };
 
         adminStore.setConfig(configData);

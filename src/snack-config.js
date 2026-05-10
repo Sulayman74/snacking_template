@@ -58,6 +58,7 @@ try {
           street: data.street || "",
           zip: data.zipcode || "",
           city: data.city || "",
+          googleMapsUrl: data.googleMapsUrl || "",
         },
         socials: {
           instagram: data.instagram || "",
@@ -87,11 +88,12 @@ try {
         enablePushNotifs: data.enablePushNotifs,
         enableSmartReview: data.enableSmartReview,
         enableViralShare: data.enableViralShare,
+        enableUpsell: data.enableUpsell,
       },
       deliveryUrl: data.deliveryUrl || "",
       hours: data.hours || [],
       reviews: {
-        googleMapsReviewLink: data.googleMapsUrl || "https://g.page/r/TON_LIEN_DA_AVIS/review",
+        googleMapsReviewLink: data.googleReviewUrl || "",
       },
       loyalty: {
         programName: data.loyaltyProgramName || "Club Fidélité",

@@ -14,6 +14,7 @@ class CartUI {
         this.cartBackdrop = document.getElementById("cart-backdrop");
         this.checkoutBtn = document.getElementById("checkout-btn");
         this.template = document.getElementById("cart-item-template");
+        this.lastFocused = null;
 
         this.init();
     }
@@ -147,12 +148,16 @@ class CartUI {
     }
 
     open() {
+        this.lastFocused = document.activeElement;
         this.render();
         this.cartBackdrop.classList.remove("opacity-0", "pointer-events-none");
         this.cartModal.classList.remove("translate-y-full");
-        this.cartModal.setAttribute('aria-hidden', 'false');
-        
-        // Focus sur le premier élément
+        // `inert` (best practice) gère focus + interactions + cache aux AT.
+        // Évite le warning "aria-hidden on focused descendant" et remplace
+        // proprement l'usage déprécié de aria-hidden sur conteneurs interactifs.
+        this.cartModal.removeAttribute('inert');
+
+        // Focus sur le premier élément interactif après l'animation d'ouverture
         setTimeout(() => {
             const firstFocusable = this.cartModal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
             if (firstFocusable) firstFocusable.focus();
@@ -162,7 +167,14 @@ class CartUI {
     close() {
         this.cartBackdrop.classList.add("opacity-0", "pointer-events-none");
         this.cartModal.classList.add("translate-y-full");
-        this.cartModal.setAttribute('aria-hidden', 'true');
+        // `inert` retire automatiquement le focus de tout descendant focusé,
+        // ce qui supprime le warning A11Y déclenché par aria-hidden.
+        this.cartModal.setAttribute('inert', '');
+
+        // Restaure le focus sur l'ouvreur (WCAG 2.4.3 Focus Order).
+        if (this.lastFocused && typeof this.lastFocused.focus === "function") {
+            this.lastFocused.focus();
+        }
     }
 
     handleFocusTrap(e) {

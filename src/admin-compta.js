@@ -24,11 +24,11 @@ async function loadComptaDashboard() {
     try {
         const { query, collection, where, getDocs, orderBy } = window.fs;
         const q = query(
-            collection(window.db, "orders"),
+            collection(window.db, "commandes"),
             where("snackId", "==", window.currentAdminSnackId),
-            where("timestamp", ">=", startDate),
-            where("timestamp", "<=", endDate),
-            orderBy("timestamp", "desc")
+            where("date", ">=", startDate),
+            where("date", "<=", endDate),
+            orderBy("date", "desc")
         );
 
         const snapshot = await getDocs(q);

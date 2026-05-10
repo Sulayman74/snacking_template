@@ -133,10 +133,26 @@ export class AdminStore extends EventTarget {
             const { doc, updateDoc } = fs;
             const snackRef = doc(db, "snacks", this.#state.config.identity.id);
             
+            const cfg = this.#state.config;
+            const c = cfg.contact || {};
+            const a = c.address || {};
+            const s = c.socials || {};
+            const r = cfg.reviews || {};
+
             const dataToSave = {
-                description: this.#state.config.identity.description,
-                promoPhrase: this.#state.config.config?.promoPhrase || this.#state.config.promoPhrase || "",
-                hours: this.#state.config.hours
+                description: cfg.identity.description,
+                promoPhrase: cfg.config?.promoPhrase || cfg.promoPhrase || "",
+                hours: cfg.hours,
+                phoneNumber: c.phone || "",
+                email: c.email || "",
+                street: a.street || "",
+                zipcode: a.zip || "",
+                city: a.city || "",
+                googleMapsUrl: a.googleMapsUrl || "",
+                googleReviewUrl: r.googleReviewUrl || "",
+                instagram: s.instagram || "",
+                facebook: s.facebook || "",
+                tiktok: s.tiktok || "",
             };
 
             await updateDoc(snackRef, dataToSave);
@@ -231,9 +247,9 @@ export class AdminStore extends EventTarget {
         const tips = [];
         const now = new Date();
         const hour = now.getHours();
-        const day = now.getDay(); // 0 = Dimanche, 1 = Lundi...
+        const day = now.getDay(); // 0 = Dimanche, 1 = Lundi, …, 6 = Samedi
 
-        // Périodes de creux typiques (15h - 18h)
+        // Périodes de creux typiques (14h - 17h)
         if (hour >= 14 && hour <= 17) {
             tips.push({
                 type: "creux",
@@ -242,22 +258,152 @@ export class AdminStore extends EventTarget {
             });
         }
 
-        // Événements saisonniers (Simplifié)
+        // Événements saisonniers — couverture mois par mois
         const month = now.getMonth() + 1;
         if (month === 2) tips.push({ type: "event", title: "❤️ Saint-Valentin", message: "Proposez un menu duo spécial amoureux !" });
+        if (month === 3) tips.push({ type: "event", title: "🌷 Printemps arrive", message: "La terrasse redevient un atout : annoncez sa réouverture et mettez en avant les boissons rafraîchissantes." });
         if (month === 6) tips.push({ type: "event", title: "☀️ Été", message: "Mettez en avant vos boissons fraîches et salades." });
+        if (month === 7 || month === 8) tips.push({ type: "event", title: "🏖️ Vacances d'été", message: "Captez le trafic touristique : mettez en avant Click & Collect rapide et menus d'été." });
+        if (month === 10) tips.push({ type: "event", title: "🎃 Halloween", message: "Proposez un menu monstrueux pour les enfants et une promo familles à l'approche du 31 octobre." });
         if (month === 12) tips.push({ type: "event", title: "🎄 Fêtes", message: "Annoncez vos horaires spéciaux de fin d'année." });
 
-        // Week-end
+        // Week-end (vendredi soir, samedi, dimanche)
         if (day === 5 || day === 6) {
             tips.push({
                 type: "weekend",
                 title: "🎉 Week-end",
                 message: "Les clients commandent plus en famille. Proposez un 'Pack Famille' ou une offre sur les accompagnements."
             });
+        } else if (day === 0) {
+            tips.push({
+                type: "weekend",
+                title: "🌙 Dimanche soir",
+                message: "Beaucoup de foyers évitent de cuisiner. Mettez en avant le Click & Collect pour le repas du dimanche soir et préparez la relance pour la semaine."
+            });
         }
 
         return tips;
+    }
+
+    /**
+     * ⚽ Football tip — appelle la Cloud Function `getUpcomingFootballEvents`,
+     * filtre les matchs dans les prochaines 48h, et renvoie le tip pour le
+     * match le plus imminent (un seul, pour ne pas saturer l'Advisor).
+     * 48h laisse le temps de programmer une campagne push J-1.
+     *
+     * Retourne `null` silencieusement si :
+     *   - fonctions Firebase non dispo (window.fs.functions absent)
+     *   - aucun match dans la fenêtre 24h
+     *   - appel function échoue
+     *
+     * @param {object} fs — bridge Firestore (window.fs) avec httpsCallable + functions
+     */
+    async getFootballTip(fs) {
+        if (!fs?.httpsCallable || !fs?.functions) return null;
+
+        try {
+            const callable = fs.httpsCallable(fs.functions, "getUpcomingFootballEvents");
+            const result = await callable({});
+            const matches = result?.data?.matches || [];
+            if (matches.length === 0) return null;
+
+            // Fenêtre 48h glissante (push J-1 confortable)
+            const now = Date.now();
+            const horizon = now + 48 * 60 * 60 * 1000;
+            const upcoming = matches
+                .map((m) => ({ ...m, _ts: new Date(m.utcDate).getTime() }))
+                .filter((m) => m._ts >= now && m._ts <= horizon)
+                .sort((a, b) => a._ts - b._ts);
+
+            if (upcoming.length === 0) return null;
+
+            const m = upcoming[0];
+            const when = new Date(m._ts).toLocaleString("fr-FR", {
+                weekday: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+            const matchLabel = `${m.homeTeam?.name || "?"} – ${m.awayTeam?.name || "?"}`;
+            const compShort = m.competition?.code === "CL" ? "Champions League"
+                : m.competition?.code === "WC" ? "Coupe du Monde"
+                : m.competition?.code === "EC" ? "Euro"
+                : m.competition?.name || m.competition?.code || "Match";
+
+            return {
+                type: "football",
+                title: `⚽ ${matchLabel} — ${when}`,
+                message: `${compShort}. Lancez une campagne "Menu match" en Click & Collect : commande à récupérer avant le coup d'envoi.`,
+            };
+        } catch (err) {
+            console.warn("[getFootballTip] échec :", err.message);
+            return null;
+        }
+    }
+
+    /**
+     * 📉 Sales trend tip — compare les revenus des 7 derniers jours à la
+     * moyenne hebdomadaire des 30 derniers. Si baisse significative (≥ 15%),
+     * pousse un tip "relancez vos inactifs".
+     *
+     * Async + query Firestore dédiée : ne dépend pas du salesData du store
+     * (qui n'est peuplé qu'à l'ouverture de la vue Compta sur une plage choisie).
+     *
+     * Retourne `null` si pas assez de data, si Firestore down, ou si la
+     * tendance est neutre/positive → l'UI peut ignorer silencieusement.
+     *
+     * @param {import("firebase/firestore").Firestore} db
+     * @param {object} fs — bridge Firestore (window.fs) avec query, collection, where, getDocs, Timestamp
+     * @param {string} snackId — snack ciblé (window.currentAdminSnackId)
+     */
+    async getSalesTrendTip(db, fs, snackId) {
+        if (!db || !fs || !snackId) return null;
+
+        try {
+            const { query, collection, where, getDocs, Timestamp } = fs;
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            // Collection "commandes" (FR) + champ "date" — cohérent avec
+            // finalizeOrder côté Cloud Function et les Firestore rules.
+            const q = query(
+                collection(db, "commandes"),
+                where("snackId", "==", snackId),
+                where("date", ">=", Timestamp.fromDate(thirtyDaysAgo)),
+                where("date", "<=", Timestamp.fromDate(now))
+            );
+            const snap = await getDocs(q);
+            if (snap.empty) return null;
+
+            let revenue7 = 0;
+            let revenue30 = 0;
+            snap.forEach((doc) => {
+                const o = doc.data();
+                const amount = parseFloat(o.total) || 0;
+                const ts = o.date?.toDate?.() || new Date(o.date);
+                revenue30 += amount;
+                if (ts >= sevenDaysAgo) revenue7 += amount;
+            });
+
+            // Pas assez d'historique pour conclure : on attend au moins 14 jours d'activité.
+            const daysWithData = (now.getTime() - thirtyDaysAgo.getTime()) / (24 * 60 * 60 * 1000);
+            if (daysWithData < 14 || revenue30 <= 0) return null;
+
+            const avgWeekly = (revenue30 / daysWithData) * 7;
+            const variation = (revenue7 - avgWeekly) / avgWeekly; // -0.20 = -20%
+
+            if (variation > -0.15) return null; // pas de tendance baissière significative
+
+            const pct = Math.abs(Math.round(variation * 100));
+            return {
+                type: "sales-trend",
+                title: `📉 Baisse de ${pct}% sur 7 jours`,
+                message: "Vos revenus reculent par rapport à la moyenne du mois. Idéal pour cibler vos clients inactifs avec une offre Click & Collect."
+            };
+        } catch (err) {
+            console.warn("[getSalesTrendTip] échec :", err.message);
+            return null;
+        }
     }
 
     async schedulePush(db, fs, pushData) {
@@ -314,13 +460,13 @@ export class AdminStore extends EventTarget {
 
         const headers = ["ID", "Date", "Client", "Total TTC", "HT (90%)", "TVA (10%)", "Statut"];
         const rows = sales.map(s => {
-            const date = s.timestamp?.toDate ? s.timestamp.toDate().toLocaleDateString() : "";
+            const date = s.date?.toDate ? s.date.toDate().toLocaleDateString() : "";
             const total = parseFloat(s.total) || 0;
             const tva = total * 0.10;
             return [
                 s.id,
                 date,
-                s.userName || "Anonyme",
+                s.clientNom || s.clientEmail?.split("@")[0] || "Anonyme",
                 total.toFixed(2),
                 (total - tva).toFixed(2),
                 tva.toFixed(2),

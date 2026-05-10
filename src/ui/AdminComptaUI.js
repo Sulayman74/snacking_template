@@ -78,7 +78,7 @@ class AdminComptaUI {
     }
 
     renderTableRow(s) {
-        const date = s.timestamp?.toDate ? s.timestamp.toDate() : new Date(s.timestamp);
+        const date = s.date?.toDate ? s.date.toDate() : new Date(s.date);
         const dateStr = escapeHTML(date.toLocaleDateString([], { day: '2-digit', month: '2-digit' }));
         const timeStr = escapeHTML(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
@@ -89,7 +89,7 @@ class AdminComptaUI {
                     <p class="text-[10px] text-gray-400 font-bold">${timeStr}</p>
                 </td>
                 <td class="px-4 py-4">
-                    <p class="text-sm font-bold text-gray-700">${escapeHTML(s.userName || "Anonyme")}</p>
+                    <p class="text-sm font-bold text-gray-700">${escapeHTML(s.clientNom || s.clientEmail?.split("@")[0] || "Anonyme")}</p>
                 </td>
                 <td class="px-4 py-4">
                     <p class="text-sm font-black text-gray-900">${(parseFloat(s.total) || 0).toFixed(2)} €</p>

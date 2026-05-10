@@ -4,13 +4,35 @@
 // Dépendances : window.cart, window.getCartTotal, window.closeCartModal,
 //               window.toggleAuthModal, window.auth, window.fs, window.db,
 //               window.snackConfig, window.showToast, window.triggerVibration,
-//               window.startOrderTracking
+//               window.startOrderTracking, window.upsellUI
+
+import { upsellUI } from "./ui/UpsellUI.js";
 
 let stripeElements = null;
 let stripeInstance = null;
 const stripePublicKey =
   "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
 
+/**
+ * Tunnel de paiement complet, déclenché par #checkout-btn (router → process-checkout).
+ *
+ * Flow :
+ *   1. Garde-fous : panier non vide, feature activée, user connecté.
+ *   2. Étape upsell (NON-BLOQUANTE) :
+ *      - On appelle upsellUI.show() qui résout :
+ *          - immédiatement "continue" si aucune suggestion (pas de catégorie
+ *            dessert/side/boisson disponible OU déjà tout au panier),
+ *          - "continue" / "cancel" après interaction utilisateur.
+ *      - L'utilisateur peut cliquer "Ajouter" sur une suggestion : store.addToCart()
+ *        muta le panier, l'event "cart-updated" déclenche un re-render CartUI,
+ *        et le total recalculé ci-dessous (window.getCartTotal après la modale)
+ *        intègre bien les ajouts.
+ *      - "cancel" interrompt le checkout (l'utilisateur peut continuer à shopper).
+ *   3. Init Stripe + ouverture du payment-bottom-sheet avec le total à jour.
+ *
+ * Important : on lit window.getCartTotal() APRÈS l'upsell pour que les ajouts
+ * soient pris en compte dans le PaymentIntent envoyé à Stripe.
+ */
 async function processCheckout() {
   const cfg = window.snackConfig;
   if (window.cart.length === 0)
@@ -20,6 +42,10 @@ async function processCheckout() {
     return window.showToast("La commande en ligne est désactivée.", "error");
   }
 
+  if (cfg?.features?.maintenanceMode) {
+    return window.showToast("Service momentanément en maintenance.", "error");
+  }
+
   const currentUser = window.auth?.currentUser;
   const btn = document.getElementById("checkout-btn");
 
@@ -27,6 +53,17 @@ async function processCheckout() {
     window.showToast("Veuillez vous connecter pour commander", "error");
     window.toggleAuthModal();
     return;
+  }
+
+  // 🪜 ÉTAPE UPSELL — gate facultatif avant init Stripe.
+  // - Skippé si le snack n'a pas activé la feature (cfg.features.enableUpsell)
+  //   via le toggle superadmin → flow inchangé pour les snacks legacy.
+  // - Pas de suggestions => résout "continue" instantanément (pas de modale).
+  // - Sinon, l'utilisateur voit la sheet et choisit continue/cancel.
+  // - "cancel" abort proprement : pas de spinner, pas d'appel Stripe.
+  if (cfg?.features?.enableUpsell) {
+    const upsellChoice = await upsellUI.show();
+    if (upsellChoice === "cancel") return;
   }
 
   const originalText = btn.innerHTML;
@@ -42,6 +79,7 @@ async function processCheckout() {
       stripeInstance = Stripe(stripePublicKey);
     }
 
+    // 💡 Total recalculé APRÈS l'upsell pour intégrer les éventuels ajouts.
     const totalAmount = window.getCartTotal();
 
     // 1. Fermer le panier pour éviter les conflits de z-index
