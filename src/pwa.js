@@ -6,18 +6,14 @@
 //               window.openClientCard, window.toggleAuthModal, window.openProductModal
 
 import { store } from "./core/Store.js";
+import { setupSWUpdatePrompt } from "./sw-update.js";
 
 // ============================================================================
-// ⚙️ SERVICE WORKER (OFFLINE ASSETS)
+// ⚙️ SERVICE WORKER — STRATÉGIE "PROMPT" (mise à jour non-intrusive)
 // ============================================================================
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((reg) => console.log("🚀 PWA: Service Worker prêt !", reg.scope))
-      .catch((err) => console.error("❌ PWA: Échec SW", err));
-  });
-}
+// Enregistrement + bandeau de mise à jour mutualisés dans sw-update.js.
+// Aucun reload automatique : l'utilisateur décide via #pwa-update-banner.
+setupSWUpdatePrompt({ context: "Client" });
 
 // ============================================================================
 // 🌐 DÉTECTION CONNEXION (ONLINE / OFFLINE)

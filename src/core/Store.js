@@ -8,7 +8,14 @@ class Store extends EventTarget {
         config: null,
         menu: [],
         user: null,
-        role: "client"
+        role: "client",
+        // 🚚 LIVRAISON — état du tunnel de commande (mode + adresse + devis).
+        // mode 'collect' par défaut → comportement legacy strictement inchangé.
+        delivery: {
+            mode: "collect",     // 'collect' | 'delivery'
+            address: null,       // { adresse, lat, lng }
+            quote: null          // { distanceKm, inRange, frais, prepMin, travelMin, totalMin }
+        }
     };
 
     constructor() {
@@ -81,6 +88,38 @@ class Store extends EventTarget {
         this.#state.cart = [];
         this.#persistCart();
         this.emit("cart-updated");
+    }
+
+    // --- LIVRAISON (mode / adresse / devis) ---
+
+    /** Bascule collect ⇄ delivery. Reset le devis car il dépend du mode. */
+    setDeliveryMode(mode) {
+        const next = mode === "delivery" ? "delivery" : "collect";
+        this.#state.delivery = { ...this.#state.delivery, mode: next, quote: null };
+        this.emit("delivery-updated");
+    }
+
+    setDeliveryAddress(address) {
+        this.#state.delivery = { ...this.#state.delivery, address: address || null };
+        this.emit("delivery-updated");
+    }
+
+    setDeliveryQuote(quote) {
+        this.#state.delivery = { ...this.#state.delivery, quote: quote || null };
+        this.emit("delivery-updated");
+    }
+
+    /** Remet le tunnel livraison à zéro (après commande validée). */
+    resetDelivery() {
+        this.#state.delivery = { mode: "collect", address: null, quote: null };
+        this.emit("delivery-updated");
+    }
+
+    /** Frais de livraison effectifs (0 en collect ou hors zone). */
+    getDeliveryFee() {
+        const d = this.#state.delivery;
+        if (d.mode !== "delivery" || !d.quote?.inRange) return 0;
+        return Number(d.quote.frais) || 0;
     }
 
     // --- UPSELLING ---

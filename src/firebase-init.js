@@ -177,8 +177,11 @@ window.authTools = {
 // ============================================================================
 onAuthStateChanged(auth, async (user) => {
   const isAdminPage = window.location.pathname.includes("admin.html") ||
-                      window.location.pathname.includes("superadmin.html");
+                      window.location.pathname.includes("superadmin.html") ||
+                      window.location.pathname.includes("livreur.html");
 
+  // L'app livreur et l'admin gèrent leur propre auth/cycle de vie (pas de
+  // bootstrap du menu client ici).
   if (isAdminPage) return;
 
   const urlParams = new URLSearchParams(window.location.search);

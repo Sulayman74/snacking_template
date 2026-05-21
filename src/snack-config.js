@@ -19,6 +19,12 @@ const SAAS_THEMES = {
   "sunflower": { primaryHex: "#eab308", accentHex: "#ca8a04", lightHex: "#fef9c3", onPrimaryHex: "#111827" },
 };
 
+// Coerce une valeur Firestore en nombre fini, sinon renvoie le fallback (ex: null).
+const numberOr = (v, fallback) => {
+  const n = typeof v === "number" ? v : parseFloat(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
 window.loadSnackConfig = async (db, snackId) => {
 try {
   // 🚀 Cache en mémoire : évite une lecture Firestore si le snack est déjà chargé
@@ -90,7 +96,24 @@ try {
         enableViralShare: data.enableViralShare,
         enableUpsell: data.enableUpsell,
       },
+      // 🔗 Lien plateforme tierce (UberEats/Deliveroo) — FALLBACK quand le snack
+      // n'a pas de flotte. La livraison native (ci-dessous) prime si activée.
       deliveryUrl: data.deliveryUrl || "",
+      // 🚚 LIVRAISON NATIVE — réglages opérationnels (édités via AdminConfigUI).
+      // Défauts sûrs : si le snack n'a rien configuré, la livraison reste cohérente.
+      delivery: {
+        radiusKm: numberOr(data.delivery?.radiusKm, 5),         // rayon max de livraison
+        frais: numberOr(data.delivery?.frais, 2.5),             // frais fixes
+        minOrder: numberOr(data.delivery?.minOrder, 0),         // panier minimum
+        avgSpeedKmh: numberOr(data.delivery?.avgSpeedKmh, 22),  // vitesse moyenne (ETA Haversine)
+        prepBaseMin: numberOr(data.delivery?.prepBaseMin, 12),  // temps prépa de base
+        queueFactorMin: numberOr(data.delivery?.queueFactorMin, 3), // min ajoutées / commande en file
+      },
+      // 📍 Coordonnées resto (géocodées une fois). null si pas encore renseignées.
+      geo: {
+        lat: numberOr(data.restaurantLat, null),
+        lng: numberOr(data.restaurantLng, null),
+      },
       hours: data.hours || [],
       reviews: {
         googleMapsReviewLink: data.googleReviewUrl || "",

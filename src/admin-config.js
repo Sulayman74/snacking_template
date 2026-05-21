@@ -5,6 +5,12 @@
 import { adminStore } from "./core/AdminStore.js";
 import { showToast } from "./utils.js";
 
+// Coerce une valeur Firestore en nombre fini, sinon le fallback (ex: null).
+const num = (v, fallback) => {
+    const n = typeof v === "number" ? v : parseFloat(v);
+    return Number.isFinite(n) ? n : fallback;
+};
+
 window.loadConfigView = async () => {
     if (!window.currentAdminSnackId) return;
     
@@ -42,6 +48,22 @@ window.loadConfigView = async () => {
             },
             reviews: {
                 googleReviewUrl: data.googleReviewUrl || "",
+            },
+            // 🚚 Livraison : flag + réglages + position resto (défauts sûrs).
+            features: {
+                enableDelivery: data.enableDelivery === true,
+            },
+            delivery: {
+                radiusKm: num(data.delivery?.radiusKm, 5),
+                frais: num(data.delivery?.frais, 2.5),
+                minOrder: num(data.delivery?.minOrder, 0),
+                avgSpeedKmh: num(data.delivery?.avgSpeedKmh, 22),
+                prepBaseMin: num(data.delivery?.prepBaseMin, 12),
+                queueFactorMin: num(data.delivery?.queueFactorMin, 3),
+            },
+            geo: {
+                lat: num(data.restaurantLat, null),
+                lng: num(data.restaurantLng, null),
             },
         };
 

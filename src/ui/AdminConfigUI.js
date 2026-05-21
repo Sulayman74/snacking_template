@@ -7,6 +7,7 @@ class AdminConfigUI {
         this.identityForm = document.getElementById("config-identity-form");
         this.hoursForm = document.getElementById("config-hours-form");
         this.contactForm = document.getElementById("config-contact-form");
+        this.deliveryForm = document.getElementById("config-delivery-form");
 
         this.init();
     }
@@ -25,6 +26,10 @@ class AdminConfigUI {
         }
         if (this.contactForm) {
             this.contactForm.addEventListener("submit", (e) => this.handleContactSubmit(e));
+        }
+        if (this.deliveryForm) {
+            this.deliveryForm.addEventListener("submit", (e) => this.handleDeliverySubmit(e));
+            document.getElementById("config-resto-locate")?.addEventListener("click", () => this.locateResto());
         }
     }
 
@@ -59,6 +64,20 @@ class AdminConfigUI {
         setVal("config-instagram", s.instagram);
         setVal("config-facebook", s.facebook);
         setVal("config-tiktok", s.tiktok);
+
+        // 4. Livraison
+        const d = cfg.delivery || {};
+        const geo = cfg.geo || {};
+        const enableDelivery = document.getElementById("config-enable-delivery");
+        if (enableDelivery) enableDelivery.checked = !!cfg.features?.enableDelivery;
+        setVal("config-delivery-radius", d.radiusKm);
+        setVal("config-delivery-fee", d.frais);
+        setVal("config-delivery-minorder", d.minOrder);
+        setVal("config-delivery-speed", d.avgSpeedKmh);
+        setVal("config-delivery-prep", d.prepBaseMin);
+        setVal("config-delivery-queue", d.queueFactorMin);
+        setVal("config-resto-lat", geo.lat);
+        setVal("config-resto-lng", geo.lng);
     }
 
     renderDayRow(h) {
@@ -137,6 +156,46 @@ class AdminConfigUI {
         adminStore.updateConfigField("contact.socials.tiktok", getVal("config-tiktok"));
 
         this.saveToServer("Coordonnées mises à jour !");
+    }
+
+    handleDeliverySubmit(e) {
+        e.preventDefault();
+        const numVal = (id) => {
+            const raw = document.getElementById(id)?.value;
+            const n = parseFloat(raw);
+            return Number.isFinite(n) ? n : null;
+        };
+
+        adminStore.updateConfigField("features.enableDelivery", !!document.getElementById("config-enable-delivery")?.checked);
+        adminStore.updateConfigField("delivery.radiusKm", numVal("config-delivery-radius") ?? 5);
+        adminStore.updateConfigField("delivery.frais", numVal("config-delivery-fee") ?? 2.5);
+        adminStore.updateConfigField("delivery.minOrder", numVal("config-delivery-minorder") ?? 0);
+        adminStore.updateConfigField("delivery.avgSpeedKmh", numVal("config-delivery-speed") ?? 22);
+        adminStore.updateConfigField("delivery.prepBaseMin", numVal("config-delivery-prep") ?? 12);
+        adminStore.updateConfigField("delivery.queueFactorMin", numVal("config-delivery-queue") ?? 3);
+        adminStore.updateConfigField("geo.lat", numVal("config-resto-lat"));
+        adminStore.updateConfigField("geo.lng", numVal("config-resto-lng"));
+
+        this.saveToServer("Réglages de livraison enregistrés !");
+    }
+
+    locateResto() {
+        if (!("geolocation" in navigator)) {
+            showToast("Géolocalisation non supportée sur cet appareil.", "error");
+            return;
+        }
+        showToast("Récupération de la position…", "success");
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = document.getElementById("config-resto-lat");
+                const lng = document.getElementById("config-resto-lng");
+                if (lat) lat.value = pos.coords.latitude.toFixed(6);
+                if (lng) lng.value = pos.coords.longitude.toFixed(6);
+                showToast("Position récupérée. Pensez à enregistrer.", "success");
+            },
+            () => showToast("Impossible de récupérer la position.", "error"),
+            { enableHighAccuracy: true, timeout: 10000 },
+        );
     }
 
     handleHoursSubmit(e) {

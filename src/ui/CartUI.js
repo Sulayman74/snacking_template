@@ -22,6 +22,8 @@ class CartUI {
     init() {
         // Écoute les changements du Store
         store.addEventListener("cart-updated", () => this.render());
+        // Le mode/adresse de livraison change les frais → re-render du total.
+        store.addEventListener("delivery-updated", () => this.updateTotal(store.state.cart));
         
         // Initialisation de l'affichage
         document.addEventListener("DOMContentLoaded", () => this.render());
@@ -141,7 +143,10 @@ class CartUI {
     }
 
     updateTotal(cart) {
-        const total = cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
+        // Total à payer = articles + frais de livraison éventuels (cf. cart.js).
+        const total = typeof window.getCartTotal === "function"
+            ? window.getCartTotal()
+            : cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
         if (this.totalPriceEl) {
             this.totalPriceEl.textContent = `${total.toFixed(2)} €`;
         }

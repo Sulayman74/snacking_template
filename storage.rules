@@ -1,0 +1,16 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      // 🔓 Lecture publique : images du menu, logos, preuves de livraison (PoD).
+      allow read: if true;
+
+      // 🔒 Écriture : utilisateur connecté + image uniquement + < 15 Mo (anti-abus).
+      // Couvre les images produits (admin), logos et les photos PoD (livreur).
+      // La Cloud Function optimizeImage écrit via l'admin SDK → NON soumise à ces règles.
+      allow write: if request.auth != null
+                   && request.resource.contentType.matches('image/.*')
+                   && request.resource.size < 15 * 1024 * 1024;
+    }
+  }
+}

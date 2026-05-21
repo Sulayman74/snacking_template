@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#111827" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Espace Livreur</title>
+    <!-- Manifest DÉDIÉ livreur (placé avant celui injecté par vite-plugin-pwa →
+         priorité au premier <link rel=manifest> : l'install ouvre /livreur.html). -->
+    <link rel="manifest" href="/livreur.webmanifest" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body class="bg-gray-100 min-h-screen text-gray-900 antialiased">
+
+    <!-- 🔐 ÉCRAN DE CONNEXION -->
+    <section id="driver-login" class="hidden fixed inset-0 z-40 flex-col items-center justify-center p-6 bg-gray-900">
+      <div class="w-full max-w-sm">
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center mb-4 shadow-lg">
+            <i class="fas fa-motorcycle text-3xl text-white"></i>
+          </div>
+          <h1 class="text-2xl font-black text-white">Espace Livreur</h1>
+          <p class="text-gray-400 text-sm mt-1">Connectez-vous pour démarrer votre tournée.</p>
+        </div>
+        <form id="driver-login-form" class="space-y-3">
+          <input id="driver-email" type="email" required autocomplete="username" placeholder="Email"
+            class="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input id="driver-password" type="password" required autocomplete="current-password" placeholder="Mot de passe"
+            class="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <button id="driver-login-btn" type="submit"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-xl transition active:scale-95 flex items-center justify-center gap-2">
+            <i class="fas fa-right-to-bracket"></i> Se connecter
+          </button>
+          <p id="driver-login-error" class="hidden text-center text-red-400 text-sm"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- 🚚 APPLICATION LIVREUR -->
+    <section id="driver-app" class="hidden min-h-screen flex-col">
+      <!-- Barre haute -->
+      <header class="sticky top-0 z-30 bg-gray-900 text-white px-4 py-3 flex items-center gap-3 shadow-md">
+        <div id="driver-initials" class="w-10 h-10 rounded-full bg-blue-600 font-black flex items-center justify-center shrink-0">?</div>
+        <div class="min-w-0 flex-1">
+          <p id="driver-name" class="font-black truncate">Livreur</p>
+          <p class="text-[11px] text-gray-400">Tournée en cours</p>
+        </div>
+        <button id="driver-notif-btn" type="button" title="Activer les notifications"
+          class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition">
+          <i class="fas fa-bell"></i>
+        </button>
+        <button id="driver-logout-btn" type="button" title="Se déconnecter"
+          class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition">
+          <i class="fas fa-right-from-bracket"></i>
+        </button>
+      </header>
+
+      <main class="flex-1 p-4 pb-24 space-y-4">
+        <!-- Course active (livraison en cours) -->
+        <div id="driver-active"></div>
+        <!-- Liste des courses à récupérer -->
+        <div id="driver-courses"></div>
+      </main>
+    </section>
+
+    <!-- 🔄 BANDEAU MISE À JOUR (pattern "prompt") — affiché par src/livreur.js -->
+    <div id="pwa-update-banner" class="fixed pointer-events-none bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/85 backdrop-blur-lg text-white p-4 rounded-2xl shadow-2xl z-[200] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0"><i class="fas fa-arrows-rotate text-blue-400 text-lg"></i></div>
+        <div><p class="font-bold text-sm">Nouvelle version dispo ✨</p><p class="text-xs text-gray-300">Rafraîchis quand tu es disponible.</p></div>
+      </div>
+      <button id="pwa-refresh-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
+      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Inputs photo (PoD) déclenchés par l'UI -->
+    <input id="pod-pickup-input" type="file" accept="image/*" capture="environment" class="hidden" />
+    <input id="pod-dropoff-input" type="file" accept="image/*" capture="environment" class="hidden" />
+
+    <!-- Toast -->
+    <template id="toast-template">
+      <div class="toast-item flex items-center gap-3 px-6 py-4 rounded-full shadow-2xl transition-all duration-300 translate-y-24 opacity-0 w-max max-w-[90vw]">
+        <i class="toast-icon text-2xl"></i>
+        <span class="toast-message font-medium text-sm md:text-base"></span>
+      </div>
+    </template>
+
+    <script type="module" src="/src/livreur.js"></script>
+  </body>
+</html>

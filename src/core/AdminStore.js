@@ -155,6 +155,25 @@ export class AdminStore extends EventTarget {
                 tiktok: s.tiktok || "",
             };
 
+            // 🚚 Livraison : flag + réglages (objet imbriqué) + position resto.
+            // Présents en permanence dans le state (chargés par loadConfigView),
+            // donc réécrits à l'identique lors des autres formulaires (idempotent).
+            if (cfg.features || cfg.delivery || cfg.geo) {
+                const d = cfg.delivery || {};
+                const num = (v, def) => (Number.isFinite(Number(v)) ? Number(v) : def);
+                dataToSave.enableDelivery = !!cfg.features?.enableDelivery;
+                dataToSave.delivery = {
+                    radiusKm: num(d.radiusKm, 5),
+                    frais: num(d.frais, 2.5),
+                    minOrder: num(d.minOrder, 0),
+                    avgSpeedKmh: num(d.avgSpeedKmh, 22),
+                    prepBaseMin: num(d.prepBaseMin, 12),
+                    queueFactorMin: num(d.queueFactorMin, 3),
+                };
+                dataToSave.restaurantLat = Number.isFinite(Number(cfg.geo?.lat)) ? Number(cfg.geo.lat) : null;
+                dataToSave.restaurantLng = Number.isFinite(Number(cfg.geo?.lng)) ? Number(cfg.geo.lng) : null;
+            }
+
             await updateDoc(snackRef, dataToSave);
             this.setSaving(false);
             return true;

@@ -1,0 +1,118 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getAuthUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isSnackAdmin(targetSnackId) {
+      let authUser = getAuthUser();
+      return isAuthenticated() && authUser != null && authUser.data.role == 'admin' && authUser.data.snackId == targetSnackId;
+    }
+
+    function isSuperAdmin() {
+      let authUser = getAuthUser();
+      return isAuthenticated() && authUser != null && authUser.data.role == 'superadmin';
+    }
+
+    function isAnyAdmin() {
+      let authUser = getAuthUser();
+      return isAuthenticated() && authUser != null && (authUser.data.role == 'admin' || authUser.data.role == 'superadmin');
+    }
+
+    // 🚚 LIVREUR : rôle stocké sur le doc users/{uid} (cohérent avec admin/superadmin).
+    function isDriver(targetSnackId) {
+      let authUser = getAuthUser();
+      return isAuthenticated() && authUser != null && authUser.data.role == 'livreur' && authUser.data.snackId == targetSnackId;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /snacks/{snackId} {
+      allow read: if true;
+      allow write: if isSnackAdmin(snackId) || isSuperAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAnyAdmin();
+
+      allow update: if isSnackAdmin(resource.data.snackId)
+                    || isSuperAdmin()
+                    || (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate']));
+
+      // 🛡️ SÉCURITÉ 1 : On force la création en tant que "client" avec 0 point. Impossible de tricher.
+      allow create: if isOwner(userId)
+                    && request.resource.data.role == 'client'
+                    && request.resource.data.points == 0;
+    }
+
+    match /produits/{produitId} {
+      allow read: if true;
+      allow write: if isSnackAdmin(request.resource.data.snackId)
+                   || (resource != null && isSnackAdmin(resource.data.snackId))
+                   || isSuperAdmin();
+    }
+
+		match /commandes/{commandeId} {
+      // 1. Lecture : Le client voit sa commande, un admin voit tout,
+      //    et le livreur du snack voit les commandes de SON snack (pour récupérer les courses).
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId) ||
+        isAnyAdmin() ||
+        isDriver(resource.data.snackId)
+      );
+
+      // 2. Création : Le client crée sa commande
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+
+      // 3. Modification (Update) :
+      // - Le client peut modifier (ex: pour le bouton "Je suis arrivé")
+      // - L'admin du snack peut modifier (ex: pour changer le statut en cuisine)
+      // - Le SuperAdmin peut tout faire
+      // - Le LIVREUR du snack peut UNIQUEMENT toucher les champs de livraison
+      //   (livreur/livreurId/statut) d'une commande en mode 'delivery', et
+      //   seulement si la course n'est pas déjà prise par un autre livreur.
+      allow update: if isAuthenticated() && (
+        isOwner(resource.data.userId) ||
+        isSnackAdmin(resource.data.snackId) ||
+        isSuperAdmin() ||
+        (
+          isDriver(resource.data.snackId)
+          && resource.data.mode == 'delivery'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['livreur', 'livreurId', 'statut'])
+          && request.resource.data.statut in ['prete', 'en_livraison', 'livree']
+          && (resource.data.livreurId == null || resource.data.livreurId == request.auth.uid)
+        )
+      );
+
+      // 4. Suppression : On peut autoriser le SuperAdmin à faire le ménage si besoin
+      allow delete: if isSuperAdmin();
+    }
+
+    // =========================================================
+    // 🚀 MARKETING : RÈGLES POUR LES CAMPAGNES PUSH (NOUVEAU)
+    // =========================================================
+    match /campagnes_push/{campagneId} {
+      // Seuls l'Admin du snack concerné ou le SuperAdmin peuvent voir les campagnes
+      allow read: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
+
+      // Pour créer, on vérifie que le snackId envoyé correspond bien au snack de l'Admin
+      allow create: if isSnackAdmin(request.resource.data.snackId) || isSuperAdmin();
+
+      // Pour modifier/supprimer
+      allow update, delete: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
+    }
+
+    // 🛑 LE VIDEUR : Rejette tout ce qui n'est pas explicitement autorisé au-dessus
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -11,11 +11,17 @@ import "./admin-marketing.js";
 import "./admin-csv.js";
 import "./admin-compta.js";
 import "./admin-config.js";
+import "./admin-livreurs.js";
 import "./ui/AdminConfigUI.js";
 import "./ui/AdminProductsUI.js";
 import "./ui/AdminMarketingUI.js";
 import "./ui/AdminComptaUI.js";
 import { confirmAction } from "./utils/ModalManager.js";
+import { setupSWUpdatePrompt } from "./sw-update.js";
+
+// SW + bandeau de mise à jour (pattern prompt) : installable plein écran sur la
+// tablette de cuisine + JAMAIS de rechargement auto en plein service.
+setupSWUpdatePrompt({ context: "Admin" });
 
 const { onAuthStateChanged, signInWithEmailAndPassword, signOut } =
   window.authTools;
@@ -119,7 +125,7 @@ document.addEventListener("visibilitychange", () => {
 // ============================================================================
 window.switchAdminTab = (tabName) => {
   window.currentAdminTab = tabName;
-  const tabs = ["cuisine", "menu", "marketing", "config", "compta", "support"];
+  const tabs = ["cuisine", "menu", "marketing", "config", "compta", "support", "livreurs"];
 
   tabs.forEach((t) => {
     const btnDesktop = document.getElementById(`tab-${t}-desktop`);
@@ -172,6 +178,8 @@ window.switchAdminTab = (tabName) => {
     if (tabName === "config") window.loadConfigView();
 
     if (tabName === "compta") window.loadComptaDashboard();
+
+    if (tabName === "livreurs") window.loadDriversView?.();
   }
 };
 

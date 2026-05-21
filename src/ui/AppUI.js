@@ -210,12 +210,20 @@ class AppUI {
 
         const isClickCollect = cfg.features.enableClickAndCollect === true;
         const isDelivery = cfg.features.enableDelivery === true;
+        // Commande native = click&collect OU livraison interne → toujours via le panier
+        // (le mode collect/livraison est choisi dans le panier). La livraison native
+        // prime sur le lien plateforme externe (UberEats), réservé au cas SANS flotte.
+        const canOrderNative = isClickCollect || isDelivery;
+        const hasExternalDelivery = !!cfg.deliveryUrl;
         const phone = cfg.contact?.phone ? cfg.contact.phone.replace(/\s/g, "") : "";
 
-        if (isClickCollect) {
+        if (canOrderNative) {
             this.#setupCtaAction(mobileBtn, mobileIcon, desktopBtn, "open-cart", "fas fa-shopping-bag", "Commander");
-        } else if (isDelivery) {
+            burgerCallBtn?.classList.add("hidden");
+        } else if (hasExternalDelivery) {
+            // Pas de commande native, mais lien plateforme externe configuré.
             this.#setupCtaAction(mobileBtn, mobileIcon, desktopBtn, "open-delivery", "fas fa-motorcycle", "Livraison", cfg.deliveryUrl);
+            burgerCallBtn?.classList.add("hidden");
         } else {
             this.#setupCtaAction(mobileBtn, mobileIcon, desktopBtn, "call-phone", "fas fa-phone animate-pulse", cfg.contact?.phone || "Appeler", null, phone);
             if (burgerCallBtn) {

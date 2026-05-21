@@ -82,6 +82,19 @@ function createTicketElement(id, commande) {
   const isWaiting = commande.statut === "en_attente_client";
   const isNew = commande.statut === "nouvelle";
 
+  // 🚚 Bandeau livraison (mode delivery) : le staff voit l'adresse + distance.
+  const isDelivery = commande.mode === "delivery";
+  const deliveryHtml = isDelivery
+    ? `<div class="mb-3 flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
+         <i class="fas fa-motorcycle text-blue-600 mt-0.5"></i>
+         <div class="text-sm min-w-0">
+           <p class="font-black text-blue-700 uppercase text-xs tracking-wide">Livraison</p>
+           <p class="text-gray-800 font-bold">${escapeHTML(commande.livraison?.adresse || "Adresse non renseignée")}</p>
+           ${commande.livraison?.distanceKm != null ? `<p class="text-gray-500 text-xs">${escapeHTML(String(commande.livraison.distanceKm))} km du resto</p>` : ""}
+         </div>
+       </div>`
+    : "";
+
   let ticketColor = "bg-white border-l-8 border-green-500";
   let textColor = "text-green-700";
   let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-hand-holding-box mr-2"></i> DONNÉE AU CLIENT</button>`;
@@ -126,6 +139,7 @@ function createTicketElement(id, commande) {
                 ${paymentBadgeHtml}
             </div>
         </div>
+        ${deliveryHtml}
         <ul class="mb-5 text-gray-800 space-y-1">${itemsHtml}</ul>
         ${btnHtml}
     `;

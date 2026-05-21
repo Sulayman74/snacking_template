@@ -132,6 +132,65 @@ function callerKey(request, action) {
   return `${action}_ip_${safeIp}`;
 }
 
+// --- Géo & ETA livraison (Haversine, sans dépendance) -----------------------
+// Dupliqué côté client dans src/services/geoService.js (KISS : pas de package
+// partagé entre /functions CommonJS et /src ESM). Source de vérité = serveur.
+const EARTH_RADIUS_KM = 6371;
+const toRad = (deg) => (deg * Math.PI) / 180;
+const isFiniteNum = (n) => typeof n === "number" && Number.isFinite(n);
+const numberOrNull = (v) => {
+  const n = typeof v === "number" ? v : parseFloat(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+function haversineKm(a, b) {
+  if (!a || !b || !isFiniteNum(a.lat) || !isFiniteNum(a.lng) || !isFiniteNum(b.lat) || !isFiniteNum(b.lng)) {
+    return NaN;
+  }
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLng / 2) ** 2 * Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat));
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+// Vérifie que l'appelant est admin du snack (ou superadmin). Rôles en Firestore
+// (cohérent avec firestore.rules : getAuthUser()), PAS en custom claims.
+async function assertCallerIsSnackAdmin(request, snackId) {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Authentification requise.");
+  const callerDoc = await db.collection("users").doc(request.auth.uid).get();
+  const c = callerDoc.exists ? callerDoc.data() : null;
+  const ok = c && (c.role === "superadmin" || (c.role === "admin" && c.snackId === snackId));
+  if (!ok) throw new HttpsError("permission-denied", "Réservé à l'administrateur du snack.");
+}
+
+// Palier de géofence franchi (mètres) parmi des seuils décroissants.
+// Renvoie le plus petit seuil >= distance, ou null si au-delà du plus grand.
+function bucketForServer(distanceM, thresholds = [3000, 1000, 300]) {
+  if (!Number.isFinite(distanceM)) return null;
+  const sorted = [...thresholds].sort((a, b) => b - a);
+  let crossed = null;
+  for (const t of sorted) if (distanceM <= t) crossed = t;
+  return crossed;
+}
+
+// Nombre de commandes "en cours" pour un snack (file d'attente cuisine).
+async function getKitchenQueueCount(snackId) {
+  try {
+    const agg = await db
+      .collection("commandes")
+      .where("snackId", "==", snackId)
+      .where("statut", "in", ["en_attente_client", "nouvelle"])
+      .count()
+      .get();
+    return agg.data().count || 0;
+  } catch (e) {
+    console.warn("[eta] queue count indisponible :", e.message);
+    return 0;
+  }
+}
+
 // ============================================================================
 // 🎁 FONCTION 1 : CADEAU DE FIDÉLITÉ (10 POINTS)
 // ============================================================================
@@ -531,6 +590,8 @@ exports.finalizeOrder = onCall(
       clientNom,
       totalCents,
       referrerId,
+      mode,
+      livraison,
     } = data;
 
     require_(V.isNonEmptyString(paymentIntentId, 200), "paymentIntentId invalide.");
@@ -550,6 +611,20 @@ exports.finalizeOrder = onCall(
       "referrerId invalide."
     );
 
+    // 🚚 Mode + adresse de livraison (collect par défaut → legacy inchangé).
+    const orderMode = mode === "delivery" ? "delivery" : "collect";
+    if (orderMode === "delivery") {
+      require_(V.isPlainObject(livraison), "livraison requise pour une commande en livraison.");
+      require_(isFiniteNum(livraison.lat) && Math.abs(livraison.lat) <= 90, "Latitude de livraison invalide.");
+      require_(isFiniteNum(livraison.lng) && Math.abs(livraison.lng) <= 180, "Longitude de livraison invalide.");
+      require_(
+        livraison.adresse === undefined ||
+          livraison.adresse === null ||
+          (V.isString(livraison.adresse) && livraison.adresse.length <= 300),
+        "Adresse de livraison invalide."
+      );
+    }
+
     // Validation détaillée de chaque item du panier
     for (const item of cartItems) {
       require_(V.isPlainObject(item), "Item de panier invalide.");
@@ -563,12 +638,13 @@ exports.finalizeOrder = onCall(
 
     // 2. Vérifier le PaymentIntent côté Stripe (le client ne peut pas falsifier ça)
     let paymentIntent;
+    let snackData = {};
     try {
-      let stripeAccountId = null;
       const snackDoc = await db.collection("snacks").doc(snackId).get();
       if (snackDoc.exists) {
-          stripeAccountId = snackDoc.data().stripeAccountId;
+          snackData = snackDoc.data() || {};
       }
+      const stripeAccountId = snackData.stripeAccountId || null;
 
       const retrieveOptions = stripeAccountId ? { stripeAccount: stripeAccountId } : undefined;
       paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, retrieveOptions);
@@ -593,6 +669,41 @@ exports.finalizeOrder = onCall(
       return { orderId: existing.docs[0].id };
     }
 
+    // 🚚 ETA (heuristique simple) + livraison — TOUT recalculé serveur.
+    const dcfg = snackData.delivery || {};
+    const prepBaseMin = isFiniteNum(dcfg.prepBaseMin) ? dcfg.prepBaseMin : 12;
+    const queueFactorMin = isFiniteNum(dcfg.queueFactorMin) ? dcfg.queueFactorMin : 3;
+    const avgSpeedKmh = isFiniteNum(dcfg.avgSpeedKmh) && dcfg.avgSpeedKmh > 0 ? dcfg.avgSpeedKmh : 22;
+
+    const queueCount = await getKitchenQueueCount(snackId);
+    const prepMin = Math.max(1, Math.round(prepBaseMin + queueFactorMin * queueCount));
+
+    let livraisonData = null;
+    let deliveryMin = null;
+    if (orderMode === "delivery") {
+      const resto = { lat: numberOrNull(snackData.restaurantLat), lng: numberOrNull(snackData.restaurantLng) };
+      const client = { lat: livraison.lat, lng: livraison.lng };
+      const distanceKm = haversineKm(resto, client);
+      const hasDist = Number.isFinite(distanceKm);
+      deliveryMin = hasDist ? Math.max(1, Math.round((distanceKm / avgSpeedKmh) * 60)) : 0;
+      livraisonData = {
+        adresse: (livraison.adresse || "").toString().slice(0, 300),
+        lat: client.lat,
+        lng: client.lng,
+        distanceKm: hasDist ? Math.round(distanceKm * 10) / 10 : null,
+        frais: isFiniteNum(dcfg.frais) ? dcfg.frais : 0, // frais issus de la config (jamais du client)
+      };
+    }
+
+    const totalMin = prepMin + (deliveryMin || 0);
+    const etaData = {
+      prepMin,
+      deliveryMin,
+      totalMin,
+      computedAt: admin.firestore.Timestamp.now(),
+      readyAt: admin.firestore.Timestamp.fromMillis(Date.now() + totalMin * 60000),
+    };
+
     // 5. Créer la commande dans Firestore (uniquement si tout est vérifié)
     const newOrder = {
       snackId,
@@ -601,9 +712,16 @@ exports.finalizeOrder = onCall(
       clientEmail,
       secretCode: generateSecretCode(6),
       date: admin.firestore.FieldValue.serverTimestamp(),
-      statut: "en_attente_client",
+      // Collect : on attend l'arrivée du client avant de cuisiner.
+      // Livraison : la cuisine démarre immédiatement (pas d'arrivée client).
+      statut: orderMode === "delivery" ? "nouvelle" : "en_attente_client",
       items: cartItems,
       total: paymentIntent.amount / 100,
+      mode: orderMode,
+      livraison: livraisonData,
+      livreurId: null,
+      livreur: null,
+      eta: etaData,
       paiement: {
         methode: "carte_bancaire",
         statut: "paye",
@@ -655,6 +773,61 @@ exports.finalizeOrder = onCall(
 );
 
 // ============================================================================
+// 🚚 FONCTION : CRÉER UN LIVREUR (réservé admin du snack)
+// ============================================================================
+// Crée le compte Auth + le doc users/{uid} avec role 'livreur' (admin SDK →
+// contourne la règle 'create' qui force role:'client'). Le livreur se connecte
+// ensuite sur /livreur.html.
+exports.createDriver = onCall({ region: "europe-west1" }, async (request) => {
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+
+  const { snackId, nom, email, password, telephone } = data;
+  require_(V.isDocId(snackId), "snackId invalide.");
+  require_(V.isNonEmptyString(nom, 100), "Nom invalide.");
+  require_(V.isEmail(email), "Email invalide.");
+  require_(
+    V.isString(password) && password.length >= 6 && password.length <= 100,
+    "Mot de passe invalide (6 à 100 caractères)."
+  );
+  require_(
+    telephone === undefined || telephone === null || (V.isString(telephone) && telephone.length <= 30),
+    "Téléphone invalide."
+  );
+
+  await assertCallerIsSnackAdmin(request, snackId);
+  await enforceRateLimit({ key: callerKey(request, "createDriver"), max: 20, windowMs: 3_600_000 });
+
+  let userRecord;
+  try {
+    userRecord = await admin.auth().createUser({ email, password, displayName: nom });
+  } catch (e) {
+    if (e.code === "auth/email-already-exists") {
+      throw new HttpsError("already-exists", "Cet email est déjà utilisé.");
+    }
+    if (e.code === "auth/invalid-password" || e.code === "auth/invalid-email") {
+      throw new HttpsError("invalid-argument", "Email ou mot de passe invalide.");
+    }
+    console.error("createDriver auth error:", e);
+    throw new HttpsError("internal", "Création du compte impossible.");
+  }
+
+  await db.collection("users").doc(userRecord.uid).set({
+    role: "livreur",
+    snackId,
+    nom,
+    email,
+    telephone: telephone || "",
+    actif: true,
+    points: 0,
+    createdBy: request.auth.uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { uid: userRecord.uid };
+});
+
+// ============================================================================
 // 🔔 FONCTION 6 : NOTIFICATION "COMMANDE PRÊTE" (V2)
 // ============================================================================
 exports.onOrderStatusChange = onDocumentUpdated(
@@ -664,49 +837,96 @@ exports.onOrderStatusChange = onDocumentUpdated(
     const oldData = event.data.before.data();
     const orderId = event.params.orderId;
 
-    // 🎯 On ne déclenche que si le statut passe de n'importe quoi à "prete"
-    if (oldData.statut !== "prete" && newData.statut === "prete") {
-      const userId = newData.userId;
+    // On ne déclenche que sur un VRAI changement de statut.
+    if (oldData.statut === newData.statut) return;
 
-      try {
-        // 1. Chercher le token du client dans la collection 'users'
-        // On utilise la constante 'db' que tu as déjà définie en haut
-        const userDoc = await db.collection("users").doc(userId).get();
-        const userData = userDoc.data();
-        const fcmToken = userData ? userData.fcmToken : null;
+    const shortId = orderId.slice(-4).toUpperCase();
+    const isDelivery = newData.mode === "delivery";
 
-        if (fcmToken) {
-          // 2. Préparer le message
-          const message = {
-            notification: {
-              title: "C'est prêt ! 🍟",
-              body: `Votre commande #${orderId.slice(-4).toUpperCase()} est prête. Bon appétit !`,
-            },
-            // Optionnel : On peut ajouter un lien vers l'app
-            webpush: {
-              fcm_options: {
-                link: "https://snacking-template.web.app/",
-              },
-            },
-            token: fcmToken,
-          };
+    // Message adapté au statut + au mode (collect / livraison).
+    let notif = null;
+    if (newData.statut === "prete") {
+      notif = isDelivery
+        ? { title: "Commande prête ✅", body: `Votre commande #${shortId} est prête, un livreur va la récupérer.` }
+        : { title: "C'est prêt ! 🍟", body: `Votre commande #${shortId} est prête. Bon appétit !` };
+    } else if (newData.statut === "en_livraison") {
+      notif = { title: "En route ! 🛵", body: `Votre commande #${shortId} est en chemin.` };
+    } else if (newData.statut === "livree") {
+      notif = { title: "Livré ! 🎉", body: `Bon appétit ! Merci pour votre commande #${shortId}.` };
+    }
+    if (!notif) return;
 
-          // 3. Envoyer via Messaging
-          const response = await getMessaging().send(message);
-          console.log(
-            `✅ Notif "Prête" envoyée pour commande ${orderId} :`,
-            response,
-          );
-        } else {
-          console.log(`⚠️ Pas de token FCM pour l'utilisateur ${userId}.`);
-        }
-      } catch (error) {
-        console.error(
-          "❌ Erreur lors de l'envoi de la notification de commande :",
-          error,
-        );
-        await cleanupInvalidFcmToken(userId, error);
+    const userId = newData.userId;
+    try {
+      const userDoc = await db.collection("users").doc(userId).get();
+      const fcmToken = userDoc.exists ? userDoc.data().fcmToken : null;
+      if (!fcmToken) {
+        console.log(`⚠️ Pas de token FCM pour l'utilisateur ${userId}.`);
+        return;
       }
+      const response = await getMessaging().send({
+        notification: notif,
+        webpush: { fcm_options: { link: "https://snacking-template.web.app/" } },
+        token: fcmToken,
+      });
+      console.log(`✅ Notif "${newData.statut}" envoyée pour commande ${orderId} :`, response);
+    } catch (error) {
+      console.error("❌ Erreur lors de l'envoi de la notification de commande :", error);
+      await cleanupInvalidFcmToken(userId, error);
+    }
+  },
+);
+
+// ============================================================================
+// 🛰️ FONCTION : GÉOFENCING LIVREUR → NOTIFS DE DISTANCE AU CLIENT
+// ============================================================================
+// Déclenchée à chaque mise à jour de position du livreur. Recalcule la distance
+// Haversine livreur→client (source de vérité SERVEUR) et notifie le client à
+// chaque palier franchi (3 km / 1 km / 300 m), UNE seule fois par palier.
+exports.onDriverPositionUpdate = onDocumentUpdated(
+  "commandes/{orderId}",
+  async (event) => {
+    const after = event.data.after.data();
+    const before = event.data.before.data();
+
+    if (after.statut !== "en_livraison" || after.mode !== "delivery") return;
+
+    const newPos = after.livreur?.position;
+    const oldPos = before.livreur?.position;
+    if (!newPos || !isFiniteNum(newPos.lat) || !isFiniteNum(newPos.lng)) return;
+    // Position réellement modifiée (évite la boucle après update de lastNotifiedBucket).
+    if (oldPos && oldPos.lat === newPos.lat && oldPos.lng === newPos.lng) return;
+
+    const client = after.livraison;
+    if (!client || !isFiniteNum(client.lat) || !isFiniteNum(client.lng)) return;
+
+    const distM = haversineKm(newPos, client) * 1000;
+    const bucket = bucketForServer(distM);
+    if (bucket == null) return; // encore au-delà du plus grand palier
+
+    const last = after.livreur?.lastNotifiedBucket ?? null;
+    // On ne notifie qu'en se rapprochant (palier strictement plus petit).
+    if (last != null && bucket >= last) return;
+
+    // Marque le palier AVANT l'envoi (idempotence, pas de double notif).
+    await event.data.after.ref.update({ "livreur.lastNotifiedBucket": bucket });
+
+    const userId = after.userId;
+    try {
+      const userDoc = await db.collection("users").doc(userId).get();
+      const fcmToken = userDoc.exists ? userDoc.data().fcmToken : null;
+      if (!fcmToken) return;
+
+      const label = bucket >= 1000 ? `${bucket / 1000} km` : `${bucket} m`;
+      const body = bucket <= 300 ? `Votre livreur arrive (${label}), préparez-vous !` : `Votre livreur est à ${label} environ.`;
+      await getMessaging().send({
+        notification: { title: "🛵 Votre livreur approche", body },
+        webpush: { fcm_options: { link: "https://snacking-template.web.app/" } },
+        token: fcmToken,
+      });
+    } catch (error) {
+      console.error("❌ Erreur notif géofence :", error);
+      await cleanupInvalidFcmToken(userId, error);
     }
   },
 );

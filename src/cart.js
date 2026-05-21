@@ -14,8 +14,15 @@ Object.defineProperty(window, "cart", {
     configurable: true
 });
 
-window.getCartTotal = () => {
+// Sous-total articles (hors livraison).
+window.getCartSubtotal = () => {
     return store.state.cart.reduce((acc, item) => acc + (item.prix * item.quantity), 0);
+};
+
+// Total à payer = articles + frais de livraison (0 en collect / hors zone).
+// Source unique consommée par l'affichage panier ET le PaymentIntent Stripe.
+window.getCartTotal = () => {
+    return window.getCartSubtotal() + store.getDeliveryFee();
 };
 
 window.openCartModal = () => cartUI.open();

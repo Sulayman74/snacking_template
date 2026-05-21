@@ -6,6 +6,8 @@
 //               window.showToast, window.triggerVibration
 //               window.switchView, window.closeProductModal, window.closeCartModal
 
+import { haversineKm, formatDistance, isLatLng } from "./services/geoService.js";
+
 // ============================================================================
 // 🎟️ GESTION DE L'UI DE LA MODALE TRACKING
 // ============================================================================
@@ -35,6 +37,16 @@ function closeTrackingModal() {
 
 window.openTrackingModal = openTrackingModal;
 window.closeTrackingModal = closeTrackingModal;
+
+// Texte d'ETA intelligent (collect ou livraison) à partir de commande.eta.readyAt
+// (calculé serveur dans finalizeOrder). Renvoie "" si indisponible.
+function etaText(commande) {
+  const readyAt = commande?.eta?.readyAt;
+  const t = readyAt?.toDate ? readyAt.toDate() : null;
+  if (!t || isNaN(t.getTime())) return "";
+  const hh = t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  return commande.mode === "delivery" ? `Livraison estimée vers ${hh}` : `Prêt vers ${hh}`;
+}
 
 // ============================================================================
 // 🔔 PROMPT FCM CONTEXTUEL — "M'avertir quand c'est prêt"
@@ -193,7 +205,14 @@ function startOrderTracking(orderId) {
             title.textContent = "En cuisine !";
             title.className = "text-3xl font-black text-gray-900 tracking-tight";
           }
-          if (subtitle) subtitle.textContent = "Le chef prépare votre commande.";
+          if (subtitle) {
+            const eta = etaText(commande);
+            subtitle.innerHTML = `Le chef prépare votre commande.${
+              eta
+                ? `<span class="flex items-center justify-center gap-2 mt-3 text-primary font-bold"><i class="fas fa-clock"></i> ${eta}</span>`
+                : ""
+            }`;
+          }
 
           if (actionBtn) {
             actionBtn.textContent = "Super, j'attends !";
@@ -244,15 +263,21 @@ function startOrderTracking(orderId) {
                 <div class="h-px bg-gray-200 w-12 mx-auto my-3"></div>
                 <p class="text-sm font-bold text-gray-600"><i class="fas fa-user mr-1 text-gray-400"></i> ${clientDisplay}</p>
               </div>
-              <p class="mt-4 text-gray-500 font-medium">Présentez cet écran au comptoir pour récupérer votre commande.</p>
+              <p class="mt-4 text-gray-500 font-medium">${
+                commande.mode === "delivery"
+                  ? "Un livreur va récupérer votre commande. Gardez ce code pour la remise."
+                  : "Présentez cet écran au comptoir pour récupérer votre commande."
+              }</p>
             `;
           }
           if (actionBtn) {
-            actionBtn.innerHTML =
-              "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
+            const deliv = commande.mode === "delivery";
+            actionBtn.innerHTML = deliv
+              ? "<i class='fas fa-motorcycle mr-2' aria-hidden='true'></i> Super, j'attends le livreur"
+              : "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
             actionBtn.className =
               "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
-            actionBtn.setAttribute("aria-label", "Fermer la fenêtre. Commande prête à être retirée.");
+            actionBtn.setAttribute("aria-label", deliv ? "Fermer la fenêtre. Un livreur va arriver." : "Fermer la fenêtre. Commande prête à être retirée.");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
             actionBtn.removeAttribute("data-id");
@@ -266,6 +291,81 @@ function startOrderTracking(orderId) {
             window.triggerVibration("success");
 
           openTrackingModal();
+        }
+
+        // 🛵 STATUT : EN LIVRAISON (distance live du livreur)
+        else if (commande.statut === "en_livraison") {
+          if (trackingBadge) {
+            trackingBadge.className =
+              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
+          }
+          if (badgeText) badgeText.textContent = "EN LIVRAISON";
+          if (iconContainer) {
+            iconContainer.className =
+              "w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+          }
+          if (icon) {
+            icon.className =
+              "fas fa-motorcycle text-5xl text-blue-600 transition-transform duration-500 animate-pulse";
+          }
+          if (title) {
+            title.textContent = "En livraison !";
+            title.className = "text-3xl font-black text-gray-900 tracking-tight";
+          }
+          if (subtitle) {
+            const driverPos = commande.livreur?.position;
+            const dest = commande.livraison;
+            let distLine = "Votre livreur a récupéré la commande, il arrive !";
+            if (isLatLng(driverPos) && isLatLng(dest)) {
+              distLine = `Votre livreur est à <b class="text-blue-600">${formatDistance(haversineKm(driverPos, dest))}</b> de chez vous.`;
+            }
+            const driverName = window.escapeHTML(commande.livreur?.nom || "Votre livreur");
+            subtitle.innerHTML = `<span class="block text-gray-600">${distLine}</span><span class="block mt-2 text-sm text-gray-400"><i class="fas fa-user mr-1"></i>${driverName}</span>`;
+          }
+          if (actionBtn) {
+            actionBtn.innerHTML = "<i class='fas fa-check mr-2'></i> Suivre";
+            actionBtn.className =
+              "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
+            actionBtn.setAttribute("aria-label", "Fermer le suivi de livraison.");
+            actionBtn.removeAttribute("onclick");
+            actionBtn.setAttribute("data-action", "close-tracking-modal");
+            actionBtn.removeAttribute("data-id");
+          }
+          const notifPrompt = document.getElementById("tracking-notif-prompt");
+          if (notifPrompt) notifPrompt.innerHTML = "";
+        }
+
+        // 🎉 STATUT : LIVRÉE
+        else if (commande.statut === "livree") {
+          if (trackingBadge) trackingBadge.className = "hidden";
+          if (iconContainer) {
+            iconContainer.className =
+              "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner scale-110";
+          }
+          if (icon) icon.className = "fas fa-circle-check text-5xl text-green-600";
+          if (title) {
+            title.textContent = "Livré ! 🎉";
+            title.className = "text-4xl font-black text-green-600 tracking-tight";
+          }
+          if (subtitle) {
+            const photo = commande.livreur?.dropoffUrl;
+            const safe = window.safeURL ? window.safeURL(photo) : photo;
+            subtitle.innerHTML = `<p class="text-gray-500 font-medium mb-3">Bon appétit ! Merci pour votre commande.</p>${
+              photo ? `<img src="${safe}" alt="Preuve de livraison" class="mx-auto rounded-2xl max-h-48 shadow-md border border-gray-200">` : ""
+            }`;
+          }
+          if (actionBtn) {
+            actionBtn.innerHTML = "<i class='fas fa-thumbs-up mr-2'></i> Parfait, merci !";
+            actionBtn.className =
+              "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
+            actionBtn.setAttribute("aria-label", "Fermer. Commande livrée.");
+            actionBtn.removeAttribute("onclick");
+            actionBtn.setAttribute("data-action", "close-tracking-modal");
+            actionBtn.removeAttribute("data-id");
+          }
+          openTrackingModal();
+          localStorage.removeItem("activeOrderId");
+          stopOrderTracking();
         }
 
         // ⚪ STATUT : TERMINÉE

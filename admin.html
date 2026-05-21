@@ -17,6 +17,10 @@
     <link rel="stylesheet" href="/src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta name="theme-color" content="#111827" />
+    <!-- Manifest DÉDIÉ admin (avant celui injecté par vite-plugin-pwa) → l'install
+         ouvre /admin.html (tablette de cuisine plein écran), pas l'app cliente. -->
+    <link rel="manifest" href="/admin.webmanifest" />
   </head>
   <body
     class="bg-gray-100 text-gray-900 font-sans h-screen flex flex-col overflow-hidden"
@@ -26,6 +30,16 @@
       src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
       preload="auto"
     ></audio>
+
+    <!-- 🔄 BANDEAU MISE À JOUR (pattern "prompt") — câblé par src/admin.js -->
+    <div id="pwa-update-banner" class="fixed pointer-events-none bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/90 backdrop-blur-lg text-white p-4 rounded-2xl shadow-2xl z-[200] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0"><i class="fas fa-arrows-rotate text-blue-400 text-lg"></i></div>
+        <div><p class="font-bold text-sm">Nouvelle version dispo ✨</p><p class="text-xs text-gray-300">Mettez à jour entre deux services.</p></div>
+      </div>
+      <button id="pwa-refresh-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
+      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+    </div>
 
     <div
       id="startup-overlay"
@@ -115,6 +129,10 @@
             <button onclick="switchAdminTab('config')" id="tab-config-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
                 <i class="fas fa-cog text-gray-500 text-xl w-8 text-center shrink-0"></i>
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Configuration</span>
+            </button>
+            <button onclick="switchAdminTab('livreurs')" id="tab-livreurs-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
+                <i class="fas fa-motorcycle text-blue-400 text-xl w-8 text-center shrink-0"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Livreurs</span>
             </button>
             <button onclick="switchAdminTab('support')" id="tab-support-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
                 <i class="fas fa-life-ring text-blue-400 text-xl w-8 text-center shrink-0"></i>
@@ -425,6 +443,63 @@
                 </div>
 
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                    <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
+                        <i class="fas fa-motorcycle text-blue-500"></i> Livraison
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-5">Activez et paramétrez votre livraison interne (flotte propre, zéro commission plateforme).</p>
+                    <form id="config-delivery-form" class="space-y-5">
+                        <label class="flex items-center justify-between bg-blue-50 p-4 rounded-2xl border border-blue-100 cursor-pointer">
+                            <span class="font-bold text-blue-800"><i class="fas fa-toggle-on mr-1"></i> Activer la livraison</span>
+                            <input type="checkbox" id="config-enable-delivery" class="w-6 h-6 rounded-lg text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer">
+                        </label>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Rayon de livraison (km)</label>
+                                <input type="number" step="0.5" min="0" id="config-delivery-radius" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="5">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Frais de livraison (€)</label>
+                                <input type="number" step="0.5" min="0" id="config-delivery-fee" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="2.5">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Commande minimum (€)</label>
+                                <input type="number" step="1" min="0" id="config-delivery-minorder" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Vitesse moyenne livreur (km/h)</label>
+                                <input type="number" step="1" min="1" id="config-delivery-speed" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="22">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Temps de prépa de base (min)</label>
+                                <input type="number" step="1" min="1" id="config-delivery-prep" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="12">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Min. ajoutées / commande en attente</label>
+                                <input type="number" step="1" min="0" id="config-delivery-queue" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="3">
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                            <p class="text-sm font-bold text-gray-700 mb-3"><i class="fas fa-location-dot text-blue-500 mr-1"></i> Position du restaurant <span class="font-normal text-gray-400">(zone de livraison + calcul du temps)</span></p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="number" step="any" id="config-resto-lat" class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="Latitude">
+                                <input type="number" step="any" id="config-resto-lng" class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="Longitude">
+                            </div>
+                            <button type="button" id="config-resto-locate" class="mt-3 text-sm font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-2">
+                                <i class="fas fa-location-crosshairs"></i> Utiliser ma position actuelle (depuis le resto)
+                            </button>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 transition flex items-center gap-2">
+                                <i class="fas fa-save"></i> Enregistrer la livraison
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
                     <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
                         <i class="fas fa-address-book text-purple-500"></i> Coordonnées & Réseaux
                     </h3>
@@ -573,6 +648,35 @@
             </div>
         </section>
 
+        <!-- 🚚 VUE LIVREURS : gestion de la flotte (création + activation) -->
+        <section id="view-livreurs" class="hidden p-4 md:p-6 bg-gray-100 min-h-full pb-24 overflow-y-auto h-full">
+            <div class="max-w-3xl mx-auto">
+                <div class="flex items-center gap-3 mb-6">
+                    <i class="fas fa-motorcycle text-2xl text-gray-700"></i>
+                    <div>
+                        <h1 class="text-2xl font-black text-gray-900">Mes Livreurs</h1>
+                        <p class="text-sm text-gray-500">Gérez votre flotte de livraison interne (zéro commission).</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
+                    <h2 class="font-black text-gray-900 mb-4"><i class="fas fa-user-plus text-blue-500 mr-2"></i>Ajouter un livreur</h2>
+                    <form id="add-driver-form" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input name="nom" type="text" required placeholder="Nom du livreur" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input name="telephone" type="tel" placeholder="Téléphone (optionnel)" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input name="email" type="email" required placeholder="Email de connexion" autocomplete="off" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input name="password" type="text" required minlength="6" placeholder="Mot de passe (min. 6)" autocomplete="off" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <button type="submit" id="add-driver-btn" class="md:col-span-2 bg-gray-900 hover:bg-black text-white font-black py-3 rounded-xl transition active:scale-95 flex items-center justify-center gap-2">
+                            <i class="fas fa-plus"></i> Créer le compte livreur
+                        </button>
+                    </form>
+                    <p class="text-[11px] text-gray-400 mt-3">Le livreur se connecte sur <b>/livreur.html</b> avec cet email et ce mot de passe.</p>
+                </div>
+
+                <div id="drivers-list" class="space-y-3"></div>
+            </div>
+        </section>
+
     <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center p-2 pb-[env(safe-area-inset-bottom) z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] fixed bottom-0 w-full">
         <button onclick="switchAdminTab('cuisine')" id="tab-cuisine-mobile" class="flex flex-col items-center gap-1 p-2 text-red-600 w-16">
             <i class="fas fa-fire text-xl"></i>
@@ -593,6 +697,10 @@
         <button onclick="switchAdminTab('config')" id="tab-config-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
             <i class="fas fa-cog text-xl"></i>
             <span class="text-[10px] font-bold">Réglages</span>
+        </button>
+        <button onclick="switchAdminTab('livreurs')" id="tab-livreurs-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
+            <i class="fas fa-motorcycle text-xl text-blue-400"></i>
+            <span class="text-[10px] font-bold">Livreurs</span>
         </button>
         <button onclick="switchAdminTab('support')" id="tab-support-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
             <i class="fas fa-life-ring text-xl text-blue-400"></i>

@@ -57,8 +57,13 @@ export default defineConfig(() => {
         }
       },
       VitePWA({
-        registerType: 'autoUpdate',
-        injectRegister: 'auto',
+        // 'prompt' : on NE recharge plus l'app automatiquement (risque d'interrompre
+        // un paiement client ou la validation d'une photo de preuve par le livreur).
+        // L'utilisateur décide quand rafraîchir via le bandeau #pwa-update-banner.
+        registerType: 'prompt',
+        // false : l'enregistrement du SW est fait manuellement en JS (registerSW)
+        // pour brancher les hooks onNeedRefresh / updateSW.
+        injectRegister: false,
         manifest: {
           name: seoData.title,
           short_name: seoData.title.split('|')[0].trim(),
@@ -93,7 +98,8 @@ export default defineConfig(() => {
           main: resolve(__dirname, 'index.html'),
           admin: resolve(__dirname, 'admin.html'),
           superadmin: resolve(__dirname, 'superadmin.html'),
-          legal: resolve(__dirname, 'legal.html')
+          legal: resolve(__dirname, 'legal.html'),
+          livreur: resolve(__dirname, 'livreur.html')
         }
       }
     }

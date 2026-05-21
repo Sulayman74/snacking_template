@@ -1,0 +1,24 @@
+{
+  "name": "Espace Livreur",
+  "short_name": "Livreur",
+  "description": "Application livreur — récupération des courses et livraisons.",
+  "start_url": "/livreur.html",
+  "scope": "/livreur.html",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
+}

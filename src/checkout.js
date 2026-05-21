@@ -38,12 +38,41 @@ async function processCheckout() {
   if (window.cart.length === 0)
     return window.showToast("Votre panier est vide", "error");
 
-  if (!cfg?.features?.enableClickAndCollect) {
-    return window.showToast("La commande en ligne est désactivée.", "error");
+  // 🚚 Mode courant (collect par défaut → comportement legacy strictement inchangé).
+  const delivery = window.store?.state?.delivery || { mode: "collect" };
+  const isDelivery = delivery.mode === "delivery";
+
+  // Garde-fou feature selon le mode : le collect exige enableClickAndCollect,
+  // la livraison exige enableDelivery (permet un snack 100% livraison).
+  const featureOk = isDelivery
+    ? cfg?.features?.enableDelivery
+    : cfg?.features?.enableClickAndCollect;
+  if (!featureOk) {
+    return window.showToast(
+      isDelivery ? "La livraison est désactivée." : "La commande en ligne est désactivée.",
+      "error",
+    );
   }
 
   if (cfg?.features?.maintenanceMode) {
     return window.showToast("Service momentanément en maintenance.", "error");
+  }
+
+  // 🚚 Validation livraison : adresse présente, dans la zone, panier minimum.
+  if (isDelivery) {
+    if (!delivery.address) {
+      window.openCartModal?.();
+      return window.showToast("Indiquez votre adresse de livraison.", "error");
+    }
+    if (delivery.quote && delivery.quote.inRange === false) {
+      return window.showToast("Votre adresse est hors zone de livraison.", "error");
+    }
+    const minOrder = cfg?.delivery?.minOrder || 0;
+    const subtotal = window.getCartSubtotal ? window.getCartSubtotal() : window.getCartTotal();
+    if (minOrder > 0 && subtotal < minOrder) {
+      window.openCartModal?.();
+      return window.showToast(`Minimum ${minOrder.toFixed(2)} € pour la livraison.`, "error");
+    }
   }
 
   const currentUser = window.auth?.currentUser;
@@ -234,6 +263,19 @@ async function finalizeOrderInFirestore(stripePaymentId) {
     // Montant en centimes pour vérification côté serveur
     const totalCents = Math.round(window.getCartTotal() * 100);
 
+    // 🚚 Données livraison (mode + adresse). Le SERVEUR recalcule distance/frais/ETA
+    // (anti-manipulation) ; on n'envoie que l'adresse + coordonnées capturées.
+    const delivery = window.store?.state?.delivery || { mode: "collect" };
+    const isDelivery = delivery.mode === "delivery";
+    const livraison =
+      isDelivery && delivery.address
+        ? {
+            adresse: delivery.address.adresse || "",
+            lat: delivery.address.lat,
+            lng: delivery.address.lng,
+          }
+        : null;
+
     const finalizeOrder = httpsCallable(functions, "finalizeOrder");
     const result = await finalizeOrder({
       paymentIntentId: stripePaymentId,
@@ -242,7 +284,9 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       totalCents,
       clientEmail: currentUser.email,
       clientNom: currentUser.displayName || currentUser.email.split("@")[0],
-      referrerId: localStorage.getItem("referralBy") || null
+      referrerId: localStorage.getItem("referralBy") || null,
+      mode: isDelivery ? "delivery" : "collect",
+      livraison,
     });
 
     const orderId = result?.data?.orderId;
@@ -259,10 +303,18 @@ async function finalizeOrderInFirestore(stripePaymentId) {
 
     window.triggerVibration?.("jackpot");
 
-    if (window.snackConfig?.features?.enableClickAndCollect) {
+    // Suivi temps réel pour le collect ET la livraison.
+    if (
+      window.snackConfig?.features?.enableClickAndCollect ||
+      window.snackConfig?.features?.enableDelivery
+    ) {
       localStorage.setItem("activeOrderId", orderId);
       window.startOrderTracking(orderId);
     }
+
+    // Réinitialise le tunnel livraison une fois la commande passée.
+    window.store?.resetDelivery?.();
+
     setTimeout(() => {
       window.openTrackingModal();
     }, 500);
