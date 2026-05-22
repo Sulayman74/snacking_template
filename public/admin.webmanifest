@@ -9,16 +9,7 @@
   "theme_color": "#111827",
   "orientation": "portrait-primary",
   "icons": [
-    {
-      "src": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
-      "sizes": "192x192",
-      "type": "image/webp"
-    },
-    {
-      "src": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
-      "sizes": "512x512",
-      "type": "image/webp",
-      "purpose": "any maskable"
-    }
+    { "src": "/admin-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/admin-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }
