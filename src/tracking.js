@@ -351,7 +351,12 @@ function startOrderTracking(orderId) {
             const photo = commande.livreur?.dropoffUrl;
             const safe = window.safeURL ? window.safeURL(photo) : photo;
             subtitle.innerHTML = `<p class="text-gray-500 font-medium mb-3">Bon appétit ! Merci pour votre commande.</p>${
-              photo ? `<img src="${safe}" alt="Preuve de livraison" class="mx-auto rounded-2xl max-h-48 shadow-md border border-gray-200">` : ""
+              photo
+                ? `<a href="${safe}" target="_blank" rel="noopener" class="block">
+                     <img src="${safe}" alt="Preuve de livraison" class="mx-auto rounded-2xl max-h-48 shadow-md border border-gray-200">
+                     <span class="block mt-2 text-xs text-gray-400"><i class="fas fa-magnifying-glass-plus mr-1"></i>Preuve de livraison · toucher pour agrandir</span>
+                   </a>`
+                : ""
             }`;
           }
           if (actionBtn) {

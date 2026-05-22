@@ -18,10 +18,23 @@ import "./ui/AdminMarketingUI.js";
 import "./ui/AdminComptaUI.js";
 import { confirmAction } from "./utils/ModalManager.js";
 import { setupSWUpdatePrompt } from "./sw-update.js";
+import { setupA2HS } from "./a2hs.js";
+import { initAdminNotifs } from "./admin-notifs.js";
 
 // SW + bandeau de mise à jour (pattern prompt) : installable plein écran sur la
 // tablette de cuisine + JAMAIS de rechargement auto en plein service.
 setupSWUpdatePrompt({ context: "Admin" });
+
+// Bouton "Installer l'app Cuisine" (A2HS) + fallback iOS.
+setupA2HS({
+  bannerId: "admin-install-banner",
+  btnId: "admin-install-btn",
+  closeId: "admin-install-close",
+  hintId: "admin-install-hint",
+});
+
+// Activation guidée des alertes "nouvelle commande" (opt-in push cuisine).
+initAdminNotifs();
 
 const { onAuthStateChanged, signInWithEmailAndPassword, signOut } =
   window.authTools;
@@ -217,6 +230,9 @@ onAuthStateChanged(window.auth, async (user) => {
       window.currentAdminSnackId = userDoc.data().snackId;
       if (document.getElementById("admin-email"))
         document.getElementById("admin-email").innerText = user.email;
+
+      // Propose l'activation des alertes "nouvelle commande" (ou re-sync le token).
+      window.maybePromptAdminNotifs?.();
 
       if (window.snackConfig?.features?.enablePushNotifs) {
         document

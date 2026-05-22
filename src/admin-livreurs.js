@@ -33,6 +33,117 @@ async function loadDriversView() {
     console.error("Erreur chargement livreurs :", e);
     listEl.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">Impossible de charger les livreurs.${e?.message?.includes("index") ? " (Index Firestore à déployer.)" : ""}</div>`;
   }
+
+  loadDeliveriesLog(snackId);
+}
+
+// ============================================================================
+// 📸 LOG DES LIVRAISONS — preuves photo (pickup/dropoff) + suivi
+// ============================================================================
+async function loadDeliveriesLog(snackId) {
+  const el = document.getElementById("deliveries-log");
+  if (!el) return;
+  bindLightbox();
+  el.innerHTML = `<p class="text-center text-gray-400 py-6"><i class="fas fa-spinner fa-spin"></i></p>`;
+
+  try {
+    const { collection, query, where, orderBy, limit, getDocs } = window.fs;
+    // Réutilise l'index commandes(snackId, statut, date). On filtre mode en JS.
+    const q = query(
+      collection(window.db, "commandes"),
+      where("snackId", "==", snackId),
+      where("statut", "in", ["en_livraison", "livree"]),
+      orderBy("date", "desc"),
+      limit(20),
+    );
+    const snap = await getDocs(q);
+    const livraisons = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((o) => o.mode === "delivery");
+    renderDeliveries(livraisons);
+  } catch (e) {
+    console.error("Erreur chargement livraisons :", e);
+    el.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">Impossible de charger les livraisons.</div>`;
+  }
+}
+
+function fmtTime(ts) {
+  const t = ts?.toDate ? ts.toDate() : null;
+  return t ? t.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+}
+
+function thumb(url, label, time) {
+  const safe = window.safeURL ? window.safeURL(url) : url;
+  if (!url) {
+    return `<div class="flex flex-col items-center gap-1 opacity-40">
+      <div class="w-16 h-16 rounded-lg bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400"><i class="fas fa-image"></i></div>
+      <span class="text-[10px] text-gray-400">${label}</span>
+    </div>`;
+  }
+  return `<button type="button" data-photo="${escapeHTML(safe)}" class="flex flex-col items-center gap-1 group">
+    <img src="${escapeHTML(safe)}" alt="${label}" loading="lazy" class="w-16 h-16 object-cover rounded-lg border border-gray-200 group-hover:ring-2 group-hover:ring-blue-400 transition cursor-zoom-in">
+    <span class="text-[10px] text-gray-500">${label}${time ? " · " + time : ""}</span>
+  </button>`;
+}
+
+function renderDeliveries(list) {
+  const el = document.getElementById("deliveries-log");
+  if (!el) return;
+
+  if (list.length === 0) {
+    el.innerHTML = `<div class="bg-white border border-dashed border-gray-300 rounded-2xl p-6 text-center text-gray-500 text-sm">Aucune livraison en cours ou récente.</div>`;
+    return;
+  }
+
+  el.innerHTML = list
+    .map((o) => {
+      const livree = o.statut === "livree";
+      const badge = livree
+        ? `<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-700">Livré</span>`
+        : `<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 animate-pulse">En livraison</span>`;
+      const lv = o.livreur || {};
+      return `
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+        <div class="flex justify-between items-start gap-2 mb-3">
+          <div class="min-w-0">
+            <p class="font-black text-gray-900 truncate">${escapeHTML(o.clientNom || "Client")}</p>
+            <p class="text-sm text-gray-500 truncate"><i class="fas fa-location-dot text-blue-500 mr-1"></i>${escapeHTML(o.livraison?.adresse || "—")}</p>
+            <p class="text-xs text-gray-400 mt-0.5"><i class="fas fa-motorcycle mr-1"></i>${escapeHTML(lv.nom || "—")}${o.livraison?.distanceKm != null ? " · " + escapeHTML(String(o.livraison.distanceKm)) + " km" : ""}</p>
+          </div>
+          ${badge}
+        </div>
+        <div class="flex gap-4">
+          ${thumb(lv.pickupUrl, "Prise en charge", fmtTime(lv.pickupAt))}
+          ${thumb(lv.dropoffUrl, "Dépôt", fmtTime(lv.dropoffAt))}
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  el.querySelectorAll("[data-photo]").forEach((btn) => {
+    btn.addEventListener("click", () => openLightbox(btn.getAttribute("data-photo")));
+  });
+}
+
+let lightboxBound = false;
+function bindLightbox() {
+  if (lightboxBound) return;
+  const lb = document.getElementById("img-lightbox");
+  if (!lb) return;
+  lightboxBound = true;
+  lb.addEventListener("click", () => {
+    lb.classList.add("hidden");
+    lb.classList.remove("flex");
+  });
+}
+
+function openLightbox(url) {
+  const lb = document.getElementById("img-lightbox");
+  const img = document.getElementById("img-lightbox-img");
+  if (!lb || !img) return;
+  img.src = url;
+  lb.classList.remove("hidden");
+  lb.classList.add("flex");
 }
 
 function renderDrivers(drivers) {

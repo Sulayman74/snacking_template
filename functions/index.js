@@ -1,4 +1,4 @@
-const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onDocumentUpdated, onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { initializeApp } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
@@ -826,6 +826,55 @@ exports.createDriver = onCall({ region: "europe-west1" }, async (request) => {
 
   return { uid: userRecord.uid };
 });
+
+// ============================================================================
+// 🛎️ FONCTION : ALERTE ADMINS À CHAQUE NOUVELLE COMMANDE (push cuisine)
+// ============================================================================
+// Notifie les admins du snack même tablette en veille / arrière-plan (le bip
+// in-app ne marche qu'au premier plan). Query equality-only (snackId + role)
+// → pas d'index composite requis (index merging).
+exports.notifyAdminsOnNewOrder = onDocumentCreated(
+  "commandes/{orderId}",
+  async (event) => {
+    const order = event.data?.data();
+    if (!order?.snackId) return;
+
+    try {
+      const adminsSnap = await db
+        .collection("users")
+        .where("snackId", "==", order.snackId)
+        .where("role", "==", "admin")
+        .get();
+
+      const targets = [];
+      adminsSnap.forEach((d) => {
+        const token = d.data().fcmToken;
+        if (token) targets.push({ uid: d.id, token });
+      });
+      if (targets.length === 0) return;
+
+      const modeLabel = order.mode === "delivery" ? "Livraison" : "Sur place";
+      const total = typeof order.total === "number" ? `${order.total.toFixed(2)}€` : "";
+      const client = order.clientNom || "Client";
+
+      const response = await getMessaging().sendEachForMulticast({
+        notification: { title: "🛎️ Nouvelle commande", body: `${client} · ${total} · ${modeLabel}` },
+        webpush: { fcm_options: { link: "https://snacking-template.web.app/admin.html" } },
+        tokens: targets.map((t) => t.token),
+      });
+
+      // Nettoyage des tokens devenus invalides.
+      await Promise.all(
+        response.responses.map((r, i) =>
+          r.success ? null : cleanupInvalidFcmToken(targets[i].uid, r.error)
+        )
+      );
+      console.log(`🛎️ Alerte commande envoyée à ${targets.length} admin(s) (snack ${order.snackId}).`);
+    } catch (error) {
+      console.error("❌ Erreur notifyAdminsOnNewOrder :", error);
+    }
+  },
+);
 
 // ============================================================================
 // 🔔 FONCTION 6 : NOTIFICATION "COMMANDE PRÊTE" (V2)

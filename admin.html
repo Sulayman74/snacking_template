@@ -21,6 +21,8 @@
     <!-- Manifest DÉDIÉ admin (avant celui injecté par vite-plugin-pwa) → l'install
          ouvre /admin.html (tablette de cuisine plein écran), pas l'app cliente. -->
     <link rel="manifest" href="/admin.webmanifest" />
+    <!-- iOS : icône d'écran d'accueil (Safari ignore les icons du manifest). -->
+    <link rel="apple-touch-icon" href="/admin-icon-192.png" />
   </head>
   <body
     class="bg-gray-100 text-gray-900 font-sans h-screen flex flex-col overflow-hidden"
@@ -39,6 +41,37 @@
       </div>
       <button id="pwa-refresh-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
       <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- 📲 BANDEAU INSTALLATION (A2HS) — câblé par src/admin.js (tablette cuisine) -->
+    <div id="admin-install-banner" class="fixed pointer-events-none bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-blue-600 text-white p-4 rounded-2xl shadow-2xl z-[190] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <i class="fas fa-circle-down text-2xl shrink-0"></i>
+        <div class="min-w-0">
+          <p class="font-bold text-sm">Installer l'app Cuisine</p>
+          <p id="admin-install-hint" class="text-xs text-blue-100">Plein écran sur la tablette de service.</p>
+        </div>
+      </div>
+      <button id="admin-install-btn" class="bg-white text-blue-700 px-4 py-2 rounded-xl font-black text-sm shrink-0 active:scale-95 transition">Installer</button>
+      <button id="admin-install-close" class="absolute -top-2 -right-2 bg-gray-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- 🔔 BANDEAU ACTIVATION ALERTES (push nouvelles commandes) — câblé par src/admin-notifs.js -->
+    <div id="admin-notif-banner" class="fixed pointer-events-none bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/90 backdrop-blur-lg text-white p-4 rounded-2xl shadow-2xl z-[185] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between gap-3 border border-white/10">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0"><i class="fas fa-bell text-amber-400 text-lg"></i></div>
+        <div class="min-w-0">
+          <p class="font-bold text-sm">Alertes nouvelles commandes</p>
+          <p id="admin-notif-hint" class="text-xs text-gray-300">Soyez prévenu même écran en veille.</p>
+        </div>
+      </div>
+      <button id="admin-notif-btn" class="bg-amber-500 hover:bg-amber-600 text-gray-900 px-4 py-2 rounded-xl font-black text-sm shrink-0 active:scale-95 transition">Activer</button>
+      <button id="admin-notif-close" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- 🔍 LIGHTBOX (aperçu plein écran des preuves photo) -->
+    <div id="img-lightbox" class="hidden fixed inset-0 z-[300] items-center justify-center bg-black/90 p-4 cursor-zoom-out">
+      <img id="img-lightbox-img" src="" alt="Aperçu de la preuve" class="max-h-[90vh] max-w-full rounded-xl object-contain" />
     </div>
 
     <div
@@ -674,6 +707,15 @@
                 </div>
 
                 <div id="drivers-list" class="space-y-3"></div>
+
+                <div class="flex items-center gap-3 mt-8 mb-4">
+                    <i class="fas fa-camera-retro text-xl text-gray-700"></i>
+                    <div>
+                        <h2 class="text-xl font-black text-gray-900">Livraisons récentes</h2>
+                        <p class="text-sm text-gray-500">Preuves photo (prise en charge & dépôt) et suivi.</p>
+                    </div>
+                </div>
+                <div id="deliveries-log" class="space-y-3"></div>
             </div>
         </section>
 

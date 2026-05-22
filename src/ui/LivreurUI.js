@@ -21,6 +21,7 @@ import { escapeHTML } from "../utils.js";
 import {
   haversineKm,
   watchPosition,
+  getCurrentPosition,
   shouldWritePosition,
   formatDistance,
   isLatLng,
@@ -28,6 +29,11 @@ import {
 
 const VAPID_KEY =
   "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098";
+
+// Rayon d'arrivée : on n'autorise la photo de livraison que si le livreur est à
+// moins de X mètres de l'adresse client (anti-validation à distance). Généreux
+// pour absorber l'imprécision GPS / d'un géocodage d'adresse.
+const DELIVERY_PROXIMITY_M = 200;
 
 class LivreurUI {
   constructor() {
@@ -39,6 +45,9 @@ class LivreurUI {
     this.lastWritten = null;
     this.wakeLock = null;
     this.activeOrderId = null; // pour router les photos PoD vers la bonne commande
+    this.activeOrder = null; // commande en cours de livraison (état complet)
+    this.lastPos = null; // dernière position GPS (chaque tick, non throttlée)
+    this.pending = null; // photo en attente d'aperçu/confirmation { kind, blob, orderId, url }
 
     this.els = {
       login: document.getElementById("driver-login"),
@@ -61,9 +70,16 @@ class LivreurUI {
     document.getElementById("driver-logout-btn")?.addEventListener("click", () => this.logout());
     document.getElementById("driver-notif-btn")?.addEventListener("click", () => this.enableNotifs());
 
-    // Inputs photo (PoD)
-    this.els.pickupInput?.addEventListener("change", (e) => this.onPhoto(e, "pickup"));
-    this.els.dropoffInput?.addEventListener("change", (e) => this.onPhoto(e, "dropoff"));
+    // Aide "Comment ça marche"
+    document.getElementById("driver-help-btn")?.addEventListener("click", () => this.toggleHelp(true));
+    document.getElementById("driver-help-close")?.addEventListener("click", () => this.toggleHelp(false));
+    document.getElementById("driver-help-ok")?.addEventListener("click", () => this.toggleHelp(false));
+
+    // Inputs photo (PoD) → aperçu avant envoi
+    this.els.pickupInput?.addEventListener("change", (e) => this.onPhotoSelected(e, "pickup"));
+    this.els.dropoffInput?.addEventListener("change", (e) => this.onPhotoSelected(e, "dropoff"));
+    document.getElementById("pod-confirm-btn")?.addEventListener("click", () => this.confirmPhoto());
+    document.getElementById("pod-retake-btn")?.addEventListener("click", () => this.retakePhoto());
 
     // Délégation des actions de l'app
     this.els.app?.addEventListener("click", (e) => this.onAppClick(e));
@@ -116,6 +132,12 @@ class LivreurUI {
       this.els.initials.textContent = this.driverName.trim().slice(0, 2).toUpperCase();
       this.showApp();
       this.startListening();
+      this.renderPerms();
+      // Ouvre l'aide au tout premier login (une seule fois).
+      if (!localStorage.getItem("livreur_help_seen")) {
+        this.toggleHelp(true);
+        localStorage.setItem("livreur_help_seen", "1");
+      }
     } catch (err) {
       console.error("Erreur auth livreur :", err);
       window.showToast?.("Erreur de connexion.", "error");
@@ -219,14 +241,17 @@ class LivreurUI {
   // --- Rendu : course active ---------------------------------------------
   renderActiveEmpty() {
     this.activeOrderId = null;
+    this.activeOrder = null;
     this.els.active.innerHTML = "";
     this.stopWatch();
   }
 
   renderActive(o) {
     this.activeOrderId = o.id;
+    this.activeOrder = o;
     const client = o.livraison;
-    const pickupDone = !!o.livraison?.preuves?.pickupUrl;
+    // PoD stocké sous livreur.* (contrainte des règles Firestore).
+    const pickupDone = !!o.livreur?.pickupUrl;
     const mapsUrl = isLatLng(client)
       ? `https://www.google.com/maps/dir/?api=1&destination=${client.lat},${client.lng}`
       : "";
@@ -243,15 +268,16 @@ class LivreurUI {
 
         ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl mb-2 transition"><i class="fas fa-diamond-turn-right mr-2"></i>Itinéraire</a>` : ""}
 
-        <button type="button" data-livreur-action="pickup"
-          class="w-full ${pickupDone ? "bg-green-100 text-green-700" : "bg-gray-900 text-white hover:bg-black"} font-bold py-3 rounded-xl mb-2 transition active:scale-95">
-          <i class="fas ${pickupDone ? "fa-check" : "fa-camera"} mr-2"></i>${pickupDone ? "Prise en charge confirmée" : "Photo de prise en charge"}
+        <button type="button" data-livreur-action="pickup" ${pickupDone ? "disabled" : ""}
+          class="w-full ${pickupDone ? "bg-green-100 text-green-700 cursor-default" : "bg-gray-900 text-white hover:bg-black"} font-bold py-3 rounded-xl mb-2 transition active:scale-95">
+          <i class="fas ${pickupDone ? "fa-check" : "fa-camera"} mr-2"></i>${pickupDone ? "Prise en charge confirmée" : "1. Photo de prise en charge"}
         </button>
 
-        <button type="button" data-livreur-action="deliver"
+        <button type="button" data-livreur-action="deliver" id="deliver-btn"
           class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition active:scale-95">
-          <i class="fas fa-camera mr-2"></i> J'ai livré (photo)
+          <i class="fas fa-camera mr-2"></i> 2. J'ai livré (photo)
         </button>
+        <p id="deliver-hint" class="text-center text-xs mt-2 min-h-4"></p>
       </div>`;
 
     // Démarre/relance le suivi GPS pour cette course
@@ -259,7 +285,40 @@ class LivreurUI {
       this.stopWatch();
       this.startWatch(o);
     }
-    this.updateActiveDistance(this.lastWritten, client);
+    this.updateActiveDistance(this.lastPos || this.lastWritten, client);
+    this.refreshDeliverButton();
+  }
+
+  // Conditions pour autoriser la photo de livraison.
+  canDeliver(o) {
+    if (!o) return { ok: false, reason: "" };
+    if (!o.livreur?.pickupUrl) return { ok: false, reason: "Confirmez d'abord la photo de prise en charge." };
+    const client = o.livraison;
+    if (!isLatLng(client)) return { ok: true, reason: "" }; // pas de géo client → on ne bloque pas
+    const pos = this.lastPos || this.lastWritten;
+    if (!isLatLng(pos)) {
+      return { ok: false, reason: this.gpsError ? "Activez la localisation pour valider la livraison." : "Localisation en cours…" };
+    }
+    const distM = haversineKm(pos, client) * 1000;
+    if (distM > DELIVERY_PROXIMITY_M) {
+      return { ok: false, reason: `Rapprochez-vous du client (${formatDistance(distM / 1000)})` };
+    }
+    return { ok: true, reason: "" };
+  }
+
+  // Active/désactive le bouton "J'ai livré" selon la proximité + la prise en charge.
+  refreshDeliverButton() {
+    const btn = document.getElementById("deliver-btn");
+    const hint = document.getElementById("deliver-hint");
+    if (!btn) return;
+    const gate = this.canDeliver(this.activeOrder);
+    btn.disabled = !gate.ok;
+    btn.classList.toggle("opacity-50", !gate.ok);
+    btn.classList.toggle("cursor-not-allowed", !gate.ok);
+    if (hint) {
+      hint.textContent = gate.ok ? "" : gate.reason;
+      hint.className = `text-center text-xs mt-2 min-h-4 ${gate.ok ? "text-gray-400" : "text-amber-600 font-bold"}`;
+    }
   }
 
   // --- Prise en charge (claim transactionnel) ----------------------------
@@ -293,25 +352,61 @@ class LivreurUI {
     (kind === "pickup" ? this.els.pickupInput : this.els.dropoffInput)?.click();
   }
 
-  async onPhoto(e, kind) {
+  // Étape 1 : photo prise → compression → APERÇU (pas d'envoi immédiat).
+  async onPhotoSelected(e, kind) {
     const file = e.target.files?.[0];
-    e.target.value = ""; // reset pour permettre reprise
+    e.target.value = ""; // reset pour permettre une reprise
     if (!file || !this.activeOrderId) return;
-    const orderId = this.activeOrderId;
-    window.showToast?.("Envoi de la photo…", "success");
     try {
       const blob = await compressImage(file);
+      if (this.pending?.url) URL.revokeObjectURL(this.pending.url);
+      this.pending = { kind, blob, orderId: this.activeOrderId, url: URL.createObjectURL(blob) };
+      this.showPreview();
+    } catch (err) {
+      console.error("Erreur compression photo :", err);
+      window.showToast?.("Photo illisible, réessayez.", "error");
+    }
+  }
+
+  showPreview() {
+    const modal = document.getElementById("pod-preview-modal");
+    const img = document.getElementById("pod-preview-img");
+    const title = document.getElementById("pod-preview-title");
+    if (img) img.src = this.pending.url;
+    if (title) title.textContent = this.pending.kind === "pickup" ? "Photo de prise en charge" : "Photo de livraison";
+    modal?.classList.remove("hidden");
+    modal?.classList.add("flex");
+  }
+
+  hidePreview() {
+    const modal = document.getElementById("pod-preview-modal");
+    modal?.classList.add("hidden");
+    modal?.classList.remove("flex");
+    if (this.pending?.url) URL.revokeObjectURL(this.pending.url);
+    this.pending = null;
+  }
+
+  retakePhoto() {
+    const kind = this.pending?.kind;
+    this.hidePreview();
+    if (kind) this.triggerPhoto(kind);
+  }
+
+  // Étape 2 : confirmation → upload Storage + écriture Firestore.
+  async confirmPhoto() {
+    if (!this.pending) return;
+    const { kind, blob, orderId } = this.pending;
+    const btn = document.getElementById("pod-confirm-btn");
+    const original = btn?.innerHTML;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Envoi…'; }
+    try {
       const url = await uploadPod(this.snackId, orderId, kind, blob);
       const ref = doc(window.db, "commandes", orderId);
 
-      // PoD stocké sous livreur.* : c'est le SEUL espace que les règles Firestore
-      // autorisent le livreur à écrire (affectedKeys = {livreur}). Champs pointés
-      // pour ne pas écraser livreur.position mise à jour par le suivi GPS.
+      // PoD stocké sous livreur.* : seul espace autorisé au livreur par les règles
+      // (affectedKeys = {livreur}). Champs pointés → ne pas écraser livreur.position.
       if (kind === "pickup") {
-        await updateDoc(ref, {
-          "livreur.pickupUrl": url,
-          "livreur.pickupAt": serverTimestamp(),
-        });
+        await updateDoc(ref, { "livreur.pickupUrl": url, "livreur.pickupAt": serverTimestamp() });
         window.showToast?.("Prise en charge confirmée ✅", "success");
       } else {
         // Dépôt → commande livrée. On purge la position (RGPD).
@@ -325,9 +420,13 @@ class LivreurUI {
         window.showToast?.("Livraison validée ! Merci 🎉", "success");
         this.stopWatch();
       }
+      this.hidePreview();
     } catch (err) {
       console.error("Erreur PoD :", err);
       window.showToast?.("Échec de l'envoi de la photo.", "error");
+      // On garde l'aperçu ouvert pour permettre un nouvel essai.
+    } finally {
+      if (btn) { btn.disabled = false; if (original) btn.innerHTML = original; }
     }
   }
 
@@ -340,7 +439,10 @@ class LivreurUI {
 
     this.watchStop = watchPosition(
       (pos) => {
+        this.lastPos = pos; // chaque tick (non throttlé) → distance + gating bouton
+        this.gpsError = false;
         this.updateActiveDistance(pos, client);
+        this.refreshDeliverButton();
         const now = Date.now();
         if (shouldWritePosition(this.lastWritten, pos, now)) {
           this.lastWritten = { lat: pos.lat, lng: pos.lng, t: now };
@@ -350,6 +452,8 @@ class LivreurUI {
         }
       },
       (err) => {
+        this.gpsError = true;
+        this.refreshDeliverButton();
         if (err.code === "denied") window.showToast?.("Activez la localisation pour le suivi.", "error");
       },
     );
@@ -393,7 +497,76 @@ class LivreurUI {
       }
     } catch (err) {
       console.error("Erreur notif livreur :", err);
+    } finally {
+      this.renderPerms();
     }
+  }
+
+  // --- Onboarding permissions (notifs + géoloc) ---------------------------
+  async geoPermState() {
+    if (!navigator.permissions?.query) return "unknown";
+    try {
+      const s = await navigator.permissions.query({ name: "geolocation" });
+      return s.state; // granted | denied | prompt
+    } catch {
+      return "unknown";
+    }
+  }
+
+  async renderPerms() {
+    const el = document.getElementById("driver-perms");
+    if (!el) return;
+    const notif = "Notification" in window ? Notification.permission : "unsupported";
+    const geo = await this.geoPermState();
+    // Tout est OK → on masque la carte (geo "unknown" = navigateur sans Permissions API,
+    // on ne bloque pas l'affichage de la carte sur ce seul critère).
+    if (notif === "granted" && geo === "granted") {
+      el.innerHTML = "";
+      return;
+    }
+    el.innerHTML = `
+      <div class="bg-white rounded-2xl border border-blue-200 p-4 mb-2 shadow-sm">
+        <p class="font-black text-gray-900 mb-1"><i class="fas fa-bolt text-blue-500 mr-1"></i>Activer mon espace</p>
+        <p class="text-xs text-gray-500 mb-2">Pour recevoir les courses et être suivi pendant les livraisons.</p>
+        ${this.permRow("notifs", "Notifications", "fa-bell", notif === "granted", notif === "denied")}
+        ${this.permRow("geo", "Localisation", "fa-location-dot", geo === "granted", geo === "denied")}
+      </div>`;
+  }
+
+  permRow(kind, label, icon, ok, denied) {
+    const right = ok
+      ? `<span class="text-green-600 font-bold text-sm shrink-0"><i class="fas fa-check-circle mr-1"></i>Activé</span>`
+      : denied
+        ? `<span class="text-[11px] text-amber-600 font-bold shrink-0 text-right">Bloqué — à réactiver<br>dans les réglages</span>`
+        : `<button type="button" data-livreur-action="enable-${kind}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition shrink-0">Activer</button>`;
+    return `<div class="flex items-center justify-between gap-3 py-2 border-t border-gray-100 first:border-0">
+      <span class="font-bold text-gray-800 text-sm"><i class="fas ${icon} text-gray-400 mr-2"></i>${label}</span>
+      ${right}
+    </div>`;
+  }
+
+  async enableGeo() {
+    try {
+      const pos = await getCurrentPosition({ timeout: 10000 }); // déclenche le prompt natif
+      this.lastPos = pos;
+      this.gpsError = false;
+      window.showToast?.("Localisation activée 📍", "success");
+    } catch (e) {
+      window.showToast?.(
+        e.code === "denied" ? "Localisation refusée. Activez-la dans les réglages." : "Localisation indisponible.",
+        "error",
+      );
+    } finally {
+      this.renderPerms();
+      this.refreshDeliverButton();
+    }
+  }
+
+  toggleHelp(show) {
+    const modal = document.getElementById("driver-help-modal");
+    if (!modal) return;
+    modal.classList.toggle("hidden", !show);
+    modal.classList.toggle("flex", show);
   }
 
   // --- Divers -------------------------------------------------------------
@@ -403,12 +576,18 @@ class LivreurUI {
     const action = btn.getAttribute("data-livreur-action");
     if (action === "take") this.takeCourse(btn.getAttribute("data-id"));
     else if (action === "pickup") this.triggerPhoto("pickup");
-    else if (action === "deliver") this.triggerPhoto("dropoff");
+    else if (action === "deliver") {
+      const gate = this.canDeliver(this.activeOrder);
+      if (!gate.ok) { if (gate.reason) window.showToast?.(gate.reason, "error"); return; }
+      this.triggerPhoto("dropoff");
+    } else if (action === "enable-notifs") this.enableNotifs();
+    else if (action === "enable-geo") this.enableGeo();
   }
 
   cleanup() {
     if (this.coursesUnsub) { this.coursesUnsub(); this.coursesUnsub = null; }
     this.stopWatch();
+    this.hidePreview();
     this.activeOrderId = null;
   }
 }
