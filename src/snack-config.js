@@ -17,6 +17,12 @@ const SAAS_THEMES = {
   "forest":    { primaryHex: "#16a34a", accentHex: "#16a34a", lightHex: "#dcfce7", onPrimaryHex: "#ffffff" },
   "midnight":  { primaryHex: "#4c1d95", accentHex: "#c084fc", lightHex: "#f3e9ff", onPrimaryHex: "#ffffff" },
   "sunflower": { primaryHex: "#eab308", accentHex: "#ca8a04", lightHex: "#fef9c3", onPrimaryHex: "#111827" },
+  "belly": {
+    primaryHex:   "#0A1B3F",  // Belly Blue — navy profond du logo
+    accentHex:    "#B88A44",  // Golden Bun — or gourmand (chaud, appétence)
+    lightHex:     "#C8D8E9",  // Logo Light — teinte bleu clair du primary
+    onPrimaryHex: "#FFFFFF",  // Texte blanc sur navy (contraste WCAG AAA ~16:1)
+  },
 };
 
 // Coerce une valeur Firestore en nombre fini, sinon renvoie le fallback (ex: null).

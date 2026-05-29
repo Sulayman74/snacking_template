@@ -84,9 +84,6 @@ document.addEventListener("click", (event) => {
     case "delete-product-ui":
       window.handleDeleteProductUI(id);
       break;
-    case "save-product":
-      window.saveProduct(event);
-      break;
     case "close-modal": {
       const modalId = target.getAttribute("data-modal-id");
       window.closeModal(modalId);

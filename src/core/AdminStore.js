@@ -212,21 +212,23 @@ export class AdminStore extends EventTarget {
                 updatedAt: serverTimestamp()
             };
 
+            let productId;
             if (productData.id) {
-                const id = productData.id;
+                productId = productData.id;
                 delete data.id; // On n'update pas l'ID
-                await updateDoc(doc(db, "produits", id), data);
+                await updateDoc(doc(db, "produits", productId), data);
             } else {
                 const snackId = this.#state.config?.identity?.id || window.currentAdminSnackId;
                 if (!snackId) throw new Error("Snack non identifié. Recharge l'onglet Configuration.");
                 data.createdAt = serverTimestamp();
                 data.isAvailable = true;
                 data.snackId = snackId;
-                await addDoc(collection(db, "produits"), data);
+                const newRef = await addDoc(collection(db, "produits"), data);
+                productId = newRef.id;
             }
 
             this.setSaving(false);
-            return true;
+            return productId; // ← id du produit (utile pour patcher l'image en arrière-plan)
         } catch (error) {
             this.setSaving(false);
             throw error;

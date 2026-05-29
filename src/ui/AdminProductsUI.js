@@ -158,7 +158,7 @@ class AdminProductsUI {
             document.getElementById("edit-desc").value = product.description || "";
             document.getElementById("edit-prix").value = product.prix || 0;
             document.getElementById("edit-prix-menu").value = product.menuPriceAdd || 2.5;
-            document.getElementById("edit-category").value = product.categorieId || "burgers";
+            this.populateCategorySelect(product.categorieId);
             document.getElementById("edit-tags").value = product.tags?.[0] || "";
             document.getElementById("edit-allow-menu").checked = product.allowMenu !== false;
             
@@ -199,7 +199,7 @@ class AdminProductsUI {
             // New Product defaults
             document.getElementById("edit-preview-img").style.display = "none";
             document.getElementById("edit-preview-fallback").style.display = "flex";
-            document.getElementById("edit-category").value = "burgers";
+            this.populateCategorySelect(null);
             ["edit-has-crudites", "edit-has-sauces", "edit-has-tailles"].forEach(id => {
                 document.getElementById(id).checked = false;
                 document.getElementById(id).dispatchEvent(new Event("change"));
@@ -224,34 +224,101 @@ class AdminProductsUI {
 
         try {
             const productData = this.collectFormData();
-            if (this.currentEditingId) productData.id = this.currentEditingId;
+            const editingId = this.currentEditingId;
+            if (editingId) productData.id = editingId;
 
-            // Image Upload
+            // On capture le fichier image AVANT de fermer/réinitialiser la modale
+            // (closeModal → form.reset() viderait l'input).
             const fileInput = document.getElementById("edit-img-file");
-            if (fileInput.files.length > 0) {
-                const snackId = adminStore.state.config?.identity?.id || window.currentAdminSnackId;
-                if (!snackId) throw new Error("Snack non identifié. Recharge l'onglet Configuration.");
-                const file = fileInput.files[0];
-                const { ref, uploadBytes, getDownloadURL } = window.storageTools;
-                const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-                const storageRef = ref(window.storage, `produits/${snackId}/${fileName}`);
-                await uploadBytes(storageRef, file);
-                productData.image = await getDownloadURL(storageRef);
-            } else if (this.currentEditingId) {
-                // Keep old image if no new file
-                const oldProduct = adminStore.state.products.find(p => p.id === this.currentEditingId);
+            const file = fileInput?.files?.[0] || null;
+
+            // En édition sans nouveau fichier : on conserve l'image existante.
+            if (!file && editingId) {
+                const oldProduct = adminStore.state.products.find(p => p.id === editingId);
                 if (oldProduct?.image) productData.image = oldProduct.image;
             }
 
-            await adminStore.saveProduct(window.db, window.fs, productData);
-            showToast("Produit enregistré !", "success");
+            // 1) Écriture rapide du doc (SANS attendre l'upload image) → UI quasi instantanée.
+            const productId = await adminStore.saveProduct(window.db, window.fs, productData);
+            showToast(file ? "Produit enregistré, image en cours…" : "Produit enregistré !", "success");
             window.closeModal("edit-product-modal");
+
+            // 2) Upload image EN ARRIÈRE-PLAN (fire-and-forget, sans Pub/Sub).
+            // Le listener onSnapshot rafraîchira la carte dès que l'URL est écrite,
+            // puis la Cloud Function optimizeImage compressera le fichier en WebP.
+            if (file && productId) this.uploadImageInBackground(productId, file);
         } catch (error) {
             showToast(error.message, "error");
         } finally {
             btn.innerHTML = originalHtml;
             btn.disabled = false;
         }
+    }
+
+    /**
+     * Upload l'image dans Storage puis patche le champ `image` du produit.
+     * Volontairement NON attendu par handleSubmit (fire-and-forget) : l'UI rend
+     * la main immédiatement après l'écriture du doc. En cas d'échec, le produit
+     * existe déjà sans image → on prévient l'utilisateur.
+     * @param {string} productId - id du document produit à patcher.
+     * @param {File} file - fichier image sélectionné.
+     */
+    async uploadImageInBackground(productId, file) {
+        try {
+            const snackId = adminStore.state.config?.identity?.id || window.currentAdminSnackId;
+            if (!snackId) throw new Error("Snack non identifié.");
+            const { ref, uploadBytes, getDownloadURL } = window.storageTools;
+            const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
+            const storageRef = ref(window.storage, `produits/${snackId}/${fileName}`);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            const { doc, updateDoc } = window.fs;
+            await updateDoc(doc(window.db, "produits", productId), { image: url });
+        } catch (error) {
+            console.error("Upload image (arrière-plan) échoué :", error);
+            showToast("Produit créé, mais l'envoi de l'image a échoué. Réessaie via Modifier.", "error");
+        }
+    }
+
+    /**
+     * Peuple le <select> des catégories à partir des produits existants,
+     * ajoute l'option "➕ Nouvelle catégorie" (sentinelle "NEW") et sélectionne
+     * la valeur voulue. Si aucune catégorie n'existe encore, force "NEW" pour
+     * que l'utilisateur saisisse la première.
+     * @param {string|null} selected - categorieId à présélectionner.
+     */
+    populateCategorySelect(selected) {
+        const sel = document.getElementById("edit-category");
+        if (!sel) return;
+
+        const categories = [...new Set(adminStore.state.products.map(p => p.categorieId).filter(Boolean))];
+        sel.innerHTML =
+            categories.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join("") +
+            `<option value="NEW">➕ Nouvelle catégorie…</option>`;
+
+        if (selected && categories.includes(selected)) sel.value = selected;
+        else if (categories.length > 0) sel.value = categories[0];
+        else sel.value = "NEW";
+
+        // Affiche le champ texte si on est en mode "nouvelle catégorie"
+        const newInput = document.getElementById("edit-new-category");
+        if (newInput) {
+            newInput.classList.toggle("hidden", sel.value !== "NEW");
+            if (sel.value !== "NEW") newInput.value = "";
+        }
+    }
+
+    /**
+     * Résout la catégorie finale : valeur saisie si "Nouvelle catégorie",
+     * sinon la valeur sélectionnée dans le <select>.
+     * @returns {string} categorieId (peut être "" → bloqué par la validation).
+     */
+    resolveCategory() {
+        const sel = document.getElementById("edit-category");
+        if (sel?.value === "NEW") {
+            return document.getElementById("edit-new-category")?.value.trim() || "";
+        }
+        return sel?.value || "";
     }
 
     collectFormData() {
@@ -275,7 +342,7 @@ class AdminProductsUI {
             description: document.getElementById("edit-desc").value.trim(),
             prix: hasTailles && tailles.length > 0 ? tailles[0].prix : parseFloat(document.getElementById("edit-prix").value) || 0,
             menuPriceAdd: parseFloat(document.getElementById("edit-prix-menu").value) || 2.5,
-            categorieId: document.getElementById("edit-category").value,
+            categorieId: this.resolveCategory(),
             tags: document.getElementById("edit-tags").value ? [document.getElementById("edit-tags").value] : [],
             allowMenu: hasTailles ? false : document.getElementById("edit-allow-menu").checked,
             hasCrudites: !!hasCrudites,
