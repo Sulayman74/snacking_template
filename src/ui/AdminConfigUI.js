@@ -144,16 +144,24 @@ class AdminConfigUI {
         e.preventDefault();
         const getVal = (id) => document.getElementById(id)?.value.trim() || "";
 
-        adminStore.updateConfigField("contact.phone", getVal("config-phone"));
-        adminStore.updateConfigField("contact.email", getVal("config-email"));
-        adminStore.updateConfigField("contact.address.street", getVal("config-street"));
-        adminStore.updateConfigField("contact.address.zip", getVal("config-zipcode"));
-        adminStore.updateConfigField("contact.address.city", getVal("config-city"));
-        adminStore.updateConfigField("contact.address.googleMapsUrl", getVal("config-google-maps-url"));
-        adminStore.updateConfigField("reviews.googleReviewUrl", getVal("config-google-review-url"));
-        adminStore.updateConfigField("contact.socials.instagram", getVal("config-instagram"));
-        adminStore.updateConfigField("contact.socials.facebook", getVal("config-facebook"));
-        adminStore.updateConfigField("contact.socials.tiktok", getVal("config-tiktok"));
+        // ⚠️ On capture TOUTES les valeurs AVANT de muter le store.
+        // updateConfigField() émet "admin-config-updated" → render() réécrit les
+        // inputs depuis le store. Si on lisait un champ APRÈS un update, render()
+        // l'aurait déjà remis à sa valeur store (vide) → on perdait la saisie.
+        // Seul le 1er champ survivait (d'où l'ancien bug "seul phoneNumber").
+        const values = {
+            "contact.phone": getVal("config-phone"),
+            "contact.email": getVal("config-email"),
+            "contact.address.street": getVal("config-street"),
+            "contact.address.zip": getVal("config-zipcode"),
+            "contact.address.city": getVal("config-city"),
+            "contact.address.googleMapsUrl": getVal("config-google-maps-url"),
+            "reviews.googleReviewUrl": getVal("config-google-review-url"),
+            "contact.socials.instagram": getVal("config-instagram"),
+            "contact.socials.facebook": getVal("config-facebook"),
+            "contact.socials.tiktok": getVal("config-tiktok"),
+        };
+        Object.entries(values).forEach(([path, v]) => adminStore.updateConfigField(path, v));
 
         this.saveToServer("Coordonnées mises à jour !");
     }
