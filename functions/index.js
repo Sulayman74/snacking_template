@@ -275,12 +275,28 @@ exports.optimizeImage = onObjectFinalized(
         .webp({ quality: 80 })
         .toFile(tempOptimizedPath);
 
+      // ⚠️ On préserve le token de téléchargement existant. Le client appelle
+      // getDownloadURL() (qui pose firebaseStorageDownloadTokens) puis stocke l'URL
+      // dans Firestore. Réécrire l'objet sans reporter ce token l'invaliderait
+      // → l'URL en base renverrait 403 (image cassée). On le lit juste avant l'upload
+      // pour laisser le temps au getDownloadURL client de l'avoir posé.
+      let downloadToken;
+      try {
+        const [existingMeta] = await bucket.file(filePath).getMetadata();
+        downloadToken = existingMeta?.metadata?.firebaseStorageDownloadTokens;
+      } catch (e) {
+        logger.warn("Lecture du token existant impossible (conservation ignorée) :", e);
+      }
+
       logger.log("Upload de l'image optimisée...");
       await bucket.upload(tempOptimizedPath, {
         destination: filePath,
         metadata: {
           contentType: "image/webp",
-          metadata: { optimized: "true" },
+          metadata: {
+            optimized: "true",
+            ...(downloadToken ? { firebaseStorageDownloadTokens: downloadToken } : {}),
+          },
         },
       });
 

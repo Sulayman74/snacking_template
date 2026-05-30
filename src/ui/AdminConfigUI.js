@@ -174,15 +174,22 @@ class AdminConfigUI {
             return Number.isFinite(n) ? n : null;
         };
 
-        adminStore.updateConfigField("features.enableDelivery", !!document.getElementById("config-enable-delivery")?.checked);
-        adminStore.updateConfigField("delivery.radiusKm", numVal("config-delivery-radius") ?? 5);
-        adminStore.updateConfigField("delivery.frais", numVal("config-delivery-fee") ?? 2.5);
-        adminStore.updateConfigField("delivery.minOrder", numVal("config-delivery-minorder") ?? 0);
-        adminStore.updateConfigField("delivery.avgSpeedKmh", numVal("config-delivery-speed") ?? 22);
-        adminStore.updateConfigField("delivery.prepBaseMin", numVal("config-delivery-prep") ?? 12);
-        adminStore.updateConfigField("delivery.queueFactorMin", numVal("config-delivery-queue") ?? 3);
-        adminStore.updateConfigField("geo.lat", numVal("config-resto-lat"));
-        adminStore.updateConfigField("geo.lng", numVal("config-resto-lng"));
+        // ⚠️ Même précaution que handleContactSubmit : on capture TOUTES les valeurs
+        // AVANT de muter le store. Le 1er updateConfigField émet "admin-config-updated"
+        // → render() réécrit les inputs depuis le store, ce qui écraserait la saisie des
+        // champs lus ensuite (bug "seul enableDelivery sauvegardé").
+        const values = {
+            "features.enableDelivery": !!document.getElementById("config-enable-delivery")?.checked,
+            "delivery.radiusKm": numVal("config-delivery-radius") ?? 5,
+            "delivery.frais": numVal("config-delivery-fee") ?? 2.5,
+            "delivery.minOrder": numVal("config-delivery-minorder") ?? 0,
+            "delivery.avgSpeedKmh": numVal("config-delivery-speed") ?? 22,
+            "delivery.prepBaseMin": numVal("config-delivery-prep") ?? 12,
+            "delivery.queueFactorMin": numVal("config-delivery-queue") ?? 3,
+            "geo.lat": numVal("config-resto-lat"),
+            "geo.lng": numVal("config-resto-lng"),
+        };
+        Object.entries(values).forEach(([path, v]) => adminStore.updateConfigField(path, v));
 
         this.saveToServer("Réglages de livraison enregistrés !");
     }

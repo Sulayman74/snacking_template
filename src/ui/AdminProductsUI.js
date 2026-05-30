@@ -2,6 +2,29 @@ import { adminStore } from "../core/AdminStore.js";
 import { confirmAction } from "../utils/ModalManager.js";
 import { escapeHTML, safeURL, showToast } from "../utils.js";
 
+/**
+ * Liste des 14 allergènes à déclaration obligatoire (UE, règlement INCO 1169/2011).
+ * La valeur stockée (`name`) est exactement ce qu'affiche la modale client
+ * (`item.allergenes.join(", ")`), d'où des libellés propres sans emoji.
+ * @type {Array<{name: string, emoji: string}>}
+ */
+const ALLERGENS = [
+    { name: "Gluten", emoji: "🌾" },
+    { name: "Crustacés", emoji: "🦐" },
+    { name: "Œufs", emoji: "🥚" },
+    { name: "Poisson", emoji: "🐟" },
+    { name: "Arachides", emoji: "🥜" },
+    { name: "Soja", emoji: "🫛" },
+    { name: "Lait", emoji: "🥛" },
+    { name: "Fruits à coque", emoji: "🌰" },
+    { name: "Céleri", emoji: "🥬" },
+    { name: "Moutarde", emoji: "🟡" },
+    { name: "Sésame", emoji: "◦" },
+    { name: "Sulfites", emoji: "🍷" },
+    { name: "Lupin", emoji: "🌸" },
+    { name: "Mollusques", emoji: "🦪" },
+];
+
 class AdminProductsUI {
     constructor() {
         this.grid = document.getElementById("admin-products-grid");
@@ -17,6 +40,32 @@ class AdminProductsUI {
         if (this.form) {
             this.form.addEventListener("submit", (e) => this.handleSubmit(e));
         }
+        this.renderAllergenOptions();
+    }
+
+    /**
+     * Injecte une fois les cases à cocher des allergènes dans la modale produit.
+     * La grille HTML (#edit-allergens-grid) est statique ; on la peuple au démarrage.
+     */
+    renderAllergenOptions() {
+        const grid = document.getElementById("edit-allergens-grid");
+        if (!grid) return;
+        grid.innerHTML = ALLERGENS.map(({ name, emoji }) => `
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-900 bg-white px-2 py-1.5 rounded-lg border border-amber-100 hover:border-amber-300 transition">
+                <input type="checkbox" class="edit-allergen w-4 h-4 text-amber-600 rounded focus:ring-amber-500 cursor-pointer" value="${escapeHTML(name)}">
+                <span>${emoji} ${escapeHTML(name)}</span>
+            </label>`).join("");
+    }
+
+    /**
+     * Coche les allergènes correspondant au produit (réinitialise les autres).
+     * @param {string[]} [list] - allergènes du produit (noms canoniques).
+     */
+    setAllergens(list) {
+        const selected = new Set(Array.isArray(list) ? list : []);
+        document.querySelectorAll(".edit-allergen").forEach((cb) => {
+            cb.checked = selected.has(cb.value);
+        });
     }
 
     render() {
@@ -161,6 +210,7 @@ class AdminProductsUI {
             this.populateCategorySelect(product.categorieId);
             document.getElementById("edit-tags").value = product.tags?.[0] || "";
             document.getElementById("edit-allow-menu").checked = product.allowMenu !== false;
+            this.setAllergens(product.allergenes);
             
             // Image Preview
             const imgEl = document.getElementById("edit-preview-img");
@@ -200,6 +250,7 @@ class AdminProductsUI {
             document.getElementById("edit-preview-img").style.display = "none";
             document.getElementById("edit-preview-fallback").style.display = "flex";
             this.populateCategorySelect(null);
+            this.setAllergens([]);
             ["edit-has-crudites", "edit-has-sauces", "edit-has-tailles"].forEach(id => {
                 document.getElementById(id).checked = false;
                 document.getElementById(id).dispatchEvent(new Event("change"));
@@ -344,6 +395,7 @@ class AdminProductsUI {
             menuPriceAdd: parseFloat(document.getElementById("edit-prix-menu").value) || 2.5,
             categorieId: this.resolveCategory(),
             tags: document.getElementById("edit-tags").value ? [document.getElementById("edit-tags").value] : [],
+            allergenes: Array.from(document.querySelectorAll(".edit-allergen:checked")).map(cb => cb.value),
             allowMenu: hasTailles ? false : document.getElementById("edit-allow-menu").checked,
             hasCrudites: !!hasCrudites,
             crudites,
