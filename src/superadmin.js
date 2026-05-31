@@ -160,6 +160,9 @@ function renderSnacksTable() {
                     <a href="livreur.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-teal-600 hover:text-white font-bold text-sm bg-teal-50 hover:bg-teal-600 px-3 py-2 rounded-lg transition" title="Ouvrir l'app livreur (mode superadmin)">
                         <i class="fas fa-motorcycle text-xs"></i> Livreur
                     </a>
+                    <button data-action="sub-link" data-snack-id="${safeId}" class="text-emerald-700 hover:text-white font-bold text-sm bg-emerald-50 hover:bg-emerald-600 px-3 py-2 rounded-lg transition" title="Générer un lien d'abonnement">
+                        <i class="fas fa-credit-card"></i>
+                    </button>
                     <button data-action="open-config" data-snack-id="${safeId}" class="text-gray-700 hover:text-white font-bold text-sm bg-gray-100 hover:bg-indigo-600 px-3 py-2 rounded-lg transition" title="Configurer les modules">
                         <i class="fas fa-cog"></i>
                     </button>
@@ -245,6 +248,8 @@ document.addEventListener("click", (e) => {
     } else if (action === "toggle-maintenance") {
         const isOn = btn.getAttribute("data-maintenance") === "1";
         window.toggleMaintenance(snackId, isOn);
+    } else if (action === "sub-link") {
+        window.openSubLinkModal(snackId);
     }
 });
 
@@ -654,4 +659,59 @@ document.getElementById("btn-export-billing")?.addEventListener("click", () => {
     a.download = `facturation_${new Date().toISOString().slice(0, 7)}.csv`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     window.showToast?.("Export facturation terminé !");
+});
+
+// ============================================================================
+// 💼 LIEN D'ABONNEMENT SaaS (modale)
+// ============================================================================
+window.openSubLinkModal = (snackId) => {
+    const snack = allSnacks.find(s => s.id === snackId);
+    document.getElementById("sub-snack-name").textContent = snack?.nom || snackId;
+    document.getElementById("sub-link-result").classList.add("hidden");
+    document.getElementById("sub-link-input").value = "";
+    const modal = document.getElementById("modal-sub-link");
+    modal.dataset.snackId = snackId;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+};
+
+document.getElementById("btn-close-sub")?.addEventListener("click", () => {
+    const modal = document.getElementById("modal-sub-link");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+});
+
+document.querySelectorAll(".sub-amount").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+        const modal = document.getElementById("modal-sub-link");
+        const snackId = modal.dataset.snackId;
+        const amountEur = parseInt(btn.getAttribute("data-amount"), 10);
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        try {
+            const { httpsCallable, functions } = window.fs;
+            const res = await httpsCallable(functions, "createSubscriptionCheckout")({
+                snackId, amountEur, origin: window.location.origin,
+            });
+            const url = res.data?.url;
+            if (!url) throw new Error("URL manquante.");
+            document.getElementById("sub-link-input").value = url;
+            document.getElementById("sub-link-result").classList.remove("hidden");
+            window.showToast?.(`Lien ${amountEur} €/mois généré !`);
+        } catch (e) {
+            console.error("createSubscriptionCheckout:", e);
+            window.showToast?.("Erreur génération du lien : " + (e.message || e), "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
+    });
+});
+
+document.getElementById("btn-copy-sub-link")?.addEventListener("click", () => {
+    const input = document.getElementById("sub-link-input");
+    if (input?.value && navigator.clipboard) {
+        navigator.clipboard.writeText(input.value).then(() => window.showToast?.("Lien copié !"));
+    }
 });
