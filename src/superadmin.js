@@ -683,11 +683,20 @@ window.openSubLinkModal = (snackId) => {
     modal.dataset.snackId = snackId;
     modal.classList.remove("hidden");
     modal.classList.add("flex");
-    console.log("[superadmin] modale ouverte (classes:", modal.className, ")");
+
+    // DIAGNOSTIC : état calculé AVANT tout forçage → dit si Tailwind s'applique.
+    const cs = getComputedStyle(modal);
+    console.log("[superadmin] computed AVANT → display:", cs.display, "| position:", cs.position,
+        "| z:", cs.zIndex, "| bg:", cs.backgroundColor, "| rect:", JSON.stringify(modal.getBoundingClientRect()));
+
+    // SÉCURITÉ : on force l'overlay en inline (indépendant de Tailwind) → s'affiche quoi qu'il arrive.
+    modal.style.cssText = "display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:1rem;background:rgba(17,24,39,.85);";
+    console.log("[superadmin] overlay forcé en inline → la modale DOIT être visible.");
 };
 
 document.getElementById("btn-close-sub")?.addEventListener("click", () => {
     const modal = document.getElementById("modal-sub-link");
+    modal.style.cssText = "display:none;"; // l'inline prime sur les classes
     modal.classList.add("hidden");
     modal.classList.remove("flex");
 });
