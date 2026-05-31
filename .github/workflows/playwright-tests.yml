@@ -23,6 +23,14 @@ jobs:
           node-version: 20
           cache: npm
 
+      # Les émulateurs Firebase (Firestore/Auth/Storage) sont des apps Java :
+      # firebase-tools exige un JDK >= 21.
+      - name: ☕ Java 21 (émulateurs Firebase)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - name: 📦 Dépendances (racine)
         run: npm ci
 
