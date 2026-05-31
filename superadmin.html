@@ -33,7 +33,15 @@
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden" id="saas-content">
-        
+
+        <!-- Onglets superadmin -->
+        <div class="flex gap-2 mb-6">
+            <button id="sa-tab-dashboard" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-gray-900 text-white transition">📊 Tableau de bord</button>
+            <button id="sa-tab-compta" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition">🧾 Compta / Facturation</button>
+        </div>
+
+        <div id="view-dashboard">
+
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-indigo-500 flex flex-col justify-between">
                 <span class="text-gray-500 font-bold text-sm uppercase">Total Snacks</span>
@@ -110,6 +118,58 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+        </div><!-- /view-dashboard -->
+
+        <!-- ============================ VUE COMPTA / FACTURATION ============================ -->
+        <div id="view-compta" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-green-500">
+                    <span class="text-gray-500 font-bold text-sm uppercase">MRR (abonnements actifs)</span>
+                    <span class="block text-4xl font-black text-green-600 mt-2" id="compta-mrr">- €</span>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-emerald-500">
+                    <span class="text-gray-500 font-bold text-sm uppercase">ARR (annuel)</span>
+                    <span class="block text-4xl font-black text-emerald-600 mt-2" id="compta-arr">- €</span>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-indigo-500">
+                    <span class="text-gray-500 font-bold text-sm uppercase">Commission estimée (mois)</span>
+                    <span class="block text-4xl font-black text-indigo-600 mt-2" id="compta-commission">- €</span>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-blue-500">
+                    <span class="text-gray-500 font-bold text-sm uppercase">CA clients (mois)</span>
+                    <span class="block text-4xl font-black text-blue-600 mt-2" id="compta-ca">- €</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50 flex-wrap gap-3">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-800">Facturation par client — <span id="compta-month-label"></span></h2>
+                        <p class="text-xs text-gray-400 mt-1">Abonnement SaaS + commission transactionnelle (8 % après 6 mois de gratuité). CA estimé depuis les commandes.</p>
+                    </div>
+                    <button id="btn-export-billing" class="bg-gray-900 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-black transition flex items-center gap-2">
+                        <i class="fas fa-file-csv"></i> Export facturation
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-500 text-xs uppercase tracking-wider">
+                                <th class="p-4 font-bold">Client</th>
+                                <th class="p-4 font-bold text-center">Ancienneté</th>
+                                <th class="p-4 font-bold text-right">Abonnement</th>
+                                <th class="p-4 font-bold text-right">CA (mois)</th>
+                                <th class="p-4 font-bold text-right">Commission</th>
+                                <th class="p-4 font-bold text-right">Total à facturer</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billing-table-body" class="divide-y divide-gray-100">
+                            <tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-2xl"></i></td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

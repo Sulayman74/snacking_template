@@ -543,3 +543,115 @@ document.addEventListener("click", (e) => {
         formNewSnack.classList.remove("hidden");
     }
 });
+
+// ============================================================================
+// 🧾 COMPTA / FACTURATION (onglet superadmin)
+// ============================================================================
+let billingRows = [];
+const tabDash = document.getElementById("sa-tab-dashboard");
+const tabCompta = document.getElementById("sa-tab-compta");
+const viewDash = document.getElementById("view-dashboard");
+const viewCompta = document.getElementById("view-compta");
+
+function setSuperTab(which) {
+    const isCompta = which === "compta";
+    viewDash?.classList.toggle("hidden", isCompta);
+    viewCompta?.classList.toggle("hidden", !isCompta);
+    const active = "bg-gray-900 text-white";
+    const idle = "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50";
+    if (tabDash) tabDash.className = `px-5 py-2.5 rounded-xl font-bold text-sm transition ${isCompta ? idle : active}`;
+    if (tabCompta) tabCompta.className = `px-5 py-2.5 rounded-xl font-bold text-sm transition ${isCompta ? active : idle}`;
+    if (isCompta) loadBillingData();
+}
+tabDash?.addEventListener("click", () => setSuperTab("dashboard"));
+tabCompta?.addEventListener("click", () => setSuperTab("compta"));
+
+function monthsSince(ts) {
+    const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
+    if (!d || isNaN(d)) return null;
+    const now = new Date();
+    return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+}
+
+async function loadBillingData() {
+    const tbody = document.getElementById("billing-table-body");
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    document.getElementById("compta-month-label").textContent =
+        now.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+
+    if (!allSnacks.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">Aucun client.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-2xl"></i> Calcul de la facturation…</td></tr>`;
+
+    const { query, collection, where, getAggregateFromServer, sum } = window.fs;
+
+    // CA du mois par snack via AGRÉGATION serveur (le superadmin lit toutes les
+    // commandes : firestore.rules autorise isSuperAdmin). ~1 lecture / 1000 docs.
+    const rows = await Promise.all(allSnacks.map(async (snack) => {
+        let ca = 0;
+        try {
+            const snap = await getAggregateFromServer(
+                query(collection(db, "commandes"), where("snackId", "==", snack.id), where("date", ">=", monthStart)),
+                { ca: sum("total") }
+            );
+            ca = Number(snap.data().ca) || 0;
+        } catch (e) {
+            console.warn("CA agg échoué pour", snack.id, e);
+        }
+        const ageMonths = monthsSince(snack.createdAt);
+        const isFree = ageMonths !== null && ageMonths < 6;
+        const subscription = snack.maintenanceMode ? 0 : (parseFloat(snack.prixAbonnement) || PRIX_ABONNEMENT_MENSUEL);
+        const commission = isFree ? 0 : Math.round(ca * 0.08 * 100) / 100;
+        return { id: snack.id, nom: snack.nom || "Sans nom", ageMonths, isFree, maintenance: !!snack.maintenanceMode, subscription, ca, commission, total: subscription + commission };
+    }));
+    billingRows = rows;
+
+    const mrr = rows.reduce((s, r) => s + r.subscription, 0);
+    const totalCa = rows.reduce((s, r) => s + r.ca, 0);
+    const totalCommission = rows.reduce((s, r) => s + r.commission, 0);
+    document.getElementById("compta-mrr").textContent = `${mrr.toFixed(2)} €`;
+    document.getElementById("compta-arr").textContent = `${(mrr * 12).toFixed(0)} €`;
+    document.getElementById("compta-commission").textContent = `${totalCommission.toFixed(2)} €`;
+    document.getElementById("compta-ca").textContent = `${totalCa.toFixed(2)} €`;
+
+    rows.sort((a, b) => b.total - a.total);
+    tbody.innerHTML = rows.map(r => {
+        const ageBadge = r.ageMonths === null
+            ? `<span class="text-gray-400">—</span>`
+            : r.isFree
+                ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois · gratuit</span>`
+                : `<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois · 8%</span>`;
+        return `
+            <tr class="hover:bg-gray-50">
+                <td class="p-4">
+                    <div class="font-bold text-gray-900">${escapeHTML(r.nom)} ${r.maintenance ? '<span class="text-yellow-600 text-xs">(maintenance)</span>' : ''}</div>
+                    <div class="font-mono text-[11px] text-gray-400">${escapeHTML(r.id)}</div>
+                </td>
+                <td class="p-4 text-center">${ageBadge}</td>
+                <td class="p-4 text-right font-bold">${r.subscription.toFixed(2)} €</td>
+                <td class="p-4 text-right text-gray-600">${r.ca.toFixed(2)} €</td>
+                <td class="p-4 text-right text-indigo-600 font-bold">${r.commission.toFixed(2)} €</td>
+                <td class="p-4 text-right font-black text-gray-900">${r.total.toFixed(2)} €</td>
+            </tr>`;
+    }).join("");
+}
+
+document.getElementById("btn-export-billing")?.addEventListener("click", () => {
+    if (!billingRows.length) { window.showToast?.("Rien à exporter.", "error"); return; }
+    const headers = ["Client", "Snack ID", "Anciennete (mois)", "Abonnement", "CA mois", "Commission", "Total a facturer"];
+    const lines = billingRows.map(r => [
+        `"${(r.nom || "").replace(/"/g, '""')}"`, r.id, r.ageMonths ?? "",
+        r.subscription.toFixed(2), r.ca.toFixed(2), r.commission.toFixed(2), r.total.toFixed(2)
+    ].join(";"));
+    const csv = [headers.join(";"), ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `facturation_${new Date().toISOString().slice(0, 7)}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    window.showToast?.("Export facturation terminé !");
+});
