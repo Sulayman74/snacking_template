@@ -65,6 +65,9 @@ window.loadConfigView = async () => {
                 lat: num(data.restaurantLat, null),
                 lng: num(data.restaurantLng, null),
             },
+            // 💳 Stripe Connect : présence = compte créé (onboarding au moins initié)
+            // → permet à l'UI compta de basculer "Configurer" vs "Gérer mes paiements".
+            stripeAccountId: data.stripeAccountId || null,
         };
 
         adminStore.setConfig(configData);

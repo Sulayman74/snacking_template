@@ -13,11 +13,67 @@ class AdminComptaUI {
 
     init() {
         adminStore.addEventListener("admin-sales-updated", () => this.render());
+        // Le statut Stripe dépend de la config (admin-config-updated), pas des ventes.
+        adminStore.addEventListener("admin-config-updated", () => this.renderStripeStatus());
     }
 
     render() {
         this.renderKPIs();
         this.renderHistory();
+        this.renderStripeStatus();
+    }
+
+    /**
+     * Bascule la carte Stripe selon la présence de stripeAccountId :
+     * absent → "Configurer les paiements" (onboarding) ; présent → "Ouvrir mon portail".
+     */
+    renderStripeStatus() {
+        const cfg = adminStore.state.config;
+        const hasAccount = !!cfg?.stripeAccountId;
+        const onboardBtn = document.getElementById("btn-stripe-onboard");
+        const manageBtn = document.getElementById("btn-stripe-dashboard");
+        if (!onboardBtn || !manageBtn) return;
+
+        onboardBtn.classList.toggle("hidden", hasAccount);
+        manageBtn.classList.toggle("hidden", !hasAccount);
+
+        const badge = document.getElementById("stripe-status-badge");
+        if (badge) {
+            badge.textContent = hasAccount ? "Connecté" : "À configurer";
+            badge.className = "ml-auto text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full " +
+                (hasAccount ? "bg-green-500/20 text-green-300" : "bg-amber-500/20 text-amber-300");
+        }
+        const text = document.getElementById("stripe-card-text");
+        if (text) {
+            text.innerHTML = hasAccount
+                ? 'Accédez à <span class="font-bold text-white">Stripe Express</span> pour votre RIB et vos versements.'
+                : 'Connectez votre compte bancaire via <span class="font-bold text-white">Stripe</span> pour recevoir vos paiements.';
+        }
+    }
+
+    /**
+     * Lance l'onboarding Stripe Connect : appelle getStripeOnboardingLink puis
+     * redirige en plein écran vers l'AccountLink (requis par Stripe). En cas
+     * d'échec, on restaure le bouton ; en cas de succès, la page change (redirection).
+     */
+    async startOnboarding() {
+        const btn = document.getElementById("btn-stripe-onboard");
+        const original = btn?.innerHTML;
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Connexion Stripe…'; }
+        try {
+            const { httpsCallable, functions } = window.fs;
+            const fn = httpsCallable(functions, "getStripeOnboardingLink");
+            const res = await fn({ snackId: window.currentAdminSnackId, origin: window.location.origin });
+            if (res.data?.url) {
+                window.location.href = res.data.url; // redirection plein écran (AccountLink)
+            } else {
+                throw new Error("URL d'onboarding manquante.");
+            }
+        } catch (e) {
+            console.error("Erreur onboarding Stripe :", e);
+            showToast("Impossible de démarrer la configuration Stripe.", "error");
+            if (btn && original != null) { btn.disabled = false; btn.innerHTML = original; }
+        }
     }
 
     renderKPIs() {
@@ -154,3 +210,4 @@ export const adminComptaUI = new AdminComptaUI();
 
 // Bridges globaux
 window.exportComptaCSV = () => adminComptaUI.handleExport();
+window.startStripeOnboarding = () => adminComptaUI.startOnboarding();

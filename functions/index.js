@@ -549,7 +549,14 @@ exports.createPaymentIntent = onCall(
         amount,
         currency: currency ? currency.toLowerCase() : "eur",
         description: description || "Commande en ligne",
-        metadata: sanitizeStripeMetadata(metadata),
+        // Metadata SERVEUR de confiance (traçabilité) en plus de celles du client.
+        // order_id ≡ paymentIntentId (id de commande déterministe dans finalizeOrder),
+        // donc déjà traçable sans le dupliquer ici.
+        metadata: sanitizeStripeMetadata({
+          ...(metadata || {}),
+          snack_id: snackId || "",
+          client_email: request.auth?.token?.email || metadata?.clientEmail || "",
+        }),
         automatic_payment_methods: { enabled: true },
       };
       
@@ -572,6 +579,82 @@ exports.createPaymentIntent = onCall(
     }
   },
 );
+
+// ============================================================================
+// 🏦 STRIPE CONNECT : ONBOARDING (Account Link) + PORTAIL (Login Link)
+// ============================================================================
+// Crée (idempotent) le compte Express du snack et renvoie un lien d'onboarding.
+// L'écriture de `stripeAccountId` se fait via l'Admin SDK — JAMAIS par le client
+// (la rule snacks/write est document-level → ne pas laisser un admin l'auto-écrire).
+exports.getStripeOnboardingLink = onCall({ region: "europe-west1" }, async (request) => {
+  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+  const { snackId, origin } = request.data || {};
+  require_(V.isDocId(snackId), "snackId invalide.");
+  // URL de retour construite SERVEUR depuis une origine whitelistée (anti open-redirect).
+  require_(
+    V.isString(origin) && /^https:\/\/[a-z0-9-]+\.(web\.app|firebaseapp\.com)$/i.test(origin),
+    "origin invalide."
+  );
+  await assertCallerIsSnackAdmin(request, snackId);
+  await enforceRateLimit({ key: callerKey(request, "getStripeOnboardingLink"), max: 5, windowMs: 60_000 });
+
+  try {
+    const ref = db.collection("snacks").doc(snackId);
+    const snap = await ref.get();
+    const data = snap.exists ? snap.data() : {};
+    let accountId = data.stripeAccountId || null;
+
+    // Idempotence : on ne crée le compte connecté qu'une seule fois.
+    if (!accountId) {
+      const account = await stripe.accounts.create({
+        type: "express",
+        country: data.country || "FR",
+        email: data.email || undefined,
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+        metadata: { snack_id: snackId },
+      });
+      accountId = account.id;
+      await ref.set({ stripeAccountId: accountId }, { merge: true });
+    }
+
+    const link = await stripe.accountLinks.create({
+      account: accountId,
+      type: "account_onboarding",
+      refresh_url: `${origin}/admin.html?stripe=refresh`,
+      return_url: `${origin}/admin.html?stripe=return`,
+    });
+    return { url: link.url };
+  } catch (error) {
+    console.error("❌ Erreur getStripeOnboardingLink :", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Impossible de générer le lien d'onboarding Stripe.");
+  }
+});
+
+// Lien de connexion au portail Stripe Express (compte déjà créé).
+// Appelé par le bouton "Ouvrir mon portail" (src/admin.js → openStripeExpressDashboard).
+exports.createStripeConnectLoginLink = onCall({ region: "europe-west1" }, async (request) => {
+  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+  const { snackId } = request.data || {};
+  require_(V.isDocId(snackId), "snackId invalide.");
+  await assertCallerIsSnackAdmin(request, snackId);
+  await enforceRateLimit({ key: callerKey(request, "createStripeConnectLoginLink"), max: 10, windowMs: 60_000 });
+
+  try {
+    const snap = await db.collection("snacks").doc(snackId).get();
+    const accountId = snap.exists ? snap.data().stripeAccountId : null;
+    require_(V.isNonEmptyString(accountId), "Compte Stripe non configuré pour ce snack.");
+    const link = await stripe.accounts.createLoginLink(accountId);
+    return { url: link.url };
+  } catch (error) {
+    console.error("❌ Erreur createStripeConnectLoginLink :", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Impossible d'ouvrir le portail Stripe.");
+  }
+});
 
 // ============================================================================
 // 💳 FONCTION 5 : FINALISATION COMMANDE (vérification Stripe côté serveur)

@@ -26,16 +26,25 @@ Modifier la logique de paiement (frais, applicationFeeAmount, montant, devises�
 - Si `stripeAccountId` est absent → renvoyer une erreur `failed-precondition` (snack pas onboardé sur Stripe Connect).
 
 ### 3. Calculer les frais
+Calcul en mois calendaires (conforme à l'implémentation réelle) :
 ```js
-const sixMonthsMs = 1000 * 60 * 60 * 24 * 30 * 6;
-const isFreePeriod = (Date.now() - snack.createdAt.toMillis()) < sixMonthsMs;
+const createdAt = snackData.createdAt?.toDate() || new Date();
+const now = new Date();
+const diffMonths = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
+const isFreePeriod = diffMonths < 6;
 const applicationFeeAmount = isFreePeriod ? 0 : Math.round(amount * 0.08);
 ```
 
-### 4. Construire le PaymentIntent
-- Passer `application_fee_amount: applicationFeeAmount`
-- Passer `transfer_data: { destination: stripeAccountId }`
-- Inclure `metadata` : `{ snackId, orderId, isFreePeriod }` pour audit/dashboard.
+### 4. Construire le PaymentIntent — modèle **DIRECT CHARGE** (validé)
+Le snack est le **merchant of record** (il assume ses litiges, a son dashboard). On crée
+donc le PaymentIntent **SUR** le compte connecté, PAS via `transfer_data.destination` :
+- `params.application_fee_amount = applicationFeeAmount` (seulement si > 0)
+- `requestOptions = { stripeAccount: stripeAccountId }` → `stripe.paymentIntents.create(params, requestOptions)`
+- `metadata` (snake_case, injectées **serveur**) : `{ snack_id, client_email }`
+  — `order_id` ≡ `paymentIntentId` (id de commande déterministe dans `finalizeOrder`), inutile de le dupliquer.
+
+> ⚠️ Ne PAS basculer en Destination Charge (`transfer_data.destination` / `on_behalf_of`)
+> sans validation explicite : cela transférerait la responsabilité légale des litiges à la plateforme.
 
 ### 5. Validation des entrées
 - Toujours utiliser le helper `V` (cf. CLAUDE.md) pour valider :
