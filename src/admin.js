@@ -224,7 +224,28 @@ onAuthStateChanged(window.auth, async (user) => {
       userDoc.exists() &&
       (userDoc.data().role === "admin" || userDoc.data().role === "superadmin")
     ) {
-      window.currentAdminSnackId = userDoc.data().snackId;
+      // 👑 Superadmin : pilote N'IMPORTE quel snack via ?s=<id> (lien depuis le
+      // dashboard superadmin). Admin classique : son propre snack.
+      // Les firestore.rules autorisent déjà isSuperAdmin sur toutes les collections.
+      const role = userDoc.data().role;
+      if (role === "superadmin") {
+        const targetSnack = new URLSearchParams(window.location.search).get("s");
+        if (!targetSnack) {
+          // Pas de cible → on renvoie le superadmin choisir un resto dans son tableau de bord.
+          window.location.href = "superadmin.html";
+          return;
+        }
+        window.currentAdminSnackId = targetSnack;
+        window.isSuperadminImpersonating = true;
+        // Repère visuel : on n'est pas dans son propre back-office.
+        const sb = document.createElement("div");
+        sb.textContent = "👑 Mode superadmin — vous pilotez le back-office d'un resto";
+        sb.className = "fixed top-0 inset-x-0 z-[400] bg-purple-700 text-white text-center text-[11px] font-bold py-1 shadow";
+        document.body.appendChild(sb);
+      } else {
+        window.currentAdminSnackId = userDoc.data().snackId;
+      }
+
       if (document.getElementById("admin-email"))
         document.getElementById("admin-email").innerText = user.email;
 
