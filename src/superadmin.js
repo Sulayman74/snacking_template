@@ -243,12 +243,17 @@ document.addEventListener("click", (e) => {
     const snackId = btn.getAttribute("data-snack-id");
     if (!snackId) return;
     const action = btn.getAttribute("data-action");
+    console.log("[superadmin] click data-action =", action, "| snackId =", snackId);
     if (action === "open-config") {
         window.openConfigModal(snackId);
     } else if (action === "toggle-maintenance") {
         const isOn = btn.getAttribute("data-maintenance") === "1";
         window.toggleMaintenance(snackId, isOn);
     } else if (action === "sub-link") {
+        if (typeof window.openSubLinkModal !== "function") {
+            console.error("[superadmin] openSubLinkModal n'est PAS défini !");
+            return;
+        }
         window.openSubLinkModal(snackId);
     }
 });
@@ -665,14 +670,20 @@ document.getElementById("btn-export-billing")?.addEventListener("click", () => {
 // 💼 LIEN D'ABONNEMENT SaaS (modale)
 // ============================================================================
 window.openSubLinkModal = (snackId) => {
+    console.log("[superadmin] openSubLinkModal()", snackId);
+    const modal = document.getElementById("modal-sub-link");
+    if (!modal) {
+        console.error("[superadmin] #modal-sub-link INTROUVABLE dans le DOM.");
+        return;
+    }
     const snack = allSnacks.find(s => s.id === snackId);
     document.getElementById("sub-snack-name").textContent = snack?.nom || snackId;
     document.getElementById("sub-link-result").classList.add("hidden");
     document.getElementById("sub-link-input").value = "";
-    const modal = document.getElementById("modal-sub-link");
     modal.dataset.snackId = snackId;
     modal.classList.remove("hidden");
     modal.classList.add("flex");
+    console.log("[superadmin] modale ouverte (classes:", modal.className, ")");
 };
 
 document.getElementById("btn-close-sub")?.addEventListener("click", () => {
@@ -681,11 +692,14 @@ document.getElementById("btn-close-sub")?.addEventListener("click", () => {
     modal.classList.remove("flex");
 });
 
-document.querySelectorAll(".sub-amount").forEach((btn) => {
+const subAmountBtns = document.querySelectorAll(".sub-amount");
+console.log("[superadmin] boutons .sub-amount trouvés au chargement:", subAmountBtns.length);
+subAmountBtns.forEach((btn) => {
     btn.addEventListener("click", async () => {
         const modal = document.getElementById("modal-sub-link");
         const snackId = modal.dataset.snackId;
         const amountEur = parseInt(btn.getAttribute("data-amount"), 10);
+        console.log("[superadmin] sub-amount click →", amountEur, "€ | snackId =", snackId);
         const original = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
