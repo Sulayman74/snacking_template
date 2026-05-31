@@ -37,7 +37,19 @@ service cloud.firestore {
 
     match /snacks/{snackId} {
       allow read: if true;
-      allow write: if isSnackAdmin(snackId) || isSuperAdmin();
+      // Création/suppression d'un snack : superadmin uniquement.
+      allow create, delete: if isSuperAdmin();
+      // Update : superadmin (tout) OU admin du snack mais SANS toucher les champs
+      // sensibles — gérés exclusivement par les Cloud Functions (Admin SDK) et le
+      // superadmin (onboarding Stripe, statut Connect, suspension SaaS).
+      allow update: if isSuperAdmin()
+                    || (
+                         isSnackAdmin(snackId)
+                         && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                              'stripeAccountId', 'stripeSubscriptionId', 'maintenanceMode',
+                              'stripeChargesEnabled', 'stripeDetailsSubmitted', 'stripePayoutsEnabled'
+                            ])
+                       );
     }
 
     match /users/{userId} {
