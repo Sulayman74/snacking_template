@@ -386,6 +386,9 @@ const formNewSnack = document.getElementById("form-new-snack");
 
 if (btnOpenModal && modalNewSnack) {
     btnOpenModal.addEventListener("click", () => {
+        // Toujours rouvrir sur le formulaire (et pas sur un ancien panneau de succès).
+        document.getElementById("new-snack-success")?.classList.add("hidden");
+        formNewSnack.classList.remove("hidden");
         modalNewSnack.classList.remove("hidden");
         modalNewSnack.classList.add("flex");
     });
@@ -407,6 +410,7 @@ if (btnOpenModal && modalNewSnack) {
         const type = document.getElementById("input-snack-type").value;
         const theme = document.getElementById("input-snack-theme").value;
         const domaine = document.getElementById("input-snack-domain").value.toLowerCase().trim();
+        const adminEmail = document.getElementById("input-snack-admin-email").value.trim();
 
         try {
 // 🏭 L'USINE À RESTAURANTS : Clonage complet du modèle de base
@@ -422,8 +426,8 @@ if (btnOpenModal && modalNewSnack) {
                 city: "",
                 street: "",
                 zipcode: "",
-                lat: 0,
-                long: 0,
+                restaurantLat: null,
+                restaurantLng: null,
                 phoneNumber: "",
                 email: "",
 
@@ -467,22 +471,69 @@ if (btnOpenModal && modalNewSnack) {
                 createdAt: serverTimestamp()
             });
 
-            // Succès
+            // Snack créé → on crée le compte ADMIN du resto (déblocage de /admin.html).
+            const snackId = newSnackRef.id;
+            let adminInfo = null;
+            try {
+                const { httpsCallable, functions } = window.fs;
+                const res = await httpsCallable(functions, "createSnackAdmin")({ snackId, email: adminEmail, nom });
+                adminInfo = res.data; // { email, tempPassword }
+            } catch (adminErr) {
+                console.error("createSnackAdmin:", adminErr);
+                window.showToast("Snack créé, mais le compte admin a échoué : " + (adminErr.message || adminErr) + " — à créer manuellement.", "error");
+            }
+
+            showSnackSuccess({ nom, snackId, admin: adminInfo });
             formNewSnack.reset();
-            modalNewSnack.classList.add("hidden");
-            modalNewSnack.classList.remove("flex");
-            
-            alert(`🎉 Le restaurant "${nom}" a été généré avec succès !\nSon identifiant unique est : ${newSnackRef.id}`);
-            
-            // On met à jour le tableau des KPIs et la liste
             loadDashboardData();
 
         } catch (error) {
             console.error("Erreur lors de la création :", error);
-            alert("Erreur lors de la création du client. Vérifiez la console.");
+            window.showToast("Erreur lors de la création du client. Vérifiez la console.", "error");
         } finally {
             btnSubmit.innerHTML = originalText;
             btnSubmit.disabled = false;
         }
     });
 }
+
+/**
+ * Affiche le panneau de succès (ID + accès admin + lien preview + checklist)
+ * à la place du formulaire. Remplace l'ancienne alert().
+ */
+function showSnackSuccess({ nom, snackId, admin }) {
+    formNewSnack.classList.add("hidden");
+    document.getElementById("new-snack-success").classList.remove("hidden");
+    document.getElementById("success-snack-name").textContent = nom;
+    document.getElementById("success-snack-id").textContent = snackId;
+    document.getElementById("success-preview-link").href = "index.html?s=" + encodeURIComponent(snackId);
+
+    const adminBlock = document.getElementById("success-admin-block");
+    if (admin && admin.tempPassword) {
+        document.getElementById("success-admin-email").textContent = admin.email;
+        document.getElementById("success-admin-pwd").textContent = admin.tempPassword;
+        adminBlock.classList.remove("hidden");
+    } else {
+        adminBlock.classList.add("hidden"); // admin non créé → on masque le bloc
+    }
+}
+
+// Boutons "copier" (délégation) + "Terminé" du panneau de succès.
+document.addEventListener("click", (e) => {
+    const copyBtn = e.target.closest(".copy-btn");
+    if (copyBtn) {
+        const el = document.getElementById(copyBtn.getAttribute("data-copy"));
+        if (el && navigator.clipboard) {
+            navigator.clipboard.writeText(el.textContent.trim())
+                .then(() => window.showToast("Copié !"))
+                .catch(() => window.showToast("Copie impossible.", "error"));
+        }
+        return;
+    }
+    if (e.target.closest("#btn-success-done")) {
+        modalNewSnack.classList.add("hidden");
+        modalNewSnack.classList.remove("flex");
+        document.getElementById("new-snack-success").classList.add("hidden");
+        formNewSnack.classList.remove("hidden");
+    }
+});
