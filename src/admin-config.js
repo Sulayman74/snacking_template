@@ -26,7 +26,9 @@ window.loadConfigView = async () => {
         const configData = {
             identity: {
                 id: window.currentAdminSnackId,
-                name: data.name || "Snack",
+                // Le superadmin écrit `nom` (cf. création snack) ; lecture compat
+                // ascendante nom → name → fallback (évite "Snack" sur un snack neuf).
+                name: data.nom || data.name || "Snack",
                 description: data.description || ""
             },
             promoPhrase: data.promoPhrase || "",
