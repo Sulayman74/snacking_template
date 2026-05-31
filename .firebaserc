@@ -17,6 +17,11 @@
         "belly-smash-burger": [
           "belly-smash-burger"
         ]
+      },
+      "storage": {
+        "main": [
+          "snacking-template.firebasestorage.app"
+        ]
       }
     }
   },

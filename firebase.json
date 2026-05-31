@@ -54,7 +54,7 @@
   },
   "storage": [
     {
-      "bucket": "snacking-template.firebasestorage.app",
+      "target": "main",
       "rules": "storage.rules"
     }
   ],
