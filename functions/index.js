@@ -602,7 +602,10 @@ exports.getStripeOnboardingLink = onCall({ region: "europe-west1" }, async (requ
   require_(V.isDocId(snackId), "snackId invalide.");
   // URL de retour construite SERVEUR depuis une origine whitelistée (anti open-redirect).
   require_(
-    V.isString(origin) && /^https:\/\/[a-z0-9-]+\.(web\.app|firebaseapp\.com)$/i.test(origin),
+    V.isString(origin) && (
+      /^https:\/\/[a-z0-9-]+\.(web\.app|firebaseapp\.com)$/i.test(origin) ||
+      /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
+    ),
     "origin invalide."
   );
   await assertCallerIsSnackAdmin(request, snackId);
@@ -715,7 +718,10 @@ exports.createSubscriptionCheckout = onCall({ region: "europe-west1" }, async (r
   require_(V.isDocId(snackId), "snackId invalide.");
   require_(V.isPositiveInt(amountEur, 1000) && amountEur >= 5, "Montant invalide (5 à 1000 €).");
   require_(
-    V.isString(origin) && /^https:\/\/[a-z0-9-]+\.(web\.app|firebaseapp\.com)$/i.test(origin),
+    V.isString(origin) && (
+      /^https:\/\/[a-z0-9-]+\.(web\.app|firebaseapp\.com)$/i.test(origin) ||
+      /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
+    ),
     "origin invalide."
   );
 
