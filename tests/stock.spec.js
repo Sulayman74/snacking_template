@@ -34,11 +34,14 @@ test.describe('Gestion des Stocks & Sécurité', () => {
     await startBtn.click();
     await expect(adminPage.locator('#startup-overlay')).toBeHidden({ timeout: 10000 });
 
-    // Le chef s'assure d'être sur l'onglet Menu/Stocks
-    await adminPage.locator('#tab-menu').click();
+    // Le chef s'assure d'être sur l'onglet Menu/Stocks. Les boutons réels sont
+    // #tab-menu-desktop / #tab-menu-mobile (selon viewport) → on passe par la
+    // fonction globale, robuste quel que soit le viewport.
+    await adminPage.evaluate(() => window.switchAdminTab('menu'));
 
-    // On attend que le texte "En stock" apparaisse (preuve que les Skeletons ont disparu)
-    await adminPage.waitForSelector('text="En stock"', { timeout: 10000 });
+    // On attend le badge "En Stock" (casse exacte du rendu AdminProductsUI →
+    // robuste quelle que soit la sensibilité à la casse de Playwright).
+    await adminPage.waitForSelector('text="En Stock"', { timeout: 10000 });
 
     // Le chef trouve le premier produit "En stock"
     const activeToggle = adminPage.locator('button.bg-green-500').first();

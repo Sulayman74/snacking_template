@@ -19,7 +19,9 @@ test.describe('Caisse Enregistreuse (Calcul du Panier)', () => {
 
     // 3. On attend que la modale s'ouvre, on coche "Menu" et on ajoute au panier
     await expect(page.locator('#modal-title')).toBeVisible();
-    await page.locator('input[value="menu"]').check({ force: true }); // force: true aide sur Firefox
+    // Le radio est `sr-only peer` (masqué, contrôle visuel = le <div> frère) :
+    // on clique le <label> parent, qui coche le radio nativement + déclenche onchange.
+    await page.locator('label:has(input[value="menu"])').click();
     await page.locator('#modal-cta').click();
 
     // 3. Ouvre le panier
