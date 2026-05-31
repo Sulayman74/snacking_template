@@ -73,5 +73,10 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SNACKING_TEMPLATE }}
 
-      - name: 🔒 Firebase deploy — rules
-        run: npx firebase-tools@latest deploy --only firestore:rules,storage --project snacking-template
+      # Étapes séparées : les rules Firestore (les plus critiques) sont déployées
+      # d'abord et indépendamment — un éventuel échec IAM sur Storage ne les bloque pas.
+      - name: 🔒 Firebase deploy — Firestore rules
+        run: npx firebase-tools@latest deploy --only firestore:rules --project snacking-template
+
+      - name: 🔒 Firebase deploy — Storage rules
+        run: npx firebase-tools@latest deploy --only storage --project snacking-template
