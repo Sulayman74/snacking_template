@@ -7,6 +7,7 @@
 
 import { store } from "./core/Store.js";
 import { setupSWUpdatePrompt } from "./sw-update.js";
+import { setupA2HS } from "./a2hs.js";
 
 // ============================================================================
 // ⚙️ SERVICE WORKER — STRATÉGIE "PROMPT" (mise à jour non-intrusive)
@@ -29,46 +30,16 @@ window.addEventListener("offline", () => {
 });
 
 // ============================================================================
-// 📲 GESTION DE L'INSTALLATION PWA (A2HS)
+// 📲 GESTION DE L'INSTALLATION PWA (A2HS) — mutualisé avec admin/livreur.
+// Gère Android (beforeinstallprompt) ET iOS (instructions « Sur l'écran
+// d'accueil ») + snooze de fermeture. Cf. src/a2hs.js.
 // ============================================================================
-let deferredPrompt;
-const installBanner = document.getElementById("pwa-install-banner");
-const installBtn = document.getElementById("pwa-install-btn");
-const closeBtn = document.getElementById("pwa-close-btn");
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-
-  setTimeout(() => {
-    if (installBanner) {
-      installBanner.classList.remove("translate-y-32", "pointer-events-none", "opacity-0");
-      if (typeof window.triggerVibration === "function")
-        window.triggerVibration("light");
-    }
-  }, 3000);
+setupA2HS({
+  bannerId: "pwa-install-banner",
+  btnId: "pwa-install-btn",
+  closeId: "pwa-close-btn",
+  hintId: "pwa-install-hint",
 });
-
-if (installBtn) {
-  installBtn.addEventListener("click", async () => {
-    if (deferredPrompt) {
-      installBanner.classList.add("translate-y-32", "opacity-0");
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`Résultat de l'installation : ${outcome}`);
-      deferredPrompt = null;
-      if (outcome === "accepted" && typeof window.triggerVibration === "function") {
-        window.triggerVibration("success");
-      }
-    }
-  });
-}
-
-if (closeBtn) {
-  closeBtn.addEventListener("click", () => {
-    installBanner.classList.add("translate-y-32", "pointer-events-none", "opacity-0");
-  });
-}
 
 // ============================================================================
 // 🔄 PULL-TO-REFRESH NATIF
