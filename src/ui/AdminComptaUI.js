@@ -21,33 +21,72 @@ class AdminComptaUI {
         this.renderKPIs();
         this.renderHistory();
         this.renderStripeStatus();
+        this.refreshStripeStatus(); // statut live (une fois par chargement de page)
     }
 
     /**
-     * Bascule la carte Stripe selon la présence de stripeAccountId :
-     * absent → "Configurer les paiements" (onboarding) ; présent → "Ouvrir mon portail".
+     * Carte Stripe à 3 états :
+     *  - pas de compte         → badge "À configurer" + bouton "Configurer les paiements"
+     *  - compte sans charges   → badge "À finaliser"  + bouton "Terminer la configuration"
+     *  - compte + charges OK    → badge "Connecté"     + bouton "Ouvrir mon portail"
+     * `chargesEnabled` vient du live (refreshStripeStatus) sinon du flag config (webhook).
      */
     renderStripeStatus() {
         const cfg = adminStore.state.config;
         const hasAccount = !!cfg?.stripeAccountId;
+        const chargesEnabled = this._chargesEnabled ?? (cfg?.stripeChargesEnabled === true);
+        const complete = hasAccount && chargesEnabled;
+
         const onboardBtn = document.getElementById("btn-stripe-onboard");
         const manageBtn = document.getElementById("btn-stripe-dashboard");
         if (!onboardBtn || !manageBtn) return;
 
-        onboardBtn.classList.toggle("hidden", hasAccount);
-        manageBtn.classList.toggle("hidden", !hasAccount);
+        onboardBtn.classList.toggle("hidden", complete);
+        manageBtn.classList.toggle("hidden", !complete);
+
+        if (!complete) {
+            onboardBtn.innerHTML = (hasAccount ? "Terminer la configuration" : "Configurer les paiements") +
+                ' <i class="fas fa-arrow-right text-sm text-gray-400"></i>';
+        }
 
         const badge = document.getElementById("stripe-status-badge");
         if (badge) {
-            badge.textContent = hasAccount ? "Connecté" : "À configurer";
-            badge.className = "ml-auto text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full " +
-                (hasAccount ? "bg-green-500/20 text-green-300" : "bg-amber-500/20 text-amber-300");
+            const [label, cls] = complete
+                ? ["Connecté", "bg-green-500/20 text-green-300"]
+                : hasAccount
+                    ? ["À finaliser", "bg-orange-500/20 text-orange-300"]
+                    : ["À configurer", "bg-amber-500/20 text-amber-300"];
+            badge.textContent = label;
+            badge.className = "ml-auto text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full " + cls;
         }
+
         const text = document.getElementById("stripe-card-text");
         if (text) {
-            text.innerHTML = hasAccount
+            text.innerHTML = complete
                 ? 'Accédez à <span class="font-bold text-white">Stripe Express</span> pour votre RIB et vos versements.'
-                : 'Connectez votre compte bancaire via <span class="font-bold text-white">Stripe</span> pour recevoir vos paiements.';
+                : hasAccount
+                    ? 'Votre compte est créé mais <span class="font-bold text-white">l\'inscription Stripe n\'est pas terminée</span> — finalisez-la pour encaisser.'
+                    : 'Connectez votre compte bancaire via <span class="font-bold text-white">Stripe</span> pour recevoir vos paiements.';
+        }
+    }
+
+    /**
+     * Récupère le statut LIVE du compte (charges_enabled) une fois par chargement
+     * de page, puis re-rend la carte. Évite d'afficher "Connecté" sur un compte
+     * dont l'onboarding n'est pas fini (les charges échoueraient).
+     */
+    async refreshStripeStatus() {
+        if (this._statusFetched) return;
+        const cfg = adminStore.state.config;
+        if (!cfg?.stripeAccountId) return;
+        this._statusFetched = true;
+        try {
+            const { httpsCallable, functions } = window.fs;
+            const res = await httpsCallable(functions, "getStripeAccountStatus")({ snackId: window.currentAdminSnackId });
+            this._chargesEnabled = !!res.data?.chargesEnabled;
+            this.renderStripeStatus();
+        } catch (e) {
+            console.warn("Statut Stripe non rafraîchi :", e);
         }
     }
 

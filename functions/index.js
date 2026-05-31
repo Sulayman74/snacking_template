@@ -530,7 +530,17 @@ exports.createPaymentIntent = onCall(
         if (snackDoc.exists) {
           const snackData = snackDoc.data();
           stripeAccountId = snackData.stripeAccountId;
-          
+
+          // 🛡️ Garde : compte connecté créé mais onboarding NON terminé
+          // (statut synchronisé par account.updated / getStripeAccountStatus).
+          // On bloque seulement si explicitement false → sinon comportement inchangé.
+          if (stripeAccountId && snackData.stripeChargesEnabled === false) {
+            throw new HttpsError(
+              "failed-precondition",
+              "Le compte Stripe du restaurant n'a pas terminé sa configuration."
+            );
+          }
+
           // Règle Métier : 0% les 6 premiers mois, puis 8%
           if (stripeAccountId) {
              const createdAt = snackData.createdAt?.toDate() || new Date();
@@ -653,6 +663,43 @@ exports.createStripeConnectLoginLink = onCall({ region: "europe-west1" }, async 
     console.error("❌ Erreur createStripeConnectLoginLink :", error);
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", "Impossible d'ouvrir le portail Stripe.");
+  }
+});
+
+// Statut LIVE du compte connecté (charges_enabled / details_submitted) + sync Firestore.
+// Permet à l'UI de distinguer "compte créé mais onboarding incomplet" de "actif",
+// sans dépendre de la configuration du webhook account.updated.
+exports.getStripeAccountStatus = onCall({ region: "europe-west1" }, async (request) => {
+  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+  const { snackId } = request.data || {};
+  require_(V.isDocId(snackId), "snackId invalide.");
+  await assertCallerIsSnackAdmin(request, snackId);
+  await enforceRateLimit({ key: callerKey(request, "getStripeAccountStatus"), max: 20, windowMs: 60_000 });
+
+  try {
+    const ref = db.collection("snacks").doc(snackId);
+    const snap = await ref.get();
+    const accountId = snap.exists ? snap.data().stripeAccountId : null;
+    if (!accountId) return { connected: false, chargesEnabled: false, detailsSubmitted: false };
+
+    const account = await stripe.accounts.retrieve(accountId);
+    // Synchronise le statut dans Firestore au passage (source de vérité pour createPaymentIntent).
+    await ref.set({
+      stripeChargesEnabled: !!account.charges_enabled,
+      stripeDetailsSubmitted: !!account.details_submitted,
+      stripePayoutsEnabled: !!account.payouts_enabled,
+    }, { merge: true });
+
+    return {
+      connected: true,
+      chargesEnabled: !!account.charges_enabled,
+      detailsSubmitted: !!account.details_submitted,
+      payoutsEnabled: !!account.payouts_enabled,
+    };
+  } catch (error) {
+    console.error("❌ Erreur getStripeAccountStatus :", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Impossible de lire le statut Stripe.");
   }
 });
 
@@ -1305,6 +1352,21 @@ exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, re
                     await snackDoc.ref.update({ maintenanceMode: false });
                     console.log(`✅ PAIEMENT SAAS REÇU: Le snack ${snackDoc.id} réactivé après paiement (Sub: ${subscriptionId}).`);
                 }
+            }
+        }
+        else if (event.type === 'account.updated') {
+            // 🏦 CONNECT : synchronise le statut d'onboarding du compte connecté.
+            // (Nécessite d'activer l'écoute des events "sur les comptes connectés"
+            // dans la config du webhook Stripe.)
+            const account = event.data.object;
+            const snap = await db.collection("snacks").where("stripeAccountId", "==", account.id).limit(1).get();
+            if (!snap.empty) {
+                await snap.docs[0].ref.update({
+                    stripeChargesEnabled: !!account.charges_enabled,
+                    stripeDetailsSubmitted: !!account.details_submitted,
+                    stripePayoutsEnabled: !!account.payouts_enabled,
+                });
+                console.log(`🔄 account.updated: snack ${snap.docs[0].id} charges_enabled=${account.charges_enabled}`);
             }
         }
 
