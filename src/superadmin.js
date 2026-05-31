@@ -157,6 +157,9 @@ function renderSnacksTable() {
                     <a href="admin.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-purple-600 hover:text-white font-bold text-sm bg-purple-50 hover:bg-purple-600 px-3 py-2 rounded-lg transition" title="Ouvrir le back-office (mode superadmin)">
                         <i class="fas fa-user-shield text-xs"></i> Admin
                     </a>
+                    <a href="livreur.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-teal-600 hover:text-white font-bold text-sm bg-teal-50 hover:bg-teal-600 px-3 py-2 rounded-lg transition" title="Ouvrir l'app livreur (mode superadmin)">
+                        <i class="fas fa-motorcycle text-xs"></i> Livreur
+                    </a>
                     <button data-action="open-config" data-snack-id="${safeId}" class="text-gray-700 hover:text-white font-bold text-sm bg-gray-100 hover:bg-indigo-600 px-3 py-2 rounded-lg transition" title="Configurer les modules">
                         <i class="fas fa-cog"></i>
                     </button>

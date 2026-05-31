@@ -118,16 +118,38 @@ class LivreurUI {
     try {
       const snap = await getDoc(doc(window.db, "users", user.uid));
       const data = snap.exists() ? snap.data() : null;
-      if (!data || data.role !== "livreur" || !data.snackId) {
-        window.showToast?.("Accès réservé aux livreurs.", "error");
+      if (!data) {
+        window.showToast?.("Accès refusé.", "error");
         return this.logout();
       }
-      if (data.actif === false) {
-        window.showToast?.("Votre compte livreur est désactivé.", "error");
-        return this.logout();
+
+      // 👑 Superadmin : pilote n'importe quelle app livreur via ?s=<id> (lien depuis
+      // le dashboard superadmin). Les rules autorisent déjà isSuperAdmin/isSnackAdmin.
+      if (data.role === "superadmin") {
+        const target = new URLSearchParams(window.location.search).get("s");
+        if (!target) {
+          window.showToast?.("Superadmin : ouvrez une app livreur depuis votre dashboard.", "error");
+          return this.logout();
+        }
+        this.snackId = target;
+        this.driverName = "Superadmin 👑";
+        const sb = document.createElement("div");
+        sb.textContent = "👑 Mode superadmin — app livreur d'un resto";
+        sb.className = "fixed top-0 inset-x-0 z-[400] bg-purple-700 text-white text-center text-[11px] font-bold py-1 shadow";
+        document.body.appendChild(sb);
+      } else {
+        if (data.role !== "livreur" || !data.snackId) {
+          window.showToast?.("Accès réservé aux livreurs.", "error");
+          return this.logout();
+        }
+        if (data.actif === false) {
+          window.showToast?.("Votre compte livreur est désactivé.", "error");
+          return this.logout();
+        }
+        this.snackId = data.snackId;
+        this.driverName = data.nom || "Livreur";
       }
-      this.snackId = data.snackId;
-      this.driverName = data.nom || "Livreur";
+
       this.els.name.textContent = this.driverName;
       this.els.initials.textContent = this.driverName.trim().slice(0, 2).toUpperCase();
       this.showApp();
