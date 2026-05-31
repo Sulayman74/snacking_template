@@ -1,39 +1,51 @@
-name: 🤖 Tests Automatiques (Playwright)
+name: 🤖 Tests E2E (Playwright + Émulateurs Firebase)
 
 on:
-  # Uniquement le bouton manuel sur GitHub !
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   test:
-    timeout-minutes: 60
+    name: 🧪 E2E sur émulateurs (cart / commande / stock)
+    timeout-minutes: 30
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: 📥 Récupération du code
-      uses: actions/checkout@v4
-    
-    - name: 🟢 Installation de Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20 # Attention: la version 24 n'est pas encore stable, je vous conseille la 20 (LTS)
+      - name: 📥 Récupération du code
+        uses: actions/checkout@v4
 
-    - name: 📦 Installation des dépendances
-      run: npm ci
+      - name: 🟢 Installation de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
 
-    - name: 🌐 Installation des navigateurs Playwright
-      run: npx playwright install --with-deps
+      - name: 📦 Dépendances (racine)
+        run: npm ci
 
-    - name: 🧪 Lancement des tests E2E
-      # 💡 L'ASTUCE EST ICI : On injecte une variable d'environnement pour prévenir notre app
-      env:
-        VITE_E2E_TESTING: "true"
-      run: npx playwright test
+      # firebase-admin (utilisé par le seed) vit dans functions/node_modules.
+      - name: 📦 Dépendances (functions, pour le seed)
+        run: npm ci --prefix functions
 
-    - name: 📁 Sauvegarde du rapport Playwright
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 7
+      - name: 🔧 Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: 🌐 Navigateurs Playwright
+        run: npx playwright install --with-deps chromium
+
+      # Démarre auth/firestore/storage en émulateur, seed, puis lance les 3 specs
+      # qui ne dépendent PAS du paiement Stripe (cf. package.json → test:e2e).
+      # L'app se branche sur les émulateurs grâce à VITE_E2E_TESTING=true.
+      - name: 🧪 Tests E2E
+        run: npm run test:e2e
+
+      - name: 📁 Rapport Playwright
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

@@ -6,6 +6,7 @@ import "./scanner.js";
 
 import {
   GoogleAuthProvider,
+  connectAuthEmulator,
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
@@ -20,8 +21,11 @@ import {
   Timestamp,
   addDoc,
   collection,
+  connectFirestoreEmulator,
+  count,
   deleteDoc,
   doc,
+  getAggregateFromServer,
   getDoc,
   getDocs,
   getFirestore,
@@ -36,12 +40,13 @@ import {
   serverTimestamp,
   setDoc,
   startAfter,
+  sum,
   updateDoc,
   where,
   writeBatch
 } from "firebase/firestore";
-import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { connectStorageEmulator, getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/functions";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 import { getAnalytics } from "firebase/analytics";
@@ -98,6 +103,21 @@ export const db = initializeFirestore(app, {
 });
 const storage = getStorage(app);
 const functions = getFunctions(app, "europe-west1");
+
+// 🤖 MODE TEST E2E (Playwright) : on branche TOUT le SDK sur les émulateurs
+// locaux au lieu de la prod. Garde-fou strict : ne s'active QUE si le flag est
+// posé (jamais dans un build de prod). Cf. CLAUDE.md « Interdiction de Test en Prod ».
+if (import.meta.env.VITE_E2E_TESTING === "true") {
+  try {
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+    connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    connectStorageEmulator(storage, "127.0.0.1", 9199);
+    console.warn("🤖 E2E : Firebase branché sur les ÉMULATEURS locaux (auth/firestore/functions/storage).");
+  } catch (e) {
+    console.error("❌ Échec connexion émulateurs E2E :", e);
+  }
+}
 // ============================================================================
 // 🚀 OPTIMISATION : CHARGEMENT DIFFÉRÉ DE FIREBASE ANALYTICS
 // ============================================================================
@@ -138,9 +158,11 @@ window.fs = {
   addDoc,
   app,
   collection,
+  count,
   deleteDoc,
   doc,
   functions,
+  getAggregateFromServer,
   getDoc,
   getDocs,
   getFunctions,
@@ -152,7 +174,8 @@ window.fs = {
   orderBy,
   query,
   serverTimestamp,
-  Timestamp, 
+  sum,
+  Timestamp,
   setDoc,
   startAfter,
   updateDoc,

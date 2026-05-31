@@ -41,16 +41,34 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAnyAdmin();
+      // Lecture UNITAIRE (get par uid) : le client lit son doc ; un admin peut lire
+      // un doc précis (nécessaire au scanner fidélité — les clients sont globaux,
+      // sans snackId, et cumulent des points multi-snack via pointsBySnack).
+      allow get: if isOwner(userId) || isAnyAdmin();
 
-      allow update: if isSnackAdmin(resource.data.snackId)
-                    || isSuperAdmin()
-                    || (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate']));
+      // Lecture en LISTE (query) : réservée au snack propriétaire des docs ciblés
+      // (anti-énumération RGPD cross-tenant). Seuls les docs livreur/admin portent
+      // un snackId ; les fiches clients (PII) ne sont donc plus énumérables.
+      allow list: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
 
-      // 🛡️ SÉCURITÉ 1 : On force la création en tant que "client" avec 0 point. Impossible de tricher.
+      // Mise à jour : un admin peut créditer la fidélité (pointsBySnack) de n'importe
+      // quel client, MAIS ne peut JAMAIS toucher 'role' ni 'snackId'
+      // (anti-élévation de privilège). Le client ne touche que fcmToken/lastOrderDate.
+      allow update: if isSuperAdmin()
+                    || (
+                         isAnyAdmin()
+                         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'snackId'])
+                       )
+                    || (
+                         isOwner(userId)
+                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate'])
+                       );
+
+      // 🛡️ Création : le client crée son propre doc en rôle 'client', sans points
+      // de fidélité préchargés (pointsBySnack vide). Conforme à src/auth.js.
       allow create: if isOwner(userId)
                     && request.resource.data.role == 'client'
-                    && request.resource.data.points == 0;
+                    && request.resource.data.pointsBySnack.size() == 0;
     }
 
     match /produits/{produitId} {
@@ -65,12 +83,15 @@ service cloud.firestore {
       //    et le livreur du snack voit les commandes de SON snack (pour récupérer les courses).
       allow read: if isAuthenticated() && (
         isOwner(resource.data.userId) ||
-        isAnyAdmin() ||
+        isSnackAdmin(resource.data.snackId) ||
+        isSuperAdmin() ||
         isDriver(resource.data.snackId)
       );
 
-      // 2. Création : Le client crée sa commande
-      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      // 2. Création : EXCLUSIVEMENT côté serveur (finalizeOrder, Admin SDK) après
+      //    validation du paiement Stripe. Aucune création directe par le client
+      //    (sinon : commande forgée 'payé' contournant finalizeOrder). Cf. functions/index.js:748.
+      allow create: if false;
 
       // 3. Modification (Update) :
       // - Le client peut modifier (ex: pour le bouton "Je suis arrivé")
@@ -80,7 +101,14 @@ service cloud.firestore {
       //   (livreur/livreurId/statut) d'une commande en mode 'delivery', et
       //   seulement si la course n'est pas déjà prise par un autre livreur.
       allow update: if isAuthenticated() && (
-        isOwner(resource.data.userId) ||
+        // Le client (propriétaire) ne peut QUE déclencher "Je suis arrivé" :
+        // statut → 'nouvelle' + dateArriveeClient. Il ne peut PAS falsifier
+        // total/paiement/snackId. Cf. src/tracking.js:104.
+        (
+          isOwner(resource.data.userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'dateArriveeClient'])
+          && request.resource.data.statut == 'nouvelle'
+        ) ||
         isSnackAdmin(resource.data.snackId) ||
         isSuperAdmin() ||
         (

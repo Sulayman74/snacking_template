@@ -22,25 +22,68 @@ async function loadComptaDashboard() {
     if (!window.currentAdminSnackId) return;
 
     try {
-        const { query, collection, where, getDocs, orderBy } = window.fs;
-        const q = query(
-            collection(window.db, "commandes"),
+        const { query, collection, where, getDocs, getAggregateFromServer, count, sum, orderBy, limit } = window.fs;
+        const baseConstraints = [
             where("snackId", "==", window.currentAdminSnackId),
             where("date", ">=", startDate),
             where("date", "<=", endDate),
-            orderBy("date", "desc")
+        ];
+
+        // 1) KPIs (CA + nb commandes) via AGRÉGATION serveur : facturée ~1 lecture
+        //    par 1000 entrées d'index, au lieu de lire toutes les commandes lourdes.
+        const aggSnap = await getAggregateFromServer(
+            query(collection(window.db, "commandes"), ...baseConstraints),
+            { count: count(), total: sum("total") }
         );
+        adminStore.setSalesAggregate({
+            count: aggSnap.data().count,
+            total: aggSnap.data().total,
+        });
 
-        const snapshot = await getDocs(q);
+        // 2) Historique : liste BORNÉE (affichage seulement, pas pour le total).
+        const HISTORY_LIMIT = 200;
+        const histSnap = await getDocs(query(
+            collection(window.db, "commandes"),
+            ...baseConstraints,
+            orderBy("date", "desc"),
+            limit(HISTORY_LIMIT)
+        ));
         const sales = [];
-        snapshot.forEach(doc => sales.push({ id: doc.id, ...doc.data() }));
-
-        adminStore.setSalesData(sales);
+        histSnap.forEach(doc => sales.push({ id: doc.id, ...doc.data() }));
+        adminStore.setSalesData(sales); // troncature détectée via length === HISTORY_LIMIT côté UI
 
     } catch (error) {
         console.error("Erreur chargement compta:", error);
     }
 }
+
+/**
+ * Récupère TOUTES les commandes de la plage affichée (sans limite) pour un export
+ * CSV comptable complet. Lecture lourde mais DÉLIBÉRÉE (au clic export uniquement).
+ * @returns {Promise<Array<Object>>}
+ */
+async function fetchAllComptaSales() {
+    const startInput = document.getElementById("compta-date-start");
+    const endInput = document.getElementById("compta-date-end");
+    if (!startInput?.value || !endInput?.value || !window.currentAdminSnackId) return [];
+
+    const startDate = new Date(startInput.value); startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(endInput.value); endDate.setHours(23, 59, 59, 999);
+
+    const { query, collection, where, getDocs, orderBy } = window.fs;
+    const snap = await getDocs(query(
+        collection(window.db, "commandes"),
+        where("snackId", "==", window.currentAdminSnackId),
+        where("date", ">=", startDate),
+        where("date", "<=", endDate),
+        orderBy("date", "desc")
+    ));
+    const sales = [];
+    snap.forEach(doc => sales.push({ id: doc.id, ...doc.data() }));
+    return sales;
+}
+
+window.fetchAllComptaSales = fetchAllComptaSales;
 
 window.setComptaDateRange = (range) => {
     const startInput = document.getElementById("compta-date-start");

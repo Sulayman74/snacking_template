@@ -20,6 +20,8 @@ jobs:
             snack_id: PsobiuoeUzNmHnwGtaRu
           - target: pizzeriadelagare
             snack_id: 4L9THuI6hIAqKjjZUn4s
+          - target: belly-smash-burger
+            snack_id: umaGD0nOIWwgpyy8Ta4h
           # ── Ajouter un client ici quand son site Firebase Hosting est créé ──
           # - target: demo-client3
           #   snack_id: REMPLACER_SNACK_ID_CLIENT3
@@ -52,3 +54,24 @@ jobs:
       # Déploie uniquement le site correspondant au target de la matrice
       - name: 🚀 Firebase deploy — ${{ matrix.target }}
         run: npx firebase-tools@latest deploy --only hosting:${{ matrix.target }} --project snacking-template
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 🔒 Backend GLOBAL (un seul projet Firebase pour tous les tenants) :
+  #    règles Firestore + Storage. Déployées UNE fois, pas par client.
+  #    Sans ce job, toute correction de sécurité reste dans le repo sans
+  #    jamais atteindre la prod (dérive repo↔prod). Pas de build nécessaire.
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-rules:
+    name: 🔒 Deploy Firestore & Storage rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔑 Google auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SNACKING_TEMPLATE }}
+
+      - name: 🔒 Firebase deploy — rules
+        run: npx firebase-tools@latest deploy --only firestore:rules,storage --project snacking-template

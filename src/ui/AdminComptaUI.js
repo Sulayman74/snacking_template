@@ -57,7 +57,15 @@ class AdminComptaUI {
             return;
         }
 
+        // L'historique est borné à 200 lignes (affichage). Les KPIs ci-dessus
+        // restent exacts (agrégat serveur). Au-delà, inviter à l'export CSV complet.
+        const truncatedNote = sales.length >= 200 ? `
+            <div class="mb-3 px-4 py-2 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 text-xs font-bold">
+                <i class="fas fa-circle-info mr-1"></i> 200 commandes les plus récentes affichées. Les totaux restent exacts ; utilisez l'export CSV pour le détail complet.
+            </div>` : "";
+
         this.historyTableEl.innerHTML = `
+            ${truncatedNote}
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
@@ -108,8 +116,22 @@ class AdminComptaUI {
         `;
     }
 
-    handleExport() {
-        const csv = adminStore.generateSalesCSV();
+    async handleExport() {
+        showToast("Préparation de l'export…", "info");
+        // Export comptable COMPLET : on récupère toute la plage (au-delà des 200
+        // lignes affichées), lecture lourde mais délibérée car déclenchée au clic.
+        let sales;
+        try {
+            sales = typeof window.fetchAllComptaSales === "function"
+                ? await window.fetchAllComptaSales()
+                : adminStore.state.salesData;
+        } catch (e) {
+            console.error("Export compta — échec récupération:", e);
+            showToast("Erreur lors de la récupération des ventes.", "error");
+            return;
+        }
+
+        const csv = adminStore.generateSalesCSV(sales);
         if (!csv) {
             showToast("Aucune donnée à exporter.", "error");
             return;

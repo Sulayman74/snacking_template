@@ -677,12 +677,14 @@ exports.finalizeOrder = onCall(
       throw new HttpsError("invalid-argument", "Montant incohérent avec le panier.");
     }
 
-    // 4. Idempotence — éviter une double commande si le client relance
-    const existing = await db.collection("commandes")
-      .where("paiement.stripeSessionId", "==", paymentIntentId)
-      .limit(1).get();
-    if (!existing.empty) {
-      return { orderId: existing.docs[0].id };
+    // 4. Idempotence ATOMIQUE — l'ID de la commande est dérivé du PaymentIntent
+    //    (unique côté Stripe). Un check rapide évite de recalculer si la commande
+    //    existe déjà ; la garantie anti-race repose sur le create() atomique (§5).
+    const orderId = paymentIntentId;
+    const docRef = db.collection("commandes").doc(orderId);
+    const existingDoc = await docRef.get();
+    if (existingDoc.exists) {
+      return { orderId };
     }
 
     // 🚚 ETA (heuristique simple) + livraison — TOUT recalculé serveur.
@@ -745,18 +747,30 @@ exports.finalizeOrder = onCall(
       },
     };
 
-    const docRef = await db.collection("commandes").add(newOrder);
+    // create() échoue si le doc existe déjà → idempotence atomique contre la race
+    // "double-clic / retry réseau" (deux appels concurrents ayant tous deux passé
+    // le check ci-dessus). Le perdant retourne l'orderId existant SANS rejouer le
+    // parrainage (increment) ni lastOrderDate.
+    try {
+      await docRef.create(newOrder);
+    } catch (e) {
+      if (e.code === 6 || e.code === "already-exists") {
+        return { orderId };
+      }
+      throw e;
+    }
 
     // 🍟 LOGIQUE PARRAINAGE
     const userRef = db.collection("users").doc(uid);
     const userDoc = await userRef.get();
-    
+
     // On vérifie si c'est la toute première commande de l'utilisateur (lastOrderDate inexistant)
-    if (referrerId && referrerId !== uid && (!userDoc.exists() || !userDoc.data().lastOrderDate)) {
+    // NB: .exists est une PROPRIÉTÉ dans l'Admin SDK (pas une méthode).
+    if (referrerId && referrerId !== uid && (!userDoc.exists || !userDoc.data().lastOrderDate)) {
       const referrerRef = db.collection("users").doc(referrerId);
       const referrerDoc = await referrerRef.get();
 
-      if (referrerDoc.exists()) {
+      if (referrerDoc.exists) {
         const fieldPath = `pointsBySnack.${snackId}`;
         await referrerRef.update({
           [fieldPath]: admin.firestore.FieldValue.increment(2)
@@ -784,7 +798,7 @@ exports.finalizeOrder = onCall(
       lastOrderDate: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    return { orderId: docRef.id };
+    return { orderId };
   }
 );
 
@@ -1160,6 +1174,22 @@ exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, re
         return response.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    // 🛡️ Idempotence — Stripe garantit une livraison "at-least-once" (retries).
+    // create() est atomique : si l'event a déjà été traité, on ACK (200) sans rejouer.
+    const eventRef = db.collection("stripeEvents").doc(event.id);
+    try {
+        await eventRef.create({
+            type: event.type,
+            receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+    } catch (e) {
+        if (e.code === 6 || e.code === "already-exists") {
+            return response.json({ received: true, duplicate: true });
+        }
+        console.error("❌ Erreur garde idempotence Webhook :", e);
+        return response.status(500).send("Internal Server Error");
+    }
+
     try {
         if (event.type === 'invoice.payment_failed' || event.type === 'customer.subscription.deleted') {
             const invoice = event.data.object;
@@ -1186,9 +1216,11 @@ exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, re
                 
                 if (!snacksSnapshot.empty) {
                     const snackDoc = snacksSnapshot.docs[0];
-                    // Si on veut être gentil, on le remet en ligne automatiquement.
-                    // await snackDoc.ref.update({ maintenanceMode: false });
-                    console.log(`✅ PAIEMENT SAAS REÇU: Le snack ${snackDoc.id} a payé son abonnement (Sub: ${subscriptionId}).`);
+                    // Réactivation automatique : un snack suspendu pour impayé qui
+                    // règle son abonnement doit être remis en ligne (sinon il reste
+                    // bloqué malgré le paiement).
+                    await snackDoc.ref.update({ maintenanceMode: false });
+                    console.log(`✅ PAIEMENT SAAS REÇU: Le snack ${snackDoc.id} réactivé après paiement (Sub: ${subscriptionId}).`);
                 }
             }
         }
@@ -1196,6 +1228,9 @@ exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, re
         response.json({ received: true });
     } catch (error) {
         console.error("❌ Erreur traitement Webhook :", error);
+        // On retire le marqueur d'idempotence pour autoriser le retry Stripe
+        // (sinon l'event serait considéré "déjà traité" et l'effet jamais appliqué).
+        await eventRef.delete().catch(() => {});
         response.status(500).send("Internal Server Error");
     }
 });

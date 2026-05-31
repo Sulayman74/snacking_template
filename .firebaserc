@@ -5,9 +5,18 @@
   "targets": {
     "snacking-template": {
       "hosting": {
-        "snacking-template": ["snacking-template"],
-        "o-bois-pizza":      ["o-bois-pizza"],
-        "pizzeriadelagare":      ["pizzeriadelagare"]
+        "snacking-template": [
+          "snacking-template"
+        ],
+        "o-bois-pizza": [
+          "o-bois-pizza"
+        ],
+        "pizzeriadelagare": [
+          "pizzeriadelagare"
+        ],
+        "belly-smash-burger": [
+          "belly-smash-burger"
+        ]
       }
     }
   },

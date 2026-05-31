@@ -28,5 +28,15 @@
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2F4L9THuI6hIAqKjjZUn4s%2FheroImg_pizz.webp?alt=media&token=0dfbe7bc-9fd0-4102-8ccd-7a71454e883d",
     "theme_color": "#0077b6",
     "shadowClass": "shadow-blue-600/40"
+  },
+  "umaGD0nOIWwgpyy8Ta4h": {
+    "title": "Belly Smash Burger Cluses | Click & Collect",
+    "desc": "Découvrez le menu digital de Belly Smash Burger à Cluses ! Commandez en ligne vos smash burgers en Click & Collect.",
+    "canonicalUrl": "https://belly-smash.web.app",
+    "logoUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/Belly_smash%2FBelly-B-logo.png?alt=media&token=e61b1bb1-77e3-4b8b-babe-fdb278e5c02f",
+    "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/Belly_smash%2Ficon-maskable-512.png?alt=media&token=b7e4268c-10fa-4a91-be69-74f062f7cb31",
+    "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/Belly_smash%2Fbelly.jpeg?alt=media&token=5ec9abd3-6e35-495a-9ee5-b484fef2780b",
+    "theme_color": "#0a1b3f",
+    "shadowClass": "shadow-blue-900/40"
   }
 }

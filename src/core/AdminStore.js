@@ -8,7 +8,8 @@ export class AdminStore extends EventTarget {
         products: [],
         categories: [],
         pushHistory: [],
-        salesData: [],
+        salesData: [],            // commandes brutes pour le tableau d'historique (BORNÉ)
+        salesAggregate: { count: 0, total: 0 }, // KPIs via agrégation serveur (toute la plage)
         isSaving: false,
         errors: []
     };
@@ -459,10 +460,25 @@ export class AdminStore extends EventTarget {
         this.emit("admin-sales-updated");
     }
 
+    /**
+     * Enregistre les KPIs calculés côté serveur (count + sum(total)) via une
+     * requête d'agrégation Firestore — au lieu de sommer des milliers de docs
+     * lourds côté client. Ne déclenche pas de rendu (setSalesData le fait ensuite).
+     * @param {{count: number, total: number}} agg
+     */
+    setSalesAggregate(agg) {
+        this.#state.salesAggregate = {
+            count: Number(agg?.count) || 0,
+            total: Number(agg?.total) || 0,
+        };
+    }
+
     getSalesKPIs() {
-        const sales = this.#state.salesData;
-        const total = sales.reduce((acc, s) => acc + (parseFloat(s.total) || 0), 0);
-        const count = sales.length;
+        // KPIs basés sur l'agrégat serveur (toute la plage), pas sur la liste
+        // bornée du tableau d'historique → total exact sans lecture massive.
+        const agg = this.#state.salesAggregate || { count: 0, total: 0 };
+        const total = Number(agg.total) || 0;
+        const count = Number(agg.count) || 0;
         const avg = count > 0 ? total / count : 0;
         const tva = total * 0.10; // TVA 10% (restauration rapide sur place/emporté)
 
@@ -475,8 +491,13 @@ export class AdminStore extends EventTarget {
         };
     }
 
-    generateSalesCSV() {
-        const sales = this.#state.salesData;
+    /**
+     * Génère le CSV des ventes. Pour un export comptable complet, passer le
+     * dataset pleine plage (récupéré au clic) ; sinon retombe sur la liste bornée.
+     * @param {Array<Object>} [salesArg] - commandes à exporter.
+     */
+    generateSalesCSV(salesArg) {
+        const sales = Array.isArray(salesArg) ? salesArg : this.#state.salesData;
         if (sales.length === 0) return null;
 
         const headers = ["ID", "Date", "Client", "Total TTC", "HT (90%)", "TVA (10%)", "Statut"];

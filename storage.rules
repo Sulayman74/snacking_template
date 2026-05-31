@@ -1,16 +1,43 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      // 🔓 Lecture publique : images du menu, logos, preuves de livraison (PoD).
-      allow read: if true;
 
-      // 🔒 Écriture : utilisateur connecté + image uniquement + < 15 Mo (anti-abus).
-      // Couvre les images produits (admin), logos et les photos PoD (livreur).
-      // La Cloud Function optimizeImage écrit via l'admin SDK → NON soumise à ces règles.
-      allow write: if request.auth != null
-                   && request.resource.contentType.matches('image/.*')
-                   && request.resource.size < 15 * 1024 * 1024;
+    // Rôle/snack de l'appelant, lus depuis Firestore (users/{uid}).
+    function authUser() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
     }
+    function isSnackAdmin(snackId) {
+      return request.auth != null
+             && authUser().role in ['admin', 'superadmin']
+             && (authUser().role == 'superadmin' || authUser().snackId == snackId);
+    }
+    function isSnackDriver(snackId) {
+      return request.auth != null
+             && authUser().role == 'livreur'
+             && authUser().snackId == snackId;
+    }
+    // Garde anti-abus : image valide et < 15 Mo.
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*')
+             && request.resource.size < 15 * 1024 * 1024;
+    }
+
+    // 🔓 Lecture publique : images menu, logos, preuves de livraison (PoD) affichées au client.
+    match /{allPaths=**} {
+      allow read: if true;
+    }
+
+    // 🍔 Images produits : écriture réservée à l'admin du snack propriétaire.
+    //    (La Cloud Function optimizeImage réécrit via l'Admin SDK → hors de ces règles.)
+    match /produits/{snackId}/{fileName} {
+      allow write: if isValidImage() && isSnackAdmin(snackId);
+    }
+
+    // 📸 Preuves de livraison : écriture réservée au livreur (ou admin) du snack.
+    match /pod/{snackId}/{orderId}/{fileName} {
+      allow write: if isValidImage() && (isSnackDriver(snackId) || isSnackAdmin(snackId));
+    }
+
+    // 🛑 Tout autre chemin : écriture refusée (anti-hébergement d'images arbitraires).
   }
 }

@@ -275,11 +275,21 @@ window.chargerMenuComplet = () => {
   const snackId = cfg?.identity?.id;
   if (!snackId) return;
 
+  // 🔄 On ferme l'écoute précédente AVANT d'en ouvrir une nouvelle.
+  // chargerMenuComplet est rappelé à chaque onAuthStateChanged (login/logout,
+  // refresh de token Firebase ~1h) et à chaque pull-to-refresh. Sans ce teardown,
+  // les listeners onSnapshot s'empilent → coût lectures temps réel + callbacks
+  // store.setMenu multiples re-déclenchant le rendu. (cf. admin-products.js:13)
+  if (typeof window.__menuUnsub === "function") {
+    window.__menuUnsub();
+    window.__menuUnsub = null;
+  }
+
   const { query, collection, where, onSnapshot } = window.fs;
   const q = query(collection(window.db, "produits"), where("snackId", "==", snackId));
 
   // Écoute en temps réel les changements de produits (stocks, prix, etc.)
-  return onSnapshot(q, (snapshot) => {
+  const unsub = onSnapshot(q, (snapshot) => {
     let tousLesProduits = [];
     snapshot.forEach((doc) => {
       tousLesProduits.push({ id: doc.id, ...doc.data() });
@@ -290,4 +300,7 @@ window.chargerMenuComplet = () => {
   }, (err) => {
     console.error("Erreur temps réel menu :", err);
   });
+
+  window.__menuUnsub = unsub;
+  return unsub;
 };

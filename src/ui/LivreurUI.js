@@ -168,10 +168,14 @@ class LivreurUI {
   // --- Écoute des courses -------------------------------------------------
   startListening() {
     if (this.coursesUnsub) this.coursesUnsub();
-    // Réutilise l'index commandes(snackId, statut, date). On filtre mode/livreur en JS.
+    // Index commandes(snackId, mode, statut, date) — cf. firestore.indexes.json.
+    // On filtre mode='delivery' CÔTÉ SERVEUR : un livreur ne traite que des
+    // livraisons. Évite de télécharger (et facturer) les commandes click&collect
+    // 'prete' qui étaient jusqu'ici récupérées puis jetées en JS.
     const q = query(
       collection(window.db, "commandes"),
       where("snackId", "==", this.snackId),
+      where("mode", "==", "delivery"),
       where("statut", "in", ["prete", "en_livraison"]),
       orderBy("date", "asc"),
     );
