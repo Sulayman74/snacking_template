@@ -37,7 +37,6 @@ window.openAdminScanner = async () => {
       onScanFailure,
     );
   } catch (err) {
-    alert("ERREUR CAMÉRA : " + (err.message || err));
     console.error("Scanner erreur :", err);
     window.showToast("Erreur d'accès à la caméra", "error");
   }

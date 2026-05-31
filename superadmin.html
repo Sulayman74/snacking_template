@@ -329,6 +329,14 @@
         <span id="sa-toast-msg">Message</span>
     </div>
 
+    <!-- Template du toast partagé (utils.js showToast) — sans lui, showToast retombe sur alert() natif -->
+    <template id="toast-template">
+      <div class="toast-item flex items-center gap-3 px-6 py-4 rounded-full shadow-2xl transition-all duration-300 translate-y-24 opacity-0 w-max max-w-[90vw]">
+        <i class="toast-icon text-2xl"></i>
+        <span class="toast-message font-medium text-sm md:text-base"></span>
+      </div>
+    </template>
+
     <script type="module" src="src/superadmin.js"></script>
 </body>
 </html>
