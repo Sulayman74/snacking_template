@@ -973,43 +973,50 @@ exports.finalizeOrder = onCall(
       throw e;
     }
 
-    // 🍟 LOGIQUE PARRAINAGE
-    const userRef = db.collection("users").doc(uid);
-    const userDoc = await userRef.get();
+    // 🍟 POST-CRÉATION (best-effort) — parrainage + lastOrderDate. Un échec ici
+    // ne doit JAMAIS faire échouer la réponse : la commande est créée et le
+    // paiement confirmé (create() déterministe = pas de double-charge au retry).
+    try {
+      const userRef = db.collection("users").doc(uid);
+      const userDoc = await userRef.get();
 
-    // On vérifie si c'est la toute première commande de l'utilisateur (lastOrderDate inexistant)
-    // NB: .exists est une PROPRIÉTÉ dans l'Admin SDK (pas une méthode).
-    if (referrerId && referrerId !== uid && (!userDoc.exists || !userDoc.data().lastOrderDate)) {
-      const referrerRef = db.collection("users").doc(referrerId);
-      const referrerDoc = await referrerRef.get();
+      // Première commande de l'utilisateur (lastOrderDate inexistant) ?
+      // NB: .exists est une PROPRIÉTÉ dans l'Admin SDK (pas une méthode).
+      if (referrerId && referrerId !== uid && (!userDoc.exists || !userDoc.data().lastOrderDate)) {
+        const referrerRef = db.collection("users").doc(referrerId);
+        const referrerDoc = await referrerRef.get();
 
-      if (referrerDoc.exists) {
-        const fieldPath = `pointsBySnack.${snackId}`;
-        await referrerRef.update({
-          [fieldPath]: admin.firestore.FieldValue.increment(2)
-        });
+        if (referrerDoc.exists) {
+          const fieldPath = `pointsBySnack.${snackId}`;
+          await referrerRef.update({
+            [fieldPath]: admin.firestore.FieldValue.increment(2)
+          });
 
-        // Notification au parrain
-        const referrerData = referrerDoc.data();
-        if (referrerData.fcmToken) {
-          try {
-            await getMessaging().send({
-              notification: {
-                title: "🍟 Une frite offerte !",
-                body: "Votre filleul vient de commander ! Vous avez reçu 2 points de fidélité."
-              },
-              token: referrerData.fcmToken
-            });
-          } catch (e) {
-            console.error("Erreur notif parrainage:", e);
+          // Notification au parrain
+          const referrerData = referrerDoc.data();
+          if (referrerData.fcmToken) {
+            try {
+              await getMessaging().send({
+                notification: {
+                  title: "🍟 Une frite offerte !",
+                  body: "Votre filleul vient de commander ! Vous avez reçu 2 points de fidélité."
+                },
+                token: referrerData.fcmToken
+              });
+            } catch (e) {
+              console.error("Erreur notif parrainage:", e);
+            }
           }
         }
       }
-    }
 
-    await userRef.update({
-      lastOrderDate: admin.firestore.FieldValue.serverTimestamp(),
-    });
+      await userRef.update({
+        lastOrderDate: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (postErr) {
+      // Commande déjà créée + payée → on renvoie quand même un succès.
+      console.error("finalizeOrder post-création (parrainage/lastOrderDate) échouée :", postErr);
+    }
 
     return { orderId };
   }
