@@ -2,13 +2,16 @@
  * 🗄️ Store — Source de Vérité Unique (Flux Unidirectionnel)
  * Gère l'état de l'application de manière privée et émet des événements lors des changements.
  */
-class Store extends EventTarget {
+export class Store extends EventTarget {
     #state = {
         cart: JSON.parse(localStorage.getItem("snackCart")) || [],
         config: null,
         menu: [],
         user: null,
         role: "client",
+        // ❤️ FAVORIS — articles personnalisés sauvegardés par le client (re-commande 1-tap).
+        // Synchronisés en temps réel depuis users/{uid}.favorites (cf. favorites.js).
+        favorites: [],
         // 🚚 LIVRAISON — état du tunnel de commande (mode + adresse + devis).
         // mode 'collect' par défaut → comportement legacy strictement inchangé.
         delivery: {
@@ -45,6 +48,12 @@ class Store extends EventTarget {
     setMenu(menu) {
         this.#state.menu = menu;
         this.emit("menu-updated");
+    }
+
+    /** Remplace la liste des favoris (source : snapshot temps réel de users/{uid}). */
+    setFavorites(favorites) {
+        this.#state.favorites = Array.isArray(favorites) ? favorites : [];
+        this.emit("favorites-updated");
     }
 
     // --- MÉTHODES PANIER (Logique métier centralisée) ---
