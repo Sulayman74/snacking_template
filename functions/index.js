@@ -982,6 +982,20 @@ exports.finalizeOrder = onCall(
       const client = { lat: livraison.lat, lng: livraison.lng };
       const distanceKm = haversineKm(resto, client);
       const hasDist = Number.isFinite(distanceKm);
+
+      // 🛡️ REJET HORS-ZONE — le serveur est l'autorité sur la zone de livraison,
+      // pas le client. On ne rejette QUE si un rayon est réellement configuré et
+      // la distance calculable (resto non géocodé / rayon absent → on n'enforce
+      // pas, cohérent avec le quoteDelivery client qui reste permissif). Borne
+      // <= radiusKm pour matcher exactement la règle inRange du front.
+      const radiusKm = Number(dcfg.radiusKm);
+      if (Number.isFinite(radiusKm) && radiusKm > 0 && hasDist && distanceKm > radiusKm) {
+        throw new HttpsError(
+          "out-of-range",
+          "Adresse hors de la zone de livraison de ce restaurant."
+        );
+      }
+
       deliveryMin = hasDist ? Math.max(1, Math.round((distanceKm / avgSpeedKmh) * 60)) : 0;
       livraisonData = {
         adresse: (livraison.adresse || "").toString().slice(0, 300),
