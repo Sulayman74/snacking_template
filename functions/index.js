@@ -353,6 +353,22 @@ exports.processPushCampaigns = onSchedule(
       if (snapshot.empty) return null;
 
       for (const doc of snapshot.docs) {
+        // 🔒 Claim atomique : on réserve la campagne (en_attente → en_cours) AVANT
+        // tout envoi. Si un autre run l'a déjà prise (le CAS échoue) → on l'ignore.
+        // Anti double-envoi si deux exécutions du cron se chevauchent (run > 5 min).
+        try {
+          await db.runTransaction(async (tx) => {
+            const fresh = await tx.get(doc.ref);
+            if (!fresh.exists || fresh.data().statut !== "en_attente") {
+              throw new Error("already-claimed");
+            }
+            tx.update(doc.ref, { statut: "en_cours" });
+          });
+        } catch (claimErr) {
+          console.log(`Campagne ${doc.id} déjà réservée par un autre run — ignorée.`);
+          continue;
+        }
+
         const campagne = doc.data();
 
         const usersSnapshot = await db
