@@ -252,11 +252,13 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       id: item.id,
       productId: item.productId || item.id.split("-")[0],
       nom: item.nom,
-      type: item.type || "seul",
+      // Le panier stocke `formule`/`taille` (cf. product-modal #buildCartItem).
+      // On garde `item.type`/`item.tailleChoisie` en fallback pour tout item legacy.
+      type: item.formule || item.type || "seul",
       boissonNom: item.boisson || null,
       sauces: item.sauces || [],
       sansCrudites: item.sansCrudites || [],
-      tailleChoisie: item.tailleChoisie || null,
+      tailleChoisie: item.taille || item.tailleChoisie || null,
       prix: item.prix || item.prixBase || 0, // IMPORTANT: Requis par la Cloud Function
       prixBase: item.prixBase || item.prix,
       prixMenuAdd: item.prixMenuAdd || 0,
