@@ -491,6 +491,13 @@ exports.createPaymentIntent = onCall(
   async (request) => {
     const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
+    // 🛡️ Authentification obligatoire : le client est forcément loggé pour
+    // commander (cf. src/checkout.js). Ferme la porte aux appels anonymes
+    // (création massive d'intents / sondage des snackId).
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentification requise.");
+    }
+
     // 🛡️ Rate limit AVANT toute logique : 10 tentatives / 60s par utilisateur (ou IP)
     await enforceRateLimit({
       key: callerKey(request, "createPaymentIntent"),
