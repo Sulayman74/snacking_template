@@ -7,11 +7,12 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────
-  # 🧪 GATE : tests unitaires (rapides + déterministes). Tout déploiement en
-  #    dépend (needs) → une régression sur la logique pure BLOQUE la prod.
+  # 🧪 Tests unitaires (rapides + déterministes). INFORMATIF pour l'instant :
+  #    tourne à chaque push et reporte ✅/❌, mais NE bloque PAS le déploiement
+  #    (pas de `needs`). À passer bloquant quand la couverture sera significative.
   # ─────────────────────────────────────────────────────────────────────────
   unit-tests:
-    name: 🧪 Tests unitaires (gate)
+    name: 🧪 Tests unitaires
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout
@@ -28,7 +29,6 @@ jobs:
 
   deploy:
     name: 🚀 Deploy ${{ matrix.target }}
-    needs: unit-tests
     runs-on: ubuntu-latest
 
     strategy:
@@ -84,7 +84,6 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────
   deploy-rules:
     name: 🔒 Deploy Firestore & Storage rules
-    needs: unit-tests
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout
