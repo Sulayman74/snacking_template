@@ -386,6 +386,10 @@ function startOrderTracking(orderId) {
         }
       }
     },
+    (err) => {
+      console.error("Radar Client (onSnapshot) erreur :", err);
+      window.showToast?.("Suivi interrompu (réseau). Rouvrez la commande pour réessayer.", "error");
+    },
   );
 }
 

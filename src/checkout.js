@@ -143,7 +143,10 @@ async function processCheckout() {
       },
     });
 
-    const clientSecret = response.data.clientSecret;
+    const clientSecret = response?.data?.clientSecret;
+    if (!clientSecret) {
+      throw new Error("Réponse de paiement invalide (clientSecret manquant).");
+    }
 
     // 4. Créer et injecter le formulaire Stripe
     const appearance = { theme: "stripe" };

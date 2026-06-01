@@ -205,6 +205,13 @@ onAuthStateChanged(window.auth, async (user) => {
   const startupDesc = document.getElementById("startup-desc");
   const backHomeBtn = document.getElementById("back-home-btn");
 
+  // Robustesse : si le shell admin n'est pas dans le DOM (refonte template),
+  // on n'essaie pas d'y écrire → évite de planter tout le bootstrap auth.
+  if (!loginSection || !startBtn || !startupIcon || !startupTitle || !startupDesc) {
+    console.warn("[admin] Éléments du shell introuvables — bootstrap ignoré.");
+    return;
+  }
+
   if (user) {
     const { getDoc, doc } = window.fs;
     const userDoc = await getDoc(doc(window.db, "users", user.uid));
@@ -323,7 +330,7 @@ function refuseAccess(message) {
   document.getElementById("back-home-btn").classList.remove("hidden");
 }
 
-document.getElementById("start-shift-btn").addEventListener("click", () => {
+document.getElementById("start-shift-btn")?.addEventListener("click", () => {
   bell.volume = 0;
   bell
     .play()

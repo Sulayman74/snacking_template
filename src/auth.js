@@ -30,8 +30,15 @@ const authForm = document.getElementById("auth-form");
 if (authForm) {
   authForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const submitBtn = authForm.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return; // anti-double-clic
     const email = document.getElementById("auth-email").value;
     const password = document.getElementById("auth-password").value;
+    const original = submitBtn?.innerHTML;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
 
     try {
       const { signInWithEmailAndPassword, createUserWithEmailAndPassword } =
@@ -46,6 +53,11 @@ if (authForm) {
       toggleAuthModal();
     } catch (error) {
       window.showToast("Erreur : " + error.message, "error");
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = original;
+      }
     }
   });
 }

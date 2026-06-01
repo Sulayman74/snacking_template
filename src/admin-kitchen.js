@@ -44,7 +44,7 @@ function createTicketElement(id, commande) {
   const safeClientName = escapeHTML(commande.clientNom || "Client Anonyme");
   const secretCode = commande.secretCode || "---";
 
-  let itemsHtml = commande.items
+  let itemsHtml = (commande.items || [])
     .map((item) => {
       let optionsHTML = "";
       if (item.tailleChoisie) {
@@ -113,8 +113,8 @@ function createTicketElement(id, commande) {
   const isPaid = paymentStatus === "paye";
 
   const priceDisplay = isPaid
-    ? `<p class="font-black text-2xl text-green-600 opacity-50 line-through">${commande.total.toFixed(2)} €</p>`
-    : `<p class="font-black text-2xl ${textColor}">${commande.total.toFixed(2)} €</p>`;
+    ? `<p class="font-black text-2xl text-green-600 opacity-50 line-through">${(Number(commande.total) || 0).toFixed(2)} €</p>`
+    : `<p class="font-black text-2xl ${textColor}">${(Number(commande.total) || 0).toFixed(2)} €</p>`;
 
   const paymentBadgeHtml = isPaid
     ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition flex items-center gap-1 hover:bg-green-200"><i class="fas fa-check-circle"></i> PAYÉ</button>`
@@ -226,6 +226,9 @@ function startKitchenRadar() {
 
     if (ringTheBell && bell) bell.play().catch((e) => console.log("Son bloqué"));
     isFirstLoad = false;
+  }, (err) => {
+    console.error("Radar cuisine (onSnapshot) erreur :", err);
+    window.showToast?.("Connexion au radar interrompue (réseau).", "error");
   });
 
   console.log("🟢 Radar Cuisine ACTIVÉ.");
