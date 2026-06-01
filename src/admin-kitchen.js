@@ -34,7 +34,7 @@ document.addEventListener("visibilitychange", async () => {
 // ============================================================================
 // 🎟️ GÉNÉRATEUR DE TICKET HTML
 // ============================================================================
-function createTicketElement(id, commande) {
+export function createTicketElement(id, commande) {
   const timeString = commande.date
     ? commande.date
         .toDate()
