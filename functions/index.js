@@ -191,6 +191,67 @@ async function getKitchenQueueCount(snackId) {
   }
 }
 
+// --- Anti-fraude prix : recalcul depuis la base, jamais le prix du client ------
+// Ensemble des prix unitaires LÉGITIMES d'un produit (en centimes) :
+//   - base : `prix` (produit simple) OU chaque `tailles[].prix` (produit taillé)
+//   - +menu : base + (menuPriceAdd || 2.5), réplique exacte du calcul client
+//             (src/product-modal.js : prixMenu = menuPriceAdd || 2.5).
+// On inclut toujours la variante menu : elle ne fait qu'AUGMENTER le prix, donc
+// l'autoriser ne peut pas baisser le plancher anti-fraude.
+function allowedUnitPriceCents(product) {
+  const cents = (e) => Math.round(Number(e) * 100);
+  const menuAdd = product.menuPriceAdd || 2.5; // 0/undefined → 2.5 (cf. client)
+  const bases =
+    Array.isArray(product.tailles) && product.tailles.length > 0
+      ? product.tailles.map((t) => Number(t.prix))
+      : [Number(product.prix)];
+
+  const set = new Set();
+  for (const b of bases) {
+    if (!Number.isFinite(b)) continue;
+    set.add(cents(b));
+    set.add(cents(b + menuAdd));
+  }
+  return set;
+}
+
+// Vérifie que CHAQUE prix unitaire facturé correspond à un prix réel du produit
+// en base, puis que le montant encaissé par Stripe couvre au moins la somme des
+// articles. Lève une HttpsError si une manipulation de prix est détectée.
+async function assertCartPricesAreLegit(cartItems, paidAmountCents, snackId) {
+  const TOL = 1; // ±1 centime (arrondis flottants)
+
+  // Lecture groupée des produits (un getAll au lieu de N getDoc).
+  const ids = [...new Set(cartItems.map((i) => i.productId).filter(Boolean))];
+  require_(ids.length > 0, "Aucun produit identifiable dans le panier.");
+  const refs = ids.map((id) => db.collection("produits").doc(id));
+  const snaps = await db.getAll(...refs);
+  const products = new Map();
+  snaps.forEach((s) => { if (s.exists) products.set(s.id, s.data()); });
+
+  let expectedItemsCents = 0;
+  for (const item of cartItems) {
+    const product = products.get(item.productId);
+    require_(!!product, `Produit introuvable : ${item.productId}.`);
+    // Cloisonnement multi-tenant : le produit doit appartenir au snack commandé.
+    require_(product.snackId === snackId, "Produit hors du restaurant ciblé.");
+
+    const paidCents = Math.round(Number(item.prix) * 100);
+    const allowed = allowedUnitPriceCents(product);
+    const ok = [...allowed].some((a) => Math.abs(a - paidCents) <= TOL);
+    require_(ok, `Prix manipulé pour « ${item.nom} » (${item.prix} € non autorisé).`);
+
+    expectedItemsCents += paidCents * item.quantity;
+  }
+
+  // Le montant réellement encaissé (immuable, source Stripe) doit AU MOINS couvrir
+  // la valeur des articles. La livraison ne peut qu'ajouter par-dessus.
+  require_(
+    paidAmountCents + TOL >= expectedItemsCents,
+    "Montant encaissé inférieur à la valeur réelle du panier."
+  );
+}
+
 // ============================================================================
 // 🎁 FONCTION 1 : CADEAU DE FIDÉLITÉ (10 POINTS)
 // ============================================================================
@@ -899,6 +960,11 @@ exports.finalizeOrder = onCall(
     if (existingDoc.exists) {
       return { orderId };
     }
+
+    // 🛡️ ANTI-FRAUDE PRIX — chaque prix unitaire doit correspondre à un prix réel
+    // du produit en base, et le montant encaissé doit couvrir la valeur du panier.
+    // On ne fait JAMAIS confiance au prix envoyé par le client (cf. CLAUDE.md §6.1).
+    await assertCartPricesAreLegit(cartItems, paymentIntent.amount, snackId);
 
     // 🚚 ETA (heuristique simple) + livraison — TOUT recalculé serveur.
     const dcfg = snackData.delivery || {};
