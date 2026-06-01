@@ -162,12 +162,18 @@ class AppUI {
         const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
         const navAdminBtn = document.getElementById("nav-admin-btn");
         const mobileAdminBtn = document.getElementById("mobile-admin-btn");
+        const navFavoritesLink = document.getElementById("nav-favorites-link");
+        const mobileFavoritesLink = document.getElementById("mobile-favorites-link");
 
         const displayAction = user ? "remove" : "add";
         [navLogoutBtn, mobileLogoutBtn].forEach(btn => btn?.classList[displayAction]("hidden"));
 
         const adminAction = (user && isAdmin) ? "remove" : "add";
         [navAdminBtn, mobileAdminBtn].forEach(btn => btn?.classList[adminAction]("hidden"));
+
+        // Favoris : visibles dès qu'un utilisateur est connecté.
+        const favAction = user ? "remove" : "add";
+        [navFavoritesLink, mobileFavoritesLink].forEach(link => link?.classList[favAction]("hidden"));
     }
 
     updateLoyaltySection(cfg, user, isAdmin) {

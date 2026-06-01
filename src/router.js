@@ -14,12 +14,23 @@ document.addEventListener("click", async (event) => {
   switch (action) {
     case "switch-home":
       window.triggerVibration?.("light");
+      window.closeFavoritesView?.();
       window.switchView("home");
       break;
 
     case "switch-menu":
       window.triggerVibration?.("light");
+      window.closeFavoritesView?.();
       window.switchView("menu");
+      break;
+
+    case "switch-favorites":
+      window.triggerVibration?.("light");
+      window.openFavoritesView?.();
+      break;
+
+    case "close-favorites":
+      window.closeFavoritesView?.();
       break;
 
     case "open-product-modal":

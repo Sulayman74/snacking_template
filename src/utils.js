@@ -75,6 +75,48 @@ export function showToast(message, type = "success") {
 }
 
 /**
+ * Construit une signature déterministe d'un article personnalisé (panier ou favori).
+ * Deux articles avec EXACTEMENT les mêmes options (produit, formule, taille, boisson,
+ * sauces, sans-crudités) produisent la même clé → permet la déduplication des favoris
+ * et l'état "déjà en favori" du bouton cœur, indépendamment de l'ordre des sauces.
+ * @param {Object} item - Article au format panier ({productId, formule, taille, boisson, sauces, sansCrudites}).
+ * @returns {string} Clé stable réutilisable comme identifiant de favori.
+ */
+export function favoriteKey(item) {
+    if (!item) return "";
+    const norm = (arr) => [...(arr || [])].map((v) => String(v)).sort().join(",");
+    return [
+        item.productId || item.id || "",
+        item.formule || "",
+        item.taille || "",
+        item.boisson || "",
+        norm(item.sauces),
+        norm(item.sansCrudites),
+    ].join("|");
+}
+
+/**
+ * Formate les options d'un article (boisson, sauces, sans-crudités) en HTML.
+ * Source unique consommée par l'affichage du panier ET des favoris (DRY).
+ * Le contenu dynamique est échappé via escapeHTML ; les icônes/balises sont sûres.
+ * @param {Object} item - Article personnalisé.
+ * @returns {string} HTML des détails, ou "" si aucune option.
+ */
+export function formatCustomizationDetails(item) {
+    const parts = [];
+    if (item.boisson) parts.push(`🥤 ${escapeHTML(item.boisson)}`);
+    if (item.sauces && item.sauces.length > 0) {
+        parts.push(`🥣 ${item.sauces.map((s) => escapeHTML(s)).join(", ")}`);
+    }
+    if (item.sansCrudites && item.sansCrudites.length > 0) {
+        parts.push(`<span class="text-red-600 font-black">⚠️ ${item.sansCrudites.map((c) => escapeHTML(c)).join(", ")}</span>`);
+    }
+    return parts.length > 0
+        ? parts.join(" <span class='text-gray-300'>|</span> ")
+        : "";
+}
+
+/**
  * Déclenche une vibration haptique sur mobile
  */
 export function triggerVibration(type = "light") {
@@ -94,3 +136,5 @@ window.escapeHTML = escapeHTML;
 window.safeURL = safeURL;
 window.showToast = showToast;
 window.triggerVibration = triggerVibration;
+window.favoriteKey = favoriteKey;
+window.formatCustomizationDetails = formatCustomizationDetails;

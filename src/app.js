@@ -7,6 +7,7 @@ import { store } from "./core/Store.js";
 import "./ui.js";
 import "./menu.js";
 import "./cart.js";
+import "./favorites.js";
 import "./delivery.js";
 import "./product-modal.js";
 import "./tracking.js";

@@ -1,7 +1,7 @@
 /**
  * 🎨 CartUI — Gestion de l'affichage du Panier (SOLID: Présentation)
  */
-import { escapeHTML } from "../utils.js";
+import { formatCustomizationDetails } from "../utils.js";
 import { store } from "../core/Store.js";
 
 class CartUI {
@@ -24,6 +24,8 @@ class CartUI {
         store.addEventListener("cart-updated", () => this.render());
         // Le mode/adresse de livraison change les frais → re-render du total.
         store.addEventListener("delivery-updated", () => this.updateTotal(store.state.cart));
+        // L'état favori (cœur) des lignes dépend de la liste des favoris.
+        store.addEventListener("favorites-updated", () => this.render());
         
         // Initialisation de l'affichage
         document.addEventListener("DOMContentLoaded", () => this.render());
@@ -95,6 +97,16 @@ class CartUI {
             clone.querySelector(".cart-item-minus").onclick = () => store.updateQuantity(item.id, -1);
             clone.querySelector(".cart-item-plus").onclick = () => store.updateQuantity(item.id, 1);
 
+            // Cœur "favori" — enregistre l'article personnalisé pour le re-commander.
+            const favBtn = clone.querySelector(".cart-item-fav");
+            if (favBtn) {
+                this.applyFavState(favBtn, item);
+                favBtn.onclick = async () => {
+                    await window.favoritesService?.toggle(item);
+                    this.applyFavState(favBtn, item);
+                };
+            }
+
             fragment.appendChild(clone);
         });
 
@@ -102,21 +114,25 @@ class CartUI {
     }
 
     getDetailsHTML(item) {
-        let detailsText = [];
-        if (item.boisson) detailsText.push(`🥤 ${escapeHTML(item.boisson)}`);
-        if (item.sauces && item.sauces.length > 0) {
-            const safeSauces = item.sauces.map((s) => escapeHTML(s)).join(", ");
-            detailsText.push(`🥣 ${safeSauces}`);
-        }
+        // Délègue au formateur partagé (DRY — même rendu que l'écran Favoris).
+        return formatCustomizationDetails(item);
+    }
 
-        if (item.sansCrudites && item.sansCrudites.length > 0) {
-            const safeCrudites = item.sansCrudites.map((c) => escapeHTML(c)).join(", ");
-            detailsText.push(`<span class="text-red-600 font-black">⚠️ ${safeCrudites}</span>`);
+    /** Reflète l'état favori (cœur plein/vide) du bouton d'une ligne panier. */
+    applyFavState(favBtn, item) {
+        const isFav = window.favoritesService?.isFavorite(item);
+        const icon = favBtn.querySelector("i");
+        favBtn.setAttribute("aria-pressed", isFav ? "true" : "false");
+        favBtn.setAttribute("aria-label", isFav ? "Retirer des favoris" : "Ajouter aux favoris");
+        if (isFav) {
+            favBtn.classList.add("text-red-500");
+            favBtn.classList.remove("text-gray-300");
+            if (icon) icon.className = "fas fa-heart text-lg";
+        } else {
+            favBtn.classList.add("text-gray-300");
+            favBtn.classList.remove("text-red-500");
+            if (icon) icon.className = "far fa-heart text-lg";
         }
-
-        return detailsText.length > 0
-            ? detailsText.join(" <span class='text-gray-300'>|</span> ")
-            : "";
     }
 
     updateBadges(cart) {

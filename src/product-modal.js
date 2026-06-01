@@ -102,6 +102,7 @@ class ProductModalUI {
     // Un produit est disponible par défaut, sauf s'il est explicitement marqué comme épuisé (false)
     if (item.isAvailable === false) {
       optionsContainer?.classList.add("hidden");
+      document.getElementById("modal-fav-btn")?.classList.add("hidden");
       if (btn) {
         btn.textContent = "Épuisé";
         btn.className = "w-full py-4 rounded-xl font-bold text-white bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2";
@@ -112,6 +113,47 @@ class ProductModalUI {
 
     this.#renderOptions(item, cfg, optionsContainer);
     this.#updateCTA(cfg, btn);
+    this.#updateFavButton(cfg);
+  }
+
+  /** Affiche/branche le bouton cœur "favori" (uniquement si commande possible). */
+  #updateFavButton(cfg) {
+    const btn = document.getElementById("modal-fav-btn");
+    if (!btn) return;
+
+    const isOrderingEnabled = cfg.features?.enableClickAndCollect !== false;
+    if (!isOrderingEnabled || !this.currentProduct?.id) {
+      btn.classList.add("hidden");
+      return;
+    }
+
+    btn.classList.remove("hidden");
+    btn.onclick = async () => {
+      await window.favoritesService?.toggle(this.#buildCartItem());
+      this.refreshFavButton();
+    };
+    this.refreshFavButton();
+  }
+
+  /** Met le cœur à jour selon que la personnalisation courante est déjà en favori. */
+  refreshFavButton() {
+    const btn = document.getElementById("modal-fav-btn");
+    if (!btn || btn.classList.contains("hidden")) return;
+
+    const isFav = window.favoritesService?.isFavorite(this.#buildCartItem());
+    const icon = btn.querySelector("i");
+    btn.setAttribute("aria-pressed", isFav ? "true" : "false");
+    btn.setAttribute("aria-label", isFav ? "Retirer des favoris" : "Ajouter aux favoris");
+
+    if (isFav) {
+      if (icon) icon.className = "fas fa-heart";
+      btn.classList.add("text-red-500", "border-red-200");
+      btn.classList.remove("text-gray-400", "border-gray-200");
+    } else {
+      if (icon) icon.className = "far fa-heart";
+      btn.classList.add("text-gray-400", "border-gray-200");
+      btn.classList.remove("text-red-500", "border-red-200");
+    }
   }
 
   #renderOptions(item, cfg, container) {
@@ -313,26 +355,36 @@ class ProductModalUI {
     setTimeout(() => first.focus(), 100);
   }
 
-  confirmAddToCart() {
+  /**
+   * Construit l'article au format panier depuis l'état courant du formulaire.
+   * Source unique consommée par l'ajout au panier ET la mise en favori (DRY).
+   * @returns {Object} Article personnalisé ({id, productId, nom, prix, image, formule, sauces, boisson, taille}).
+   */
+  #buildCartItem() {
     const formule = document.querySelector('input[name="formule"]:checked')?.value || "seul";
     const isMenu = formule === "menu";
-    const sauces = Array.from(document.querySelectorAll(".sauce-checkbox:checked")).map(cb => cb.value);
-    const boisson = isMenu ? document.querySelector('input[name="boisson"]:checked')?.value : null;
-    
-    if (isMenu && !boisson) return showToast("Choisissez une boisson", "error");
+    const sauces = Array.from(document.querySelectorAll(".sauce-checkbox:checked")).map((cb) => cb.value);
+    const boisson = isMenu ? (document.querySelector('input[name="boisson"]:checked')?.value || null) : null;
+    const taille = this.currentProduct.tailleChoisie || null;
 
-    const uniqueId = `${this.currentProduct.id}-${formule}-${sauces.join("-")}-${this.currentProduct.tailleChoisie || ""}`;
-    
-    store.addToCart({
-      id: uniqueId,
+    return {
+      id: `${this.currentProduct.id}-${formule}-${sauces.join("-")}-${taille || ""}`,
       productId: this.currentProduct.id,
       nom: isMenu ? `Menu ${this.currentProduct.nom}` : this.currentProduct.nom,
       prix: this.currentProduct.prixBase + (isMenu ? this.currentProduct.prixMenu : 0),
       image: this.currentProduct.image,
+      formule,
       sauces,
       boisson,
-      taille: this.currentProduct.tailleChoisie
-    });
+      taille,
+    };
+  }
+
+  confirmAddToCart() {
+    const item = this.#buildCartItem();
+    if (item.formule === "menu" && !item.boisson) return showToast("Choisissez une boisson", "error");
+
+    store.addToCart(item);
 
     showToast("Ajouté au panier ! 🍔", "success");
     triggerVibration("success");
@@ -361,6 +413,7 @@ window.toggleDrinkSection = () => {
     const devise = store.state.config.identity.currency || "€";
     const prix = productModalUI.currentProduct.prixBase + (isMenu ? productModalUI.currentProduct.prixMenu : 0);
     if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
+    productModalUI.refreshFavButton();
 };
 window.checkSauceLimit = (e, max) => {
     const checked = document.querySelectorAll(".sauce-checkbox:checked");
@@ -371,6 +424,7 @@ window.checkSauceLimit = (e, max) => {
         if (counter) counter.textContent = max;
         showToast(`Max ${max} sauces !`, "error");
     }
+    productModalUI.refreshFavButton();
 };
 window.updateProductSize = (radio) => {
     productModalUI.currentProduct.prixBase = parseFloat(radio.getAttribute("data-prix"));
@@ -378,4 +432,5 @@ window.updateProductSize = (radio) => {
     const btn = document.getElementById("modal-cta");
     const devise = store.state.config.identity.currency || "€";
     if (btn) btn.innerHTML = `<span>Ajouter - ${productModalUI.currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+    productModalUI.refreshFavButton();
 };
