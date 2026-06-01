@@ -6,6 +6,11 @@ import './snack-config.js';
 import './firebase-init.js';
 
 import { escapeHTML } from './utils.js';
+import { setupSWUpdatePrompt } from './sw-update.js';
+
+// Enregistre le Service Worker (prérequis à l'installation desktop "Add to Dock")
+// + branche le bandeau #pwa-update-banner (pattern "prompt", mutualisé DRY).
+setupSWUpdatePrompt({ context: 'SuperAdmin' });
 
 const { collection, doc, getDoc, getDocs, updateDoc, addDoc, serverTimestamp } = window.fs;
 const { onAuthStateChanged, signOut } = window.authTools;
