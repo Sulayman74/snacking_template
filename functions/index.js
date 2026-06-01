@@ -1133,6 +1133,59 @@ exports.createSnackAdmin = onCall({ region: "europe-west1" }, async (request) =>
 });
 
 // ============================================================================
+// ❤️ FIDÉLITÉ : crédit d'un point côté SERVEUR (transaction + anti double-scan)
+// ============================================================================
+// Remplace l'écriture client du scanner (src/scanner.js). L'admin du snack (ou
+// superadmin) scanne le QR (uid client) → +1 point, ou remise à 0 + récompense
+// au palier de 10. Transaction = pas de race au seuil ; cooldown = pas de double-scan.
+exports.awardLoyaltyPoint = onCall({ region: "europe-west1" }, async (request) => {
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+  const { clientUid, snackId } = data;
+  require_(V.isDocId(clientUid), "clientUid invalide.");
+  require_(V.isDocId(snackId), "snackId invalide.");
+
+  await assertCallerIsSnackAdmin(request, snackId);
+  await enforceRateLimit({ key: callerKey(request, "awardLoyaltyPoint"), max: 60, windowMs: 60_000 });
+
+  const MAX_POINTS = 10;
+  const COOLDOWN_MS = 20_000; // anti double-scan accidentel
+  const clientRef = db.collection("users").doc(clientUid);
+
+  return await db.runTransaction(async (tx) => {
+    const snap = await tx.get(clientRef);
+    if (!snap.exists) {
+      throw new HttpsError("not-found", "Ce QR code n'est pas dans la base.");
+    }
+    const d = snap.data();
+    const current = (d.pointsBySnack || {})[snackId] || 0;
+    const lastScan = (d.loyaltyLastScan || {})[snackId];
+    const lastMs = lastScan && lastScan.toMillis ? lastScan.toMillis() : 0;
+
+    // Anti-rejeu : refuse un re-scan trop rapproché (double-scan accidentel).
+    if (lastMs && Date.now() - lastMs < COOLDOWN_MS) {
+      throw new HttpsError("failed-precondition", "Carte déjà scannée à l'instant.");
+    }
+
+    let newPoints;
+    let reward = false;
+    if (current >= MAX_POINTS) {
+      newPoints = 0;        // palier atteint → menu offert, carte remise à 0
+      reward = true;
+    } else {
+      newPoints = current + 1;
+    }
+
+    tx.update(clientRef, {
+      [`pointsBySnack.${snackId}`]: newPoints,
+      [`loyaltyLastScan.${snackId}`]: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { points: newPoints, max: MAX_POINTS, reward };
+  });
+});
+
+// ============================================================================
 // 🛎️ FONCTION : ALERTE ADMINS À CHAQUE NOUVELLE COMMANDE (push cuisine)
 // ============================================================================
 // Notifie les admins du snack même tablette en veille / arrière-plan (le bip

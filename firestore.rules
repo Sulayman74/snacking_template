@@ -63,17 +63,28 @@ service cloud.firestore {
       // un snackId ; les fiches clients (PII) ne sont donc plus énumérables.
       allow list: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
 
-      // Mise à jour : un admin peut créditer la fidélité (pointsBySnack) de n'importe
-      // quel client, MAIS ne peut JAMAIS toucher 'role' ni 'snackId'
-      // (anti-élévation de privilège). Le client ne touche que fcmToken/lastOrderDate.
+      // Mise à jour : un admin peut éditer des fiches users de son périmètre, MAIS
+      // ne peut JAMAIS toucher 'role'/'snackId' (anti-élévation) NI les champs de
+      // fidélité (points/pointsBySnack/loyaltyLastScan) — désormais écrits
+      // EXCLUSIVEMENT côté serveur par awardLoyaltyPoint/finalizeOrder (Admin SDK).
       allow update: if isSuperAdmin()
                     || (
                          isAnyAdmin()
-                         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'snackId'])
+                         && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                              'role', 'snackId', 'points', 'pointsBySnack', 'loyaltyLastScan'
+                            ])
                        )
                     || (
+                         // Le client ne touche que ses champs non sensibles : token push,
+                         // date de dernière commande, et sa liste de favoris (raccourci
+                         // d'UI non financier — le prix réel est recalculé par finalizeOrder).
                          isOwner(userId)
-                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate'])
+                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate', 'favorites'])
+                         // Plafond anti-bloat : la liste de favoris reste raisonnable.
+                         && (
+                              !request.resource.data.diff(resource.data).affectedKeys().hasAny(['favorites'])
+                              || (request.resource.data.favorites is list && request.resource.data.favorites.size() <= 50)
+                            )
                        );
 
       // 🛡️ Création : le client crée son propre doc en rôle 'client', sans points

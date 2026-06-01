@@ -67,37 +67,24 @@ async function onScanSuccess(decodedText) {
   window.showToast("QR Code lu ! Vérification en cours...", "success");
 
   try {
-    const { doc, getDoc, updateDoc, increment } = window.fs;
-    const db = window.db;
+    // 🔒 Crédit des points côté SERVEUR (transaction + anti double-scan).
+    // L'admin n'écrit plus directement pointsBySnack (cf. firestore.rules).
+    const { httpsCallable, functions } = window.fs;
+    const awardLoyaltyPoint = httpsCallable(functions, "awardLoyaltyPoint");
+    const res = await awardLoyaltyPoint({ clientUid: decodedText, snackId: adminSnackId });
+    const { points, max, reward } = res.data || {};
 
-    const clientRef = doc(db, "users", decodedText);
-    const clientDoc = await getDoc(clientRef);
-
-    if (!clientDoc.exists()) {
-      window.showToast("❌ Erreur : Ce QR Code n'est pas dans notre base.", "error");
-      return;
-    }
-
-    const clientData = clientDoc.data();
-    const currentPoints = (clientData.pointsBySnack || {})[adminSnackId] || 0;
-    const maxPoints = 10;
-    const pointField = `pointsBySnack.${adminSnackId}`;
-
-    if (currentPoints >= maxPoints) {
-      await updateDoc(clientRef, { [pointField]: 0 });
+    if (reward) {
       window.showToast("🎉 BINGO ! Donnez un Menu Gratuit ! (Carte remise à 0)", "success");
+    } else if (points === max) {
+      window.showToast("✅ Point ajouté ! Le client gagne son menu ! 🎁", "success");
     } else {
-      await updateDoc(clientRef, { [pointField]: increment(1) });
-      const newTotal = currentPoints + 1;
-      if (newTotal === maxPoints) {
-        window.showToast(`✅ Point ajouté ! Le client gagne son menu ! 🎁`, "success");
-      } else {
-        window.showToast(`✅ Point ajouté ! Total actuel : ${newTotal}/${maxPoints}`, "success");
-      }
+      window.showToast(`✅ Point ajouté ! Total actuel : ${points}/${max}`, "success");
     }
   } catch (error) {
-    console.error("❌ Erreur critique lors du scan :", error);
-    window.showToast("Erreur de communication avec le serveur.", "error");
+    console.error("❌ Erreur scan fidélité :", error);
+    // Les HttpsError du serveur exposent un message lisible (QR inconnu, cooldown…).
+    window.showToast(error?.message || "Erreur de communication avec le serveur.", "error");
   }
 }
 
