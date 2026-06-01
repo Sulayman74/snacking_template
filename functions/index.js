@@ -250,6 +250,9 @@ async function assertCartPricesAreLegit(cartItems, paidAmountCents, snackId) {
     paidAmountCents + TOL >= expectedItemsCents,
     "Montant encaissé inférieur à la valeur réelle du panier."
   );
+
+  // Sous-total articles (centimes), prix déjà validés → réutilisable (ex. minOrder).
+  return expectedItemsCents;
 }
 
 // ============================================================================
@@ -964,7 +967,7 @@ exports.finalizeOrder = onCall(
     // 🛡️ ANTI-FRAUDE PRIX — chaque prix unitaire doit correspondre à un prix réel
     // du produit en base, et le montant encaissé doit couvrir la valeur du panier.
     // On ne fait JAMAIS confiance au prix envoyé par le client (cf. CLAUDE.md §6.1).
-    await assertCartPricesAreLegit(cartItems, paymentIntent.amount, snackId);
+    const itemsCents = await assertCartPricesAreLegit(cartItems, paymentIntent.amount, snackId);
 
     // 🚚 ETA (heuristique simple) + livraison — TOUT recalculé serveur.
     const dcfg = snackData.delivery || {};
@@ -993,6 +996,17 @@ exports.finalizeOrder = onCall(
         throw new HttpsError(
           "out-of-range",
           "Adresse hors de la zone de livraison de ce restaurant."
+        );
+      }
+
+      // 🛡️ PANIER MINIMUM — comme le client (checkout.js), uniquement en livraison
+      // et sur le SOUS-TOTAL articles (hors frais de livraison). N'enforce que si
+      // un minimum est configuré. itemsCents : prix déjà validés côté serveur.
+      const minOrder = Number(dcfg.minOrder);
+      if (Number.isFinite(minOrder) && minOrder > 0 && itemsCents < Math.round(minOrder * 100)) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Minimum de commande pour la livraison : ${minOrder.toFixed(2)} €.`
         );
       }
 
