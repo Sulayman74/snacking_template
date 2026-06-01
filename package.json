@@ -7,21 +7,19 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-
     "build:tacos": "SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 vite build",
     "build:pizza": "SNACK_ID=PsobiuoeUzNmHnwGtaRu vite build",
     "build:all": "npm run build:tacos && npm run build:pizza",
-
     "deploy:tacos": "npm run build:tacos && firebase deploy --only hosting:demo-tacos",
     "deploy:pizza": "npm run build:pizza && firebase deploy --only hosting:demo-pizza",
     "deploy:all": "npm run build:all && firebase deploy --only hosting",
-
     "migrate:snack-fields": "node functions/scripts/migrate-snack-fields.js",
     "migrate:snack-fields:apply": "node functions/scripts/migrate-snack-fields.js --apply",
-
     "emulators": "firebase emulators:start --only auth,firestore,functions,storage --project snacking-template",
     "seed": "node functions/seed-emulator.js",
-    "test:e2e": "VITE_E2E_TESTING=true SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 firebase emulators:exec --only auth,firestore,storage --project snacking-template \"node functions/seed-emulator.js && playwright test cart.spec.js commande.spec.js stock.spec.js\""
+    "test:e2e": "VITE_E2E_TESTING=true SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 firebase emulators:exec --only auth,firestore,storage --project snacking-template \"node functions/seed-emulator.js && playwright test cart.spec.js commande.spec.js stock.spec.js\"",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -38,11 +36,14 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.5.0",
+    "@vitest/coverage-v8": "^4.1.8",
     "autoprefixer": "^10.4.27",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.1.8",
     "workbox-window": "^7.4.0"
   },
   "dependencies": {
