@@ -1,9 +1,14 @@
 // ============================================================================
 // 📸 SCANNER QR CODE (Admin - Fidélité)
 // ============================================================================
-// Dépendances : window.fs (doc, getDoc, updateDoc, increment)
-//               window.db, window.snackConfig
+// Dépendances : window.snackConfig
 //               window.showToast, window.triggerVibration
+// ⚠️ scanner.js est importé PAR firebase-init.js : on importe donc functions
+// directement depuis le SDK (et non via le barrel core/firebase.js) pour éviter
+// un cycle firebase-init → scanner → barrel → firebase-init. L'app par défaut
+// est déjà initialisée par firebase-init au moment où ces handlers s'exécutent.
+import { getApp } from "firebase/app";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 let html5Qrcode = null;
 
@@ -69,7 +74,7 @@ async function onScanSuccess(decodedText) {
   try {
     // 🔒 Crédit des points côté SERVEUR (transaction + anti double-scan).
     // L'admin n'écrit plus directement pointsBySnack (cf. firestore.rules).
-    const { httpsCallable, functions } = window.fs;
+    const functions = getFunctions(getApp(), "europe-west1");
     const awardLoyaltyPoint = httpsCallable(functions, "awardLoyaltyPoint");
     const res = await awardLoyaltyPoint({ clientUid: decodedText, snackId: adminSnackId });
     const { points, max, reward } = res.data || {};

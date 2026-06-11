@@ -125,10 +125,12 @@ service cloud.firestore {
       //   seulement si la course n'est pas déjà prise par un autre livreur.
       allow update: if isAuthenticated() && (
         // Le client (propriétaire) ne peut QUE déclencher "Je suis arrivé" :
-        // statut → 'nouvelle' + dateArriveeClient. Il ne peut PAS falsifier
-        // total/paiement/snackId. Cf. src/tracking.js:104.
+        // 'en_attente_client' → 'nouvelle' + dateArriveeClient. Il ne peut PAS
+        // falsifier total/paiement/snackId, NI renvoyer en file une commande
+        // déjà avancée (prete/en_livraison/livree). Cf. src/tracking.js:104.
         (
           isOwner(resource.data.userId)
+          && resource.data.statut == 'en_attente_client'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'dateArriveeClient'])
           && request.resource.data.statut == 'nouvelle'
         ) ||

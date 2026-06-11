@@ -17,6 +17,17 @@ import {
   runTransaction,
   serverTimestamp,
 } from "firebase/firestore";
+import {
+  auth,
+  db,
+  storage,
+  messaging,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  getToken,
+  storageTools,
+} from "../core/firebase.js";
 import { escapeHTML } from "../utils.js";
 import {
   haversineKm,
@@ -89,8 +100,7 @@ class LivreurUI {
       if (document.visibilityState === "visible" && this.watchOrderId) this.requestWakeLock();
     });
 
-    const { onAuthStateChanged } = window.authTools;
-    onAuthStateChanged(window.auth, (user) => this.onAuth(user));
+    onAuthStateChanged(auth, (user) => this.onAuth(user));
   }
 
   // --- Auth ---------------------------------------------------------------
@@ -104,7 +114,7 @@ class LivreurUI {
     btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connexion…`;
     this.els.loginError.classList.add("hidden");
     try {
-      await window.authTools.signInWithEmailAndPassword(window.auth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
       this.els.loginError.textContent = "Identifiants incorrects.";
       this.els.loginError.classList.remove("hidden");
@@ -116,7 +126,7 @@ class LivreurUI {
   async onAuth(user) {
     if (!user) return this.showLogin();
     try {
-      const snap = await getDoc(doc(window.db, "users", user.uid));
+      const snap = await getDoc(doc(db, "users", user.uid));
       const data = snap.exists() ? snap.data() : null;
       if (!data) {
         window.showToast?.("Accès refusé.", "error");
@@ -183,7 +193,7 @@ class LivreurUI {
 
   async logout() {
     this.cleanup();
-    try { await window.authTools.signOut(window.auth); } catch (_) {}
+    try { await signOut(auth); } catch (_) {}
     this.showLogin();
   }
 
@@ -195,7 +205,7 @@ class LivreurUI {
     // livraisons. Évite de télécharger (et facturer) les commandes click&collect
     // 'prete' qui étaient jusqu'ici récupérées puis jetées en JS.
     const q = query(
-      collection(window.db, "commandes"),
+      collection(db, "commandes"),
       where("snackId", "==", this.snackId),
       where("mode", "==", "delivery"),
       where("statut", "in", ["prete", "en_livraison"]),
@@ -205,7 +215,7 @@ class LivreurUI {
       q,
       (snap) => {
         const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        const uid = window.auth.currentUser?.uid;
+        const uid = auth.currentUser?.uid;
         const mine = docs.filter((o) => o.statut === "en_livraison" && o.livreurId === uid);
         const available = docs.filter(
           (o) => o.statut === "prete" && o.mode === "delivery" && !o.livreurId,
@@ -349,11 +359,11 @@ class LivreurUI {
 
   // --- Prise en charge (claim transactionnel) ----------------------------
   async takeCourse(orderId) {
-    const uid = window.auth.currentUser?.uid;
+    const uid = auth.currentUser?.uid;
     if (!uid) return;
     try {
-      await runTransaction(window.db, async (tx) => {
-        const ref = doc(window.db, "commandes", orderId);
+      await runTransaction(db, async (tx) => {
+        const ref = doc(db, "commandes", orderId);
         const snap = await tx.get(ref);
         if (!snap.exists()) throw new Error("introuvable");
         const d = snap.data();
@@ -427,7 +437,7 @@ class LivreurUI {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Envoi…'; }
     try {
       const url = await uploadPod(this.snackId, orderId, kind, blob);
-      const ref = doc(window.db, "commandes", orderId);
+      const ref = doc(db, "commandes", orderId);
 
       // PoD stocké sous livreur.* : seul espace autorisé au livreur par les règles
       // (affectedKeys = {livreur}). Champs pointés → ne pas écraser livreur.position.
@@ -472,7 +482,7 @@ class LivreurUI {
         const now = Date.now();
         if (shouldWritePosition(this.lastWritten, pos, now)) {
           this.lastWritten = { lat: pos.lat, lng: pos.lng, t: now };
-          updateDoc(doc(window.db, "commandes", order.id), {
+          updateDoc(doc(db, "commandes", order.id), {
             "livreur.position": { lat: pos.lat, lng: pos.lng, updatedAt: serverTimestamp() },
           }).catch((e) => console.warn("write position:", e.message));
         }
@@ -515,10 +525,10 @@ class LivreurUI {
       const perm = await Notification.requestPermission();
       if (perm !== "granted") return window.showToast?.("Notifications refusées.", "error");
       const reg = await navigator.serviceWorker.ready;
-      const token = await window.authTools.getToken(window.messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
-      const uid = window.auth.currentUser?.uid;
+      const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+      const uid = auth.currentUser?.uid;
       if (token && uid) {
-        await updateDoc(doc(window.db, "users", uid), { fcmToken: token });
+        await updateDoc(doc(db, "users", uid), { fcmToken: token });
         window.showToast?.("Notifications activées 🔔", "success");
       }
     } catch (err) {
@@ -642,9 +652,9 @@ function compressImage(file, maxDim = 1280, quality = 0.7) {
 }
 
 async function uploadPod(snackId, orderId, kind, blob) {
-  const { ref, uploadBytes, getDownloadURL } = window.storageTools;
+  const { ref, uploadBytes, getDownloadURL } = storageTools;
   const path = `pod/${snackId}/${orderId}/${kind}_${Date.now()}.jpg`;
-  const r = ref(window.storage, path);
+  const r = ref(storage, path);
   await uploadBytes(r, blob, { contentType: "image/jpeg" });
   return getDownloadURL(r);
 }

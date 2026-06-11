@@ -3,14 +3,20 @@
 // ============================================================================
 // Envoie discrètement les erreurs critiques ou événements importants 
 // vers Firestore pour le monitoring SuperAdmin.
+import {
+    auth,
+    db,
+    collection,
+    addDoc,
+    serverTimestamp,
+} from "./core/firebase.js";
 
 export async function logError(action, message, details = {}) {
     try {
-        if (!window.fs || !window.db) return; // Firestore pas encore prêt
-        
-        const { collection, addDoc, serverTimestamp } = window.fs;
+        if (!db) return; // Firestore pas encore prêt
+
         const snackId = window.snackConfig?.identity?.id || window.currentAdminSnackId || "inconnu";
-        const userId = window.auth?.currentUser?.uid || "anonyme";
+        const userId = auth?.currentUser?.uid || "anonyme";
         
         const logEntry = {
             snackId,
@@ -23,7 +29,7 @@ export async function logError(action, message, details = {}) {
             userAgent: navigator.userAgent
         };
 
-        await addDoc(collection(window.db, "system_logs"), logEntry);
+        await addDoc(collection(db, "system_logs"), logEntry);
         console.log("📡 [SaaS Logger] Erreur remontée au QG.");
     } catch (e) {
         // Fallback silencieux : on ne veut pas qu'un plantage du logger casse l'app.

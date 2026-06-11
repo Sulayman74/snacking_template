@@ -10,6 +10,7 @@
 import { store } from "./core/Store.js";
 import "./ui/FavoritesUI.js";
 import { favoriteKey, showToast, triggerVibration } from "./utils.js";
+import { db, doc, onSnapshot, updateDoc } from "./core/firebase.js";
 
 /** Plafond anti-bloat du document utilisateur (favoris tous snacks confondus). */
 const MAX_FAVORITES = 50;
@@ -52,9 +53,8 @@ class FavoritesService {
     if (this.unsubscribe) return;
 
     try {
-      const { doc, onSnapshot } = window.fs;
       this.unsubscribe = onSnapshot(
-        doc(window.db, "users", user.uid),
+        doc(db, "users", user.uid),
         (snap) => {
           const data = snap.exists() ? snap.data() : {};
           // On garde le tableau COMPLET (tous snacks) dans le store ; l'UI filtre
@@ -149,8 +149,7 @@ class FavoritesService {
 
     const next = [...all, fav];
     try {
-      const { doc, updateDoc } = window.fs;
-      await updateDoc(doc(window.db, "users", user.uid), { favorites: next });
+      await updateDoc(doc(db, "users", user.uid), { favorites: next });
       store.setFavorites(next); // optimiste (le snapshot confirmera)
       triggerVibration?.("success");
       showToast("Ajouté à vos favoris ❤️", "success");
@@ -170,8 +169,7 @@ class FavoritesService {
       (f) => !(f.favId === favId && f.snackId === snackId)
     );
     try {
-      const { doc, updateDoc } = window.fs;
-      await updateDoc(doc(window.db, "users", user.uid), { favorites: next });
+      await updateDoc(doc(db, "users", user.uid), { favorites: next });
       store.setFavorites(next); // optimiste
       triggerVibration?.("light");
       showToast("Retiré de vos favoris", "success");

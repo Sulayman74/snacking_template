@@ -4,8 +4,8 @@
 // Le push est ENVOYÉ par la Cloud Function notifyAdminsOnNewOrder. Ici on gère
 // seulement l'OPT-IN côté cuisine : permission + enregistrement du fcmToken sur
 // users/{uid} (autorisé par les règles : owner peut écrire fcmToken).
-// Dépendances : window.auth, window.messaging, window.authTools.getToken,
-//               window.fs (doc, updateDoc), window.db, window.showToast.
+// Dépendances : window.messaging, window.showToast.
+import { auth, db, doc, updateDoc, getToken } from "./core/firebase.js";
 
 const VAPID_KEY =
   "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098";
@@ -16,13 +16,13 @@ const hideBanner = () => banner()?.classList.add("translate-y-32", "opacity-0", 
 
 async function writeToken() {
   const reg = await navigator.serviceWorker.ready;
-  const token = await window.authTools.getToken(window.messaging, {
+  const token = await getToken(window.messaging, {
     vapidKey: VAPID_KEY,
     serviceWorkerRegistration: reg,
   });
-  const uid = window.auth?.currentUser?.uid;
+  const uid = auth?.currentUser?.uid;
   if (token && uid) {
-    await window.fs.updateDoc(window.fs.doc(window.db, "users", uid), { fcmToken: token });
+    await updateDoc(doc(db, "users", uid), { fcmToken: token });
   }
   return token;
 }

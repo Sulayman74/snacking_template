@@ -5,6 +5,7 @@
 // Les utilitaires Tailwind bg-primary / text-accent / border-accent / bg-primary-light
 // / text-on-primary sont générés par le bloc @theme dans styles.css.
 import { store } from "./core/Store.js";
+import { doc, getDoc } from "./core/firebase.js";
 
 const SAAS_THEMES = {
   "ruby":      { primaryHex: "#dc2626", accentHex: "#dc2626", lightHex: "#fee2e2", onPrimaryHex: "#ffffff" },
@@ -38,8 +39,6 @@ try {
   if (currentConfig?.identity?.id === snackId) {
     return currentConfig;
   }
-
-  const { doc, getDoc } = window.fs;
 
   const snackRef = doc(db, "snacks", snackId);
   const snackSnap = await getDoc(snackRef);

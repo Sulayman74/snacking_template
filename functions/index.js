@@ -12,6 +12,7 @@ const os = require("os");
 const fs = require("fs");
 const sharp = require("sharp");
 const admin = require("firebase-admin");
+const { getStripe, resolveSubscriptionId } = require("./lib/stripe");
 
 // Initialisation de Firebase Admin
 admin.initializeApp();
@@ -569,7 +570,7 @@ exports.processPushCampaigns = onSchedule(
 exports.createPaymentIntent = onCall(
   { region: "europe-west1" },
   async (request) => {
-    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const stripe = getStripe();
 
     // 🛡️ Authentification obligatoire : le client est forcément loggé pour
     // commander (cf. src/checkout.js). Ferme la porte aux appels anonymes
@@ -684,7 +685,7 @@ exports.createPaymentIntent = onCall(
 // L'écriture de `stripeAccountId` se fait via l'Admin SDK — JAMAIS par le client
 // (la rule snacks/write est document-level → ne pas laisser un admin l'auto-écrire).
 exports.getStripeOnboardingLink = onCall({ region: "europe-west1" }, async (request) => {
-  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+  const stripe = getStripe();
   const { snackId, origin } = request.data || {};
   require_(V.isDocId(snackId), "snackId invalide.");
   // URL de retour construite SERVEUR depuis une origine whitelistée (anti open-redirect).
@@ -737,7 +738,7 @@ exports.getStripeOnboardingLink = onCall({ region: "europe-west1" }, async (requ
 // Lien de connexion au portail Stripe Express (compte déjà créé).
 // Appelé par le bouton "Ouvrir mon portail" (src/admin.js → openStripeExpressDashboard).
 exports.createStripeConnectLoginLink = onCall({ region: "europe-west1" }, async (request) => {
-  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+  const stripe = getStripe();
   const { snackId } = request.data || {};
   require_(V.isDocId(snackId), "snackId invalide.");
   await assertCallerIsSnackAdmin(request, snackId);
@@ -760,7 +761,7 @@ exports.createStripeConnectLoginLink = onCall({ region: "europe-west1" }, async 
 // Permet à l'UI de distinguer "compte créé mais onboarding incomplet" de "actif",
 // sans dépendre de la configuration du webhook account.updated.
 exports.getStripeAccountStatus = onCall({ region: "europe-west1" }, async (request) => {
-  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+  const stripe = getStripe();
   const { snackId } = request.data || {};
   require_(V.isDocId(snackId), "snackId invalide.");
   await assertCallerIsSnackAdmin(request, snackId);
@@ -800,7 +801,7 @@ exports.getStripeAccountStatus = onCall({ region: "europe-west1" }, async (reque
 // (price_data), donc aucun Price à pré-créer dans Stripe. Le snack_id voyage en
 // metadata → le webhook checkout.session.completed lie l'abonnement au snack.
 exports.createSubscriptionCheckout = onCall({ region: "europe-west1" }, async (request) => {
-  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+  const stripe = getStripe();
   const { snackId, amountEur, origin } = request.data || {};
   require_(V.isDocId(snackId), "snackId invalide.");
   require_(V.isPositiveInt(amountEur, 1000) && amountEur >= 5, "Montant invalide (5 à 1000 €).");
@@ -856,7 +857,7 @@ exports.createSubscriptionCheckout = onCall({ region: "europe-west1" }, async (r
 exports.finalizeOrder = onCall(
   { region: "europe-west1" },
   async (request) => {
-    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const stripe = getStripe();
 
     // 1. Authentification obligatoire
     if (!request.auth) {
@@ -1578,11 +1579,30 @@ exports.getUpcomingFootballEvents = onCall(
 // ============================================================================
 // 🤖 FONCTION 7 : STRIPE WEBHOOK (SAAS BILLING B2B)
 // ============================================================================
-// Écoute les événements Stripe (ex: invoice.payment_failed) pour couper 
+// Écoute les événements Stripe (ex: invoice.payment_failed) pour couper
 // automatiquement l'accès (maintenance) en cas de non-paiement de l'abonnement.
 
+/**
+ * Bascule le `maintenanceMode` du snack associé à un abonnement Stripe.
+ * Centralise la logique partagée par les events de suspension/réactivation SaaS.
+ * @param {string|null} subscriptionId - ID d'abonnement Stripe (no-op si falsy).
+ * @param {boolean} maintenanceMode - true = suspendre, false = réactiver.
+ * @param {string} reason - Raison loggée (sans PII).
+ * @returns {Promise<void>}
+ */
+async function setSnackMaintenanceBySubscription(subscriptionId, maintenanceMode, reason) {
+    if (!subscriptionId) return;
+    const snap = await db.collection("snacks")
+        .where("stripeSubscriptionId", "==", subscriptionId).limit(1).get();
+    if (snap.empty) return;
+    const snackDoc = snap.docs[0];
+    await snackDoc.ref.update({ maintenanceMode });
+    const icon = maintenanceMode ? "🔒 LOCATAIRE SUSPENDU" : "✅ LOCATAIRE RÉACTIVÉ";
+    console.log(`${icon}: snack ${snackDoc.id} — ${reason} (Sub: ${subscriptionId}).`);
+}
+
 exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, response) => {
-    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const stripe = getStripe();
     const sig = request.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -1613,38 +1633,24 @@ exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, re
     }
 
     try {
-        if (event.type === 'invoice.payment_failed' || event.type === 'customer.subscription.deleted') {
-            const invoice = event.data.object;
-            const subscriptionId = invoice.subscription || invoice.id; // if subscription deleted event
-            
-            if (subscriptionId) {
-                // Find the Snack with this subscription ID
-                const snacksSnapshot = await db.collection("snacks").where("stripeSubscriptionId", "==", subscriptionId).get();
-                
-                if (!snacksSnapshot.empty) {
-                    const snackDoc = snacksSnapshot.docs[0];
-                    await snackDoc.ref.update({ maintenanceMode: true });
-                    console.log(`🔒 LOCATAIRE SUSPENDU: Le snack ${snackDoc.id} a été mis en maintenance suite à un échec de paiement (Sub: ${subscriptionId}).`);
-                }
-            }
+        if (event.type === 'invoice.payment_failed') {
+            // Objet = Invoice → l'ID d'abonnement se lit via resolveSubscriptionId
+            // (legacy `invoice.subscription` OU Basil `invoice.parent…`).
+            await setSnackMaintenanceBySubscription(
+                resolveSubscriptionId(event.data.object), true, "échec de paiement");
+        }
+        else if (event.type === 'customer.subscription.deleted') {
+            // ⚠️ Pour cet event, l'objet EST une Subscription : l'ID est
+            // directement `object.id` (et NON `invoice.subscription` — c'était
+            // le bug de regroupement initial, masqué par `|| invoice.id`).
+            await setSnackMaintenanceBySubscription(
+                event.data.object.id, true, "abonnement annulé");
         }
         else if (event.type === 'invoice.payment_succeeded') {
-            const invoice = event.data.object;
-            const subscriptionId = invoice.subscription;
-            
-            if (subscriptionId) {
-                // Find the Snack with this subscription ID
-                const snacksSnapshot = await db.collection("snacks").where("stripeSubscriptionId", "==", subscriptionId).get();
-                
-                if (!snacksSnapshot.empty) {
-                    const snackDoc = snacksSnapshot.docs[0];
-                    // Réactivation automatique : un snack suspendu pour impayé qui
-                    // règle son abonnement doit être remis en ligne (sinon il reste
-                    // bloqué malgré le paiement).
-                    await snackDoc.ref.update({ maintenanceMode: false });
-                    console.log(`✅ PAIEMENT SAAS REÇU: Le snack ${snackDoc.id} réactivé après paiement (Sub: ${subscriptionId}).`);
-                }
-            }
+            // Réactivation automatique : un snack suspendu pour impayé qui règle
+            // son abonnement doit être remis en ligne (sinon bloqué malgré le paiement).
+            await setSnackMaintenanceBySubscription(
+                resolveSubscriptionId(event.data.object), false, "paiement reçu");
         }
         else if (event.type === 'checkout.session.completed') {
             // 💼 Abonnement SaaS souscrit par un resto → on lie l'abonnement au snack

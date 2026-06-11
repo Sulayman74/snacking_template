@@ -1,5 +1,6 @@
 import { adminStore } from "../core/AdminStore.js";
 import { escapeHTML, showToast } from "../utils.js";
+import { db, fs } from "../core/firebase.js";
 
 class AdminConfigUI {
     constructor() {
@@ -232,7 +233,7 @@ class AdminConfigUI {
 
     async saveToServer(successMsg) {
         try {
-            await adminStore.saveConfig(window.db, window.fs);
+            await adminStore.saveConfig(db, fs);
             showToast(successMsg, "success");
         } catch (error) {
             showToast(error.message, "error");

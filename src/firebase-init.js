@@ -65,7 +65,7 @@ const firebaseConfig = {
 };
 
 // 3. INITIALISATION
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 // 🛡️ FIREBASE APP CHECK (reCAPTCHA v3)
 // Protège Firestore, Functions et Storage contre les appels depuis des origines non autorisées.
@@ -95,14 +95,24 @@ if (APPCHECK_SITE_KEY) {
   );
 }
 
-const auth = getAuth(app);
-const messaging = getMessaging(app);
+export const auth = getAuth(app);
+// Firebase Cloud Messaging n'est pas supporté partout (Safari iOS ancien,
+// environnements de test/SSR sans Notification/ServiceWorker API). Init défensive
+// pour ne PAS casser le chargement du module si l'API est absente. Les consommateurs
+// (onMessage, getToken) doivent vérifier que `messaging` n'est pas null.
+let _messaging = null;
+try {
+  _messaging = getMessaging(app);
+} catch (e) {
+  console.warn("⚠️ Firebase Messaging indisponible :", e?.code || e?.message);
+}
+export const messaging = _messaging;
 // Activation du cache persistant (pour le mode offline)
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
-const storage = getStorage(app);
-const functions = getFunctions(app, "europe-west1");
+export const storage = getStorage(app);
+export const functions = getFunctions(app, "europe-west1");
 
 // 🤖 MODE TEST E2E (Playwright) : on branche TOUT le SDK sur les émulateurs
 // locaux au lieu de la prod. Garde-fou strict : ne s'active QUE si le flag est
@@ -149,12 +159,10 @@ setTimeout(initAnalytics, 3500);
 // ============================================================================
 // 4. EXPORTATION SÉCURISÉE (LE HUB POUR VITE)
 // ============================================================================
-window.db = db;
-window.storage = storage;
-window.auth = auth;
-window.messaging = messaging;
-
-window.fs = {
+// 🧰 Namespaces SDK exportés en ESM (Lot 4 PR-1). Restent aussi exposés en
+// window.* (dual-access) tant que les lecteurs catégorie A ne sont pas tous
+// migrés vers les imports `src/core/firebase.js`.
+export const fs = {
   addDoc,
   app,
   collection,
@@ -182,8 +190,8 @@ window.fs = {
   where,
   writeBatch,
 };
-window.storageTools = { getDownloadURL, ref, uploadBytes };
-window.authTools = {
+export const storageTools = { getDownloadURL, ref, uploadBytes };
+export const authTools = {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -194,6 +202,12 @@ window.authTools = {
   getToken,
   onMessage,
 };
+
+// ⚠️ Catégorie A (db/auth/storage/fs/authTools/storageTools) retirée de window.*
+// (Lot 4 PR-1) : ces dépendances passent désormais EXCLUSIVEMENT par les imports
+// ESM `src/core/firebase.js`. Seul window.messaging subsiste (lu par loyalty.js,
+// catégorie B — sera migré en PR-2).
+window.messaging = messaging;
 
 // ============================================================================
 // 🕵️‍♂️ ÉCOUTEUR D'ÉTAT (LE VIGILE)
@@ -227,7 +241,6 @@ onAuthStateChanged(auth, async (user) => {
     // 3. Récupération du rôle
     let role = "client";
     if (user) {
-      const { getDoc, doc } = window.fs;
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
         role = userDoc.data().role;
@@ -248,8 +261,10 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-onMessage(messaging, (payload) => {
-  const titre = payload.notification?.title || "Nouvelle notification";
-  const message = payload.notification?.body || "";
-  window.showToast(`🔔 ${titre} : ${message}`, "success");
-});
+if (messaging) {
+  onMessage(messaging, (payload) => {
+    const titre = payload.notification?.title || "Nouvelle notification";
+    const message = payload.notification?.body || "";
+    window.showToast(`🔔 ${titre} : ${message}`, "success");
+  });
+}

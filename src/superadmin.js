@@ -7,15 +7,31 @@ import './firebase-init.js';
 
 import { escapeHTML } from './utils.js';
 import { setupSWUpdatePrompt } from './sw-update.js';
+import {
+    auth,
+    db,
+    functions,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    updateDoc,
+    addDoc,
+    serverTimestamp,
+    query,
+    orderBy,
+    limit,
+    where,
+    getAggregateFromServer,
+    sum,
+    httpsCallable,
+    onAuthStateChanged,
+    signOut,
+} from './core/firebase.js';
 
 // Enregistre le Service Worker (prérequis à l'installation desktop "Add to Dock")
 // + branche le bandeau #pwa-update-banner (pattern "prompt", mutualisé DRY).
 setupSWUpdatePrompt({ context: 'SuperAdmin' });
-
-const { collection, doc, getDoc, getDocs, updateDoc, addDoc, serverTimestamp } = window.fs;
-const { onAuthStateChanged, signOut } = window.authTools;
-const auth = window.auth;
-const db = window.db;
 
 // Variables Globales
 let allSnacks = [];
@@ -195,7 +211,6 @@ async function loadLogs() {
     btn.disabled = true;
 
     try {
-        const { query, orderBy, limit } = window.fs;
         const q = query(collection(db, "system_logs"), orderBy("timestamp", "desc"), limit(50));
         const snapshot = await getDocs(q);
         
@@ -491,7 +506,6 @@ if (btnOpenModal && modalNewSnack) {
             const snackId = newSnackRef.id;
             let adminInfo = null;
             try {
-                const { httpsCallable, functions } = window.fs;
                 const res = await httpsCallable(functions, "createSnackAdmin")({ snackId, email: adminEmail, nom });
                 adminInfo = res.data; // { email, tempPassword }
             } catch (adminErr) {
@@ -596,8 +610,6 @@ async function loadBillingData() {
     }
     tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-2xl"></i> Calcul de la facturation…</td></tr>`;
 
-    const { query, collection, where, getAggregateFromServer, sum } = window.fs;
-
     // CA du mois par snack via AGRÉGATION serveur (le superadmin lit toutes les
     // commandes : firestore.rules autorise isSuperAdmin). ~1 lecture / 1000 docs.
     const rows = await Promise.all(allSnacks.map(async (snack) => {
@@ -696,7 +708,6 @@ document.querySelectorAll(".sub-amount").forEach((btn) => {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         try {
-            const { httpsCallable, functions } = window.fs;
             const res = await httpsCallable(functions, "createSubscriptionCheckout")({
                 snackId, amountEur, origin: window.location.origin,
             });

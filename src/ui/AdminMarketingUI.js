@@ -1,4 +1,5 @@
 import { adminStore } from "../core/AdminStore.js";
+import { db, fs } from "../core/firebase.js";
 import { escapeHTML, showToast } from "../utils.js";
 import { getWeatherForCity } from "../services/weatherService.js";
 import { getInsight } from "../services/weatherInsights.js";
@@ -110,10 +111,10 @@ class AdminMarketingUI {
         // 2 & 3 : async tips en parallèle pour minimiser la latence perçue.
         const snackId = window.currentAdminSnackId;
         const [salesTip, footballTip] = await Promise.all([
-            (snackId && window.db && window.fs)
-                ? adminStore.getSalesTrendTip(window.db, window.fs, snackId)
+            (snackId && db && fs)
+                ? adminStore.getSalesTrendTip(db, fs, snackId)
                 : Promise.resolve(null),
-            window.fs ? adminStore.getFootballTip(window.fs) : Promise.resolve(null),
+            fs ? adminStore.getFootballTip(fs) : Promise.resolve(null),
         ]);
 
         // Ordre de priorité visuelle (top → bas) :
@@ -224,7 +225,7 @@ class AdminMarketingUI {
                 if (product?.image) imageUrl = product.image;
             }
 
-            await adminStore.schedulePush(window.db, window.fs, {
+            await adminStore.schedulePush(db, fs, {
                 titre,
                 message,
                 cible: target,

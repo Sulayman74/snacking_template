@@ -1,7 +1,8 @@
 // ============================================================================
 // 📥 CSV — Import en masse, Export comptable, Modèle, Aide
 // ============================================================================
-// Dépendances : window.currentAdminSnackId, window.db, window.fs, window.showToast
+// Dépendances : window.currentAdminSnackId, window.showToast
+import { db, addDoc, collection, serverTimestamp } from "./core/firebase.js";
 
 // ============================================================================
 // 📥 IMPORT DE PRODUITS EN MASSE (SMART CSV + SÉCURITÉ)
@@ -22,7 +23,6 @@ window.importProductsCSV = async (event) => {
     const separator = firstLine.includes(";") ? ";" : ",";
     const headers = firstLine.split(separator).map(h => h.trim().toLowerCase());
 
-    const { addDoc, collection, serverTimestamp } = window.fs;
     let successCount = 0;
 
     // 2. Traitement des données
@@ -52,7 +52,7 @@ window.importProductsCSV = async (event) => {
 
       const prix = parseFloat(String(row.prix).replace(",", ".")) || 0;
 
-      await addDoc(collection(window.db, "produits"), {
+      await addDoc(collection(db, "produits"), {
         snackId: window.currentAdminSnackId,
         nom: row.nom,
         description: row.description || "",

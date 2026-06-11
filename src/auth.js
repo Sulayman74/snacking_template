@@ -1,9 +1,22 @@
 // ============================================================================
 // 🔐 AUTHENTIFICATION (Modale, Formulaire, Google, Reset, Logout)
 // ============================================================================
-// Dépendances : window.auth, window.authTools, window.fs, window.db
-//               window.showToast, window.triggerVibration, window.switchView
-//               window.snackConfig
+// Dépendances : window.showToast, window.triggerVibration, window.switchView,
+//               window.snackConfig (catégories B/C — Lot 4 PR-2/PR-3)
+import {
+  auth,
+  db,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from "./core/firebase.js";
 
 // ============================================================================
 // 🔐 LOGIQUE DU FORMULAIRE D'AUTH
@@ -41,13 +54,11 @@ if (authForm) {
     }
 
     try {
-      const { signInWithEmailAndPassword, createUserWithEmailAndPassword } =
-        window.authTools;
       if (isSignUpMode) {
-        await createUserWithEmailAndPassword(window.auth, email, password);
+        await createUserWithEmailAndPassword(auth, email, password);
         window.showToast("Compte créé ! 🎉", "success");
       } else {
-        await signInWithEmailAndPassword(window.auth, email, password);
+        await signInWithEmailAndPassword(auth, email, password);
         window.showToast("Ravi de vous revoir ! 👋", "success");
       }
       toggleAuthModal();
@@ -129,8 +140,7 @@ async function resetPassword() {
   }
 
   try {
-    const { sendPasswordResetEmail } = window.authTools;
-    await sendPasswordResetEmail(window.auth, emailInput);
+    await sendPasswordResetEmail(auth, emailInput);
     window.showToast("Un email de réinitialisation vous a été envoyé ! 📧", "success");
     if (typeof window.triggerVibration === "function")
       window.triggerVibration("success");
@@ -156,12 +166,11 @@ const btnGoogleLogin = document.getElementById("btn-google-login");
 if (btnGoogleLogin) {
   btnGoogleLogin.addEventListener("click", async () => {
     try {
-      const provider = new window.authTools.GoogleAuthProvider();
-      const result = await window.authTools.signInWithPopup(window.auth, provider);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      const { doc, getDoc, setDoc, serverTimestamp } = window.fs;
-      const userRef = doc(window.db, "users", user.uid);
+      const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
@@ -193,9 +202,6 @@ if (btnGoogleLogin) {
 // ============================================================================
 async function logoutUser() {
   try {
-    const { signOut } = window.authTools;
-    const auth = window.auth;
-
     await signOut(auth);
     window.showToast("Vous êtes déconnecté. À bientôt !", "success");
 

@@ -2,12 +2,13 @@
 // 📲 PWA : SW, INSTALLATION, PULL-TO-REFRESH, SMART REVIEW, DEEP LINKING
 // ============================================================================
 // Dépendances : window.snackConfig, window.triggerVibration, window.chargerMenuComplet
-//               window.switchView, window.auth
+//               window.switchView
 //               window.openClientCard, window.toggleAuthModal, window.openProductModal
 
 import { store } from "./core/Store.js";
 import { setupSWUpdatePrompt } from "./sw-update.js";
 import { setupA2HS } from "./a2hs.js";
+import { auth } from "./core/firebase.js";
 
 // ============================================================================
 // ⚙️ SERVICE WORKER — STRATÉGIE "PROMPT" (mise à jour non-intrusive)
@@ -147,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (pwaAction === "menu") {
         window.switchView("menu");
       } else if (pwaAction === "loyalty") {
-        if (window.auth && window.auth.currentUser) {
+        if (auth && auth.currentUser) {
           window.openClientCard();
         } else {
           window.toggleAuthModal();

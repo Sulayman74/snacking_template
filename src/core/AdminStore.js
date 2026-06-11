@@ -314,11 +314,11 @@ export class AdminStore extends EventTarget {
      * 48h laisse le temps de programmer une campagne push J-1.
      *
      * Retourne `null` silencieusement si :
-     *   - fonctions Firebase non dispo (window.fs.functions absent)
+     *   - fonctions Firebase non dispo (fs.functions absent)
      *   - aucun match dans la fenêtre 24h
      *   - appel function échoue
      *
-     * @param {object} fs — bridge Firestore (window.fs) avec httpsCallable + functions
+     * @param {object} fs — bridge Firestore (barrel firebase.js) avec httpsCallable + functions
      */
     async getFootballTip(fs) {
         if (!fs?.httpsCallable || !fs?.functions) return null;
@@ -374,7 +374,7 @@ export class AdminStore extends EventTarget {
      * tendance est neutre/positive → l'UI peut ignorer silencieusement.
      *
      * @param {import("firebase/firestore").Firestore} db
-     * @param {object} fs — bridge Firestore (window.fs) avec query, collection, where, getDocs, Timestamp
+     * @param {object} fs — bridge Firestore (barrel firebase.js) avec query, collection, where, getDocs, Timestamp
      * @param {string} snackId — snack ciblé (window.currentAdminSnackId)
      */
     async getSalesTrendTip(db, fs, snackId) {
