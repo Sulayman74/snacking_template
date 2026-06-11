@@ -120,6 +120,65 @@ async function cleanupInvalidFcmToken(userId, error) {
   }
 }
 
+// Palier fidélité partagé (scan boutique ET commande payée). À MAX → menu offert.
+const MAX_LOYALTY_POINTS = 10;
+
+/**
+ * Crédite n point(s) de fidélité sur pointsBySnack.{snackId}, dans une transaction.
+ * Sémantique identique au scan boutique : à partir du palier (current >= MAX), le crédit
+ * suivant déclenche la récompense + remise à 0 ; sinon on incrémente. N'émet PAS le push
+ * (effet de bord à faire APRÈS commit) et ne touche PAS loyaltyLastScan (cooldown propre au
+ * scan). Retourne de quoi décider du push après la transaction.
+ * @param {FirebaseFirestore.Transaction} tx - Transaction Firestore en cours.
+ * @param {FirebaseFirestore.DocumentReference} clientRef - Réf. du doc users/{uid}.
+ * @param {string} snackId - Clé de partitionnement multi-tenant.
+ * @param {number} [n=1] - Nombre de points à créditer (1 en pratique : scan & commande).
+ * @returns {Promise<{points:number, max:number, reward:boolean, fcmToken:(string|null)}>}
+ * @throws {HttpsError} not-found si le doc client n'existe pas.
+ */
+async function creditLoyaltyPoints(tx, clientRef, snackId, n = 1) {
+  const snap = await tx.get(clientRef);
+  if (!snap.exists) throw new HttpsError("not-found", "Client introuvable.");
+  const d = snap.data();
+  const current = (d.pointsBySnack || {})[snackId] || 0;
+
+  let newPoints;
+  let reward = false;
+  if (current >= MAX_LOYALTY_POINTS) {
+    newPoints = 0;            // palier atteint → menu offert, carte remise à 0
+    reward = true;
+  } else {
+    newPoints = current + n;  // n=1 en pratique (scan & commande)
+  }
+
+  tx.update(clientRef, { [`pointsBySnack.${snackId}`]: newPoints });
+  return { points: newPoints, max: MAX_LOYALTY_POINTS, reward, fcmToken: d.fcmToken || null };
+}
+
+/**
+ * Émet le push de palier « menu offert ». À appeler APRÈS le commit de la transaction
+ * (jamais dans une transaction). No-op si le client n'a pas de token. Nettoie un token mort.
+ * @param {string} userId - uid du client (pour le cleanup du token).
+ * @param {string|null} fcmToken - Token FCM du client.
+ * @param {string} snackId - Snack à l'origine de la récompense (transmis au front).
+ * @returns {Promise<void>}
+ */
+async function sendRewardPush(userId, fcmToken, snackId) {
+  if (!fcmToken) return; // crédit OK sans token → pas de crash
+  try {
+    await getMessaging().send({
+      notification: {
+        title: "🎁 Menu offert !",
+        body: "Bravo ! Tu as atteint le palier fidélité. Ton prochain menu est offert 🍟",
+      },
+      data: { type: "REWARD_UNLOCKED", snackId: String(snackId) },
+      token: fcmToken,
+    });
+  } catch (error) {
+    await cleanupInvalidFcmToken(userId, error);
+  }
+}
+
 // Identifie un appelant : uid si auth, sinon hash IP (X-Forwarded-For)
 function callerKey(request, action) {
   if (request.auth?.uid) return `${action}_uid_${request.auth.uid}`;
@@ -257,49 +316,12 @@ async function assertCartPricesAreLegit(cartItems, paidAmountCents, snackId) {
 }
 
 // ============================================================================
-// 🎁 FONCTION 1 : CADEAU DE FIDÉLITÉ (10 POINTS)
+// 🎁 FIDÉLITÉ — le push de palier « menu offert » est désormais émis À LA SOURCE
+// (sendRewardPush, après crédit) par awardLoyaltyPoint (scan) ET finalizeOrder
+// (commande payée). L'ancien trigger notifierMenuOffert écoutait le champ plat
+// `points` (jamais écrit : les points vivent dans pointsBySnack.{snackId}) → il
+// ne partait jamais. Supprimé pour éviter tout double-push et code mort.
 // ============================================================================
-exports.notifierMenuOffert = onDocumentUpdated(
-  "users/{userId}",
-  async (event) => {
-    const dataBefore = event.data.before.data();
-    const dataAfter = event.data.after.data();
-    const userId = event.params.userId;
-
-    console.log(`🔍 Analyse du changement pour l'utilisateur : ${userId}`);
-
-    if (dataAfter.points >= 10 && dataBefore.points < 10) {
-      const token = dataAfter.fcmToken;
-
-      if (!token) {
-        console.log("⚠️ Abandon : Le client n'a pas de token FCM enregistré.");
-        return;
-      }
-
-      const message = {
-        notification: {
-          title: "🎁 CADEAU : Menu Offert !",
-          body: "Félicitations ! Tu as atteint 10 points. Ton prochain menu est gratuit chez nous !",
-        },
-        data: {
-          type: "REWARD_UNLOCKED",
-          points: "10",
-        },
-        token: token,
-      };
-
-      try {
-        const response = await getMessaging().send(message);
-        console.log("✅ Notification envoyée avec succès :", response);
-      } catch (error) {
-        console.error("❌ Erreur lors de l'envoi FCM :", error);
-        await cleanupInvalidFcmToken(userId, error);
-      }
-    } else {
-      console.log("ℹ️ Changement ignoré (pas le palier des 10 points).");
-    }
-  },
-);
 
 // ============================================================================
 // 🖼️ FONCTION 2 : OPTIMISATION D'IMAGES (SHARP)
@@ -1113,6 +1135,18 @@ exports.finalizeOrder = onCall(
       console.error("finalizeOrder post-création (parrainage/lastOrderDate) échouée :", postErr);
     }
 
+    // 🎁 FIDÉLITÉ CLIENT (best-effort) — +1 point par commande payée, collect ET
+    // livraison (mode-agnostique). Ancré dans le bloc post-création idempotent
+    // (les retries retournent §4/§5 avant ce point) → jamais de double crédit.
+    // try/catch isolé : un échec fidélité ne casse jamais une commande déjà payée.
+    try {
+      const clientRef = db.collection("users").doc(uid);
+      const res = await db.runTransaction((tx) => creditLoyaltyPoints(tx, clientRef, snackId, 1));
+      if (res.reward) await sendRewardPush(uid, res.fcmToken, snackId);
+    } catch (loyErr) {
+      console.error("finalizeOrder crédit fidélité échoué :", loyErr);
+    }
+
     return { orderId };
   }
 );
@@ -1243,41 +1277,35 @@ exports.awardLoyaltyPoint = onCall({ region: "europe-west1" }, async (request) =
   await assertCallerIsSnackAdmin(request, snackId);
   await enforceRateLimit({ key: callerKey(request, "awardLoyaltyPoint"), max: 60, windowMs: 60_000 });
 
-  const MAX_POINTS = 10;
   const COOLDOWN_MS = 20_000; // anti double-scan accidentel
   const clientRef = db.collection("users").doc(clientUid);
 
-  return await db.runTransaction(async (tx) => {
+  const result = await db.runTransaction(async (tx) => {
+    // Anti-rejeu : refuse un re-scan trop rapproché (double-scan accidentel).
+    // Lecture dédiée au cooldown (loyaltyLastScan), propre au scan boutique.
     const snap = await tx.get(clientRef);
     if (!snap.exists) {
       throw new HttpsError("not-found", "Ce QR code n'est pas dans la base.");
     }
-    const d = snap.data();
-    const current = (d.pointsBySnack || {})[snackId] || 0;
-    const lastScan = (d.loyaltyLastScan || {})[snackId];
+    const lastScan = (snap.data().loyaltyLastScan || {})[snackId];
     const lastMs = lastScan && lastScan.toMillis ? lastScan.toMillis() : 0;
-
-    // Anti-rejeu : refuse un re-scan trop rapproché (double-scan accidentel).
     if (lastMs && Date.now() - lastMs < COOLDOWN_MS) {
       throw new HttpsError("failed-precondition", "Carte déjà scannée à l'instant.");
     }
 
-    let newPoints;
-    let reward = false;
-    if (current >= MAX_POINTS) {
-      newPoints = 0;        // palier atteint → menu offert, carte remise à 0
-      reward = true;
-    } else {
-      newPoints = current + 1;
-    }
-
+    // Crédit via le helper partagé (scan + commande) → +1 point, palier/reset unifiés.
+    const res = await creditLoyaltyPoints(tx, clientRef, snackId, 1);
+    // Marque l'instant du scan (cooldown spécifique boutique, hors helper).
     tx.update(clientRef, {
-      [`pointsBySnack.${snackId}`]: newPoints,
       [`loyaltyLastScan.${snackId}`]: admin.firestore.FieldValue.serverTimestamp(),
     });
-
-    return { points: newPoints, max: MAX_POINTS, reward };
+    return res;
   });
+
+  // Push de palier émis APRÈS commit (jamais dans la transaction, qui peut rejouer).
+  if (result.reward) await sendRewardPush(clientUid, result.fcmToken, snackId);
+
+  return { points: result.points, max: result.max, reward: result.reward };
 });
 
 // ============================================================================
