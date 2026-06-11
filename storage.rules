@@ -16,28 +16,36 @@ service firebase.storage {
              && authUser().role == 'livreur'
              && authUser().snackId == snackId;
     }
-    // Garde anti-abus : image valide et < 15 Mo.
+    // Garde anti-abus : image bitmap (PAS de SVG → XSS stocké) et < 15 Mo.
     function isValidImage() {
-      return request.resource.contentType.matches('image/.*')
+      return request.resource.contentType.matches('image/(png|jpeg|webp|avif)')
              && request.resource.size < 15 * 1024 * 1024;
     }
 
-    // 🔓 Lecture publique : images menu, logos, preuves de livraison (PoD) affichées au client.
-    match /{allPaths=**} {
-      allow read: if true;
-    }
-
-    // 🍔 Images produits : écriture réservée à l'admin du snack propriétaire.
-    //    (La Cloud Function optimizeImage réécrit via l'Admin SDK → hors de ces règles.)
+    // 🍔 Images produits / menu : lecture PUBLIQUE (affichées au client non
+    //    connecté), écriture réservée à l'admin du snack propriétaire.
+    //    (La Cloud Function optimizeImage réécrit via l'Admin SDK → hors règles.)
     match /produits/{snackId}/{fileName} {
+      allow read: if true;
       allow write: if isValidImage() && isSnackAdmin(snackId);
     }
 
-    // 📸 Preuves de livraison : écriture réservée au livreur (ou admin) du snack.
+    // 🖼️ Logos / assets publics éventuels d'un snack : lecture publique seule.
+    match /logos/{allPaths=**} {
+      allow read: if true;
+    }
+
+    // 📸 Preuves de livraison (PoD) : contiennent des données personnelles (photos
+    //    de domicile/porte) → lecture RESTREINTE (RGPD), plus de lecture publique.
+    //    Autorisée au livreur/admin du snack OU au client propriétaire de la commande.
     match /pod/{snackId}/{orderId}/{fileName} {
+      allow read: if isSnackDriver(snackId)
+                  || isSnackAdmin(snackId)
+                  || (request.auth != null
+                      && firestore.get(/databases/(default)/documents/commandes/$(orderId)).data.userId == request.auth.uid);
       allow write: if isValidImage() && (isSnackDriver(snackId) || isSnackAdmin(snackId));
     }
 
-    // 🛑 Tout autre chemin : écriture refusée (anti-hébergement d'images arbitraires).
+    // 🛑 Tout autre chemin : lecture ET écriture refusées par défaut (deny-all).
   }
 }
