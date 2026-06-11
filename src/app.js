@@ -8,6 +8,7 @@ import "./ui.js";
 import "./menu.js";
 import "./cart.js";
 import "./favorites.js";
+import "./reorder.js";
 import "./delivery.js";
 import "./product-modal.js";
 import "./tracking.js";

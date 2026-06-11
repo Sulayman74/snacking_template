@@ -71,6 +71,78 @@ describe("Store.getDeliveryFee", () => {
   });
 });
 
+describe("Store.validateAgainstMenu (revalidation re-commande — LOT A)", () => {
+  const menu = [
+    { id: "tacos1", prix: 8, menuPriceAdd: 2.5, isAvailable: true, image: "tacos.webp" },
+    { id: "burger1", prix: 7, isAvailable: false },
+    {
+      id: "pizza1",
+      prix: 10,
+      isAvailable: true,
+      tailles: [
+        { nom: "M", prix: 10 },
+        { nom: "XL", prix: 14 },
+      ],
+    },
+  ];
+  beforeEach(() => store.setMenu(menu));
+
+  it("produit retiré de la carte → missing, pas d'item", () => {
+    const r = store.validateAgainstMenu({ productId: "fantome", prix: 5 });
+    expect(r).toEqual({ ok: false, reason: "missing", currentItem: null });
+  });
+
+  it("produit épuisé (isAvailable === false) → unavailable", () => {
+    const r = store.validateAgainstMenu({ productId: "burger1", prix: 7 });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe("unavailable");
+  });
+
+  it("favori valide au même prix → ok sans reason", () => {
+    const r = store.validateAgainstMenu({ productId: "tacos1", prix: 8, formule: "seul" });
+    expect(r.ok).toBe(true);
+    expect(r.reason).toBeNull();
+    expect(r.currentItem.prix).toBe(8);
+  });
+
+  it("prix changé → reprice avec le PRIX COURANT (jamais le snapshot)", () => {
+    const r = store.validateAgainstMenu({ productId: "tacos1", prix: 6.5, formule: "seul" });
+    expect(r.ok).toBe(true);
+    expect(r.reason).toBe("reprice");
+    expect(r.currentItem.prix).toBe(8);
+  });
+
+  it("formule menu → base + menuPriceAdd (réplique product-modal)", () => {
+    const r = store.validateAgainstMenu({ productId: "tacos1", prix: 10.5, formule: "menu" });
+    expect(r.ok).toBe(true);
+    expect(r.reason).toBeNull();
+    expect(r.currentItem.prix).toBe(10.5);
+  });
+
+  it("taille choisie → prix de la taille courante", () => {
+    const r = store.validateAgainstMenu({ productId: "pizza1", prix: 14, taille: "XL" });
+    expect(r.ok).toBe(true);
+    expect(r.reason).toBeNull();
+    expect(r.currentItem.prix).toBe(14);
+  });
+
+  it("taille disparue du produit → missing", () => {
+    const r = store.validateAgainstMenu({ productId: "pizza1", prix: 18, taille: "XXL" });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe("missing");
+  });
+
+  it("retrouve le produit via l'id panier composé quand productId absent", () => {
+    const r = store.validateAgainstMenu({ id: "tacos1-seul--", prix: 8 });
+    expect(r.ok).toBe(true);
+  });
+
+  it("rafraîchit l'image depuis le menu courant", () => {
+    const r = store.validateAgainstMenu({ productId: "tacos1", prix: 8, image: "vieille.jpg" });
+    expect(r.currentItem.image).toBe("tacos.webp");
+  });
+});
+
 describe("Store.addToCart / updateQuantity (jamais de NaN)", () => {
   it("même id ajouté 2× → quantité 2", () => {
     store.addToCart({ id: "a", prix: 5 });

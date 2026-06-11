@@ -12,6 +12,9 @@ export class Store extends EventTarget {
         // ❤️ FAVORIS — articles personnalisés sauvegardés par le client (re-commande 1-tap).
         // Synchronisés en temps réel depuis users/{uid}.favorites (cf. favorites.js).
         favorites: [],
+        // 🔁 RE-COMMANDE — dernière commande payée de l'utilisateur sur CE snack.
+        // Chargée à la connexion (cf. reorder.js), null si aucun historique.
+        lastOrder: null,
         // 🚚 LIVRAISON — état du tunnel de commande (mode + adresse + devis).
         // mode 'collect' par défaut → comportement legacy strictement inchangé.
         delivery: {
@@ -54,6 +57,55 @@ export class Store extends EventTarget {
     setFavorites(favorites) {
         this.#state.favorites = Array.isArray(favorites) ? favorites : [];
         this.emit("favorites-updated");
+    }
+
+    /** Remplace la dernière commande connue de l'utilisateur (source : reorder.js). */
+    setLastOrder(order) {
+        this.#state.lastOrder = order || null;
+        this.emit("last-order-updated");
+    }
+
+    /**
+     * Confronte un article re-commandé (favori, ancienne commande) au menu courant.
+     * Courtoisie UX uniquement : la barrière de sécurité reste le recalcul serveur
+     * de finalizeOrder (functions/index.js, assertCartPricesAreLegit).
+     *
+     * Réplique le calcul de prix client (src/product-modal.js) : prix de base ou
+     * prix de la taille choisie, + supplément menu (menuPriceAdd || 2.5) en formule.
+     *
+     * @param {Object} item - Article au format panier ({productId, prix, formule, taille, ...}).
+     * @returns {{ok: boolean, reason: null|'missing'|'unavailable'|'reprice', currentItem: Object|null}}
+     *   ok=false : ne pas ajouter (reason 'missing' ou 'unavailable').
+     *   ok=true + reason 'reprice' : ajouter currentItem (prix courant) en prévenant.
+     */
+    validateAgainstMenu(item) {
+        const menu = this.#state.menu || [];
+        const productId =
+            item?.productId || (typeof item?.id === "string" ? item.id.split("-")[0] : item?.id);
+        const product = menu.find((p) => p.id === productId);
+
+        if (!product) return { ok: false, reason: "missing", currentItem: null };
+        if (product.isAvailable === false) return { ok: false, reason: "unavailable", currentItem: null };
+
+        let base = Number(product.prix) || 0;
+        if (item.taille) {
+            const taille = (product.tailles || []).find((t) => t.nom === item.taille);
+            // La taille mémorisée n'existe plus → on ne devine pas, on signale.
+            if (!taille) return { ok: false, reason: "missing", currentItem: null };
+            base = Number(taille.prix) || 0;
+        }
+        const menuAdd = item.formule === "menu" ? (Number(product.menuPriceAdd) || 2.5) : 0;
+        const currentPrix = base + menuAdd;
+
+        // Comparaison en centimes : pas d'arrondi flottant.
+        const repriced =
+            Math.round(currentPrix * 100) !== Math.round((Number(item.prix) || 0) * 100);
+
+        return {
+            ok: true,
+            reason: repriced ? "reprice" : null,
+            currentItem: { ...item, prix: currentPrix, image: product.image || item.image },
+        };
     }
 
     // --- MÉTHODES PANIER (Logique métier centralisée) ---

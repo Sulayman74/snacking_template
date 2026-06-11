@@ -179,13 +179,36 @@ class FavoritesService {
     }
   }
 
-  /** Ré-ajoute un favori au panier (re-commande 1-tap). */
+  /**
+   * Ré-ajoute un favori au panier (re-commande 1-tap), après revalidation
+   * contre le menu courant : un produit retiré/épuisé n'est pas ajouté, un
+   * produit reprixé est ajouté au PRIX COURANT (le favori reste un snapshot).
+   * Enchaîne l'ouverture du panier (chemin direct vers le checkout).
+   */
   reorder(favId) {
     const fav = (store.state.favorites || []).find((f) => f.favId === favId);
     if (!fav?.item) return showToast("Favori introuvable", "error");
-    store.addToCart({ ...fav.item });
+
+    const check = store.validateAgainstMenu(fav.item);
+    if (!check.ok) {
+      triggerVibration?.("error");
+      return showToast(
+        check.reason === "unavailable"
+          ? "Ce produit est épuisé pour le moment"
+          : "Ce produit n'est plus à la carte",
+        "error"
+      );
+    }
+
+    store.addToCart({ ...check.currentItem });
     triggerVibration?.("success");
-    showToast("Ajouté au panier ! 🛒", "success");
+    showToast(
+      check.reason === "reprice"
+        ? "Ajouté au panier — le prix a été mis à jour 🛒"
+        : "Ajouté au panier ! 🛒",
+      "success"
+    );
+    window.openCartModal?.();
   }
 }
 

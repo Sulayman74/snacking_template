@@ -53,6 +53,10 @@ document.addEventListener("click", async (event) => {
       window.openCartModal();
       break;
 
+    case "reorder-last":
+      window.reorderLastOrder?.();
+      break;
+
     case "close-cart":
       window.closeCartModal();
       break;

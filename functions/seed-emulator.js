@@ -70,7 +70,30 @@ async function seed() {
   produits.forEach((p, i) => batch.set(db.collection("produits").doc(`e2e_${i}`), p));
   await batch.commit();
 
-  console.log(`✅ Seed E2E OK — snack ${SNACK_ID}, user ${TEST_EMAIL} (admin), ${produits.length} produits.`);
+  // 5) Commande passée du user de test : alimente le bloc « Commander à nouveau »
+  //    (reorder.spec). Contient une ligne valide (Frites : 3.5 + 2.5 menu = 6) et
+  //    une ligne dont le produit n'existe plus → doit être exclue à la re-commande.
+  //    ⚠️ On référence e2e_1 (Frites Test) et PAS e2e_0 : stock.spec désactive le
+  //    PREMIER produit « En Stock » de la liste admin (triée par nom → Burger
+  //    Robot), et les specs tournent en parallèle sur le même émulateur.
+  await db.collection("commandes").doc("e2e_order_1").set({
+    snackId: SNACK_ID,
+    userId: uid,
+    clientNom: "Robot Test",
+    clientEmail: TEST_EMAIL,
+    secretCode: "E2E001",
+    date: admin.firestore.Timestamp.fromDate(new Date("2026-01-01T12:00:00Z")),
+    statut: "livree",
+    items: [
+      { id: "e2e_1-menu--", productId: "e2e_1", nom: "Menu Frites Test", prix: 6, image: "", formule: "menu", boisson: "Coca", taille: null, sauces: [], quantity: 2 },
+      { id: "e2e_ghost-seul--", productId: "e2e_ghost", nom: "Produit Disparu", prix: 4, image: "", formule: "seul", boisson: null, taille: null, sauces: [], quantity: 1 },
+    ],
+    total: 16,
+    mode: "collect",
+    paiement: { methode: "carte_bancaire", statut: "paye", stripeSessionId: "pi_e2e_seed" },
+  });
+
+  console.log(`✅ Seed E2E OK — snack ${SNACK_ID}, user ${TEST_EMAIL} (admin), ${produits.length} produits, 1 commande.`);
 }
 
 seed()
