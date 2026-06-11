@@ -183,5 +183,5 @@ export const store = new Store();
 
 // 🔧 Debug helper — expose le store pour inspection console (`window.store.state`,
 // `window.store.getUpsellSuggestions(10)`). Pas utilisé en interne, c'est juste
-// un pont pour DevTools, cohérent avec window.snackConfig / window.db.
+// un pont pour DevTools, cohérent avec window.snackConfig.
 if (typeof window !== "undefined") window.store = store;

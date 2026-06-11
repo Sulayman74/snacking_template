@@ -4,14 +4,22 @@
  */
 import { adminStore } from "./core/AdminStore.js";
 import { escapeHTML } from "./utils.js";
+import {
+    db,
+    query,
+    collection,
+    where,
+    getDocs,
+    orderBy,
+    limit,
+} from "./core/firebase.js";
 
 async function loadPushHistory() {
     if (!window.currentAdminSnackId) return;
 
     try {
-        const { query, collection, where, getDocs, orderBy, limit } = window.fs;
         const q = query(
-            collection(window.db, "campagnes_push"),
+            collection(db, "campagnes_push"),
             where("snackId", "==", window.currentAdminSnackId),
             orderBy("dateCreation", "desc"),
             limit(10)

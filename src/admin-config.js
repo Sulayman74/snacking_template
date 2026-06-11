@@ -4,6 +4,7 @@
  */
 import { adminStore } from "./core/AdminStore.js";
 import { showToast } from "./utils.js";
+import { db, doc, getDoc } from "./core/firebase.js";
 
 // Coerce une valeur Firestore en nombre fini, sinon le fallback (ex: null).
 const num = (v, fallback) => {
@@ -14,9 +15,8 @@ const num = (v, fallback) => {
 window.loadConfigView = async () => {
     if (!window.currentAdminSnackId) return;
     
-    const { doc, getDoc } = window.fs;
     try {
-        const snackRef = doc(window.db, "snacks", window.currentAdminSnackId);
+        const snackRef = doc(db, "snacks", window.currentAdminSnackId);
         const snackSnap = await getDoc(snackRef);
 
         if (!snackSnap.exists()) return;

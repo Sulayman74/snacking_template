@@ -1,14 +1,22 @@
 // ============================================================================
 // 🎁 CARTE FIDÉLITÉ & NOTIFICATIONS
 // ============================================================================
-// Dépendances : window.auth, window.fs, window.db
-//               window.showToast, window.triggerVibration, window.snackConfig
-//               window.authTools (getToken), window.messaging
+// Dépendances : window.showToast, window.triggerVibration, window.snackConfig
+//               window.messaging
+import {
+  auth,
+  db,
+  doc,
+  getDoc,
+  updateDoc,
+  onSnapshot,
+  getToken,
+} from "./core/firebase.js";
 
 let unsubscribeClientCard = null;
 
 function openClientCard() {
-  const user = window.auth?.currentUser;
+  const user = auth?.currentUser;
   if (!user) return;
 
   const cfg = window.snackConfig;
@@ -50,9 +58,6 @@ function openClientCard() {
   }
 
   // 4. Écouteur temps réel des points
-  const { doc, onSnapshot } = window.fs;
-  const db = window.db;
-
   if (typeof unsubscribeClientCard === "function") unsubscribeClientCard();
 
   const currentSnackId = window.snackConfig?.identity?.id;
@@ -160,9 +165,6 @@ async function requestNotif() {
 
     if (permission === "granted") {
       const registration = await navigator.serviceWorker.ready;
-      const { getToken } = window.authTools;
-      const { updateDoc, doc } = window.fs;
-      const db = window.db;
       const messaging = window.messaging;
 
       const currentToken = await getToken(messaging, {
@@ -172,7 +174,7 @@ async function requestNotif() {
       });
 
       if (currentToken) {
-        const user = window.auth.currentUser;
+        const user = auth.currentUser;
         if (user)
           await updateDoc(doc(db, "users", user.uid), { fcmToken: currentToken });
         window.showToast("🔔 Parfait ! Vous recevrez nos promos.", "success");
@@ -201,14 +203,11 @@ async function syncFcmToken() {
   if (!("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
 
-  const user = window.auth?.currentUser;
+  const user = auth?.currentUser;
   if (!user) return;
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    const { getToken } = window.authTools;
-    const { doc, getDoc, updateDoc } = window.fs;
-    const db = window.db;
     const messaging = window.messaging;
 
     const currentToken = await getToken(messaging, {
@@ -233,7 +232,7 @@ async function syncFcmToken() {
 }
 
 async function shareReferralLink() {
-  const user = window.auth?.currentUser;
+  const user = auth?.currentUser;
   if (!user) return;
 
   const shareData = {

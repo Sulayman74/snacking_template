@@ -20,6 +20,17 @@ import { confirmAction } from "./utils/ModalManager.js";
 import { setupSWUpdatePrompt } from "./sw-update.js";
 import { setupA2HS } from "./a2hs.js";
 import { initAdminNotifs } from "./admin-notifs.js";
+import {
+  auth,
+  db,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  getDoc,
+  doc,
+  httpsCallable,
+  functions,
+} from "./core/firebase.js";
 
 // SW + bandeau de mise à jour (pattern prompt) : installable plein écran sur la
 // tablette de cuisine + JAMAIS de rechargement auto en plein service.
@@ -35,9 +46,6 @@ setupA2HS({
 
 // Activation guidée des alertes "nouvelle commande" (opt-in push cuisine).
 initAdminNotifs();
-
-const { onAuthStateChanged, signInWithEmailAndPassword, signOut } =
-  window.authTools;
 
 // ============================================================================
 // VARIABLES GLOBALES PARTAGÉES
@@ -197,7 +205,7 @@ window.switchAdminTab = (tabName) => {
 // ============================================================================
 // 🔐 AUTH ADMIN
 // ============================================================================
-onAuthStateChanged(window.auth, async (user) => {
+onAuthStateChanged(auth, async (user) => {
   const loginSection = document.getElementById("admin-login-section");
   const startBtn = document.getElementById("start-shift-btn");
   const startupIcon = document.getElementById("startup-icon");
@@ -213,8 +221,7 @@ onAuthStateChanged(window.auth, async (user) => {
   }
 
   if (user) {
-    const { getDoc, doc } = window.fs;
-    const userDoc = await getDoc(doc(window.db, "users", user.uid));
+    const userDoc = await getDoc(doc(db, "users", user.uid));
 
     const initialsDiv = document.getElementById("admin-initials");
 
@@ -279,7 +286,7 @@ onAuthStateChanged(window.auth, async (user) => {
       // On affiche toujours le bouton retour accueil pour ne pas bloquer l'admin
       backHomeBtn?.classList.remove("hidden");
     } else {
-      window.auth.signOut();
+      auth.signOut();
       refuseAccess(
         "Accès refusé. Vous n'avez pas les droits d'administration.",
       );
@@ -311,7 +318,7 @@ if (adminLoginForm) {
     errorMsg.classList.add("hidden");
 
     try {
-      await signInWithEmailAndPassword(window.auth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
       console.error("Erreur de connexion:", error);
       errorMsg.innerText = "Identifiants incorrects. Veuillez réessayer.";
@@ -354,7 +361,6 @@ window.openStripeExpressDashboard = async () => {
   btn.disabled = true;
 
   try {
-    const { httpsCallable, functions } = window.fs;
     const getStripeLoginLink = httpsCallable(
       functions,
       "createStripeConnectLoginLink",
@@ -380,7 +386,7 @@ window.openStripeExpressDashboard = async () => {
 // 5. DÉCONNEXION
 // ============================================================================
 window.logoutAdmin = async () => {
-  await signOut(window.auth);
+  await signOut(auth);
   window.location.href = "index.html";
 };
 

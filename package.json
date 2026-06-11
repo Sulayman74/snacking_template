@@ -43,6 +43,7 @@
     "@vitest/coverage-v8": "^4.1.8",
     "autoprefixer": "^10.4.27",
     "jsdom": "^29.1.1",
+    "madge": "^8.0.0",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
     "vite": "^7.3.1",

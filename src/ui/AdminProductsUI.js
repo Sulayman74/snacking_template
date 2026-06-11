@@ -1,6 +1,17 @@
 import { adminStore } from "../core/AdminStore.js";
 import { confirmAction } from "../utils/ModalManager.js";
 import { escapeHTML, safeURL, showToast } from "../utils.js";
+import {
+    db,
+    storage,
+    fs,
+    deleteDoc,
+    doc,
+    updateDoc,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+} from "../core/firebase.js";
 
 /**
  * Liste des 14 allergènes à déclaration obligatoire (UE, règlement INCO 1169/2011).
@@ -164,7 +175,7 @@ class AdminProductsUI {
 
     async handleToggle(productId) {
         try {
-            await adminStore.toggleProductStatus(window.db, window.fs, productId);
+            await adminStore.toggleProductStatus(db, fs, productId);
             // Pas besoin de showToast, le changement visuel est immédiat via le listener
         } catch (error) {
             showToast("Erreur lors de la modification du statut", "error");
@@ -184,8 +195,7 @@ class AdminProductsUI {
 
         if (confirmed) {
             try {
-                const { deleteDoc, doc } = window.fs;
-                await deleteDoc(doc(window.db, "produits", productId));
+                await deleteDoc(doc(db, "produits", productId));
                 showToast("Produit supprimé !");
             } catch (error) {
                 showToast("Erreur lors de la suppression", "error");
@@ -290,7 +300,7 @@ class AdminProductsUI {
             }
 
             // 1) Écriture rapide du doc (SANS attendre l'upload image) → UI quasi instantanée.
-            const productId = await adminStore.saveProduct(window.db, window.fs, productData);
+            const productId = await adminStore.saveProduct(db, fs, productData);
             showToast(file ? "Produit enregistré, image en cours…" : "Produit enregistré !", "success");
             window.closeModal("edit-product-modal");
 
@@ -318,13 +328,11 @@ class AdminProductsUI {
         try {
             const snackId = adminStore.state.config?.identity?.id || window.currentAdminSnackId;
             if (!snackId) throw new Error("Snack non identifié.");
-            const { ref, uploadBytes, getDownloadURL } = window.storageTools;
             const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-            const storageRef = ref(window.storage, `produits/${snackId}/${fileName}`);
+            const storageRef = ref(storage, `produits/${snackId}/${fileName}`);
             await uploadBytes(storageRef, file);
             const url = await getDownloadURL(storageRef);
-            const { doc, updateDoc } = window.fs;
-            await updateDoc(doc(window.db, "produits", productId), { image: url });
+            await updateDoc(doc(db, "produits", productId), { image: url });
         } catch (error) {
             console.error("Upload image (arrière-plan) échoué :", error);
             showToast("Produit créé, mais l'envoi de l'image a échoué. Réessaie via Modifier.", "error");

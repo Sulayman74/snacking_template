@@ -2,11 +2,11 @@
 // 💳 CHECKOUT — Stripe, Commande Firebase
 // ============================================================================
 // Dépendances : window.cart, window.getCartTotal, window.closeCartModal,
-//               window.toggleAuthModal, window.auth, window.fs, window.db,
-//               window.snackConfig, window.showToast, window.triggerVibration,
-//               window.startOrderTracking, window.upsellUI
+//               window.toggleAuthModal, window.snackConfig, window.showToast,
+//               window.triggerVibration, window.startOrderTracking, window.upsellUI
 
 import { upsellUI } from "./ui/UpsellUI.js";
+import { auth, functions, httpsCallable } from "./core/firebase.js";
 
 let stripeElements = null;
 let stripeInstance = null;
@@ -75,7 +75,7 @@ async function processCheckout() {
     }
   }
 
-  const currentUser = window.auth?.currentUser;
+  const currentUser = auth?.currentUser;
   const btn = document.getElementById("checkout-btn");
 
   if (!currentUser) {
@@ -125,7 +125,6 @@ async function processCheckout() {
     openPaymentSheet();
 
     // 3. Demander le PaymentIntent à la Cloud Function
-    const { httpsCallable, functions } = window.fs;
     const createPaymentIntent = httpsCallable(functions, "createPaymentIntent");
 
     const ticketSummary = window.cart
@@ -244,8 +243,7 @@ async function submitStripePayment() {
 
 async function finalizeOrderInFirestore(stripePaymentId) {
   const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
-  const currentUser = window.auth?.currentUser;
-  const { httpsCallable, functions } = window.fs;
+  const currentUser = auth?.currentUser;
 
   try {
     const cartItems = window.cart.map((item) => ({

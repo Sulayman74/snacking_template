@@ -3,6 +3,18 @@
  * Gère le chargement filtré des ventes et délègue l'UI à AdminComptaUI.
  */
 import { adminStore } from "./core/AdminStore.js";
+import {
+    db,
+    query,
+    collection,
+    where,
+    getDocs,
+    getAggregateFromServer,
+    count,
+    sum,
+    orderBy,
+    limit,
+} from "./core/firebase.js";
 
 async function loadComptaDashboard() {
     const startInput = document.getElementById("compta-date-start");
@@ -22,7 +34,6 @@ async function loadComptaDashboard() {
     if (!window.currentAdminSnackId) return;
 
     try {
-        const { query, collection, where, getDocs, getAggregateFromServer, count, sum, orderBy, limit } = window.fs;
         const baseConstraints = [
             where("snackId", "==", window.currentAdminSnackId),
             where("date", ">=", startDate),
@@ -32,7 +43,7 @@ async function loadComptaDashboard() {
         // 1) KPIs (CA + nb commandes) via AGRÉGATION serveur : facturée ~1 lecture
         //    par 1000 entrées d'index, au lieu de lire toutes les commandes lourdes.
         const aggSnap = await getAggregateFromServer(
-            query(collection(window.db, "commandes"), ...baseConstraints),
+            query(collection(db, "commandes"), ...baseConstraints),
             { count: count(), total: sum("total") }
         );
         adminStore.setSalesAggregate({
@@ -43,7 +54,7 @@ async function loadComptaDashboard() {
         // 2) Historique : liste BORNÉE (affichage seulement, pas pour le total).
         const HISTORY_LIMIT = 200;
         const histSnap = await getDocs(query(
-            collection(window.db, "commandes"),
+            collection(db, "commandes"),
             ...baseConstraints,
             orderBy("date", "desc"),
             limit(HISTORY_LIMIT)
@@ -70,9 +81,8 @@ async function fetchAllComptaSales() {
     const startDate = new Date(startInput.value); startDate.setHours(0, 0, 0, 0);
     const endDate = new Date(endInput.value); endDate.setHours(23, 59, 59, 999);
 
-    const { query, collection, where, getDocs, orderBy } = window.fs;
     const snap = await getDocs(query(
-        collection(window.db, "commandes"),
+        collection(db, "commandes"),
         where("snackId", "==", window.currentAdminSnackId),
         where("date", ">=", startDate),
         where("date", "<=", endDate),

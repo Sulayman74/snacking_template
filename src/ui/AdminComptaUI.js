@@ -1,5 +1,6 @@
 import { adminStore } from "../core/AdminStore.js";
 import { escapeHTML, showToast } from "../utils.js";
+import { functions, httpsCallable } from "../core/firebase.js";
 
 class AdminComptaUI {
     constructor() {
@@ -81,7 +82,6 @@ class AdminComptaUI {
         if (!cfg?.stripeAccountId) return;
         this._statusFetched = true;
         try {
-            const { httpsCallable, functions } = window.fs;
             const res = await httpsCallable(functions, "getStripeAccountStatus")({ snackId: window.currentAdminSnackId });
             this._chargesEnabled = !!res.data?.chargesEnabled;
             this.renderStripeStatus();
@@ -100,7 +100,6 @@ class AdminComptaUI {
         const original = btn?.innerHTML;
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Connexion Stripe…'; }
         try {
-            const { httpsCallable, functions } = window.fs;
             const fn = httpsCallable(functions, "getStripeOnboardingLink");
             const res = await fn({ snackId: window.currentAdminSnackId, origin: window.location.origin });
             if (res.data?.url) {

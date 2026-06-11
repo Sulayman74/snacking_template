@@ -1,8 +1,26 @@
 // @vitest-environment jsdom
 // 🍳 Tests unitaires Cuisine — rendu des tickets + actions métier (statut/caisse).
-// Les fonctions métier sont exposées sur `window` par admin-kitchen.js ; on injecte
-// des mocks Firestore via window.fs / window.db (lus à l'appel, pas à l'import).
+// Les fonctions métier sont exposées sur `window` par admin-kitchen.js. Depuis le
+// Lot 4 PR-1, admin-kitchen importe Firestore via le barrel ESM `core/firebase.js`
+// (et non plus window.fs/window.db) : on mocke donc ce module pour injecter les
+// stubs Firestore. Bonus : mocker le barrel évite de charger la vraie init Firebase.
 import { describe, it, expect, beforeEach, vi } from "vitest";
+
+vi.mock("../../src/core/firebase.js", () => ({
+  db: {},
+  doc: vi.fn((db, col, id) => ({ col, id })),
+  updateDoc: vi.fn().mockResolvedValue(),
+  writeBatch: vi.fn(),
+  getDoc: vi.fn(),
+  increment: vi.fn((n) => ({ __inc: n })),
+  collection: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+  orderBy: vi.fn(),
+  onSnapshot: vi.fn(),
+}));
+
+import * as fb from "../../src/core/firebase.js";
 import { createTicketElement } from "../../src/admin-kitchen.js";
 
 describe("createTicketElement — rendu & statuts", () => {
@@ -130,21 +148,19 @@ describe("createTicketElement — rendu & statuts", () => {
 
 describe("window.updateOrderStatus", () => {
   beforeEach(() => {
-    window.db = {};
-    window.fs = {
-      updateDoc: vi.fn().mockResolvedValue(),
-      doc: vi.fn((db, col, id) => ({ col, id })),
-    };
+    vi.clearAllMocks();
+    fb.doc.mockImplementation((db, col, id) => ({ col, id }));
+    fb.updateDoc.mockResolvedValue();
   });
 
   it("écrit le nouveau statut sur la bonne commande", async () => {
     await window.updateOrderStatus("cmd1", "prete");
-    expect(window.fs.doc).toHaveBeenCalledWith(window.db, "commandes", "cmd1");
-    expect(window.fs.updateDoc.mock.calls[0][1]).toEqual({ statut: "prete" });
+    expect(fb.doc).toHaveBeenCalledWith(fb.db, "commandes", "cmd1");
+    expect(fb.updateDoc.mock.calls[0][1]).toEqual({ statut: "prete" });
   });
 
   it("erreur Firestore → catchée (pas de throw)", async () => {
-    window.fs.updateDoc = vi.fn().mockRejectedValue(new Error("net"));
+    fb.updateDoc.mockRejectedValueOnce(new Error("net"));
     await expect(window.updateOrderStatus("cmd1", "prete")).resolves.toBeUndefined();
   });
 });
@@ -152,15 +168,13 @@ describe("window.updateOrderStatus", () => {
 describe("window.updatePaymentStatus", () => {
   let batch;
   beforeEach(() => {
+    vi.clearAllMocks();
     batch = { update: vi.fn(), commit: vi.fn().mockResolvedValue() };
-    window.db = {};
     window.showToast = vi.fn();
-    window.fs = {
-      writeBatch: vi.fn(() => batch),
-      doc: vi.fn((db, col, id) => ({ col, id })),
-      getDoc: vi.fn(),
-      increment: vi.fn((n) => ({ __inc: n })),
-    };
+    fb.doc.mockImplementation((db, col, id) => ({ col, id }));
+    fb.writeBatch.mockReturnValue(batch);
+    fb.increment.mockImplementation((n) => ({ __inc: n }));
+    fb.getDoc.mockReset();
   });
 
   it("toggle paye → en_attente : aucun incrément de ventes", async () => {
@@ -168,12 +182,12 @@ describe("window.updatePaymentStatus", () => {
     expect(batch.update).toHaveBeenCalledWith(expect.anything(), {
       "paiement.statut": "en_attente",
     });
-    expect(window.fs.getDoc).not.toHaveBeenCalled();
+    expect(fb.getDoc).not.toHaveBeenCalled();
     expect(window.showToast).toHaveBeenCalledWith("Paiement annulé.", "success");
   });
 
   it("toggle en_attente → paye : incrémente les ventes par article", async () => {
-    window.fs.getDoc = vi.fn().mockResolvedValue({
+    fb.getDoc.mockResolvedValue({
       exists: () => true,
       data: () => ({
         items: [
@@ -185,10 +199,10 @@ describe("window.updatePaymentStatus", () => {
     await window.updatePaymentStatus("cmd1", "en_attente");
     // 1 update statut paiement + 2 updates ventes
     expect(batch.update).toHaveBeenCalledTimes(3);
-    expect(window.fs.increment).toHaveBeenCalledWith(2);
-    expect(window.fs.increment).toHaveBeenCalledWith(1);
-    expect(window.fs.doc).toHaveBeenCalledWith(window.db, "produits", "p1");
-    expect(window.fs.doc).toHaveBeenCalledWith(window.db, "produits", "p2");
+    expect(fb.increment).toHaveBeenCalledWith(2);
+    expect(fb.increment).toHaveBeenCalledWith(1);
+    expect(fb.doc).toHaveBeenCalledWith(fb.db, "produits", "p1");
+    expect(fb.doc).toHaveBeenCalledWith(fb.db, "produits", "p2");
     expect(window.showToast).toHaveBeenCalledWith(
       expect.stringContaining("Best-Sellers"),
       "success",
@@ -196,7 +210,7 @@ describe("window.updatePaymentStatus", () => {
   });
 
   it("erreur lors du commit → toast erreur", async () => {
-    window.fs.getDoc = vi.fn().mockResolvedValue({ exists: () => false });
+    fb.getDoc.mockResolvedValue({ exists: () => false });
     batch.commit = vi.fn().mockRejectedValue(new Error("boom"));
     await window.updatePaymentStatus("cmd1", "en_attente");
     expect(window.showToast).toHaveBeenCalledWith(

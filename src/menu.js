@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { store } from "./core/Store.js";
+import { db, collection, onSnapshot, query, where } from "./core/firebase.js";
 
 class MenuUI {
   constructor() {
@@ -285,8 +286,7 @@ window.chargerMenuComplet = () => {
     window.__menuUnsub = null;
   }
 
-  const { query, collection, where, onSnapshot } = window.fs;
-  const q = query(collection(window.db, "produits"), where("snackId", "==", snackId));
+  const q = query(collection(db, "produits"), where("snackId", "==", snackId));
 
   // Écoute en temps réel les changements de produits (stocks, prix, etc.)
   const unsub = onSnapshot(q, (snapshot) => {

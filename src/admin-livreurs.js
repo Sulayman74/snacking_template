@@ -1,11 +1,24 @@
 // ============================================================================
 // 🚚 ADMIN LIVREURS — Création & gestion de la flotte interne
 // ============================================================================
-// Dépendances : window.currentAdminSnackId, window.db, window.fs,
-//               window.showToast. La création passe par la CF createDriver
-//               (admin SDK → crée le compte Auth + users/{uid} role 'livreur').
+// Dépendances : window.currentAdminSnackId, window.showToast. La création
+//               passe par la CF createDriver (admin SDK → crée le compte Auth
+//               + users/{uid} role 'livreur').
 
 import { escapeHTML } from "./utils.js";
+import {
+  db,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+  doc,
+  updateDoc,
+  httpsCallable,
+  functions,
+} from "./core/firebase.js";
 
 let driversBound = false;
 
@@ -19,10 +32,9 @@ async function loadDriversView() {
   listEl.innerHTML = `<p class="text-center text-gray-400 py-8"><i class="fas fa-spinner fa-spin"></i> Chargement…</p>`;
 
   try {
-    const { collection, query, where, getDocs } = window.fs;
     // Composite (snackId, role) — cf. firestore.indexes.json.
     const q = query(
-      collection(window.db, "users"),
+      collection(db, "users"),
       where("snackId", "==", snackId),
       where("role", "==", "livreur"),
     );
@@ -47,10 +59,9 @@ async function loadDeliveriesLog(snackId) {
   el.innerHTML = `<p class="text-center text-gray-400 py-6"><i class="fas fa-spinner fa-spin"></i></p>`;
 
   try {
-    const { collection, query, where, orderBy, limit, getDocs } = window.fs;
     // Réutilise l'index commandes(snackId, statut, date). On filtre mode en JS.
     const q = query(
-      collection(window.db, "commandes"),
+      collection(db, "commandes"),
       where("snackId", "==", snackId),
       where("statut", "in", ["en_livraison", "livree"]),
       orderBy("date", "desc"),
@@ -187,8 +198,7 @@ function renderDrivers(drivers) {
 
 async function toggleDriver(uid, currentlyActive) {
   try {
-    const { doc, updateDoc } = window.fs;
-    await updateDoc(doc(window.db, "users", uid), { actif: !currentlyActive });
+    await updateDoc(doc(db, "users", uid), { actif: !currentlyActive });
     window.showToast?.(currentlyActive ? "Livreur désactivé." : "Livreur activé.", "success");
     loadDriversView();
   } catch (e) {
@@ -226,7 +236,6 @@ function bindDriverForm() {
     btn.disabled = true;
     btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Création…`;
     try {
-      const { httpsCallable, functions } = window.fs;
       const createDriver = httpsCallable(functions, "createDriver");
       await createDriver(payload);
       window.showToast?.("Livreur créé ✅", "success");

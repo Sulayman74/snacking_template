@@ -2,9 +2,22 @@
 // 🍳 CUISINE — Radar temps réel, Tickets, Statuts, Wake Lock
 // ============================================================================
 // Dépendances : window.currentAdminSnackId, window.currentAdminTab,
-//               window.db, window.fs, window.showToast
+//               window.showToast
 
 import { escapeHTML } from "./utils.js";
+import {
+  db,
+  query,
+  collection,
+  where,
+  orderBy,
+  onSnapshot,
+  updateDoc,
+  doc,
+  writeBatch,
+  getDoc,
+  increment,
+} from "./core/firebase.js";
 
 // ============================================================================
 // 💡 ANTI-VEILLE (WAKE LOCK API)
@@ -170,10 +183,8 @@ function startKitchenRadar() {
   if (newOrdersContainer) newOrdersContainer.innerHTML = "";
   if (readyOrdersContainer) readyOrdersContainer.innerHTML = "";
 
-  const { query, collection, where, orderBy, onSnapshot } = window.fs;
-
   const q = query(
-    collection(window.db, "commandes"),
+    collection(db, "commandes"),
     where("snackId", "==", window.currentAdminSnackId),
     where("statut", "in", ["en_attente_client", "nouvelle", "prete"]),
     orderBy("date", "asc"),
@@ -250,8 +261,7 @@ function stopKitchenRadar() {
 // ============================================================================
 async function updateOrderStatus(orderId, newStatus) {
   try {
-    const { updateDoc, doc } = window.fs;
-    await updateDoc(doc(window.db, "commandes", orderId), { statut: newStatus });
+    await updateDoc(doc(db, "commandes", orderId), { statut: newStatus });
   } catch (error) {
     console.error("Erreur Statut :", error);
   }
@@ -260,10 +270,9 @@ async function updateOrderStatus(orderId, newStatus) {
 async function updatePaymentStatus(orderId, currentStatus) {
   try {
     const newStatus = currentStatus === "paye" ? "en_attente" : "paye";
-    const { writeBatch, doc, getDoc, increment } = window.fs;
 
-    const batch = writeBatch(window.db);
-    const orderRef = doc(window.db, "commandes", orderId);
+    const batch = writeBatch(db);
+    const orderRef = doc(db, "commandes", orderId);
     batch.update(orderRef, { "paiement.statut": newStatus });
 
     if (newStatus === "paye") {
@@ -273,7 +282,7 @@ async function updatePaymentStatus(orderId, currentStatus) {
         for (const item of items) {
           const realProductId = item.productId || item.id.split("-")[0];
           if (realProductId) {
-            const productRef = doc(window.db, "produits", realProductId);
+            const productRef = doc(db, "produits", realProductId);
             batch.update(productRef, { ventes: increment(item.quantity) });
           }
         }

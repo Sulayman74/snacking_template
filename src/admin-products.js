@@ -4,6 +4,7 @@
  */
 import { adminStore } from "./core/AdminStore.js";
 import { escapeHTML } from "./utils.js";
+import { db, query, collection, where, onSnapshot } from "./core/firebase.js";
 
 let adminProductsUnsubscribe = null;
 
@@ -12,9 +13,8 @@ async function loadAdminProducts() {
   
   if (adminProductsUnsubscribe) adminProductsUnsubscribe();
 
-  const { query, collection, where, onSnapshot } = window.fs;
   const q = query(
-    collection(window.db, "produits"),
+    collection(db, "produits"),
     where("snackId", "==", window.currentAdminSnackId),
   );
 

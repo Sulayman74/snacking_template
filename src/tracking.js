@@ -1,12 +1,19 @@
 // ============================================================================
 // 📡 TRACKING DE COMMANDE EN TEMPS RÉEL
 // ============================================================================
-// Dépendances : window.fs (onSnapshot, doc, updateDoc, serverTimestamp)
-//               window.db, window.snackConfig
+// Dépendances : window.snackConfig
 //               window.showToast, window.triggerVibration
 //               window.switchView, window.closeProductModal, window.closeCartModal
 
 import { haversineKm, formatDistance, isLatLng } from "./services/geoService.js";
+import {
+  auth,
+  db,
+  doc,
+  updateDoc,
+  serverTimestamp,
+  onSnapshot,
+} from "./core/firebase.js";
 
 // ============================================================================
 // 🎟️ GESTION DE L'UI DE LA MODALE TRACKING
@@ -61,7 +68,7 @@ function renderNotifPrompt() {
 
   if (!("Notification" in window)) return;
   if (Notification.permission !== "default") return;
-  if (!window.auth?.currentUser) return;
+  if (!auth?.currentUser) return;
 
   const btn = document.createElement("button");
   btn.type = "button";
@@ -98,12 +105,9 @@ async function notifyArrival(orderId) {
     btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Transmission au chef...`;
     btn.disabled = true;
 
-    const { doc, updateDoc } = window.fs;
-    const db = window.db;
-
     await updateDoc(doc(db, "commandes", orderId), {
       statut: "nouvelle",
-      dateArriveeClient: window.fs.serverTimestamp(),
+      dateArriveeClient: serverTimestamp(),
     });
 
     window.showToast("C'est noté ! Le chef lance la cuisson 🔥", "success");
@@ -142,8 +146,8 @@ function startOrderTracking(orderId) {
   if (typeof unsubscribeClientRadar === "function") unsubscribeClientRadar();
   console.log("🟢 Radar Client ACTIVÉ :", orderId);
 
-  unsubscribeClientRadar = window.fs.onSnapshot(
-    window.fs.doc(window.db, "commandes", orderId),
+  unsubscribeClientRadar = onSnapshot(
+    doc(db, "commandes", orderId),
     (docSnap) => {
       if (docSnap.exists()) {
         const commande = docSnap.data();
