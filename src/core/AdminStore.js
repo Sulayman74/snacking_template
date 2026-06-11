@@ -10,6 +10,8 @@ export class AdminStore extends EventTarget {
         pushHistory: [],
         salesData: [],            // commandes brutes pour le tableau d'historique (BORNÉ)
         salesAggregate: { count: 0, total: 0 }, // KPIs via agrégation serveur (toute la plage)
+        upsellStats: [],          // 📊 perf upsell par produit (shown/accepted/revenue + nom)
+        kitchenLoad: { queue: 0, avgPrepMin: 0, rushMode: false }, // 🔥 charge cuisine (serveur)
         isSaving: false,
         errors: []
     };
@@ -265,6 +267,66 @@ export class AdminStore extends EventTarget {
         };
     }
 
+    // --- CHARGE CUISINE (signal de capacité, autorité serveur) ---
+
+    /**
+     * Enregistre le dernier signal de charge cuisine renvoyé par getKitchenLoad.
+     * rushMode est décidé SERVEUR (jamais recalculé ici) ; le store ne fait que
+     * le diffuser pour que l'UI (console cuisine, bouton offre flash) réagisse.
+     * @param {{queue:number, avgPrepMin:number, rushMode:boolean}} load
+     */
+    setKitchenLoad(load) {
+        this.#state.kitchenLoad = {
+            queue: Number(load?.queue) || 0,
+            avgPrepMin: Number(load?.avgPrepMin) || 0,
+            rushMode: load?.rushMode === true,
+        };
+        this.emit("admin-kitchen-load-updated");
+    }
+
+    /**
+     * Éligibilité d'une OFFRE FLASH : combine le quota mensuel push existant ET la
+     * garde de capacité (refus en rushMode). L'envoi réel est de toute façon
+     * re-vérifié côté serveur (pushFlashOffer) — c'est ici de l'UX préventive.
+     * @returns {{canSendFlash:boolean, rushMode:boolean, message:string}}
+     */
+    getFlashOfferEligibility() {
+        const push = this.getPushEligibility();
+        const rushMode = this.#state.kitchenLoad?.rushMode === true;
+        let message = "";
+        if (rushMode) message = "Cuisine en charge — offre flash indisponible. Réessayez quand le rush retombe.";
+        else if (!push.canSend) message = push.message;
+        return { canSendFlash: push.canSend && !rushMode, rushMode, message };
+    }
+
+    /**
+     * Pousse une offre flash via la Cloud Function gardée `pushFlashOffer`
+     * (role-gate + rate-limit + rushMode serveur). On NE réutilise PAS schedulePush
+     * (écriture directe campagnes_push) : le flash doit passer par la CF.
+     * @param {object} fs — bridge firebase.js (httpsCallable + functions)
+     * @param {{title:string, body:string, ttlMin:number}} data
+     */
+    async pushFlashOffer(fs, data) {
+        if (!fs?.httpsCallable || !fs?.functions) throw new Error("Fonctions Firebase indisponibles.");
+        const snackId = this.#state.config?.identity?.id || window.currentAdminSnackId;
+        if (!snackId) throw new Error("Snack non identifié. Recharge l'onglet Configuration.");
+
+        this.setSaving(true);
+        try {
+            const callable = fs.httpsCallable(fs.functions, "pushFlashOffer");
+            const res = await callable({ snackId, title: data.title, body: data.body, ttlMin: data.ttlMin });
+            this.setSaving(false);
+            return res?.data || { ok: true };
+        } catch (error) {
+            this.setSaving(false);
+            // Traduit l'erreur de capacité serveur en message lisible.
+            if (error?.message?.includes("kitchen-busy") || error?.details === "kitchen-busy") {
+                throw new Error("Cuisine en charge — offre flash refusée par le serveur.");
+            }
+            throw error;
+        }
+    }
+
     getSmartMarketingTips() {
         const tips = [];
         const now = new Date();
@@ -466,6 +528,16 @@ export class AdminStore extends EventTarget {
      * lourds côté client. Ne déclenche pas de rendu (setSalesData le fait ensuite).
      * @param {{count: number, total: number}} agg
      */
+    /**
+     * Enregistre les stats de performance upsell (une ligne par produit ayant
+     * été affiché et/ou ajouté via la bottom-sheet d'upsell).
+     * @param {Array<{productId:string, nom:string, shown:number, accepted:number, revenue:number}>} rows
+     */
+    setUpsellStats(rows) {
+        this.#state.upsellStats = Array.isArray(rows) ? rows : [];
+        this.emit("admin-upsell-updated");
+    }
+
     setSalesAggregate(agg) {
         this.#state.salesAggregate = {
             count: Number(agg?.count) || 0,

@@ -167,6 +167,59 @@ describe("AdminStore.getPushEligibility", () => {
   });
 });
 
+describe("AdminStore.getFlashOfferEligibility (charge cuisine)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-15T10:00:00"));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("cuisine OK + quota libre → canSendFlash", () => {
+    store.setKitchenLoad({ queue: 1, avgPrepMin: 12, rushMode: false });
+    const e = store.getFlashOfferEligibility();
+    expect(e.canSendFlash).toBe(true);
+    expect(e.rushMode).toBe(false);
+    expect(e.message).toBe("");
+  });
+
+  it("rushMode → refusé, message cuisine", () => {
+    store.setKitchenLoad({ queue: 9, avgPrepMin: 40, rushMode: true });
+    const e = store.getFlashOfferEligibility();
+    expect(e.canSendFlash).toBe(false);
+    expect(e.rushMode).toBe(true);
+    expect(e.message).toMatch(/cuisine/i);
+  });
+
+  it("quota mensuel atteint (cuisine OK) → refusé, message quota", () => {
+    store.setKitchenLoad({ queue: 0, avgPrepMin: 12, rushMode: false });
+    store.setPushHistory([
+      { dateCreation: new Date("2026-06-01") },
+      { dateCreation: new Date("2026-06-10") },
+    ]);
+    const e = store.getFlashOfferEligibility();
+    expect(e.canSendFlash).toBe(false);
+    expect(e.message).toMatch(/quota/i);
+  });
+
+  it("rush ET quota atteint → refusé (rush prioritaire dans le message)", () => {
+    store.setKitchenLoad({ queue: 9, avgPrepMin: 40, rushMode: true });
+    store.setPushHistory([
+      { dateCreation: new Date("2026-06-01") },
+      { dateCreation: new Date("2026-06-10") },
+    ]);
+    const e = store.getFlashOfferEligibility();
+    expect(e.canSendFlash).toBe(false);
+    expect(e.message).toMatch(/cuisine/i);
+  });
+
+  it("setKitchenLoad normalise les valeurs manquantes", () => {
+    store.setKitchenLoad({});
+    const e = store.getFlashOfferEligibility();
+    expect(e.rushMode).toBe(false);
+    expect(e.canSendFlash).toBe(true);
+  });
+});
+
 describe("AdminStore.getSmartMarketingTips", () => {
   afterEach(() => vi.useRealTimers());
   const at = (iso) => {

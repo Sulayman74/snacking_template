@@ -121,6 +121,68 @@ async function main() {
     ok("C6. signature invalide → 400 (rejet)", m.get().status === 400, `http ${m.get().status}`);
   }
 
+  // ===== D. getKitchenLoad + pushFlashOffer (charge cuisine, Firestore émulé) =====
+  const CALM = "snack_load_calm";
+  const RUSH = "snack_load_rush";
+  // Seeds : seuils en config (jamais en dur) + admins + file de commandes.
+  await db.collection("snacks").doc(CALM).set({ capacity: { rushThreshold: 50 } });
+  await db.collection("snacks").doc(RUSH).set({ capacity: { rushThreshold: 1 } });
+  await db.collection("users").doc("u_admin_calm").set({ role: "admin", snackId: CALM });
+  await db.collection("users").doc("u_admin_rush").set({ role: "admin", snackId: RUSH });
+  // 2 commandes "en cours" pour le snack RUSH (queue=2 ≥ rushThreshold=1 → rush).
+  for (const [i, st] of [["a", "en_attente_client"], ["b", "nouvelle"]]) {
+    await db.collection("commandes").doc(`cmd_rush_${i}`).set({ snackId: RUSH, statut: st });
+  }
+
+  const loadCalm = test.wrap(myFunctions.getKitchenLoad);
+  const flash = test.wrap(myFunctions.pushFlashOffer);
+
+  // D1. Snack calme : queue 0, rushMode false, avgPrepMin = défaut prepBaseMin(12).
+  try {
+    const out = await loadCalm({ data: { snackId: CALM }, auth: { uid: "u_client" } });
+    ok("D1. getKitchenLoad calme → rushMode false (queue 0, avgPrepMin 12)",
+      out.queue === 0 && out.rushMode === false && out.avgPrepMin === 12, JSON.stringify(out));
+  } catch (e) { ok("D1. getKitchenLoad calme", false, e?.message || String(e)); }
+
+  // D2. 2e appel < TTL → servi depuis le cache.
+  try {
+    const out = await loadCalm({ data: { snackId: CALM }, auth: { uid: "u_client" } });
+    ok("D2. getKitchenLoad calme (2e appel) → cached:true", out.cached === true, JSON.stringify(out));
+  } catch (e) { ok("D2. getKitchenLoad cache", false, e?.message || String(e)); }
+
+  // D3. Snack en rush : queue 2 ≥ rushThreshold 1 → rushMode true.
+  try {
+    const out = await loadCalm({ data: { snackId: RUSH }, auth: { uid: "u_client" } });
+    ok("D3. getKitchenLoad rush → rushMode true (queue 2)", out.queue === 2 && out.rushMode === true, JSON.stringify(out));
+  } catch (e) { ok("D3. getKitchenLoad rush", false, e?.message || String(e)); }
+
+  // D4. pushFlashOffer hors rush → crée une campagne immédiate (source flash_offer).
+  try {
+    const before = (await db.collection("campagnes_push").where("snackId", "==", CALM).get()).size;
+    await flash({ data: { snackId: CALM, title: "Goûter -20%", body: "1h seulement", ttlMin: 60 }, auth: { uid: "u_admin_calm" } });
+    const after = await db.collection("campagnes_push").where("snackId", "==", CALM).get();
+    const created = after.docs.find((d) => d.data().source === "flash_offer");
+    ok("D4. pushFlashOffer calme → campagne en_attente créée",
+      after.size === before + 1 && created?.data().statut === "en_attente" && created?.data().cible === "active",
+      `n=${after.size}`);
+  } catch (e) { ok("D4. pushFlashOffer calme", false, e?.message || String(e)); }
+
+  // D5. pushFlashOffer en rush → refusé failed-precondition / kitchen-busy.
+  try {
+    await flash({ data: { snackId: RUSH, title: "X", body: "Y", ttlMin: 30 }, auth: { uid: "u_admin_rush" } });
+    ok("D5. pushFlashOffer rush → refusé kitchen-busy", false, "aucune exception levée");
+  } catch (e) {
+    ok("D5. pushFlashOffer rush → refusé kitchen-busy", e?.message?.includes("kitchen-busy"), e?.message || String(e));
+  }
+
+  // D6. pushFlashOffer non-admin → permission-denied.
+  try {
+    await flash({ data: { snackId: CALM, title: "X", body: "Y", ttlMin: 30 }, auth: { uid: "u_inconnu" } });
+    ok("D6. pushFlashOffer non-admin → permission-denied", false, "aucune exception levée");
+  } catch (e) {
+    ok("D6. pushFlashOffer non-admin → permission-denied", /permission|administrateur/i.test(e?.message || ""), e?.message || String(e));
+  }
+
   const passed = results.filter(Boolean).length;
   console.log(`\n${passed}/${results.length} validations OK`);
   await test.cleanup?.();

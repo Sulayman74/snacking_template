@@ -16,6 +16,7 @@
 
 import { store } from "../core/Store.js";
 import { escapeHTML } from "../utils.js";
+import { functions, httpsCallable } from "../core/firebase.js";
 
 class UpsellUI {
     constructor() {
@@ -31,21 +32,30 @@ class UpsellUI {
 
     /**
      * Ouvre la modale avec les suggestions courantes.
+     * @param {Object} [opts]
+     * @param {boolean} [opts.rushMode=false] - Charge cuisine (décidée serveur) ;
+     *   transmise telle quelle au Store qui filtre les suggestions. L'UI ne décide
+     *   de rien — elle relaie juste le flag (cf. règle d'or : pas de métier dans l'UI).
      * @returns {Promise<"continue"|"cancel">} action choisie par l'utilisateur.
      *   Si aucune suggestion disponible, résout "continue" sans afficher la modale.
      */
-    show() {
+    show({ rushMode = false } = {}) {
         return new Promise((resolve) => {
             if (!this.sheet || !this.content || !this.list || !this.template) {
                 console.warn("UpsellUI : DOM manquant, skip upsell.");
                 return resolve("continue");
             }
 
-            const suggestions = store.getUpsellSuggestions(3);
+            const suggestions = store.getUpsellSuggestions(3, { rushMode });
             if (suggestions.length === 0) return resolve("continue");
 
             this.#renderSuggestions(suggestions);
             this.#open();
+
+            // 📊 Instrumentation "shown" (fire-and-forget) : ne bloque ni ne
+            // rejette jamais le tunnel (cf. règle d'or : un upsell ne casse
+            // jamais le checkout).
+            this.#trackShown(suggestions.map((p) => p.id));
 
             const cleanup = (action) => {
                 this.sheet.removeEventListener("click", onSheetClick);
@@ -116,6 +126,7 @@ class UpsellUI {
             prixBase: product.prix,
             image: product.image || "",
             type: "seul",
+            viaUpsell: true, // 📊 tag d'attribution (mesure accepted/revenue serveur)
         });
 
         window.triggerVibration?.("light");
@@ -127,6 +138,25 @@ class UpsellUI {
         btnElement.classList.add("bg-green-600");
         btnElement.classList.remove("bg-primary");
         liElement.classList.add("opacity-60");
+    }
+
+    /**
+     * Incrémente le compteur `shown` côté serveur (onCall trackUpsellShown).
+     * Fire-and-forget : tout échec (réseau, auth) est silencieux pour ne jamais
+     * impacter l'affichage ni le checkout. Source de vérité de l'agrégat = serveur.
+     * @param {string[]} productIds — IDs des produits affichés dans la sheet.
+     */
+    #trackShown(productIds) {
+        try {
+            const snackId = window.snackConfig?.identity?.id;
+            if (!snackId || !Array.isArray(productIds) || productIds.length === 0) return;
+            const track = httpsCallable(functions, "trackUpsellShown");
+            track({ snackId, productIds: productIds.slice(0, 10) }).catch((e) => {
+                console.warn("trackUpsellShown échec (non bloquant) :", e?.message || e);
+            });
+        } catch (e) {
+            console.warn("trackUpsellShown skip :", e?.message || e);
+        }
     }
 
     #open() {

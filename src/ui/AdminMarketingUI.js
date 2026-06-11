@@ -10,6 +10,8 @@ class AdminMarketingUI {
         this.tipsContainer = document.getElementById("marketing-tips-container");
         this.quotaContainer = document.getElementById("marketing-quota-info");
         this.weatherCard = document.getElementById("weather-insight-card");
+        this.flashBtn = document.getElementById("btn-flash-offer");
+        this.flashHint = document.getElementById("flash-offer-hint");
 
         this.init();
     }
@@ -19,16 +21,68 @@ class AdminMarketingUI {
         // La config peut arriver après l'init (loadConfigView async) → on
         // re-render la météo dès qu'elle est en place.
         adminStore.addEventListener("admin-config-updated", () => this.renderWeatherInsight());
+        // 🔥 Le bouton offre flash reflète la charge cuisine (rushMode serveur).
+        adminStore.addEventListener("admin-kitchen-load-updated", () => this.renderFlashEligibility());
         if (this.form) {
             this.form.addEventListener("submit", (e) => this.handleSubmit(e));
         }
+        if (this.flashBtn) {
+            this.flashBtn.addEventListener("click", () => this.handleFlashOffer());
+        }
         // 1er essai au montage (si la config est déjà chargée)
         this.renderWeatherInsight();
+        this.renderFlashEligibility();
     }
 
     render() {
         this.renderTips();
         this.renderQuota();
+        this.renderFlashEligibility();
+    }
+
+    /**
+     * Reflète l'éligibilité d'une offre flash sur le bouton dédié : désactivé en
+     * rushMode (cuisine en charge) ou quota mensuel atteint. Purement UX — le
+     * serveur (pushFlashOffer) reste la source de vérité de la garde.
+     */
+    renderFlashEligibility() {
+        if (!this.flashBtn) return;
+        const { canSendFlash, message } = adminStore.getFlashOfferEligibility();
+        this.flashBtn.disabled = !canSendFlash;
+        if (!canSendFlash) {
+            this.flashBtn.classList.add("opacity-50", "grayscale");
+            this.flashBtn.title = message;
+        } else {
+            this.flashBtn.classList.remove("opacity-50", "grayscale");
+            this.flashBtn.title = "";
+        }
+        if (this.flashHint) this.flashHint.textContent = canSendFlash ? "" : message;
+    }
+
+    async handleFlashOffer() {
+        if (!this.flashBtn) return;
+        const title = document.getElementById("push-title")?.value?.trim();
+        const message = document.getElementById("push-message")?.value?.trim();
+        if (!title || !message) {
+            showToast("Renseigne un titre et un message pour l'offre flash.", "error");
+            return;
+        }
+
+        const originalHtml = this.flashBtn.innerHTML;
+        this.flashBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Envoi flash...`;
+        this.flashBtn.disabled = true;
+        try {
+            // ttlMin par défaut : 60 min (offre courte). Le serveur revérifie le rushMode.
+            await adminStore.pushFlashOffer(fs, { title, body: message, ttlMin: 60 });
+            showToast("Offre flash envoyée aux clients actifs ! ⚡", "success");
+            this.form?.reset();
+            if (typeof window.loadPushHistory === "function") window.loadPushHistory();
+        } catch (error) {
+            showToast(error.message, "error");
+        } finally {
+            this.flashBtn.innerHTML = originalHtml;
+            this.renderFlashEligibility();
+        }
     }
 
     /**

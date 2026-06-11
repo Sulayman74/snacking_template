@@ -91,7 +91,18 @@ async function processCheckout() {
   // - Sinon, l'utilisateur voit la sheet et choisit continue/cancel.
   // - "cancel" abort proprement : pas de spinner, pas d'appel Stripe.
   if (cfg?.features?.enableUpsell) {
-    const upsellChoice = await upsellUI.show();
+    // 🔥 Charge cuisine (autorité serveur) : en rush, l'upsell se limite aux
+    // produits prêts à servir. FAIL-OPEN absolu — la capacité ne doit JAMAIS
+    // bloquer le paiement : tout échec/lenteur → rushMode=false (upsell complet).
+    let rushMode = false;
+    try {
+      const getKitchenLoad = httpsCallable(functions, "getKitchenLoad");
+      const res = await getKitchenLoad({ snackId: cfg.identity?.id });
+      rushMode = res?.data?.rushMode === true;
+    } catch (e) {
+      rushMode = false;
+    }
+    const upsellChoice = await upsellUI.show({ rushMode });
     if (upsellChoice === "cancel") return;
   }
 
@@ -261,6 +272,9 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       prixBase: item.prixBase || item.prix,
       prixMenuAdd: item.prixMenuAdd || 0,
       quantity: item.quantity,
+      // 📊 Attribution upsell : tag posé par UpsellUI lors d'un ajout via la
+      // bottom-sheet. Le serveur (finalizeOrder) agrège accepted/revenue.
+      viaUpsell: item.viaUpsell === true,
     }));
 
     // Montant en centimes pour vérification côté serveur

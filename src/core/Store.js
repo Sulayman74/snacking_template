@@ -140,13 +140,25 @@ export class Store extends EventTarget {
      *
      * Match case-insensitive sur `categorieId` — ne dépend pas d'un flag
      * Firestore dédié (KISS, marche pour tous les snacks existants).
+     *
+     * En `rushMode` (cuisine surchargée, décidé côté serveur via getKitchenLoad),
+     * on limite aux produits PRÊTS À SERVIR (boissons/desserts) et on retire les
+     * accompagnements/sides qui demandent de la cuisson. La partition lourd/léger
+     * est une heuristique de catégorie ici (logique métier) — jamais dans l'UI.
+     *
+     * @param {number} maxItems - Nombre maximum de suggestions.
+     * @param {Object} [opts]
+     * @param {boolean} [opts.rushMode=false] - Si vrai, exclut les produits à cuisson.
+     * @returns {Array<Object>} Produits suggérés.
      */
-    getUpsellSuggestions(maxItems = 3) {
+    getUpsellSuggestions(maxItems = 3, { rushMode = false } = {}) {
         const menu = this.#state.menu || [];
         const cart = this.#state.cart || [];
         if (menu.length === 0) return [];
 
-        const UPSELL_RE = /(drinks?|boissons?|sides?|accompagnements?|desserts?)/i;
+        const LIGHT_RE = /(drinks?|boissons?|desserts?)/i;
+        const ALL_RE = /(drinks?|boissons?|sides?|accompagnements?|desserts?)/i;
+        const UPSELL_RE = rushMode ? LIGHT_RE : ALL_RE;
         const cartProductIds = new Set(
             cart.map((i) => i.productId || (typeof i.id === "string" ? i.id.split("-")[0] : i.id))
         );
