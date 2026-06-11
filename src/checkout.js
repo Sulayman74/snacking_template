@@ -143,7 +143,7 @@ async function processCheckout() {
       .join(", ");
 
     const response = await createPaymentIntent({
-      snackId: cfg.identity.id || "Ym1YiO4Ue5Fb5UXlxr06",
+      snackId: cfg.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06",
       amount: Math.round(totalAmount * 100),
       currency: "eur",
       description: `Commande Web - ${cfg.identity.name}`,
@@ -259,7 +259,7 @@ async function finalizeOrderInFirestore(stripePaymentId) {
   try {
     const cartItems = window.cart.map((item) => ({
       id: item.id,
-      productId: item.productId || item.id.split("-")[0],
+      productId: item.productId || (typeof item.id === "string" ? item.id.split("-")[0] : null),
       nom: item.nom,
       // Le panier stocke `formule`/`taille` (cf. product-modal #buildCartItem).
       // On garde `item.type`/`item.tailleChoisie` en fallback pour tout item legacy.
