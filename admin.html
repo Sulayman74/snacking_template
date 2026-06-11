@@ -206,7 +206,15 @@
 
     <div class="flex-1 overflow-y-auto pb-2 md:pb-0"> 
         
-        <section id="view-cuisine" class="flex flex-col md:flex-row gap-6 p-4 pb-20 md:p-6 h-full min-h-full">
+        <!-- 🔥 Badge de charge cuisine (signal de capacité, décidé serveur via getKitchenLoad) -->
+        <div id="kitchen-load-badge"
+             class="hidden absolute top-2 left-1/2 -translate-x-1/2 z-20 items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow"
+             role="status" aria-live="polite">
+            <span id="kitchen-load-dot" class="w-2.5 h-2.5 rounded-full inline-block"></span>
+            <span id="kitchen-load-text">Charge : —</span>
+        </div>
+
+        <section id="view-cuisine" class="relative flex flex-col md:flex-row gap-6 p-4 pb-20 md:p-6 h-full min-h-full">
             <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
                     <h2 class="text-xl font-black text-gray-600 uppercase"><i class="fas fa-car text-gray-500 mr-2"></i> Attente Client</h2>
@@ -332,6 +340,13 @@
                             <button type="submit" id="btn-send-push" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-700 hover:-translate-y-1 transition-all active:scale-95 flex justify-center items-center gap-2">
                                 <i class="fas fa-paper-plane"></i> Programmer la campagne
                             </button>
+
+                            <!-- ⚡ Offre flash : envoi immédiat au segment actifs, REFUSÉ si la
+                                 cuisine est en charge (rushMode décidé serveur via getKitchenLoad). -->
+                            <button type="button" id="btn-flash-offer" class="w-full bg-orange-500 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-orange-600 hover:-translate-y-1 transition-all active:scale-95 flex justify-center items-center gap-2">
+                                <i class="fas fa-bolt"></i> Envoyer une offre flash
+                            </button>
+                            <p id="flash-offer-hint" class="text-[10px] text-gray-500 italic text-center"></p>
                         </form>
                     </div>
 
@@ -440,6 +455,17 @@
                         <i class="fas fa-list-alt text-purple-500"></i> Historique des ventes (ce mois)
                     </h3>
                     <div id="compta-history-table">
+                        <p class="text-center text-gray-300 py-8">Chargement en cours...</p>
+                    </div>
+                </div>
+
+                <!-- 📊 Performance Upsell -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
+                        <i class="fas fa-arrow-trend-up text-green-500"></i> Performance Upsell
+                    </h3>
+                    <p class="text-xs text-gray-400 mb-4">Suggestions affichées vs ajoutées au panier, et chiffre d'affaires attribuable (cumul).</p>
+                    <div id="upsell-stats-table">
                         <p class="text-center text-gray-300 py-8">Chargement en cours...</p>
                     </div>
                 </div>

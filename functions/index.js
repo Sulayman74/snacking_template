@@ -120,6 +120,65 @@ async function cleanupInvalidFcmToken(userId, error) {
   }
 }
 
+// Palier fidélité partagé (scan boutique ET commande payée). À MAX → menu offert.
+const MAX_LOYALTY_POINTS = 10;
+
+/**
+ * Crédite n point(s) de fidélité sur pointsBySnack.{snackId}, dans une transaction.
+ * Sémantique identique au scan boutique : à partir du palier (current >= MAX), le crédit
+ * suivant déclenche la récompense + remise à 0 ; sinon on incrémente. N'émet PAS le push
+ * (effet de bord à faire APRÈS commit) et ne touche PAS loyaltyLastScan (cooldown propre au
+ * scan). Retourne de quoi décider du push après la transaction.
+ * @param {FirebaseFirestore.Transaction} tx - Transaction Firestore en cours.
+ * @param {FirebaseFirestore.DocumentReference} clientRef - Réf. du doc users/{uid}.
+ * @param {string} snackId - Clé de partitionnement multi-tenant.
+ * @param {number} [n=1] - Nombre de points à créditer (1 en pratique : scan & commande).
+ * @returns {Promise<{points:number, max:number, reward:boolean, fcmToken:(string|null)}>}
+ * @throws {HttpsError} not-found si le doc client n'existe pas.
+ */
+async function creditLoyaltyPoints(tx, clientRef, snackId, n = 1) {
+  const snap = await tx.get(clientRef);
+  if (!snap.exists) throw new HttpsError("not-found", "Client introuvable.");
+  const d = snap.data();
+  const current = (d.pointsBySnack || {})[snackId] || 0;
+
+  let newPoints;
+  let reward = false;
+  if (current >= MAX_LOYALTY_POINTS) {
+    newPoints = 0;            // palier atteint → menu offert, carte remise à 0
+    reward = true;
+  } else {
+    newPoints = current + n;  // n=1 en pratique (scan & commande)
+  }
+
+  tx.update(clientRef, { [`pointsBySnack.${snackId}`]: newPoints });
+  return { points: newPoints, max: MAX_LOYALTY_POINTS, reward, fcmToken: d.fcmToken || null };
+}
+
+/**
+ * Émet le push de palier « menu offert ». À appeler APRÈS le commit de la transaction
+ * (jamais dans une transaction). No-op si le client n'a pas de token. Nettoie un token mort.
+ * @param {string} userId - uid du client (pour le cleanup du token).
+ * @param {string|null} fcmToken - Token FCM du client.
+ * @param {string} snackId - Snack à l'origine de la récompense (transmis au front).
+ * @returns {Promise<void>}
+ */
+async function sendRewardPush(userId, fcmToken, snackId) {
+  if (!fcmToken) return; // crédit OK sans token → pas de crash
+  try {
+    await getMessaging().send({
+      notification: {
+        title: "🎁 Menu offert !",
+        body: "Bravo ! Tu as atteint le palier fidélité. Ton prochain menu est offert 🍟",
+      },
+      data: { type: "REWARD_UNLOCKED", snackId: String(snackId) },
+      token: fcmToken,
+    });
+  } catch (error) {
+    await cleanupInvalidFcmToken(userId, error);
+  }
+}
+
 // Identifie un appelant : uid si auth, sinon hash IP (X-Forwarded-For)
 function callerKey(request, action) {
   if (request.auth?.uid) return `${action}_uid_${request.auth.uid}`;
@@ -192,6 +251,37 @@ async function getKitchenQueueCount(snackId) {
   }
 }
 
+// Minutes de préparation estimées depuis la file et la config delivery.
+// Source de vérité UNIQUE, consommée par finalizeOrder ET getKitchenLoad (DRY).
+function computePrepMin(snackData, queueCount) {
+  const d = (snackData && snackData.delivery) || {};
+  const prepBaseMin = isFiniteNum(d.prepBaseMin) ? d.prepBaseMin : 12;
+  const queueFactorMin = isFiniteNum(d.queueFactorMin) ? d.queueFactorMin : 3;
+  return Math.max(1, Math.round(prepBaseMin + queueFactorMin * queueCount));
+}
+
+// Seuils de capacité cuisine, lus depuis snacks/{snackId}.capacity avec des
+// défauts serveur sûrs (zéro migration : un snack sans `capacity` reste valide).
+function readCapacityConfig(snackData) {
+  const c = (snackData && snackData.capacity) || {};
+  return {
+    rushThreshold: isFiniteNum(c.rushThreshold) && c.rushThreshold > 0 ? c.rushThreshold : 8,
+    prepCeilingMin: isFiniteNum(c.prepCeilingMin) && c.prepCeilingMin > 0 ? c.prepCeilingMin : 30,
+    loadCacheTtlMs:
+      (isFiniteNum(c.loadCacheTtlSec) && c.loadCacheTtlSec > 0 ? c.loadCacheTtlSec : 30) * 1000,
+  };
+}
+
+// Décision de capacité (sans cache) : file + prep estimée → rushMode.
+// Calculée UNE fois côté serveur, consommée par getKitchenLoad et pushFlashOffer.
+async function computeKitchenLoad(snackData, snackId) {
+  const cfg = readCapacityConfig(snackData);
+  const queue = await getKitchenQueueCount(snackId);
+  const avgPrepMin = computePrepMin(snackData, queue);
+  const rushMode = queue >= cfg.rushThreshold || avgPrepMin >= cfg.prepCeilingMin;
+  return { queue, avgPrepMin, rushMode };
+}
+
 // --- Anti-fraude prix : recalcul depuis la base, jamais le prix du client ------
 // Ensemble des prix unitaires LÉGITIMES d'un produit (en centimes) :
 //   - base : `prix` (produit simple) OU chaque `tailles[].prix` (produit taillé)
@@ -257,49 +347,12 @@ async function assertCartPricesAreLegit(cartItems, paidAmountCents, snackId) {
 }
 
 // ============================================================================
-// 🎁 FONCTION 1 : CADEAU DE FIDÉLITÉ (10 POINTS)
+// 🎁 FIDÉLITÉ — le push de palier « menu offert » est désormais émis À LA SOURCE
+// (sendRewardPush, après crédit) par awardLoyaltyPoint (scan) ET finalizeOrder
+// (commande payée). L'ancien trigger notifierMenuOffert écoutait le champ plat
+// `points` (jamais écrit : les points vivent dans pointsBySnack.{snackId}) → il
+// ne partait jamais. Supprimé pour éviter tout double-push et code mort.
 // ============================================================================
-exports.notifierMenuOffert = onDocumentUpdated(
-  "users/{userId}",
-  async (event) => {
-    const dataBefore = event.data.before.data();
-    const dataAfter = event.data.after.data();
-    const userId = event.params.userId;
-
-    console.log(`🔍 Analyse du changement pour l'utilisateur : ${userId}`);
-
-    if (dataAfter.points >= 10 && dataBefore.points < 10) {
-      const token = dataAfter.fcmToken;
-
-      if (!token) {
-        console.log("⚠️ Abandon : Le client n'a pas de token FCM enregistré.");
-        return;
-      }
-
-      const message = {
-        notification: {
-          title: "🎁 CADEAU : Menu Offert !",
-          body: "Félicitations ! Tu as atteint 10 points. Ton prochain menu est gratuit chez nous !",
-        },
-        data: {
-          type: "REWARD_UNLOCKED",
-          points: "10",
-        },
-        token: token,
-      };
-
-      try {
-        const response = await getMessaging().send(message);
-        console.log("✅ Notification envoyée avec succès :", response);
-      } catch (error) {
-        console.error("❌ Erreur lors de l'envoi FCM :", error);
-        await cleanupInvalidFcmToken(userId, error);
-      }
-    } else {
-      console.log("ℹ️ Changement ignoré (pas le palier des 10 points).");
-    }
-  },
-);
 
 // ============================================================================
 // 🖼️ FONCTION 2 : OPTIMISATION D'IMAGES (SHARP)
@@ -972,12 +1025,10 @@ exports.finalizeOrder = onCall(
 
     // 🚚 ETA (heuristique simple) + livraison — TOUT recalculé serveur.
     const dcfg = snackData.delivery || {};
-    const prepBaseMin = isFiniteNum(dcfg.prepBaseMin) ? dcfg.prepBaseMin : 12;
-    const queueFactorMin = isFiniteNum(dcfg.queueFactorMin) ? dcfg.queueFactorMin : 3;
     const avgSpeedKmh = isFiniteNum(dcfg.avgSpeedKmh) && dcfg.avgSpeedKmh > 0 ? dcfg.avgSpeedKmh : 22;
 
     const queueCount = await getKitchenQueueCount(snackId);
-    const prepMin = Math.max(1, Math.round(prepBaseMin + queueFactorMin * queueCount));
+    const prepMin = computePrepMin(snackData, queueCount);
 
     let livraisonData = null;
     let deliveryMin = null;
@@ -1113,9 +1164,202 @@ exports.finalizeOrder = onCall(
       console.error("finalizeOrder post-création (parrainage/lastOrderDate) échouée :", postErr);
     }
 
+    // 🎁 FIDÉLITÉ CLIENT (best-effort) — +1 point par commande payée, collect ET
+    // livraison (mode-agnostique). Ancré dans le bloc post-création idempotent
+    // (les retries retournent §4/§5 avant ce point) → jamais de double crédit.
+    // try/catch isolé : un échec fidélité ne casse jamais une commande déjà payée.
+    try {
+      const clientRef = db.collection("users").doc(uid);
+      const res = await db.runTransaction((tx) => creditLoyaltyPoints(tx, clientRef, snackId, 1));
+      if (res.reward) await sendRewardPush(uid, res.fcmToken, snackId);
+    } catch (loyErr) {
+      console.error("finalizeOrder crédit fidélité échoué :", loyErr);
+    }
+
+    // 📊 UPSELL ANALYTICS (best-effort) — agrège accepted/revenue depuis la
+    // commande PAYÉE (source de vérité, zéro confiance client). Ne s'exécute
+    // qu'à la première création (les retries retournent tôt §4/§5) → pas de
+    // double comptage. Un échec ici ne fait JAMAIS échouer la commande.
+    try {
+      const upsellBatch = db.batch();
+      let hasUpsell = false;
+      for (const item of cartItems) {
+        if (item.viaUpsell !== true || !V.isDocId(item.productId)) continue;
+        const qty = Number(item.quantity) || 0;
+        const prix = Number(item.prix) || 0;
+        if (qty <= 0) continue;
+        hasUpsell = true;
+        const statRef = db
+          .collection("snacks").doc(snackId)
+          .collection("upsellStats").doc(item.productId);
+        upsellBatch.set(
+          statRef,
+          {
+            accepted: admin.firestore.FieldValue.increment(qty),
+            revenue: admin.firestore.FieldValue.increment(prix * qty),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+      if (hasUpsell) await upsellBatch.commit();
+    } catch (upsellErr) {
+      console.error("finalizeOrder upsellStats (accepted/revenue) échouée :", upsellErr);
+    }
+
     return { orderId };
   }
 );
+
+// ============================================================================
+// 🔥 FONCTION : CHARGE CUISINE (signal de capacité, autorité serveur)
+// ============================================================================
+// Retourne { queue, avgPrepMin, rushMode } pour un snack. `rushMode` est calculé
+// UNE fois côté serveur (seuils en config snacks/{snackId}.capacity, jamais en
+// dur) et consommé par l'upsell (checkout) et la console cuisine admin.
+// Cache court (doc cache/kitchen_load_{snackId}) : sans lui, chaque ouverture de
+// checkout déclencherait une agrégation .count() + une lecture snack.
+// Auth simple requise (pas admin) : ne fuit rien de sensible (queue/eta sont déjà
+// exposés via l'ETA de commande). Jamais bloquant : le client fait fail-open.
+exports.getKitchenLoad = onCall({ region: "europe-west1" }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Authentification requise.");
+  }
+
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+  const { snackId } = data;
+  require_(V.isDocId(snackId), "snackId invalide.");
+
+  const snackSnap = await db.collection("snacks").doc(snackId).get();
+  if (!snackSnap.exists) throw new HttpsError("not-found", "Snack introuvable.");
+  const snackData = snackSnap.data() || {};
+  const ttlMs = readCapacityConfig(snackData).loadCacheTtlMs;
+
+  // 1. Cache hit valide → return direct (borne le coût Firestore par snack).
+  const cacheRef = db.collection("cache").doc(`kitchen_load_${snackId}`);
+  const cacheSnap = await cacheRef.get();
+  const cached = cacheSnap.exists ? cacheSnap.data() : null;
+  const ageMs = Date.now() - (cached?.fetchedAt?.toMillis?.() || 0);
+  if (cached && ageMs < ttlMs && typeof cached.rushMode === "boolean") {
+    return { queue: cached.queue, avgPrepMin: cached.avgPrepMin, rushMode: cached.rushMode, cached: true };
+  }
+
+  // 2. Cache miss / expiré → recalcul + écriture cache.
+  const load = await computeKitchenLoad(snackData, snackId);
+  await cacheRef.set({
+    ...load,
+    fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return { ...load, cached: false };
+});
+
+// ============================================================================
+// ⚡ FONCTION : OFFRE FLASH (gardée par la charge cuisine)
+// ============================================================================
+// Pousse une offre flash au segment "active" — MAIS refuse en rushMode (cuisine
+// surchargée). Le flash DOIT passer par cette CF (role-gate + rate-limit +
+// rushMode serveur) : un client ne crée jamais une campagne directement.
+// Lecture de charge FRAÎCHE (pas le cache 30s) : débloquer/bloquer une offre sur
+// un état périmé serait incorrect ; action admin rare → coût négligeable.
+// L'envoi est délégué au cron existant `processPushCampaigns` (≤ 5 min) via un
+// doc campagnes_push conforme — pas de mécanique FCM dupliquée (DRY).
+exports.pushFlashOffer = onCall({ region: "europe-west1" }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Authentification requise.");
+  }
+
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+  const { snackId, title, body, ttlMin } = data;
+  require_(V.isDocId(snackId), "snackId invalide.");
+  require_(V.isNonEmptyString(title, 80), "Titre invalide.");
+  require_(V.isNonEmptyString(body, 200), "Message invalide.");
+  require_(V.isPositiveInt(ttlMin, 240), "ttlMin invalide.");
+
+  // 🛡️ Réservé à l'admin du snack + rate limit (3 offres flash / 60s).
+  await assertCallerIsSnackAdmin(request, snackId);
+  await enforceRateLimit({
+    key: callerKey(request, "flashOffer"),
+    max: 3,
+    windowMs: 60_000,
+  });
+
+  // 🔥 Garde de capacité : on refuse en plein coup de feu (lecture fraîche).
+  const snackSnap = await db.collection("snacks").doc(snackId).get();
+  if (!snackSnap.exists) throw new HttpsError("not-found", "Snack introuvable.");
+  const { rushMode } = await computeKitchenLoad(snackSnap.data() || {}, snackId);
+  if (rushMode) throw new HttpsError("failed-precondition", "kitchen-busy");
+
+  // ✅ Déléguer l'envoi au cron : doc campagnes_push immédiat, segment "active".
+  await db.collection("campagnes_push").add({
+    snackId,
+    titre: title,
+    message: body,
+    cible: "active",
+    actionUrl: null,
+    imageUrl: null,
+    statut: "en_attente",
+    dateEnvoiPrevue: admin.firestore.Timestamp.now(),
+    dateCreation: admin.firestore.FieldValue.serverTimestamp(),
+    source: "flash_offer",
+    flashTtlMin: ttlMin,
+    stats: { envoye: 0, clics: 0 },
+  });
+
+  return { ok: true };
+});
+
+// ============================================================================
+// 📊 FONCTION : TRACKING UPSELL "SHOWN" (instrumentation légère)
+// ============================================================================
+// Incrémente le compteur `shown` des produits affichés dans la bottom-sheet
+// d'upsell, pour calculer le taux d'acceptation côté admin (accepted/shown).
+// Écrit EXCLUSIVEMENT côté serveur dans snacks/{snackId}/upsellStats/{productId}
+// (un client ne fabrique pas ses propres stats). Fire-and-forget côté client :
+// un échec ici n'impacte jamais le tunnel de commande.
+exports.trackUpsellShown = onCall({ region: "europe-west1" }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Authentification requise.");
+  }
+
+  // 🛡️ Rate limit généreux : 1 appel par affichage upsell (≈ 1 par checkout).
+  await enforceRateLimit({
+    key: callerKey(request, "trackUpsellShown"),
+    max: 30,
+    windowMs: 60_000,
+  });
+
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+
+  const { snackId, productIds } = data;
+  require_(V.isDocId(snackId), "snackId invalide.");
+  require_(V.isArray(productIds) && productIds.length > 0, "productIds vide ou invalide.");
+  require_(productIds.length <= 10, "Trop de productIds.");
+
+  const batch = db.batch();
+  let count = 0;
+  for (const productId of productIds) {
+    if (!V.isDocId(productId)) continue;
+    count++;
+    const statRef = db
+      .collection("snacks").doc(snackId)
+      .collection("upsellStats").doc(productId);
+    batch.set(
+      statRef,
+      {
+        shown: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+  require_(count > 0, "Aucun productId valide.");
+  await batch.commit();
+
+  return { ok: true, tracked: count };
+});
 
 // ============================================================================
 // 🚚 FONCTION : CRÉER UN LIVREUR (réservé admin du snack)
@@ -1243,41 +1487,35 @@ exports.awardLoyaltyPoint = onCall({ region: "europe-west1" }, async (request) =
   await assertCallerIsSnackAdmin(request, snackId);
   await enforceRateLimit({ key: callerKey(request, "awardLoyaltyPoint"), max: 60, windowMs: 60_000 });
 
-  const MAX_POINTS = 10;
   const COOLDOWN_MS = 20_000; // anti double-scan accidentel
   const clientRef = db.collection("users").doc(clientUid);
 
-  return await db.runTransaction(async (tx) => {
+  const result = await db.runTransaction(async (tx) => {
+    // Anti-rejeu : refuse un re-scan trop rapproché (double-scan accidentel).
+    // Lecture dédiée au cooldown (loyaltyLastScan), propre au scan boutique.
     const snap = await tx.get(clientRef);
     if (!snap.exists) {
       throw new HttpsError("not-found", "Ce QR code n'est pas dans la base.");
     }
-    const d = snap.data();
-    const current = (d.pointsBySnack || {})[snackId] || 0;
-    const lastScan = (d.loyaltyLastScan || {})[snackId];
+    const lastScan = (snap.data().loyaltyLastScan || {})[snackId];
     const lastMs = lastScan && lastScan.toMillis ? lastScan.toMillis() : 0;
-
-    // Anti-rejeu : refuse un re-scan trop rapproché (double-scan accidentel).
     if (lastMs && Date.now() - lastMs < COOLDOWN_MS) {
       throw new HttpsError("failed-precondition", "Carte déjà scannée à l'instant.");
     }
 
-    let newPoints;
-    let reward = false;
-    if (current >= MAX_POINTS) {
-      newPoints = 0;        // palier atteint → menu offert, carte remise à 0
-      reward = true;
-    } else {
-      newPoints = current + 1;
-    }
-
+    // Crédit via le helper partagé (scan + commande) → +1 point, palier/reset unifiés.
+    const res = await creditLoyaltyPoints(tx, clientRef, snackId, 1);
+    // Marque l'instant du scan (cooldown spécifique boutique, hors helper).
     tx.update(clientRef, {
-      [`pointsBySnack.${snackId}`]: newPoints,
       [`loyaltyLastScan.${snackId}`]: admin.firestore.FieldValue.serverTimestamp(),
     });
-
-    return { points: newPoints, max: MAX_POINTS, reward };
+    return res;
   });
+
+  // Push de palier émis APRÈS commit (jamais dans la transaction, qui peut rejouer).
+  if (result.reward) await sendRewardPush(clientUid, result.fcmToken, snackId);
+
+  return { points: result.points, max: result.max, reward: result.reward };
 });
 
 // ============================================================================

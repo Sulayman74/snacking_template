@@ -50,6 +50,16 @@ service cloud.firestore {
                               'stripeChargesEnabled', 'stripeDetailsSubmitted', 'stripePayoutsEnabled'
                             ])
                        );
+
+      // 📊 STATS UPSELL : compteurs shown/accepted/revenue par produit.
+      // Lecture réservée à l'admin du snack (ou superadmin) pour la vue
+      // "Performance Upsell". Écriture EXCLUSIVEMENT côté serveur (Admin SDK
+      // bypass les règles) → un client ne fabrique jamais ses propres stats.
+      // NB: les règles ne cascadent pas vers les sous-collections, d'où ce match imbriqué.
+      match /upsellStats/{productId} {
+        allow read: if isSnackAdmin(snackId) || isSuperAdmin();
+        allow write: if false;
+      }
     }
 
     match /users/{userId} {

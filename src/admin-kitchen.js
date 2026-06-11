@@ -5,6 +5,7 @@
 //               window.showToast
 
 import { escapeHTML } from "./utils.js";
+import { adminStore } from "./core/AdminStore.js";
 import {
   db,
   query,
@@ -17,7 +18,54 @@ import {
   writeBatch,
   getDoc,
   increment,
+  functions,
+  httpsCallable,
 } from "./core/firebase.js";
+
+// ============================================================================
+// 🔥 SIGNAL DE CAPACITÉ — charge cuisine (rushMode décidé serveur)
+// ============================================================================
+// Throttlé : la décision rushMode vit côté serveur (getKitchenLoad, cache 30s).
+// On ne l'interroge qu'au plus une fois toutes les 30s, déclenché par les
+// changements du radar — pas à chaque docChange (coût + cache serveur).
+let lastKitchenLoadAt = 0;
+const KITCHEN_LOAD_THROTTLE_MS = 30_000;
+
+async function refreshKitchenLoad(force = false) {
+  const snackId = window.currentAdminSnackId;
+  if (!snackId) return;
+  const now = Date.now();
+  if (!force && now - lastKitchenLoadAt < KITCHEN_LOAD_THROTTLE_MS) return;
+  lastKitchenLoadAt = now;
+  try {
+    const getKitchenLoad = httpsCallable(functions, "getKitchenLoad");
+    const res = await getKitchenLoad({ snackId });
+    const load = res?.data || {};
+    adminStore.setKitchenLoad(load);
+    renderKitchenLoadBadge(load);
+  } catch (e) {
+    console.warn("[cuisine] charge indisponible (non bloquant) :", e?.message || e);
+  }
+}
+
+function renderKitchenLoadBadge(load) {
+  const badge = document.getElementById("kitchen-load-badge");
+  const dot = document.getElementById("kitchen-load-dot");
+  const text = document.getElementById("kitchen-load-text");
+  if (!badge || !dot || !text) return;
+
+  const rush = load?.rushMode === true;
+  const queue = Number(load?.queue) || 0;
+  const avg = Number(load?.avgPrepMin) || 0;
+
+  text.innerText = `Charge : ${queue} · ~${avg} min · ${rush ? "RUSH" : "OK"}`;
+  // Couleurs sémantiques (statut), cohérentes avec les compteurs cuisine existants
+  // (bg-red-600 / bg-green-600) — pas une couleur de marque.
+  badge.classList.remove("hidden", "bg-red-100", "text-red-700", "bg-green-100", "text-green-700");
+  badge.classList.add("flex", rush ? "bg-red-100" : "bg-green-100", rush ? "text-red-700" : "text-green-700");
+  dot.classList.remove("bg-red-600", "bg-green-600");
+  dot.classList.add(rush ? "bg-red-600" : "bg-green-600");
+}
 
 // ============================================================================
 // 💡 ANTI-VEILLE (WAKE LOCK API)
@@ -236,6 +284,12 @@ function startKitchenRadar() {
         readyOrdersContainer.children.length;
 
     if (ringTheBell && bell) bell.play().catch((e) => console.log("Son bloqué"));
+
+    // 🔥 Met à jour le signal de capacité (throttlé serveur) à chaque évolution
+    // du radar. Force le 1er calcul au tout premier chargement pour afficher le
+    // badge immédiatement.
+    refreshKitchenLoad(isFirstLoad);
+
     isFirstLoad = false;
   }, (err) => {
     console.error("Radar cuisine (onSnapshot) erreur :", err);

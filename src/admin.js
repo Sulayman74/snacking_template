@@ -10,12 +10,14 @@ import "./admin-products.js";
 import "./admin-marketing.js";
 import "./admin-csv.js";
 import "./admin-compta.js";
+import "./admin-upsell.js";
 import "./admin-config.js";
 import "./admin-livreurs.js";
 import "./ui/AdminConfigUI.js";
 import "./ui/AdminProductsUI.js";
 import "./ui/AdminMarketingUI.js";
 import "./ui/AdminComptaUI.js";
+import "./ui/AdminUpsellUI.js";
 import { confirmAction } from "./utils/ModalManager.js";
 import { setupSWUpdatePrompt } from "./sw-update.js";
 import { setupA2HS } from "./a2hs.js";
@@ -195,7 +197,10 @@ window.switchAdminTab = (tabName) => {
 
     if (tabName === "config") window.loadConfigView();
 
-    if (tabName === "compta") window.loadComptaDashboard();
+    if (tabName === "compta") {
+      window.loadComptaDashboard();
+      window.loadUpsellStats?.();
+    }
 
     if (tabName === "livreurs") window.loadDriversView?.();
   }

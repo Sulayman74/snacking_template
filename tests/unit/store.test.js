@@ -39,6 +39,20 @@ describe("Store.getUpsellSuggestions (upsell)", () => {
   it("menu vide → []", () => {
     expect(store.getUpsellSuggestions()).toEqual([]);
   });
+
+  it("rushMode: exclut les sides/accompagnements (cuisson), garde boissons/desserts", () => {
+    store.setMenu(menu);
+    const ids = store.getUpsellSuggestions(10, { rushMode: true }).map((p) => p.id);
+    expect(ids).toEqual(expect.arrayContaining(["dessert1", "drink1"]));
+    expect(ids).not.toContain("side1");
+  });
+
+  it("rushMode false (et défaut) garde les sides → non-régression", () => {
+    store.setMenu(menu);
+    expect(store.getUpsellSuggestions(10, { rushMode: false }).map((p) => p.id)).toContain("side1");
+    // Signature rétrocompatible : appel sans 2e argument inchangé.
+    expect(store.getUpsellSuggestions(10).map((p) => p.id)).toContain("side1");
+  });
 });
 
 describe("Store.getDeliveryFee", () => {
