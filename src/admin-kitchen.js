@@ -273,15 +273,15 @@ function startKitchenRadar() {
       }
     });
 
-    if (document.getElementById("count-waiting") && waitingOrdersContainer)
-      document.getElementById("count-waiting").innerText =
-        waitingOrdersContainer.children.length;
-    if (newOrdersContainer)
-      document.getElementById("count-new").innerText =
-        newOrdersContainer.children.length;
-    if (readyOrdersContainer)
-      document.getElementById("count-ready").innerText =
-        readyOrdersContainer.children.length;
+    const countWaiting = document.getElementById("count-waiting");
+    if (countWaiting && waitingOrdersContainer)
+      countWaiting.innerText = waitingOrdersContainer.children.length;
+    const countNew = document.getElementById("count-new");
+    if (countNew && newOrdersContainer)
+      countNew.innerText = newOrdersContainer.children.length;
+    const countReady = document.getElementById("count-ready");
+    if (countReady && readyOrdersContainer)
+      countReady.innerText = readyOrdersContainer.children.length;
 
     if (ringTheBell && bell) bell.play().catch((e) => console.log("Son bloqué"));
 
@@ -334,11 +334,11 @@ async function updatePaymentStatus(orderId, currentStatus) {
       if (orderDoc.exists()) {
         const items = orderDoc.data().items || [];
         for (const item of items) {
-          const realProductId = item.productId || item.id.split("-")[0];
-          if (realProductId) {
-            const productRef = doc(db, "produits", realProductId);
-            batch.update(productRef, { ventes: increment(item.quantity) });
-          }
+          const realProductId =
+            item.productId || (typeof item.id === "string" ? item.id.split("-")[0] : null);
+          if (!realProductId) continue; // item dégradé : on n'incrémente pas les ventes
+          const productRef = doc(db, "produits", realProductId);
+          batch.update(productRef, { ventes: increment(item.quantity) });
         }
       }
     }

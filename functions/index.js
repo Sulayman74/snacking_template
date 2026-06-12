@@ -660,6 +660,10 @@ exports.createPaymentIntent = onCall(
       metadata === undefined || V.isPlainObject(metadata),
       "Metadata invalides."
     );
+    require_(
+      snackId === undefined || snackId === null || V.isDocId(snackId),
+      "snackId invalide."
+    );
 
     try {
       // 1. Récupération des infos du Snack (Tenant)
@@ -1003,10 +1007,9 @@ exports.finalizeOrder = onCall(
       throw new HttpsError("failed-precondition", `Paiement non confirmé (statut: ${paymentIntent.status}).`);
     }
 
-    // 3. Vérifier que le montant Stripe correspond au panier (anti-manipulation prix)
-    if (Math.abs(paymentIntent.amount - totalCents) > 10) {
-      throw new HttpsError("invalid-argument", "Montant incohérent avec le panier.");
-    }
+    // 3. Le contrôle du montant encaissé est fait plus bas, APRÈS recalcul serveur
+    //    du total attendu (articles validés + frais de livraison config). On ne se
+    //    fie PAS au `totalCents` envoyé par le client (cf. CLAUDE.md §6.1).
 
     // 4. Idempotence ATOMIQUE — l'ID de la commande est dérivé du PaymentIntent
     //    (unique côté Stripe). Un check rapide évite de recalculer si la commande
@@ -1072,6 +1075,18 @@ exports.finalizeOrder = onCall(
       };
     }
 
+    // 🛡️ TOTAL ATTENDU SERVEUR = articles (prix déjà validés) + frais de livraison
+    // (issus de la config, en mode delivery). On EXIGE que l'encaissement Stripe le
+    // couvre : ferme la faille où un client en livraison ne paie que le sous-total
+    // (frais non encaissés alors que livraison.frais est stocké). ±1c (arrondis).
+    const fraisCents =
+      orderMode === "delivery" && livraisonData ? Math.round((livraisonData.frais || 0) * 100) : 0;
+    const expectedTotalCents = itemsCents + fraisCents;
+    require_(
+      paymentIntent.amount + 1 >= expectedTotalCents,
+      "Montant encaissé inférieur au total attendu (articles + livraison)."
+    );
+
     const totalMin = prepMin + (deliveryMin || 0);
     const etaData = {
       prepMin,
@@ -1093,7 +1108,9 @@ exports.finalizeOrder = onCall(
       // Livraison : la cuisine démarre immédiatement (pas d'arrivée client).
       statut: orderMode === "delivery" ? "nouvelle" : "en_attente_client",
       items: cartItems,
-      total: paymentIntent.amount / 100,
+      // Total cohérent avec livraison.frais (articles + frais config), recalculé
+      // serveur — pas le brut Stripe (qui pourrait inclure un sur-paiement client).
+      total: expectedTotalCents / 100,
       mode: orderMode,
       livraison: livraisonData,
       livreurId: null,

@@ -265,6 +265,30 @@ class ProductModalUI {
       </fieldset>`;
     }
 
+    // Crudités : le client coche celles à RETIRER (→ sansCrudites). Source : champ
+    // produit `crudites` configuré côté admin quand `hasCrudites`. Consommé tel quel
+    // par la cuisine (admin-kitchen), le panier et les favoris.
+    if (this.currentProduct.hasCrudites && Array.isArray(this.currentProduct.crudites) && this.currentProduct.crudites.length) {
+      html += `<fieldset class="mb-4">
+        <legend class="text-lg font-black text-gray-900 mb-2 flex justify-between items-center">
+            <span>Crudités</span>
+            <span class="text-[10px] font-black bg-gray-900 text-white px-2 py-1 rounded-full uppercase tracking-widest">À retirer</span>
+        </legend>
+        <div class="grid grid-cols-2 gap-3">
+            ${this.currentProduct.crudites.map(c => {
+                const safe = escapeHTML(c || "");
+                return `
+                <label class="relative cursor-pointer">
+                    <input type="checkbox" name="crudite" value="${safe}" class="sr-only peer crudite-checkbox">
+                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-red-400 peer-checked:bg-red-50 transition-all flex justify-center items-center">
+                        <span class="font-bold text-gray-800 text-sm">Sans ${safe}</span>
+                    </div>
+                </label>
+            `;}).join("")}
+        </div>
+      </fieldset>`;
+    }
+
     container.innerHTML = html;
   }
 
@@ -365,10 +389,14 @@ class ProductModalUI {
     const isMenu = formule === "menu";
     const sauces = Array.from(document.querySelectorAll(".sauce-checkbox:checked")).map((cb) => cb.value);
     const boisson = isMenu ? (document.querySelector('input[name="boisson"]:checked')?.value || null) : null;
+    const sansCrudites = Array.from(document.querySelectorAll(".crudite-checkbox:checked")).map((cb) => cb.value);
     const taille = this.currentProduct.tailleChoisie || null;
 
     return {
-      id: `${this.currentProduct.id}-${formule}-${sauces.join("-")}-${taille || ""}`,
+      // ⚠️ La clé `id` doit inclure TOUTES les options qui distinguent deux
+      // articles (boisson, sansCrudites compris), sinon store.addToCart fusionne
+      // par id → mauvaise boisson servie / exclusion perdue.
+      id: `${this.currentProduct.id}-${formule}-${sauces.join("-")}-${boisson || ""}-${sansCrudites.join("-")}-${taille || ""}`,
       productId: this.currentProduct.id,
       nom: isMenu ? `Menu ${this.currentProduct.nom}` : this.currentProduct.nom,
       prix: this.currentProduct.prixBase + (isMenu ? this.currentProduct.prixMenu : 0),
@@ -376,6 +404,7 @@ class ProductModalUI {
       formule,
       sauces,
       boisson,
+      sansCrudites,
       taille,
     };
   }

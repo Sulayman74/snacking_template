@@ -64,6 +64,41 @@ export default defineConfig(() => {
         // false : l'enregistrement du SW est fait manuellement en JS (registerSW)
         // pour brancher les hooks onNeedRefresh / updateSW.
         injectRegister: false,
+        // 🗄️ Stratégies de cache (CLAUDE.md §8.3). L'app-shell buildé est précaché
+        // par défaut. Le catalogue Firestore (menus/prix) est déjà géré offline par
+        // persistentLocalCache du SDK → pas besoin de le runtime-cacher ici.
+        workbox: {
+          cleanupOutdatedCaches: true,
+          runtimeCaching: [
+            {
+              // Polices & icônes CDN : immuables → cache-first (long TTL).
+              urlPattern: ({ url }) =>
+                ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'ka-f.fontawesome.com'].includes(url.hostname),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'cdn-assets',
+                expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              // Images produits (Firebase Storage) : stale-while-revalidate (catalogue).
+              urlPattern: ({ url }) =>
+                url.hostname.includes('firebasestorage') || url.hostname.includes('storage.googleapis.com'),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'product-images',
+                expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 7 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              // ❌ Cloud Functions (paiement/commande) : JAMAIS de cache (network-only).
+              urlPattern: ({ url }) => url.hostname.includes('cloudfunctions.net'),
+              handler: 'NetworkOnly',
+            },
+          ],
+        },
         manifest: {
           name: seoData.title,
           short_name: seoData.title.split('|')[0].trim(),

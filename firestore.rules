@@ -73,13 +73,15 @@ service cloud.firestore {
       // un snackId ; les fiches clients (PII) ne sont donc plus énumérables.
       allow list: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
 
-      // Mise à jour : un admin peut éditer des fiches users de son périmètre, MAIS
-      // ne peut JAMAIS toucher 'role'/'snackId' (anti-élévation) NI les champs de
-      // fidélité (points/pointsBySnack/loyaltyLastScan) — désormais écrits
-      // EXCLUSIVEMENT côté serveur par awardLoyaltyPoint/finalizeOrder (Admin SDK).
+      // Mise à jour : un admin peut éditer les fiches users de SON snack uniquement
+      // (livreurs/admins portant resource.data.snackId == son snack), MAIS jamais
+      // 'role'/'snackId' (anti-élévation) NI les champs de fidélité (points/
+      // pointsBySnack/loyaltyLastScan, écrits côté serveur). isSnackAdmin (et non
+      // isAnyAdmin) ferme le cross-tenant ; les fiches client (sans snackId) ne sont
+      // éditables que par leur propriétaire (branche isOwner) ou le superadmin.
       allow update: if isSuperAdmin()
                     || (
-                         isAnyAdmin()
+                         isSnackAdmin(resource.data.snackId)
                          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
                               'role', 'snackId', 'points', 'pointsBySnack', 'loyaltyLastScan'
                             ])
@@ -97,11 +99,14 @@ service cloud.firestore {
                             )
                        );
 
-      // 🛡️ Création : le client crée son propre doc en rôle 'client', sans points
-      // de fidélité préchargés (pointsBySnack vide). Conforme à src/auth.js.
+      // 🛡️ Création : le client crée son propre doc en rôle 'client', avec une carte
+      // de fidélité VIDE et SANS pouvoir forger un solde (`points`), s'auto-attribuer
+      // un tenant (`snackId`) ni un `loyaltyLastScan`. `pointsBySnack == {}` refuse
+      // proprement le cas où le champ est absent (null == {} → false). Cf. src/auth.js.
       allow create: if isOwner(userId)
                     && request.resource.data.role == 'client'
-                    && request.resource.data.pointsBySnack.size() == 0;
+                    && request.resource.data.pointsBySnack == {}
+                    && !request.resource.data.keys().hasAny(['points', 'snackId', 'loyaltyLastScan']);
     }
 
     match /produits/{produitId} {
