@@ -46,7 +46,8 @@
     <link rel="stylesheet" href="/src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Stripe.js est chargé À LA DEMANDE au tunnel checkout (src/checkout.js),
+         pas en bloquant sur la home (perf LCP/INP — cf. CLAUDE.md §8.2). -->
     <script>
       window.CURRENT_SNACK_ID = "{{SNACK_ID}}";
       const _splashStart = Date.now();
@@ -165,7 +166,7 @@
             <div class="relative flex-1">
               <input type="text" id="menu-search-input" placeholder="Un p'tit creux ?" class="w-full pl-10 pr-10 py-3 bg-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all text-gray-800 font-medium text-sm" />
               <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-              <button id="clear-search-btn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600">
+              <button id="clear-search-btn" aria-label="Effacer la recherche" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600">
                 <i class="fas fa-times-circle text-lg"></i>
               </button>
             </div>

@@ -14,6 +14,31 @@ const stripePublicKey =
   "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
 
 /**
+ * Charge le SDK Stripe.js à la demande (1ère ouverture du tunnel de paiement).
+ * Retiré du <head> de la home pour ne pas pénaliser le LCP/INP (CLAUDE.md §8.2).
+ * Idempotent : résout immédiatement si déjà chargé / en cours.
+ * @returns {Promise<void>}
+ */
+function loadStripeSdk() {
+  if (window.Stripe) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById("stripe-js");
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("Échec du chargement de Stripe.")));
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = "stripe-js";
+    s.src = "https://js.stripe.com/v3/";
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Échec du chargement de Stripe."));
+    document.head.appendChild(s);
+  });
+}
+
+/**
  * Tunnel de paiement complet, déclenché par #checkout-btn (router → process-checkout).
  *
  * Flow :
@@ -111,9 +136,8 @@ async function processCheckout() {
   btn.disabled = true;
 
   try {
-    if (typeof Stripe === "undefined") {
-      throw new Error("Stripe n'est pas chargé !");
-    }
+    // Chargement paresseux du SDK Stripe (retiré du <head> de la home pour le LCP).
+    await loadStripeSdk();
 
     if (!stripeInstance) {
       stripeInstance = Stripe(stripePublicKey);

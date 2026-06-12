@@ -248,3 +248,12 @@ body.is-offline::after {
 .liquid-blob {
   animation: float 10s ease-in-out infinite;
 }
+
+/* ♿ A11y — anneau de focus CLAVIER visible (CLAUDE.md §7.2). On utilise box-shadow
+   (et non outline) pour SURVIVRE aux `outline-none` / `focus:outline-none` posés sur
+   certains éléments interactifs (nav du bas, etc.). :focus-visible ne s'affiche qu'à
+   la navigation clavier, pas au clic souris. Couleur = thème du snack. */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary, #0A1B3F), 0 0 0 5px rgba(255, 255, 255, 0.65);
+}
