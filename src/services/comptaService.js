@@ -91,4 +91,59 @@ function computeComptaSummary(agg = {}) {
   };
 }
 
-export { computeComptaSummary, centsToEuros, round2 };
+/**
+ * Décompose UNE commande en ligne d'export comptable ventilé (LOT E). Lit les
+ * champs persistés (centimes) et renvoie des EUROS (2 déc.). Les articles 10 %
+ * et la livraison (10 %) restent DISTINCTS (colonne `fraisLivraison` à part),
+ * contrairement à l'affichage dashboard qui les replie.
+ *
+ * Réconciliation (commande ventilée) :
+ *   ht5_5+tva5_5 + ht10+tva10 + ht20+tva20 + fraisLivraison === ttc
+ * (invariant LOT A : Σ tvaBreakdown.*.ttc === total).
+ *
+ * @param {object} [order] - Document commande Firestore.
+ * @returns {{
+ *   ttc:number, mode:('collect'|'delivery'), ventilated:boolean,
+ *   ht5_5:number, tva5_5:number, ht10:number, tva10:number, ht20:number, tva20:number,
+ *   fraisLivraison:number, commission:number, stripeFee:number, refunded:number, net:number
+ * }}
+ */
+function computeOrderRow(order = {}) {
+  const o = order || {};
+  const tb = o.tvaBreakdown || null;
+  const ventilated = !!tb && typeof tb === "object";
+  const bucket = (b) =>
+    b && typeof b === "object"
+      ? { ht: centsToEuros(b.ht), tva: centsToEuros(b.tva), ttc: centsToEuros(b.ttc) }
+      : { ht: 0, tva: 0, ttc: 0 };
+
+  const r55 = bucket(tb && tb["5.5"]);
+  const r10 = bucket(tb && tb["10"]);
+  const r20 = bucket(tb && tb["20"]);
+  const liv = bucket(tb && tb.livraison);
+
+  const ttc = round2(Number(o.total) || 0); // euros
+  const commission = centsToEuros(o.commission);
+  const stripeFee = centsToEuros(o.stripeFee);
+  const refund = o.refund || {};
+  const refunded = centsToEuros(refund.total);
+  const refundCommission = centsToEuros(refund.commission);
+  // Net restaurateur = brut TTC − remboursé − commission nette − frais Stripe.
+  const net = ttc - refunded - (commission - refundCommission) - stripeFee;
+
+  return {
+    ttc,
+    mode: o.mode === "delivery" ? "delivery" : "collect",
+    ventilated,
+    ht5_5: round2(r55.ht), tva5_5: round2(r55.tva),
+    ht10: round2(r10.ht), tva10: round2(r10.tva),
+    ht20: round2(r20.ht), tva20: round2(r20.tva),
+    fraisLivraison: round2(liv.ttc),
+    commission: round2(commission),
+    stripeFee: round2(stripeFee),
+    refunded: round2(refunded),
+    net: round2(net),
+  };
+}
+
+export { computeComptaSummary, computeOrderRow, centsToEuros, round2 };
