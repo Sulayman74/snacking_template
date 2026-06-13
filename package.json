@@ -27,7 +27,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:loyalty": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/loyalty-harness.cjs\"",
-    "test:rules": "firebase emulators:exec --only firestore --project snacking-template \"vitest run --config vitest.rules.config.js\""
+    "test:rules": "firebase emulators:exec --only firestore --project snacking-template \"vitest run --config vitest.rules.config.js\"",
+    "test:refund": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/refund-harness.cjs\""
   },
   "repository": {
     "type": "git",

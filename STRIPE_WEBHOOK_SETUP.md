@@ -28,11 +28,21 @@ Assurez-vous que votre fonction `stripeWebhook` est en ligne sur les serveurs de
 3. Allez dans **Développeurs > Webhooks**.
 4. Cliquez sur le bouton **Ajouter un endpoint**.
 5. Collez l'**URL** obtenue à l'Étape 1 dans le champ "URL de l'endpoint".
-6. Cliquez sur **Sélectionner des événements** et cochez ces trois événements précis :
+6. Cliquez sur **Sélectionner des événements** et cochez ces événements :
    - `invoice.payment_failed` (Quand un prélèvement échoue)
    - `invoice.payment_succeeded` (Quand une facture est payée/régularisée)
    - `customer.subscription.deleted` (Quand l'abonnement est annulé)
+   - `checkout.session.completed` (Souscription d'un abonnement SaaS par un resto)
+   - `account.updated` (Statut d'onboarding Stripe Connect du compte connecté)
+   - `charge.refunded` (Remboursement — réconcilie le bloc `refund` de la commande, **LOT B**)
 7. Cliquez sur **Ajouter l'endpoint**.
+
+> ### ⚠️ Comptes connectés (Stripe Connect) — requis pour `charge.refunded` et `account.updated`
+> En **charge directe**, les paiements et remboursements vivent sur le **compte connecté** du resto. Pour que `charge.refunded` (remboursement fait depuis le dashboard, hors app) et `account.updated` parviennent à ce webhook, l'endpoint doit écouter les **événements sur les comptes connectés** :
+> - Soit cochez **« Écouter les événements sur les comptes connectés »** à la création de l'endpoint,
+> - Soit créez un endpoint **Connect** dédié pointant sur la même URL.
+>
+> Sans cela, un remboursement initié depuis le dashboard Stripe ne sera **pas** réconcilié automatiquement (le bloc `refund` de la commande resterait à 0). Les remboursements faits **via l'app** (`refundOrder`) sont, eux, toujours tracés directement.
 
 ---
 

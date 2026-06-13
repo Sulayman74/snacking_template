@@ -1292,6 +1292,167 @@ exports.finalizeOrder = onCall(
 );
 
 // ============================================================================
+// 💸 REMBOURSEMENT (LOT B) — refundOrder + réconciliation
+// ============================================================================
+
+/**
+ * Applique un remboursement Stripe au bloc `refund` d'une commande, de façon
+ * ATOMIQUE et IDEMPOTENTE (dédup sur `refundId`). Source de vérité serveur :
+ * partagé par `refundOrder` (refund initié par l'app) et le webhook
+ * `charge.refunded` (refund initié depuis le dashboard Stripe) → un même
+ * `refundId` n'est jamais compté deux fois. Tout en centimes.
+ * @param {FirebaseFirestore.DocumentReference} orderRef - Réf. de la commande.
+ * @param {object} r - Détails du remboursement.
+ * @param {string} r.refundId - ID du Refund Stripe (clé d'idempotence).
+ * @param {number} r.amount - Montant remboursé, en centimes.
+ * @param {number} r.commissionRefunded - Commission rendue (prorata), en centimes.
+ * @param {string|null} r.reason - Motif Stripe.
+ * @param {"app"|"stripe"} r.source - Origine du remboursement.
+ * @returns {Promise<{applied:boolean, duplicate?:boolean, refundTotal:number, fullyRefunded?:boolean}>}
+ */
+async function applyRefundToOrder(orderRef, { refundId, amount, commissionRefunded, reason, source }) {
+  return db.runTransaction(async (tx) => {
+    const fresh = await tx.get(orderRef);
+    if (!fresh.exists) return { applied: false, refundTotal: 0 };
+    const f = fresh.data() || {};
+    const block = f.refund || { total: 0, commission: 0, count: 0, fullyRefunded: false, items: [] };
+    const items = Array.isArray(block.items) ? block.items : [];
+    // Idempotence : ce refund.id est déjà comptabilisé (retry réseau, Idempotency-Key
+    // Stripe renvoyant le même objet, ou event webhook d'un refund déjà tracé par l'app).
+    if (items.some((it) => it && it.refundId === refundId)) {
+      return { applied: false, duplicate: true, refundTotal: Number(block.total) || 0 };
+    }
+    const newTotal = (Number(block.total) || 0) + amount;
+    const orderTotalCents = Math.round(Number(f.total) * 100);
+    const fullyRefunded = newTotal >= orderTotalCents;
+    tx.update(orderRef, {
+      refund: {
+        total: newTotal,
+        commission: (Number(block.commission) || 0) + (Number(commissionRefunded) || 0),
+        count: (Number(block.count) || 0) + 1,
+        fullyRefunded,
+        items: items.concat([{
+          refundId,
+          amount,
+          commissionRefunded: Number(commissionRefunded) || 0,
+          reason: reason || null,
+          source: source || "app",
+          at: admin.firestore.Timestamp.now(),
+        }]),
+      },
+      // Statut DÉDIÉ paiement (sans toucher order.statut : machine cuisine/livreur intacte).
+      "paiement.statut": fullyRefunded ? "rembourse" : "partiellement_rembourse",
+    });
+    return { applied: true, refundTotal: newTotal, fullyRefunded };
+  });
+}
+
+/**
+ * Rembourse une commande (total ou partiel). Charge DIRECTE : le refund passe
+ * `{ stripeAccount }` + `refund_application_fee: true` (si commission Connect) →
+ * Stripe rend la commission au prorata. Admin du snack propriétaire uniquement.
+ * Montants en centimes, lus depuis la commande (jamais le client). Idempotent
+ * (Idempotency-Key + dédup refundId).
+ * @param {object} request.data - `{ orderId, amount?, reason? }`.
+ */
+exports.refundOrder = onCall({ region: "europe-west1" }, async (request) => {
+  const stripe = getStripe();
+  if (!request.auth) throw new HttpsError("unauthenticated", "Authentification requise.");
+
+  // 1. Validation stricte des entrées.
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+  const { orderId, amount, reason } = data;
+  require_(V.isNonEmptyString(orderId, 200), "orderId invalide.");
+  require_(
+    amount === undefined || amount === null || V.isPositiveInt(amount, 1_000_000),
+    "amount invalide (centimes)."
+  );
+  const REASONS = ["duplicate", "fraudulent", "requested_by_customer"];
+  const refundReason = reason === undefined || reason === null ? "requested_by_customer" : reason;
+  require_(REASONS.includes(refundReason), "reason invalide.");
+
+  // 2. Rate limit (clé par uid) — avant les lectures, pour couper l'abus tôt.
+  await enforceRateLimit({ key: callerKey(request, "refundOrder"), max: 10, windowMs: 60_000 });
+
+  // 3. Lire la commande (Admin SDK) — source de vérité serveur.
+  const orderRef = db.collection("commandes").doc(orderId);
+  const orderSnap = await orderRef.get();
+  if (!orderSnap.exists) throw new HttpsError("not-found", "Commande introuvable.");
+  const order = orderSnap.data() || {};
+
+  // 4. Admin du snack PROPRIÉTAIRE (snackId lu sur la commande, jamais du client).
+  const snackId = order.snackId;
+  require_(V.isDocId(snackId), "Commande sans snackId valide.");
+  await assertCallerIsSnackAdmin(request, snackId);
+
+  // 5. Garde-fous montant. ⚠️ order.total est en EUROS ; tout le reste en centimes.
+  const refundableStatuts = ["paye", "partiellement_rembourse"];
+  require_(
+    refundableStatuts.includes(order.paiement?.statut),
+    "Commande non remboursable (statut paiement)."
+  );
+  const paymentIntentId = order.paiement?.stripeSessionId;
+  require_(V.isNonEmptyString(paymentIntentId, 200), "PaymentIntent introuvable sur la commande.");
+  const orderTotalCents = Math.round(Number(order.total) * 100);
+  require_(Number.isInteger(orderTotalCents) && orderTotalCents > 0, "Total de commande invalide.");
+  const alreadyRefunded = Number(order.refund?.total) || 0;
+  const remaining = orderTotalCents - alreadyRefunded;
+  require_(remaining > 0, "Commande déjà intégralement remboursée.");
+  const refundAmount = amount === undefined || amount === null ? remaining : amount;
+  require_(refundAmount > 0 && refundAmount <= remaining, "Montant de remboursement hors limites.");
+
+  // 6. Compte connecté (charge directe). Null = charge plateforme (legacy/sans Connect).
+  const snackDoc = await db.collection("snacks").doc(snackId).get();
+  const stripeAccountId = (snackDoc.exists ? snackDoc.data() : {}).stripeAccountId || null;
+
+  // 7. Refund Stripe. `refund_application_fee` n'est valide QUE si la charge porte
+  //    réellement une commission Connect (sinon Stripe rejette : "can only be used
+  //    by the Connect application that created the charge"). On ne le passe donc que
+  //    si compte connecté ET commission > 0 (ex. période franchise 0 % → aucune
+  //    application fee à rendre). Quand présent, Stripe rend la commission au prorata.
+  //    Idempotency-Key dérivée de l'état → un retry réseau renvoie le MÊME refund.id
+  //    (puis dédup en base), un nouveau remboursement partiel a une clé distincte.
+  const hasApplicationFee = !!stripeAccountId && (Number(order.commission) || 0) > 0;
+  const refundParams = { payment_intent: paymentIntentId, amount: refundAmount, reason: refundReason };
+  if (hasApplicationFee) refundParams.refund_application_fee = true;
+  let refund;
+  try {
+    refund = await stripe.refunds.create(refundParams, {
+      ...(stripeAccountId ? { stripeAccount: stripeAccountId } : {}),
+      idempotencyKey: `refund_${orderId}_${refundAmount}_${alreadyRefunded}`,
+    });
+  } catch (e) {
+    console.error("refundOrder — échec Stripe refunds.create :", e?.message || e);
+    throw new HttpsError("internal", "Échec du remboursement côté Stripe.");
+  }
+
+  // 8. Commission rendue au prorata (cohérent avec Stripe ; évite un appel API
+  //    supplémentaire ; réconciliable a posteriori via l'objet application_fee_refund).
+  const commissionRefunded =
+    orderTotalCents > 0 ? Math.round(((Number(order.commission) || 0) * refundAmount) / orderTotalCents) : 0;
+
+  // 9. Persister (transaction idempotente, partagée avec le webhook).
+  const res = await applyRefundToOrder(orderRef, {
+    refundId: refund.id,
+    amount: refundAmount,
+    commissionRefunded,
+    reason: refundReason,
+    source: "app",
+  });
+
+  return {
+    ok: true,
+    refundId: refund.id,
+    amount: refundAmount,
+    commissionRefunded,
+    duplicate: res.duplicate === true,
+    refundTotal: res.refundTotal,
+    fullyRefunded: res.fullyRefunded ?? res.refundTotal >= orderTotalCents,
+  };
+});
+
+// ============================================================================
 // 🔥 FONCTION : CHARGE CUISINE (signal de capacité, autorité serveur)
 // ============================================================================
 // Retourne { queue, avgPrepMin, rushMode } pour un snack. `rushMode` est calculé
@@ -2099,6 +2260,35 @@ exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, re
                     stripePayoutsEnabled: !!account.payouts_enabled,
                 });
                 console.log(`🔄 account.updated: snack ${snap.docs[0].id} charges_enabled=${account.charges_enabled}`);
+            }
+        }
+        else if (event.type === 'charge.refunded') {
+            // 💸 FILET (LOT B) : un remboursement initié HORS app (dashboard Stripe)
+            // doit être réconcilié dans le bloc refund de la commande. La dédup par
+            // refund.id (applyRefundToOrder) garantit qu'un refund déjà tracé par
+            // refundOrder n'est PAS recompté. orderId = paymentIntent (= id commande).
+            // NB: charge.refunds.data est borné (~10 derniers) — suffisant ici ; pour
+            // un historique long, retrieve la charge avec expand refunds.
+            const charge = event.data.object;
+            const orderId = typeof charge.payment_intent === 'string'
+                ? charge.payment_intent
+                : charge.payment_intent?.id;
+            if (orderId) {
+                const orderRef = db.collection("commandes").doc(orderId);
+                const orderSnap = await orderRef.get();
+                if (orderSnap.exists) {
+                    const order = orderSnap.data() || {};
+                    const orderTotalCents = Math.round(Number(order.total) * 100);
+                    for (const r of (charge.refunds?.data || [])) {
+                        const commissionRefunded = orderTotalCents > 0
+                            ? Math.round(((Number(order.commission) || 0) * r.amount) / orderTotalCents)
+                            : 0;
+                        await applyRefundToOrder(orderRef, {
+                            refundId: r.id, amount: r.amount, commissionRefunded,
+                            reason: r.reason || null, source: "stripe",
+                        });
+                    }
+                }
             }
         }
 
