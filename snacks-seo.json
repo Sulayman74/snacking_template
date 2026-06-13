@@ -9,6 +9,7 @@
     "theme_color": "#16a34a",
     "colorPalette": "forest",
     "lightHex": "#dcfce7",
+    "accentHex": "#16a34a",
     "fontKey": "poppins",
     "shadowClass": "shadow-green-600/40"
   },
@@ -22,6 +23,7 @@
     "theme_color": "#4c1d95",
     "colorPalette": "midnight",
     "lightHex": "#f3e9ff",
+    "accentHex": "#c084fc",
     "fontKey": "montserrat",
     "shadowClass": "shadow-purple-600/40"
   },
@@ -35,6 +37,7 @@
     "theme_color": "#0077b6",
     "colorPalette": "ocean",
     "lightHex": "#caf0f8",
+    "accentHex": "#00b4d8",
     "fontKey": "spacegrotesk",
     "shadowClass": "shadow-blue-600/40"
   },
@@ -48,6 +51,7 @@
     "theme_color": "#0a1b3f",
     "colorPalette": "belly",
     "lightHex": "#C8D8E9",
+    "accentHex": "#B88A44",
     "fontKey": "outfit",
     "shadowClass": "shadow-blue-900/40"
   }

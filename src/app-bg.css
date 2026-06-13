@@ -1,0 +1,32 @@
+/* ============================================================================
+   🌈 FOND MESH DÉGRADÉ MULTI-THÈMES
+   ----------------------------------------------------------------------------
+   0 octet réseau, 0 image, 1 paint statique, 0 CLS. UN fichier pour les 6 thèmes.
+   Consomme les variables posées par AppUI.applyTheme() (et injectées au build par
+   vite transformIndexHtml) : --color-primary-light (base), --color-accent / --color-primary
+   (nappes). Aucune couleur en dur -> changer colorPalette re-dérive le fond tout seul.
+   Couche dédiée position:fixed z-index:-1 -> hors flux, aucun impact layout/CLS.
+   Ne JAMAIS y mettre will-change / filter / backdrop-filter / animation (statique).
+   ============================================================================ */
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--color-primary-light, #f5f7f4); /* base = teinte claire du thème */
+  background-image:
+    radial-gradient(at 18% 12%, color-mix(in srgb, var(--color-accent,  transparent) 16%, transparent) 0, transparent 46%),
+    radial-gradient(at 86% 10%, color-mix(in srgb, var(--color-primary, transparent) 10%, transparent) 0, transparent 42%),
+    radial-gradient(at 82% 86%, color-mix(in srgb, var(--color-accent,  transparent) 13%, transparent) 0, transparent 52%),
+    radial-gradient(at  6% 92%, color-mix(in srgb, var(--color-primary, transparent)  9%, transparent) 0, transparent 46%);
+}
+
+/* belly : base bleu clair plus soutenue -> nappes remontées pour rester visibles.
+   Activé par data-theme="belly" sur <html> (AppUI.applyTheme + injection build vite). */
+[data-theme="belly"] .app-bg {
+  background-image:
+    radial-gradient(at 18% 12%, color-mix(in srgb, var(--color-accent,  transparent) 18%, transparent) 0, transparent 46%),
+    radial-gradient(at 86% 10%, color-mix(in srgb, var(--color-primary, transparent) 12%, transparent) 0, transparent 42%),
+    radial-gradient(at 82% 86%, color-mix(in srgb, var(--color-accent,  transparent) 15%, transparent) 0, transparent 52%),
+    radial-gradient(at  6% 92%, color-mix(in srgb, var(--color-primary, transparent) 10%, transparent) 0, transparent 46%);
+}

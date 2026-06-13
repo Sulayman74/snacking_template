@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./app-bg.css"; /* 🌈 fond mesh dérivé du thème (après Tailwind pour cascader sur les vars) */
 
 /* ============================================================================
    🎨 DESIGN TOKENS SAAS — Variables CSS pilotées par JS au runtime
@@ -9,7 +10,8 @@
 @theme {
   --color-primary: #dc2626; /* ruby par défaut — écrasé par applySaaSThemeToHTML */
   --color-accent: #dc2626;
-  --color-primary-light: #fee2e2;
+  --color-primary-light: #f5f7f4; /* NEUTRE par défaut : si le flash survient avant l'injection
+                                     vite/runtime, il est gris neutre, pas rose ruby */
   --color-on-primary: #ffffff;
   /* 🎨 Neutres SÉMANTIQUES (CLAUDE.md theming). Couleurs NON liées à la palette : fixes
      et intentionnelles, mais centralisées (plus de gris ni de rouges dispersés). Tailwind v4

@@ -70,6 +70,9 @@ class AppUI {
         root.style.setProperty("--color-primary-light", lightHex);
         root.style.setProperty("--color-on-primary", onPrimaryHex);
 
+        // 🌈 Active les overrides CSS par thème ([data-theme="belly"] .app-bg, futurs réglages).
+        if (cfg.theme.colorPalette) root.dataset.theme = cfg.theme.colorPalette;
+
         // 🔤 Police — surcharge UNIQUEMENT si Firestore a un fontKey explicite (override admin).
         // Sinon on laisse la valeur posée au build (snacks-seo.json) pour éviter tout FOUT.
         const fonts = cfg.theme.fonts;
