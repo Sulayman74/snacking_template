@@ -42,6 +42,19 @@ self.addEventListener('notificationclick', function(event) {
     self.navigator.clearAppBadge();
   }
 
+  // 📊 Tracking best-effort du clic campagne (incrémente stats.clics côté serveur).
+  // Fire-and-forget : no-cors + keepalive, aucun impact si ça échoue.
+  const campaignId = event.notification.data?.campaignId;
+  if (campaignId) {
+    event.waitUntil(
+      fetch(
+        'https://europe-west9-snacking-template.cloudfunctions.net/trackPushClick?c=' +
+          encodeURIComponent(campaignId),
+        { method: 'POST', mode: 'no-cors', keepalive: true }
+      ).catch(() => {})
+    );
+  }
+
   // 🔗 DEEP LINK : On utilise l'actionUrl envoyée dans les données de la notification
   // (ex: "?action=product&id=xxx" pour ouvrir directement la fiche produit)
   const actionUrl = event.notification.data?.actionUrl

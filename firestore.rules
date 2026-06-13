@@ -171,8 +171,10 @@ service cloud.firestore {
       // Seuls l'Admin du snack concerné ou le SuperAdmin peuvent voir les campagnes
       allow read: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
 
-      // Pour créer, on vérifie que le snackId envoyé correspond bien au snack de l'Admin
-      allow create: if isSnackAdmin(request.resource.data.snackId) || isSuperAdmin();
+      // Création EXCLUSIVEMENT côté serveur (Cloud Functions schedulePushCampaign /
+      // pushFlashOffer, Admin SDK). Ferme le contournement du quota mensuel par
+      // écriture client directe (le quota est enforcé dans la CF).
+      allow create: if false;
 
       // Pour modifier/supprimer
       allow update, delete: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();

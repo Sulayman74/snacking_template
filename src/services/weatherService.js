@@ -14,6 +14,32 @@
 
 const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
+const CACHE_TTL_MS = 45 * 60 * 1000; // 45 min : la météo bouge lentement, évite de refetch à chaque onglet.
+
+/** fetch avec timeout (AbortController) — sans ça, un upstream lent fige le widget. */
+function fetchWithTimeout(url, ms = 5000) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
+}
+
+function readWxCache(key) {
+    try {
+        const raw = sessionStorage.getItem(key);
+        if (!raw) return null;
+        const { at, data } = JSON.parse(raw);
+        return Date.now() - at > CACHE_TTL_MS ? null : data;
+    } catch {
+        return null;
+    }
+}
+function writeWxCache(key, data) {
+    try {
+        sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data }));
+    } catch {
+        /* sessionStorage indispo (mode privé/quota) → on ignore, pas bloquant. */
+    }
+}
 
 /**
  * Récupère la météo actuelle pour une ville.
@@ -28,10 +54,15 @@ const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
 export async function getWeatherForCity(city, country = "FR") {
     if (!city || typeof city !== "string") return null;
 
+    // Cache client : évite un double appel HTTP à chaque ouverture de l'onglet Marketing.
+    const cacheKey = `wx:${country}:${city.trim().toLowerCase()}`;
+    const cached = readWxCache(cacheKey);
+    if (cached) return cached;
+
     try {
         // 1. Geocoding : ville → lat/lon
         const geoUrl = `${GEOCODING_URL}?name=${encodeURIComponent(city)}&count=1&language=fr&format=json`;
-        const geoResp = await fetch(geoUrl);
+        const geoResp = await fetchWithTimeout(geoUrl);
         if (!geoResp.ok) return null;
         const geoData = await geoResp.json();
 
@@ -43,7 +74,7 @@ export async function getWeatherForCity(city, country = "FR") {
 
         // 2. Forecast : lat/lon → météo actuelle
         const wxUrl = `${FORECAST_URL}?latitude=${match.latitude}&longitude=${match.longitude}&current=temperature_2m,weather_code,is_day&timezone=auto`;
-        const wxResp = await fetch(wxUrl);
+        const wxResp = await fetchWithTimeout(wxUrl);
         if (!wxResp.ok) return null;
         const wxData = await wxResp.json();
 
@@ -54,7 +85,7 @@ export async function getWeatherForCity(city, country = "FR") {
         const weatherCode = current.weather_code;
         const isDay = current.is_day === 1;
 
-        return {
+        const result = {
             temperature,
             weatherCode,
             isDay,
@@ -63,6 +94,8 @@ export async function getWeatherForCity(city, country = "FR") {
             latitude: match.latitude,
             longitude: match.longitude,
         };
+        writeWxCache(cacheKey, result);
+        return result;
     } catch (err) {
         console.warn("[weatherService] Météo indisponible :", err.message);
         return null;
