@@ -1,6 +1,6 @@
 // 🧾 Tests unitaires — compta nette (LOT D), logique pure sans Firebase.
 import { describe, it, expect } from "vitest";
-import { computeComptaSummary } from "../../src/services/comptaService.js";
+import { computeComptaSummary, computeOrderRow } from "../../src/services/comptaService.js";
 
 describe("computeComptaSummary — CA net", () => {
   it("agrégat vide → tout à zéro (aucune division par 0)", () => {
@@ -82,5 +82,64 @@ describe("computeComptaSummary — CA net", () => {
     const s = computeComptaSummary({ total: 11, tva: { ht10: 1000, tva10: 100 } });
     expect(s.tvaParTaux).toHaveLength(1);
     expect(s.tvaParTaux[0].rate).toBe(10);
+  });
+});
+
+describe("computeOrderRow — ligne d'export ventilé (LOT E)", () => {
+  it("réconciliation : Σ(HT+TVA par taux) + frais livraison === TTC + net correct", () => {
+    const order = {
+      total: 18, // 11 € @10 + 7 € @20
+      mode: "delivery",
+      commission: 0,
+      stripeFee: 45, // 0,45 €
+      tvaBreakdown: {
+        "10": { ttc: 1100, ht: 1000, tva: 100 },
+        "20": { ttc: 700, ht: 583, tva: 117 },
+        livraison: null,
+      },
+      refund: { total: 0, commission: 0 },
+    };
+    const r = computeOrderRow(order);
+    expect(r.ventilated).toBe(true);
+    expect(r.mode).toBe("delivery");
+    // Réconciliation (acceptance LOT E)
+    const somme = r.ht5_5 + r.tva5_5 + r.ht10 + r.tva10 + r.ht20 + r.tva20 + r.fraisLivraison;
+    expect(somme).toBeCloseTo(r.ttc, 2);
+    expect(r.ht20).toBe(5.83);
+    expect(r.tva20).toBe(1.17);
+    // net = 18 − 0 − 0 − 0,45
+    expect(r.net).toBe(17.55);
+  });
+
+  it("la livraison apparaît en colonne dédiée (frais), pas fondue dans le 10 %", () => {
+    const order = {
+      total: 21,
+      mode: "delivery",
+      tvaBreakdown: {
+        "10": { ttc: 1100, ht: 1000, tva: 100 },
+        livraison: { rate: 10, ttc: 1000, ht: 909, tva: 91 },
+      },
+    };
+    const r = computeOrderRow(order);
+    expect(r.ht10).toBe(10); // articles seuls
+    expect(r.fraisLivraison).toBe(10); // livraison TTC à part
+    const somme = r.ht10 + r.tva10 + r.fraisLivraison;
+    expect(somme).toBeCloseTo(r.ttc, 2); // 10 + 1 + 10 = 21
+  });
+
+  it("un remboursement réduit le net de la ligne", () => {
+    const order = { total: 20, commission: 0, stripeFee: 0, refund: { total: 1000, commission: 0 } };
+    const r = computeOrderRow(order);
+    expect(r.refunded).toBe(10);
+    expect(r.net).toBe(10); // 20 − 10
+  });
+
+  it("commande legacy (sans tvaBreakdown) → ventilated=false, HT/TVA à 0, net=TTC", () => {
+    const r = computeOrderRow({ total: 12 });
+    expect(r.ventilated).toBe(false);
+    expect(r.ht10).toBe(0);
+    expect(r.tva10).toBe(0);
+    expect(r.ttc).toBe(12);
+    expect(r.net).toBe(12);
   });
 });

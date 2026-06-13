@@ -2,7 +2,7 @@
  * 🛠️ AdminStore — Gestionnaire d'état pour le Back-office
  * Flux unidirectionnel, mutations explicites, validation intégrée.
  */
-import { computeComptaSummary } from "../services/comptaService.js";
+import { computeComptaSummary, computeOrderRow } from "../services/comptaService.js";
 
 export class AdminStore extends EventTarget {
     #state = {
@@ -606,36 +606,84 @@ export class AdminStore extends EventTarget {
     }
 
     /**
-     * Génère le CSV des ventes. Pour un export comptable complet, passer le
-     * dataset pleine plage (récupéré au clic) ; sinon retombe sur la liste bornée.
-     * @param {Array<Object>} [salesArg] - commandes à exporter.
+     * Génère le CSV comptable VENTILÉ (LOT E) : une ligne par commande (TTC + HT/TVA
+     * par taux 5,5/10/20 + frais livraison + commission + frais Stripe + remboursé +
+     * net), puis un bloc TOTAUX et un RÉCAP TVA par taux pour la réintégration par
+     * l'expert-comptable. Montants en euros (2 déc., virgule FR) ; séparateur `;`.
+     *
+     * Réconciliation (commandes ventilées) : Σ(HT+TVA par taux)+frais livraison === TTC,
+     * et Σ TTC export === CA TTC des KPIs. FEC explicitement HORS périmètre (cf.
+     * brief §0.6) : cet export se réintègre dans l'outil du comptable, il n'est PAS
+     * destiné à un dépôt direct DGFiP.
+     *
+     * @param {Array<Object>} [salesArg] - commandes pleine plage (sinon liste bornée).
+     * @returns {string|null} CSV (sans BOM ; le BOM UTF-8 est ajouté au blob d'export).
      */
     generateSalesCSV(salesArg) {
         const sales = Array.isArray(salesArg) ? salesArg : this.#state.salesData;
-        if (sales.length === 0) return null;
+        if (!sales || sales.length === 0) return null;
 
-        const headers = ["ID", "Date", "Client", "Total TTC", "HT (90%)", "TVA (10%)", "Statut"];
-        const rows = sales.map(s => {
-            const date = s.date?.toDate ? s.date.toDate().toLocaleDateString() : "";
-            const total = parseFloat(s.total) || 0;
-            const tva = total * 0.10;
+        const SEP = ";";
+        // Euros « FR » : 2 décimales, virgule décimale (Excel FR). Jamais de `;` interne.
+        const eur = (n) => (Number(n) || 0).toFixed(2).replace(".", ",");
+
+        const headers = [
+            "Date", "N° commande", "Mode", "TTC",
+            "HT 5,5%", "TVA 5,5%", "HT 10%", "TVA 10%", "HT 20%", "TVA 20%",
+            "Frais livraison", "Commission", "Frais Stripe", "Remboursé", "Net", "Ventilé",
+        ];
+
+        const acc = {
+            ttc: 0, ht5_5: 0, tva5_5: 0, ht10: 0, tva10: 0, ht20: 0, tva20: 0,
+            frais: 0, commission: 0, stripeFee: 0, refunded: 0, net: 0, legacy: 0,
+        };
+
+        const rows = sales.map((s) => {
+            const r = computeOrderRow(s);
+            acc.ttc += r.ttc; acc.ht5_5 += r.ht5_5; acc.tva5_5 += r.tva5_5;
+            acc.ht10 += r.ht10; acc.tva10 += r.tva10; acc.ht20 += r.ht20; acc.tva20 += r.tva20;
+            acc.frais += r.fraisLivraison; acc.commission += r.commission;
+            acc.stripeFee += r.stripeFee; acc.refunded += r.refunded; acc.net += r.net;
+            if (!r.ventilated) acc.legacy += 1;
+            const date = s.date?.toDate ? s.date.toDate().toLocaleDateString("fr-FR") : "";
             return [
-                s.id,
-                date,
-                s.clientNom || s.clientEmail?.split("@")[0] || "Anonyme",
-                total.toFixed(2),
-                (total - tva).toFixed(2),
-                tva.toFixed(2),
-                s.statut || "payé"
+                date, s.id, r.mode, eur(r.ttc),
+                eur(r.ht5_5), eur(r.tva5_5), eur(r.ht10), eur(r.tva10), eur(r.ht20), eur(r.tva20),
+                eur(r.fraisLivraison), eur(r.commission), eur(r.stripeFee), eur(r.refunded), eur(r.net),
+                r.ventilated ? "oui" : "LEGACY",
             ];
         });
 
-        // Totaux
-        const kpis = this.getSalesKPIs();
-        rows.push([]);
-        rows.push(["TOTAL", "", "", kpis.total, kpis.ht, kpis.tva, ""]);
+        const totalsRow = [
+            "TOTAUX", "", "", eur(acc.ttc),
+            eur(acc.ht5_5), eur(acc.tva5_5), eur(acc.ht10), eur(acc.tva10), eur(acc.ht20), eur(acc.tva20),
+            eur(acc.frais), eur(acc.commission), eur(acc.stripeFee), eur(acc.refunded), eur(acc.net), "",
+        ];
 
-        return [headers, ...rows].map(r => r.join(";")).join("\n");
+        // Récap TVA par taux (articles) + ligne livraison + note de périmètre.
+        const recap = [
+            [],
+            ["RÉCAP TVA PAR TAUX (articles)"],
+            ["Taux", "HT", "TVA", "TTC"],
+            ["5,5%", eur(acc.ht5_5), eur(acc.tva5_5), eur(acc.ht5_5 + acc.tva5_5)],
+            ["10%", eur(acc.ht10), eur(acc.tva10), eur(acc.ht10 + acc.tva10)],
+            ["20%", eur(acc.ht20), eur(acc.tva20), eur(acc.ht20 + acc.tva20)],
+            ["Frais de livraison (TTC, 10%)", "", "", eur(acc.frais)],
+            [],
+            ["TVA collectée totale", eur(acc.tva5_5 + acc.tva10 + acc.tva20)],
+            ["Commission plateforme", eur(acc.commission)],
+            ["Frais Stripe", eur(acc.stripeFee)],
+            ["Remboursements", eur(acc.refunded)],
+            ["CA net encaissé", eur(acc.net)],
+            [],
+            [`Commandes hors ventilation (antérieures au socle compta) : ${acc.legacy}`],
+            ["Données de gestion, non certifiées NF525. TVA collectée hors TVA déductible."],
+            ["Export destiné à votre expert-comptable (réintégration) — NON un FEC/dépôt DGFiP."],
+        ];
+
+        return [headers, ...rows, [], totalsRow, ...recap]
+            .map((r) => r.join(SEP))
+            .join("\n");
     }
 }
 

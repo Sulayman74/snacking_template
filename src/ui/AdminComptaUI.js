@@ -265,7 +265,8 @@ class AdminComptaUI {
             return;
         }
 
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        // BOM UTF-8 (﻿) : Excel FR ouvre alors les accents correctement (LOT E).
+        const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);

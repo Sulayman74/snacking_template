@@ -138,21 +138,34 @@ describe("AdminStore.generateSalesCSV", () => {
   it("liste vide → null", () => {
     expect(store.generateSalesCSV([])).toBeNull();
   });
-  it("en-têtes + ligne client (HT/TVA 10%) + ligne TOTAL", () => {
-    store.setSalesAggregate({ count: 1, total: 10 });
-    const csv = store.generateSalesCSV([{ id: "c1", clientNom: "Bob", total: 10, statut: "payé" }]);
+  it("LOT E : CSV ventilé (en-têtes par taux, virgule FR), TOTAUX + récap", () => {
+    const order = {
+      id: "c1", total: 18, mode: "delivery", commission: 0, stripeFee: 0,
+      tvaBreakdown: {
+        "10": { ttc: 1100, ht: 1000, tva: 100 },
+        "20": { ttc: 700, ht: 583, tva: 117 },
+        livraison: null,
+      },
+      refund: { total: 0, commission: 0 },
+    };
+    const csv = store.generateSalesCSV([order]);
     const lines = csv.split("\n");
-    expect(lines[0]).toContain("Total TTC");
-    expect(lines[1]).toContain("Bob");
-    expect(lines[1]).toContain("10.00"); // TTC
-    expect(lines[1]).toContain("9.00"); // HT
-    expect(lines[1]).toContain("1.00"); // TVA
-    expect(lines[lines.length - 1]).toMatch(/^TOTAL/);
+    expect(lines[0]).toContain("HT 10%");
+    expect(lines[0]).toContain("TVA 20%");
+    expect(lines[0]).toContain("Net");
+    // Ligne commande : virgule décimale FR + marqueur ventilé.
+    expect(lines[1]).toContain("c1");
+    expect(lines[1]).toContain("18,00"); // TTC
+    expect(lines[1]).toContain("1,17"); // TVA 20%
+    expect(lines[1]).toContain("oui");
+    expect(csv).toContain("TOTAUX");
+    expect(csv).toContain("RÉCAP TVA PAR TAUX");
+    expect(csv).toContain("CA net encaissé");
   });
-  it("clientNom déduit de l'email si absent", () => {
-    store.setSalesAggregate({ count: 1, total: 5 });
-    const csv = store.generateSalesCSV([{ id: "c2", clientEmail: "jane@x.com", total: 5 }]);
-    expect(csv).toContain("jane");
+  it("commande legacy (sans ventilation) marquée LEGACY", () => {
+    const csv = store.generateSalesCSV([{ id: "old1", total: 12 }]);
+    expect(csv).toContain("LEGACY");
+    expect(csv).toContain("12,00");
   });
 });
 
