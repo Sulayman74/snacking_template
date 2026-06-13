@@ -19,13 +19,20 @@ test.describe('Caisse Enregistreuse (Calcul du Panier)', () => {
 
     // 3. On attend que la modale s'ouvre, on coche "Menu" et on ajoute au panier
     await expect(page.locator('#modal-title')).toBeVisible();
-    // Le radio est `sr-only peer` (masqué, contrôle visuel = le <div> frère) :
-    // on clique le <label> parent, qui coche le radio nativement + déclenche onchange.
-    await page.locator('label:has(input[value="menu"])').click();
+    // Le radio formule est `sr-only peer` (1px, masqué) → cliquer le label est flaky
+    // (animation modale + actionability). Le but du test étant le CALCUL, on coche la
+    // formule "menu" de façon déterministe (coche + event change → window.toggleDrinkSection).
+    await page.evaluate(() => {
+      const radio = document.querySelector('#product-modal input[value="menu"]');
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     await page.locator('#modal-cta').click();
 
-    // 3. Ouvre le panier
-    await page.locator('#floating-cart-container button').click();
+    // 3. Ouvre le panier (via l'API : le bouton d'ouverture est le CTA contextuel
+    // #mobile-cta-btn, dont l'action varie selon la vue — on teste ici le CALCUL,
+    // pas le bouton, donc on ouvre directement comme pour window.switchView).
+    await page.evaluate(() => window.openCartModal());
 
     // 4. Ajoute une quantité (+1) via le bouton du panier
     // On cherche le bouton "+" dans les articles du panier

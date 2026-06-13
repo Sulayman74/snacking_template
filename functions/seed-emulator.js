@@ -62,9 +62,13 @@ async function seed() {
   );
 
   // 4) Produits : au moins un disponible + option "menu" (coché par cart.spec).
+  //    ⚠️ Une BOISSON (catégorie "drinks") est indispensable : un menu exige une
+  //    boisson (product-modal : formule "menu" + !boisson → ajout bloqué). La 1ʳᵉ
+  //    boisson est cochée par défaut → l'ajout du menu (cart/commande.spec) aboutit.
   const produits = [
     { nom: "Burger Robot", description: "Test E2E", prix: 9.5, menuPriceAdd: 2.5, categorieId: "burgers", isAvailable: true, allowMenu: true, snackId: SNACK_ID },
     { nom: "Frites Test", description: "Test E2E", prix: 3.5, menuPriceAdd: 2.5, categorieId: "frites", isAvailable: true, allowMenu: true, snackId: SNACK_ID },
+    { nom: "Boisson Robot", description: "Test E2E", prix: 2, menuPriceAdd: 0, categorieId: "drinks", isAvailable: true, allowMenu: false, snackId: SNACK_ID },
   ];
   const batch = db.batch();
   produits.forEach((p, i) => batch.set(db.collection("produits").doc(`e2e_${i}`), p));

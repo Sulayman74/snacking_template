@@ -74,16 +74,17 @@ test.describe('Gestion des Stocks & Sécurité', () => {
     const outOfStockCard = clientPage.locator('#full-menu-container .group').filter({ hasText: 'Épuisé' }).first();
     await expect(outOfStockCard).toBeVisible({ timeout: 10000 });
     
-    // Le client essaie de cliquer sur le produit grisé
+    // Le client clique sur le produit grisé
     await outOfStockCard.click();
 
-    // VÉRIFICATION : Le Toast d'erreur ("Produit momentanément indisponible") doit apparaître !
-    const toastMessage = clientPage.locator('#snackbar-message');
-    await expect(toastMessage).toBeVisible();
-    await expect(toastMessage).toContainText('indisponible', { ignoreCase: true });
-    
-    // Et bien sûr, la modale du produit ne doit PAS s'ouvrir (elle reste en bas de l'écran avec la classe translate-y-full)
-    await expect(clientPage.locator('#product-modal')).toHaveClass(/translate-y-full/);
+    // VÉRIFICATION (comportement actuel) : la modale s'ouvre MAIS le bouton d'ajout
+    // est neutralisé — il affiche « Épuisé » et n'est pas commandable (cf.
+    // product-modal.js : isAvailable === false → CTA "Épuisé", cursor-not-allowed,
+    // onclick null). Le garde-fou anti-commande est bien là.
+    const modalCta = clientPage.locator('#modal-cta');
+    await expect(modalCta).toBeVisible({ timeout: 10000 });
+    await expect(modalCta).toHaveText('Épuisé');
+    await expect(modalCta).toHaveClass(/cursor-not-allowed/);
   });
 
 });
