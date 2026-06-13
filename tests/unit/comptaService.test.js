@@ -1,6 +1,6 @@
 // 🧾 Tests unitaires — compta nette (LOT D), logique pure sans Firebase.
 import { describe, it, expect } from "vitest";
-import { computeComptaSummary, computeOrderRow } from "../../src/services/comptaService.js";
+import { computeComptaSummary, computeOrderRow, franchiseInfo, pctDelta } from "../../src/services/comptaService.js";
 
 describe("computeComptaSummary — CA net", () => {
   it("agrégat vide → tout à zéro (aucune division par 0)", () => {
@@ -141,5 +141,38 @@ describe("computeOrderRow — ligne d'export ventilé (LOT E)", () => {
     expect(r.tva10).toBe(0);
     expect(r.ttc).toBe(12);
     expect(r.net).toBe(12);
+  });
+});
+
+describe("franchiseInfo — badge franchise 0 % (§8.2)", () => {
+  const now = new Date("2026-06-15T12:00:00");
+  it("snack créé il y a 2 mois → franchise active, 4 mois restants, 0 %", () => {
+    const f = franchiseInfo(new Date("2026-04-10"), now);
+    expect(f.active).toBe(true);
+    expect(f.monthsRemaining).toBe(4);
+    expect(f.feeRatePct).toBe(0);
+  });
+  it("snack créé il y a 6 mois pile → franchise terminée, 8 %", () => {
+    const f = franchiseInfo(new Date("2025-12-01"), now);
+    expect(f.active).toBe(false);
+    expect(f.monthsRemaining).toBe(0);
+    expect(f.feeRatePct).toBe(8);
+  });
+  it("accepte un Timestamp Firestore (toDate) et l'absence de date", () => {
+    const ts = { toDate: () => new Date("2026-05-01") };
+    expect(franchiseInfo(ts, now).active).toBe(true);
+    expect(franchiseInfo(null, now)).toEqual({ active: false, monthsRemaining: 0, feeRatePct: 8 });
+  });
+});
+
+describe("pctDelta — comparaison période précédente (§8.2)", () => {
+  it("hausse / baisse signées, arrondies à 0,1 %", () => {
+    expect(pctDelta(120, 100)).toBe(20);
+    expect(pctDelta(80, 100)).toBe(-20);
+    expect(pctDelta(133, 100)).toBe(33);
+  });
+  it("base nulle → null (pas d'infini trompeur)", () => {
+    expect(pctDelta(50, 0)).toBeNull();
+    expect(pctDelta(0, 0)).toBeNull();
   });
 });
