@@ -116,20 +116,55 @@ class AdminComptaUI {
 
     renderKPIs() {
         const kpis = adminStore.getSalesKPIs();
-        // En-tête : on garde le CA BRUT TTC visible, mais le héros décisionnel est
-        // le CA NET (ci-dessous). totalSalesEl/totalOrdersEl existent déjà.
+        // En-tête : CA BRUT visible, mais le héros décisionnel est le CA NET (§8.3).
         if (this.totalSalesEl) this.totalSalesEl.textContent = `${kpis.total} €`;
         if (this.totalOrdersEl) this.totalOrdersEl.textContent = kpis.count;
 
         if (!this.kpiExtrasEl) return;
 
-        // Cascade CA brut → net : ce que le resto garde réellement (§8.2). Chaque
-        // déduction est une ligne négative ; le net est mis en avant.
-        const line = (label, val, neg = false) => `
-            <div class="flex items-center justify-between text-sm">
-                <span class="text-gray-500">${label}</span>
-                <span class="font-bold ${neg ? "text-red-600" : "text-gray-900"} tabular-nums">${neg ? "−" : ""}${val} €</span>
-            </div>`;
+        const brut = kpis.caBrutNum || 0;
+        const barPct = (v) => (brut > 0 ? Math.min(100, Math.max(0, (Math.abs(Number(v) || 0) / brut) * 100)) : 0);
+
+        // Pastille de variation ↑↓ vs période précédente (null → « — » neutre).
+        const deltaBadge = (pct) => {
+            if (pct === null || pct === undefined) return `<span class="text-[10px] font-bold text-gray-300">—</span>`;
+            const up = pct >= 0;
+            const cls = up ? "text-green-600" : "text-red-600";
+            return `<span class="text-[10px] font-black ${cls}">${up ? "▲" : "▼"} ${Math.abs(pct).toFixed(1).replace(".", ",")} %</span>`;
+        };
+
+        // Ligne de cascade avec barre proportionnelle au CA brut.
+        const bar = (label, val, kind, extra = "") => {
+            const barCls = kind === "deduct" ? "bg-red-400" : "bg-gray-300";
+            const valCls = kind === "deduct" ? "text-red-600" : "text-gray-900";
+            const style = kind === "net" ? 'background:var(--color-primary,#1E2938)' : "";
+            return `
+                <div>
+                    <div class="flex items-baseline justify-between text-sm mb-1">
+                        <span class="text-gray-500">${label} ${extra}</span>
+                        <span class="font-bold ${valCls} tabular-nums">${kind === "deduct" ? "−" : ""}${val} €</span>
+                    </div>
+                    <div class="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div class="h-full rounded-full ${style ? "" : barCls}" style="width:${barPct(val)}%;${style}"></div>
+                    </div>
+                </div>`;
+        };
+
+        const fr = kpis.franchise || {};
+        const cmp = kpis.comparison;
+
+        // Ligne commission : remplacée par un encart FRANCHISE positif si active (§8.2).
+        const commissionBlock = fr.active
+            ? `
+                <div>
+                    <div class="flex items-baseline justify-between text-sm mb-1">
+                        <span class="text-gray-500">Commission plateforme</span>
+                        <span class="font-black text-green-600">Franchise 0 %</span>
+                    </div>
+                    <div class="h-1.5 rounded-full bg-green-100 overflow-hidden"><div class="h-full rounded-full bg-green-400" style="width:100%"></div></div>
+                    <p class="text-[10px] font-bold text-green-600 mt-0.5">🎁 Offerte encore ${fr.monthsRemaining} mois</p>
+                </div>`
+            : bar("Commission plateforme (nette)", kpis.commissionNette, "deduct");
 
         // Ventilation TVA collectée par taux (uniquement les taux présents).
         const tvaRows = (kpis.tvaParTaux || []).length
@@ -141,17 +176,47 @@ class AdminComptaUI {
                 </div>`).join("")
             : `<p class="text-xs text-gray-400">Aucune commande ventilée sur la période (commandes antérieures au socle compta).</p>`;
 
+        // Comparaison période précédente (bandeau discret).
+        const comparisonNote = cmp && cmp.hasPrev
+            ? `<div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500 mb-3">
+                   <span class="font-bold uppercase tracking-wider text-gray-400">vs période précédente</span>
+                   <span>CA ${deltaBadge(cmp.deltaTotal)}</span>
+                   <span>Commandes ${deltaBadge(cmp.deltaCount)}</span>
+               </div>`
+            : `<p class="text-[10px] text-gray-400 mb-3">Pas d'historique comparable sur la période précédente.</p>`;
+
+        // Cartes secondaires optionnelles (affichées seulement si pertinentes).
+        const deliveryCard = kpis.deliveryShare !== null
+            ? `<div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                   <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Part livraison</p>
+                   <p class="text-xl font-black text-gray-900">${kpis.deliveryShare} %</p>
+               </div>` : "";
+        const upsellCard = Number(kpis.upsellRevenue) > 0
+            ? `<div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                   <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Upsell généré</p>
+                   <p class="text-xl font-black text-gray-900">${kpis.upsellRevenue} €</p>
+               </div>` : "";
+
         this.kpiExtrasEl.innerHTML = `
             <div class="sm:col-span-2 lg:col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <p class="text-[10px] text-gray-500 font-black uppercase tracking-wider mb-3">Du brut au net</p>
-                <div class="space-y-1.5">
-                    ${line("CA brut TTC", kpis.total)}
-                    ${line("Remboursements", kpis.refundTotal, true)}
-                    ${line("Commission plateforme (nette)", kpis.commissionNette, true)}
-                    ${line("Frais Stripe", kpis.stripeFee, true)}
-                    <div class="flex items-center justify-between pt-2 mt-1 border-t border-gray-200">
-                        <span class="text-sm font-black text-gray-900">CA net encaissé</span>
-                        <span class="text-xl font-black tabular-nums" style="color:var(--color-primary,#1E2938)">${kpis.caNet} €</span>
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] text-gray-500 font-black uppercase tracking-wider">Du brut au net</p>
+                    ${fr.active ? `<span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-500/15 text-green-600">Franchise 0 % · ${fr.monthsRemaining} mois</span>` : ""}
+                </div>
+                ${comparisonNote}
+                <div class="space-y-2.5">
+                    ${bar("CA brut TTC", kpis.total, "brut", deltaBadge(cmp?.deltaTotal))}
+                    ${bar("Remboursements", kpis.refundTotal, "deduct")}
+                    ${commissionBlock}
+                    ${bar("Frais Stripe", kpis.stripeFee, "deduct")}
+                    <div class="pt-2 mt-1 border-t border-gray-200">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-black text-gray-900">CA net encaissé</span>
+                            <span class="text-2xl font-black tabular-nums" style="color:var(--color-primary,#1E2938)">${kpis.caNet} €</span>
+                        </div>
+                        <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
+                            <div class="h-full rounded-full" style="width:${barPct(kpis.caNetNum)}%;background:var(--color-primary,#1E2938)"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -160,8 +225,10 @@ class AdminComptaUI {
                 <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Panier Moyen</p>
                 <p class="text-xl font-black text-gray-900">${kpis.avg} €</p>
             </div>
+            ${deliveryCard}
+            ${upsellCard}
 
-            <div class="sm:col-span-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="sm:col-span-2 lg:col-span-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
                 <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">TVA collectée par taux</p>
                 <div class="space-y-1.5">${tvaRows}</div>
                 <p class="text-[10px] text-gray-400 mt-2 leading-snug">

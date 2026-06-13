@@ -146,4 +146,53 @@ function computeOrderRow(order = {}) {
   };
 }
 
-export { computeComptaSummary, computeOrderRow, centsToEuros, round2 };
+// Durée de la franchise (commission 0 %) en mois — ALIGNÉE sur la règle serveur
+// (functions/index.js : 0 % les 6 premiers mois, puis 8 %).
+const FRANCHISE_MONTHS = 6;
+const COMMISSION_RATE_PCT = 8;
+
+/**
+ * Statut de franchise d'un snack (commission 0 % les 6 premiers mois). Réplique
+ * EXACTEMENT le calcul serveur (diff en mois calendaires depuis createdAt). Sert
+ * au badge positif « Franchise 0 % · encore N mois » (§8.2).
+ * @param {*} createdAt - Timestamp Firestore | Date | ms | ISO | null.
+ * @param {Date} [now] - injecté pour les tests (défaut : maintenant).
+ * @returns {{active:boolean, monthsRemaining:number, feeRatePct:number}}
+ */
+function franchiseInfo(createdAt, now = new Date()) {
+  const d = createdAt?.toDate ? createdAt.toDate() : createdAt != null ? new Date(createdAt) : null;
+  if (!d || isNaN(d.getTime())) {
+    // Sans date de création connue : on NE prétend pas à une franchise.
+    return { active: false, monthsRemaining: 0, feeRatePct: COMMISSION_RATE_PCT };
+  }
+  const diffMonths = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+  const active = diffMonths < FRANCHISE_MONTHS;
+  return {
+    active,
+    monthsRemaining: active ? Math.max(0, FRANCHISE_MONTHS - diffMonths) : 0,
+    feeRatePct: active ? 0 : COMMISSION_RATE_PCT,
+  };
+}
+
+/**
+ * Variation en % d'une métrique vs la période précédente. Renvoie null si la base
+ * est nulle (pas de % significatif) → l'UI affiche « — » plutôt qu'un ∞ trompeur.
+ * @param {number} current
+ * @param {number} previous
+ * @returns {number|null} variation arrondie à 0,1 % (signée), ou null.
+ */
+function pctDelta(current, previous) {
+  const prev = Number(previous) || 0;
+  if (prev === 0) return null;
+  return Math.round(((Number(current) || 0) - prev) / prev * 1000) / 10;
+}
+
+export {
+  computeComptaSummary,
+  computeOrderRow,
+  franchiseInfo,
+  pctDelta,
+  centsToEuros,
+  round2,
+  FRANCHISE_MONTHS,
+};

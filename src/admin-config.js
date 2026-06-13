@@ -71,6 +71,8 @@ window.loadConfigView = async () => {
             // terminé (synced par account.updated/getStripeAccountStatus) → 3 états UI.
             stripeAccountId: data.stripeAccountId || null,
             stripeChargesEnabled: data.stripeChargesEnabled === true,
+            // Date de création (Timestamp) → badge franchise 0 % (compta §8.2).
+            createdAt: data.createdAt || null,
         };
 
         adminStore.setConfig(configData);

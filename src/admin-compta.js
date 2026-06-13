@@ -82,6 +82,31 @@ async function loadComptaDashboard() {
             },
         });
 
+        // 1bis) PÉRIODE PRÉCÉDENTE (même durée, juste avant) pour la comparaison
+        //       ↑↓ % (§8.2). Léger : count + total seulement. Non bloquant.
+        try {
+            const durationMs = endDate.getTime() - startDate.getTime();
+            const prevEnd = new Date(startDate.getTime() - 1);
+            const prevStart = new Date(prevEnd.getTime() - durationMs);
+            const prevSnap = await getAggregateFromServer(
+                query(
+                    collection(db, "commandes"),
+                    where("snackId", "==", window.currentAdminSnackId),
+                    where("date", ">=", prevStart),
+                    where("date", "<=", prevEnd),
+                ),
+                { count: count(), total: sum("total") }
+            );
+            adminStore.setSalesComparison({
+                prevCount: prevSnap.data().count,
+                prevTotal: prevSnap.data().total,
+            });
+        } catch (e) {
+            // La comparaison est un bonus : un échec ne casse pas le dashboard.
+            console.warn("Comparaison période précédente indisponible:", e);
+            adminStore.setSalesComparison(null);
+        }
+
         // 2) Historique : liste BORNÉE (affichage seulement, pas pour le total).
         const HISTORY_LIMIT = 200;
         const histSnap = await getDocs(query(

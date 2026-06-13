@@ -2,7 +2,7 @@
  * 🛠️ AdminStore — Gestionnaire d'état pour le Back-office
  * Flux unidirectionnel, mutations explicites, validation intégrée.
  */
-import { computeComptaSummary, computeOrderRow } from "../services/comptaService.js";
+import { computeComptaSummary, computeOrderRow, franchiseInfo, pctDelta } from "../services/comptaService.js";
 
 export class AdminStore extends EventTarget {
     #state = {
@@ -12,6 +12,7 @@ export class AdminStore extends EventTarget {
         pushHistory: [],
         salesData: [],            // commandes brutes pour le tableau d'historique (BORNÉ)
         salesAggregate: { count: 0, total: 0 }, // KPIs via agrégation serveur (toute la plage)
+        salesComparison: null,    // { prevCount, prevTotal } période précédente (§8 comparaison)
         upsellStats: [],          // 📊 perf upsell par produit (shown/accepted/revenue + nom)
         kitchenLoad: { queue: 0, avgPrepMin: 0, rushMode: false }, // 🔥 charge cuisine (serveur)
         isSaving: false,
@@ -580,13 +581,52 @@ export class AdminStore extends EventTarget {
     }
 
     /**
+     * Stocke l'agrégat (léger) de la période PRÉCÉDENTE pour la comparaison ↑↓ %
+     * (§8). `null` = comparaison indisponible.
+     * @param {{prevCount:number, prevTotal:number}|null} cmp
+     */
+    setSalesComparison(cmp) {
+        this.#state.salesComparison = cmp
+            ? { prevCount: Number(cmp.prevCount) || 0, prevTotal: Number(cmp.prevTotal) || 0 }
+            : null;
+    }
+
+    /**
      * KPIs compta (LOT D) basés sur l'agrégat serveur (toute la plage). Délègue le
      * calcul net + ventilation TVA au service pur `computeComptaSummary` (zéro
      * `total*0.10` en dur : la TVA est désormais LUE depuis `tvaBreakdown`).
      * Conserve les champs `total`/`tva`/`ht` pour la rétro-compat (CSV, UI).
+     * §8 : ajoute franchise, comparaison période précédente, part livraison, upsell.
      */
     getSalesKPIs() {
         const s = computeComptaSummary(this.#state.salesAggregate || {});
+
+        // Comparaison vs période précédente (sur CA brut + nb commandes : l'agrégat
+        // précédent est volontairement léger). null si indisponible.
+        const cmp = this.#state.salesComparison;
+        const comparison = cmp
+            ? {
+                  deltaTotal: pctDelta(s.caBrutTtc, cmp.prevTotal),
+                  deltaCount: pctDelta(s.count, cmp.prevCount),
+                  hasPrev: (Number(cmp.prevCount) || 0) > 0,
+              }
+            : null;
+
+        // Badge franchise 0 % (depuis la date de création du snack, règle 6 mois).
+        const franchise = franchiseInfo(this.#state.config?.createdAt);
+
+        // Part livraison : déduite de l'échantillon historique (bornée). Honnête :
+        // null si la liste est tronquée (≥200) → on n'affiche pas un % faux.
+        const sales = this.#state.salesData || [];
+        const truncated = sales.length >= 200;
+        const deliveryShare =
+            !truncated && sales.length > 0
+                ? Math.round((sales.filter((o) => o.mode === "delivery").length / sales.length) * 100)
+                : null;
+
+        // Upsell généré (€) si les stats sont chargées (sinon 0 → carte masquée).
+        const upsellRevenue = (this.#state.upsellStats || []).reduce((sum, u) => sum + (Number(u.revenue) || 0), 0);
+
         return {
             // Rétro-compat (consommé par renderKPIs + generateSalesCSV).
             total: s.caBrutTtc.toFixed(2),
@@ -602,6 +642,16 @@ export class AdminStore extends EventTarget {
             refundTotal: s.refundTotal.toFixed(2),
             tvaCollectee: s.tvaCollectee.toFixed(2),
             tvaParTaux: s.tvaParTaux, // [{rate, ht, tva}] en euros
+            // §8 — console UI.
+            caBrutNum: s.caBrutTtc, // pour les barres proportionnelles
+            caNetNum: s.caNet,
+            commissionNetteNum: s.commissionNette,
+            stripeFeeNum: s.stripeFee,
+            refundTotalNum: s.refundTotal,
+            franchise,
+            comparison,
+            deliveryShare,
+            upsellRevenue: upsellRevenue.toFixed(2),
         };
     }
 
