@@ -111,9 +111,16 @@ service cloud.firestore {
 
     match /produits/{produitId} {
       allow read: if true;
-      allow write: if isSnackAdmin(request.resource.data.snackId)
-                   || (resource != null && isSnackAdmin(resource.data.snackId))
-                   || isSuperAdmin();
+      // Création : uniquement dans SON snack. Update : propriétaire requis ET
+      // snackId IMMUABLE (sinon un admin s'approprie le produit d'un autre snack
+      // en changeant snackId — l'ancienne clause testait le nouveau snackId).
+      allow create: if isSnackAdmin(request.resource.data.snackId) || isSuperAdmin();
+      allow update: if isSuperAdmin()
+                    || (
+                         isSnackAdmin(resource.data.snackId)
+                         && request.resource.data.snackId == resource.data.snackId
+                       );
+      allow delete: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
     }
 
 		match /commandes/{commandeId} {
@@ -149,7 +156,16 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'dateArriveeClient'])
           && request.resource.data.statut == 'nouvelle'
         ) ||
-        isSnackAdmin(resource.data.snackId) ||
+        // L'admin du snack gère sa commande (statut cuisine, paiement, livreur…)
+        // MAIS ne peut PAS muter les champs financiers de compta : ils naissent
+        // dans finalizeOrder/refundOrder (Admin SDK, hors rules) et doivent rester
+        // une source de vérité serveur (LOT A). Le superadmin garde le plein accès.
+        (
+          isSnackAdmin(resource.data.snackId)
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+               'commission', 'stripeFee', 'stripeNet', 'stripeFeePending', 'tvaBreakdown', 'refund'
+             ])
+        ) ||
         isSuperAdmin() ||
         (
           isDriver(resource.data.snackId)

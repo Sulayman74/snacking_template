@@ -217,6 +217,7 @@ class AdminProductsUI {
             document.getElementById("edit-desc").value = product.description || "";
             document.getElementById("edit-prix").value = product.prix || 0;
             document.getElementById("edit-prix-menu").value = product.menuPriceAdd || 2.5;
+            document.getElementById("edit-tva-rate").value = String(product.tvaRate ?? 10);
             this.populateCategorySelect(product.categorieId);
             document.getElementById("edit-tags").value = product.tags?.[0] || "";
             document.getElementById("edit-allow-menu").checked = product.allowMenu !== false;
@@ -401,6 +402,9 @@ class AdminProductsUI {
             description: document.getElementById("edit-desc").value.trim(),
             prix: hasTailles && tailles.length > 0 ? tailles[0].prix : parseFloat(document.getElementById("edit-prix").value) || 0,
             menuPriceAdd: parseFloat(document.getElementById("edit-prix-menu").value) || 2.5,
+            tvaRate: [5.5, 10, 20].includes(parseFloat(document.getElementById("edit-tva-rate").value))
+                ? parseFloat(document.getElementById("edit-tva-rate").value)
+                : 10,
             categorieId: this.resolveCategory(),
             tags: document.getElementById("edit-tags").value ? [document.getElementById("edit-tags").value] : [],
             allergenes: Array.from(document.querySelectorAll(".edit-allergen:checked")).map(cb => cb.value),

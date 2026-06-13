@@ -212,6 +212,9 @@ export class AdminStore extends EventTarget {
             const { doc, updateDoc, addDoc, collection, serverTimestamp } = fs;
             const data = {
                 ...productData,
+                // TVA : on force un preset valide (défaut 10) — defense-in-depth si la
+                // donnée vient d'ailleurs que du formulaire (LOT A).
+                tvaRate: [5.5, 10, 20].includes(Number(productData.tvaRate)) ? Number(productData.tvaRate) : 10,
                 updatedAt: serverTimestamp()
             };
 
