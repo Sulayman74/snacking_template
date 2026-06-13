@@ -42,6 +42,11 @@ class MenuUI {
   }
 
   handleScrollSpy() {
+    // Pendant un scroll déclenché par un clic sur une pille, on ne laisse PAS le spy
+    // réagir : sinon il émet des recentrages concurrents qui interrompent le scroll
+    // au clic et le font atterrir court (bug sauts longs cat1→cat4).
+    if (this.isProgrammaticScroll) return;
+
     const sections = this.container.querySelectorAll(".menu-section");
     const nav = document.getElementById("menu-categories-nav");
     if (!sections.length || !nav) return;
@@ -70,22 +75,37 @@ class MenuUI {
     }
 
     if (activeCatId && activeCatId !== this.currentActiveCatId) {
-      this.currentActiveCatId = activeCatId;
-      
-      const pills = nav.querySelectorAll(".cat-pill");
-      pills.forEach((pill) => {
-        const isTarget = pill.getAttribute("data-cat-id") === activeCatId;
-        pill.classList.toggle("bg-gray-900", isTarget);
-        pill.classList.toggle("text-white", isTarget);
-        pill.classList.toggle("bg-gray-100", !isTarget);
-        pill.classList.toggle("text-gray-600", !isTarget);
-        
-        if (isTarget) {
-          // Centrer le bouton actif dans la navigation horizontale
-          pill.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-        }
-      });
+      this.setActivePill(activeCatId);
     }
+  }
+
+  /**
+   * Surligne la pille de la catégorie active et la recentre dans la nav HORIZONTALE.
+   * ⚠️ On ne fait JAMAIS `pill.scrollIntoView()` : ça scrollerait aussi le conteneur
+   * vertical `#full-menu` et casserait le scroll-au-clic. On ne touche que `nav.scrollLeft`.
+   * @param {string} activeCatId
+   */
+  setActivePill(activeCatId) {
+    const nav = document.getElementById("menu-categories-nav");
+    if (!nav) return;
+    this.currentActiveCatId = activeCatId;
+
+    const pills = nav.querySelectorAll(".cat-pill");
+    pills.forEach((pill) => {
+      const isTarget = pill.getAttribute("data-cat-id") === activeCatId;
+      pill.classList.toggle("bg-gray-900", isTarget);
+      pill.classList.toggle("text-white", isTarget);
+      pill.classList.toggle("bg-gray-100", !isTarget);
+      pill.classList.toggle("text-gray-600", !isTarget);
+
+      if (isTarget) {
+        // Centrage horizontal de la pille DANS la nav uniquement (pas d'ancêtre vertical).
+        const left =
+          pill.getBoundingClientRect().left - nav.getBoundingClientRect().left +
+          nav.scrollLeft + pill.offsetWidth / 2 - nav.clientWidth / 2;
+        nav.scrollTo({ left, behavior: "smooth" });
+      }
+    });
   }
 
   render() {
@@ -238,9 +258,18 @@ class MenuUI {
       btn.onclick = () => {
         const target = document.getElementById(`cat-${catId}`);
         if (target && this.scrollContainer) {
+            // Gèle le scroll-spy le temps du scroll programmatique (sinon il interrompt
+            // le saut et on atterrit court). On surligne tout de suite la pille cliquée.
+            this.isProgrammaticScroll = true;
+            clearTimeout(this._spyResumeTimer);
+            this.setActivePill(catId);
+
             const headerHeight = document.querySelector('#full-menu .sticky')?.offsetHeight || 120;
             const targetPos = (target.getBoundingClientRect().top - this.scrollContainer.getBoundingClientRect().top) + this.scrollContainer.scrollTop - headerHeight - 10;
             this.scrollContainer.scrollTo({ top: targetPos, behavior: 'smooth' });
+
+            // Réactive le spy une fois le scroll fluide stabilisé.
+            this._spyResumeTimer = setTimeout(() => { this.isProgrammaticScroll = false; }, 700);
         }
       };
       nav.appendChild(btn);
