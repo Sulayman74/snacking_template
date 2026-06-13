@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
     />
     <title>{{SEO_TITLE}}</title>
     <meta name="description" content="{{SEO_DESC}}" />
@@ -82,7 +82,7 @@
     <!-- 🌈 Fond mesh dérivé du thème (décoratif, hors flux, 0 CLS) -->
     <div class="app-bg" aria-hidden="true"></div>
     <!-- BANDEAU PROMO DYNAMIQUE -->
-    <div id="promo-banner" class="hidden bg-primary text-on-primary py-2.5 px-4 text-center text-sm font-black uppercase tracking-widest shadow-md sticky top-0 z-[60] animate-fade-in">
+    <div id="promo-banner" class="hidden bg-primary text-on-primary pb-2.5 pt-[calc(0.625rem_+_env(safe-area-inset-top))] px-4 text-center text-sm font-black uppercase tracking-widest shadow-md sticky top-0 z-[60] animate-fade-in">
       <div class="container mx-auto flex justify-center items-center gap-3">
         <i class="fas fa-utensils animate-bounce"></i>
         <span id="promo-text"></span>
@@ -99,7 +99,7 @@
       </div>
     </div>
     <main>
-      <nav id="navbar" class="fixed w-full z-50 top-0 transition-all duration-300 bg-linear-to-b backdrop-blur-sm from-black/90 to-transparent">
+      <nav id="navbar" class="fixed w-full z-50 top-0 pt-[env(safe-area-inset-top)] transition-all duration-300 bg-linear-to-b backdrop-blur-sm from-black/90 to-transparent">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
           <a href="#" class="flex items-center gap-2">
             <img id="nav-logo" src="" alt="Logo" class="h-10 w-10 object-contain rounded-xl hidden" />
