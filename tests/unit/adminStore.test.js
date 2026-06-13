@@ -47,14 +47,35 @@ describe("AdminStore.validate (config + horaires)", () => {
 });
 
 describe("AdminStore.getSalesKPIs", () => {
-  it("total/TVA(10%)/HT/moyenne depuis l'agrégat serveur", () => {
+  it("total/moyenne depuis l'agrégat serveur (CA brut + nb commandes)", () => {
     store.setSalesAggregate({ count: 4, total: 100 });
     const k = store.getSalesKPIs();
     expect(k.total).toBe("100.00");
     expect(k.count).toBe(4);
     expect(k.avg).toBe("25.00");
-    expect(k.tva).toBe("10.00");
-    expect(k.ht).toBe("90.00");
+  });
+  it("LOT D : TVA LUE depuis la ventilation (plus de 10 % forfaitaire) + CA net", () => {
+    // total en EUROS ; commission/stripeFee/tva en CENTIMES.
+    store.setSalesAggregate({
+      count: 2,
+      total: 100,
+      commission: 800, // 8,00 €
+      stripeFee: 175, // 1,75 €
+      tva: { ht10: 5000, tva10: 500, ht20: 833, tva20: 167 }, // 5,00 € + 1,67 € TVA
+    });
+    const k = store.getSalesKPIs();
+    // TVA réelle collectée = 5,00 + 1,67 = 6,67 € (et NON 10 % de 100 = 10,00)
+    expect(k.tva).toBe("6.67");
+    expect(k.tvaCollectee).toBe("6.67");
+    // CA net = 100 − 0 − 8 − 1,75 = 90,25
+    expect(k.caNet).toBe("90.25");
+    expect(k.tvaParTaux).toHaveLength(2);
+  });
+  it("legacy (agrégat sans ventilation) → TVA 0, jamais de 10 % fantôme", () => {
+    store.setSalesAggregate({ count: 3, total: 75 });
+    const k = store.getSalesKPIs();
+    expect(k.tva).toBe("0.00");
+    expect(k.caNet).toBe("75.00"); // pas de commission/frais → net = brut
   });
   it("aucune vente → 0 partout, jamais NaN", () => {
     const k = store.getSalesKPIs();

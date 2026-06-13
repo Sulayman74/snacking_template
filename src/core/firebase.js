@@ -34,6 +34,7 @@ export {
   count,
   deleteDoc,
   doc,
+  FieldPath,
   getAggregateFromServer,
   getDoc,
   getDocs,

@@ -116,25 +116,59 @@ class AdminComptaUI {
 
     renderKPIs() {
         const kpis = adminStore.getSalesKPIs();
+        // En-tête : on garde le CA BRUT TTC visible, mais le héros décisionnel est
+        // le CA NET (ci-dessous). totalSalesEl/totalOrdersEl existent déjà.
         if (this.totalSalesEl) this.totalSalesEl.textContent = `${kpis.total} €`;
         if (this.totalOrdersEl) this.totalOrdersEl.textContent = kpis.count;
 
-        if (this.kpiExtrasEl) {
-            this.kpiExtrasEl.innerHTML = `
-                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Panier Moyen</p>
-                    <p class="text-xl font-black text-gray-900">${kpis.avg} €</p>
+        if (!this.kpiExtrasEl) return;
+
+        // Cascade CA brut → net : ce que le resto garde réellement (§8.2). Chaque
+        // déduction est une ligne négative ; le net est mis en avant.
+        const line = (label, val, neg = false) => `
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-500">${label}</span>
+                <span class="font-bold ${neg ? "text-red-600" : "text-gray-900"} tabular-nums">${neg ? "−" : ""}${val} €</span>
+            </div>`;
+
+        // Ventilation TVA collectée par taux (uniquement les taux présents).
+        const tvaRows = (kpis.tvaParTaux || []).length
+            ? kpis.tvaParTaux.map(t => `
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500">TVA ${String(t.rate).replace(".", ",")} %
+                        <span class="text-gray-400">(HT ${t.ht.toFixed(2)} €)</span></span>
+                    <span class="font-bold text-gray-900 tabular-nums">${t.tva.toFixed(2)} €</span>
+                </div>`).join("")
+            : `<p class="text-xs text-gray-400">Aucune commande ventilée sur la période (commandes antérieures au socle compta).</p>`;
+
+        this.kpiExtrasEl.innerHTML = `
+            <div class="sm:col-span-2 lg:col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <p class="text-[10px] text-gray-500 font-black uppercase tracking-wider mb-3">Du brut au net</p>
+                <div class="space-y-1.5">
+                    ${line("CA brut TTC", kpis.total)}
+                    ${line("Remboursements", kpis.refundTotal, true)}
+                    ${line("Commission plateforme (nette)", kpis.commissionNette, true)}
+                    ${line("Frais Stripe", kpis.stripeFee, true)}
+                    <div class="flex items-center justify-between pt-2 mt-1 border-t border-gray-200">
+                        <span class="text-sm font-black text-gray-900">CA net encaissé</span>
+                        <span class="text-xl font-black tabular-nums" style="color:var(--color-primary,#1E2938)">${kpis.caNet} €</span>
+                    </div>
                 </div>
-                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">TVA (10%)</p>
-                    <p class="text-xl font-black text-gray-900">${kpis.tva} €</p>
-                </div>
-                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Total HT</p>
-                    <p class="text-xl font-black text-gray-900">${kpis.ht} €</p>
-                </div>
-            `;
-        }
+            </div>
+
+            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Panier Moyen</p>
+                <p class="text-xl font-black text-gray-900">${kpis.avg} €</p>
+            </div>
+
+            <div class="sm:col-span-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">TVA collectée par taux</p>
+                <div class="space-y-1.5">${tvaRows}</div>
+                <p class="text-[10px] text-gray-400 mt-2 leading-snug">
+                    TVA <b>collectée</b> (hors TVA déductible sur vos achats) — à valider avec votre comptable. Données de gestion, non certifiées NF525.
+                </p>
+            </div>
+        `;
     }
 
     renderHistory() {

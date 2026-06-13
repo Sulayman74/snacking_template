@@ -14,6 +14,7 @@ import {
     sum,
     orderBy,
     limit,
+    FieldPath,
 } from "./core/firebase.js";
 
 async function loadComptaDashboard() {
@@ -40,15 +41,45 @@ async function loadComptaDashboard() {
             where("date", "<=", endDate),
         ];
 
-        // 1) KPIs (CA + nb commandes) via AGRÉGATION serveur : facturée ~1 lecture
-        //    par 1000 entrées d'index, au lieu de lire toutes les commandes lourdes.
+        // 1) KPIs via AGRÉGATION serveur : facturée ~1 lecture / 1000 entrées
+        //    d'index, au lieu de lire toutes les commandes lourdes. LOT D : on
+        //    somme aussi les champs financiers (centimes) + la ventilation TVA.
+        //    Les commandes legacy sans ces champs sont ignorées par sum() → 0.
+        //    `tvaBreakdown."5.5"` a un point dans la clé → FieldPath (un field-path
+        //    en string "a.5.5.b" serait mal découpé).
         const aggSnap = await getAggregateFromServer(
             query(collection(db, "commandes"), ...baseConstraints),
-            { count: count(), total: sum("total") }
+            {
+                count: count(),
+                total: sum("total"),
+                commission: sum("commission"),
+                stripeFee: sum("stripeFee"),
+                refundTotal: sum("refund.total"),
+                refundCommission: sum("refund.commission"),
+                ht5_5: sum(new FieldPath("tvaBreakdown", "5.5", "ht")),
+                tva5_5: sum(new FieldPath("tvaBreakdown", "5.5", "tva")),
+                ht10: sum("tvaBreakdown.10.ht"),
+                tva10: sum("tvaBreakdown.10.tva"),
+                ht20: sum("tvaBreakdown.20.ht"),
+                tva20: sum("tvaBreakdown.20.tva"),
+                htLiv: sum("tvaBreakdown.livraison.ht"),
+                tvaLiv: sum("tvaBreakdown.livraison.tva"),
+            }
         );
+        const a = aggSnap.data();
         adminStore.setSalesAggregate({
-            count: aggSnap.data().count,
-            total: aggSnap.data().total,
+            count: a.count,
+            total: a.total,
+            commission: a.commission,
+            stripeFee: a.stripeFee,
+            refundTotal: a.refundTotal,
+            refundCommission: a.refundCommission,
+            tva: {
+                ht5_5: a.ht5_5, tva5_5: a.tva5_5,
+                ht10: a.ht10, tva10: a.tva10,
+                ht20: a.ht20, tva20: a.tva20,
+                htLiv: a.htLiv, tvaLiv: a.tvaLiv,
+            },
         });
 
         // 2) Historique : liste BORNÉE (affichage seulement, pas pour le total).

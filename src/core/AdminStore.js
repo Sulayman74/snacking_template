@@ -2,6 +2,8 @@
  * 🛠️ AdminStore — Gestionnaire d'état pour le Back-office
  * Flux unidirectionnel, mutations explicites, validation intégrée.
  */
+import { computeComptaSummary } from "../services/comptaService.js";
+
 export class AdminStore extends EventTarget {
     #state = {
         config: null,
@@ -553,28 +555,53 @@ export class AdminStore extends EventTarget {
         this.emit("admin-upsell-updated");
     }
 
+    /**
+     * Stocke l'agrégat serveur étendu (LOT D) : CA brut (€) + champs financiers
+     * et ventilation TVA, tous en CENTIMES. Les commandes legacy (pré-LOT A) sans
+     * ces champs sont ignorées par `sum()` côté serveur → aucune valeur fausse.
+     * @param {object} agg
+     */
     setSalesAggregate(agg) {
+        const t = agg?.tva || {};
         this.#state.salesAggregate = {
             count: Number(agg?.count) || 0,
-            total: Number(agg?.total) || 0,
+            total: Number(agg?.total) || 0, // EUROS (somme de commande.total)
+            commission: Number(agg?.commission) || 0, // centimes
+            stripeFee: Number(agg?.stripeFee) || 0,
+            refundTotal: Number(agg?.refundTotal) || 0,
+            refundCommission: Number(agg?.refundCommission) || 0,
+            tva: {
+                ht5_5: Number(t.ht5_5) || 0, tva5_5: Number(t.tva5_5) || 0,
+                ht10: Number(t.ht10) || 0, tva10: Number(t.tva10) || 0,
+                ht20: Number(t.ht20) || 0, tva20: Number(t.tva20) || 0,
+                htLiv: Number(t.htLiv) || 0, tvaLiv: Number(t.tvaLiv) || 0,
+            },
         };
     }
 
+    /**
+     * KPIs compta (LOT D) basés sur l'agrégat serveur (toute la plage). Délègue le
+     * calcul net + ventilation TVA au service pur `computeComptaSummary` (zéro
+     * `total*0.10` en dur : la TVA est désormais LUE depuis `tvaBreakdown`).
+     * Conserve les champs `total`/`tva`/`ht` pour la rétro-compat (CSV, UI).
+     */
     getSalesKPIs() {
-        // KPIs basés sur l'agrégat serveur (toute la plage), pas sur la liste
-        // bornée du tableau d'historique → total exact sans lecture massive.
-        const agg = this.#state.salesAggregate || { count: 0, total: 0 };
-        const total = Number(agg.total) || 0;
-        const count = Number(agg.count) || 0;
-        const avg = count > 0 ? total / count : 0;
-        const tva = total * 0.10; // TVA 10% (restauration rapide sur place/emporté)
-
+        const s = computeComptaSummary(this.#state.salesAggregate || {});
         return {
-            total: total.toFixed(2),
-            count,
-            avg: avg.toFixed(2),
-            tva: tva.toFixed(2),
-            ht: (total - tva).toFixed(2)
+            // Rétro-compat (consommé par renderKPIs + generateSalesCSV).
+            total: s.caBrutTtc.toFixed(2),
+            count: s.count,
+            avg: s.avg.toFixed(2),
+            tva: s.tvaCollectee.toFixed(2), // TVA RÉELLE collectée (ventilée), plus 10 % forfaitaire
+            ht: (s.caBrutTtc - s.tvaCollectee).toFixed(2),
+            // LOT D — compta nette + ventilation par taux.
+            caNet: s.caNet.toFixed(2),
+            commission: s.commission.toFixed(2),
+            commissionNette: s.commissionNette.toFixed(2),
+            stripeFee: s.stripeFee.toFixed(2),
+            refundTotal: s.refundTotal.toFixed(2),
+            tvaCollectee: s.tvaCollectee.toFixed(2),
+            tvaParTaux: s.tvaParTaux, // [{rate, ht, tva}] en euros
         };
     }
 
