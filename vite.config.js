@@ -28,6 +28,10 @@ export default defineConfig(() => {
   // Fond de page = base claire de la palette (overscroll / pré-paint). Fallback theme_color
   // si un tenant n'a pas encore de lightHex dans snacks-seo.json.
   const lightHex = seoData.lightHex || seoData.theme_color;
+  // Accent du thème : nappe secondaire du fond mesh (.app-bg). Fallback theme_color
+  // (palettes monochromes type forest où accent == primary).
+  const accentHex = seoData.accentHex || seoData.theme_color;
+  const palette = seoData.colorPalette || '';
 
   return {
     plugins: [
@@ -58,12 +62,15 @@ export default defineConfig(() => {
           // overscroll / avant peinture du contenu. Le SPLASH (#boot-splash) garde --color-primary
           // (couleur de marque pleine) via sa propre règle. --color-primary-light est posé ici
           // pour que body et composants thémés aient la bonne base avant le boot du JS.
+          // --color-accent posé ici aussi -> le fond mesh (.app-bg) est complet dès le 1er paint
+          // (sinon les nappes accent restent transparentes jusqu'au boot JS).
           const splashStyle = `<style>
             :root,html,body{background:${lightHex} !important; color-scheme: light dark;}
-            :root{--color-primary:${seoData.theme_color};--color-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
+            :root{--color-primary:${seoData.theme_color};--color-accent:${accentHex};--color-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
           </style>`;
           
           return html
+            .replace('<html', `<html data-theme="${palette}"`) // override mesh par thème actif au 1er paint
             .replace('<head>', `<head>\n    ${splashStyle}`)
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)
             .replace(/\{\{SEO_DESC\}\}/g, seoData.desc)
