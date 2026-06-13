@@ -12,17 +12,19 @@
 // Si tu changes la version du endpoint, mets à jour cette constante (et re-teste
 // le tunnel paiement sur clés TEST).
 
-const Stripe = require("stripe");
-
 /** Version d'API Stripe épinglée — cf. endpoint webhook "snacks_events". */
 const STRIPE_API_VERSION = "2026-03-25.dahlia";
 
 /**
  * Instancie un client Stripe avec la clé secrète d'environnement et l'apiVersion
  * épinglée. À utiliser à la place de `require("stripe")(...)` direct.
+ * Le SDK `stripe` est requis EN LAZY (ici, pas au chargement du module) pour que
+ * la logique pure ré-exportée (resolveSubscriptionId) reste importable sans le SDK
+ * — ex. tests unitaires en CI où `functions/node_modules` n'est pas installé.
  * @returns {import("stripe").Stripe} Client Stripe configuré.
  */
 function getStripe() {
+    const Stripe = require("stripe");
     return Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION });
 }
 
