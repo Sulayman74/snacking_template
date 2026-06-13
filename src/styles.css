@@ -11,6 +11,15 @@
   --color-accent: #dc2626;
   --color-primary-light: #fee2e2;
   --color-on-primary: #ffffff;
+  /* 🎨 Neutres SÉMANTIQUES (CLAUDE.md theming). Couleurs NON liées à la palette : fixes
+     et intentionnelles, mais centralisées (plus de gris ni de rouges dispersés). Tailwind v4
+     génère bg-surface, text-text, text-text-muted, text-danger, text-on-dark, etc.
+     --color-danger reste pilotable au runtime si un jour un tenant veut sa propre teinte. */
+  --color-surface: #ffffff;      /* fond des cartes / surfaces claires */
+  --color-text: #1f2937;         /* texte principal (= gray-800) */
+  --color-text-muted: #6b7280;   /* texte secondaire (= gray-500) */
+  --color-danger: #dc2626;       /* erreurs / actions destructives (= red-600) */
+  --color-on-dark: #ffffff;      /* texte sur héros/nav sombre */
   /* 🔤 Polices pilotées au runtime (comme les couleurs). Tailwind v4 génère font-body /
      font-display. Défaut = stack système (0 octet). Override JS via applyTheme :
      root.style.setProperty('--font-body', "'Poppins', sans-serif"). */

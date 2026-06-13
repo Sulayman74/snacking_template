@@ -58,7 +58,7 @@ export function showToast(message, type = "success") {
         toast.classList.add("bg-gray-900", "text-white");
         icon.className = "fas fa-check-circle text-green-400";
     } else {
-        toast.classList.add("bg-red-600", "text-white");
+        toast.classList.add("bg-danger", "text-white");
         icon.className = "fas fa-exclamation-triangle text-white";
     }
 
@@ -109,7 +109,7 @@ export function formatCustomizationDetails(item) {
         parts.push(`🥣 ${item.sauces.map((s) => escapeHTML(s)).join(", ")}`);
     }
     if (item.sansCrudites && item.sansCrudites.length > 0) {
-        parts.push(`<span class="text-red-600 font-black">⚠️ ${item.sansCrudites.map((c) => escapeHTML(c)).join(", ")}</span>`);
+        parts.push(`<span class="text-danger font-black">⚠️ ${item.sansCrudites.map((c) => escapeHTML(c)).join(", ")}</span>`);
     }
     return parts.length > 0
         ? parts.join(" <span class='text-gray-300'>|</span> ")

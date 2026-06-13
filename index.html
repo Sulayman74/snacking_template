@@ -111,7 +111,7 @@
             <a href="#" data-action="switch-favorites" id="nav-favorites-link" class="hidden text-white hover:text-primary font-medium transition drop-shadow-md"><i class="fas fa-heart text-accent mr-1" aria-hidden="true"></i>Mes Favoris</a>
             <a href="#loyalty" id="nav-loyalty-link" class="hidden text-white hover:text-primary font-medium transition drop-shadow-md">Fidélité</a>
             <a href="#infos" class="text-white hover:text-primary font-medium transition drop-shadow-md">Infos</a>
-            <a href="/admin.html" id="nav-admin-btn" class="hidden text-red-500 hover:text-red-400 font-bold transition drop-shadow-md"><i class="fas fa-cog"></i> Admin</a>
+            <a href="/admin.html" id="nav-admin-btn" class="hidden text-danger hover:text-danger/80 font-bold transition drop-shadow-md"><i class="fas fa-cog"></i> Admin</a>
             <a href="#" id="cta-nav" class="ml-4 bg-primary px-6 py-2 rounded-full font-bold text-on-primary shadow-lg transform hover:scale-105 transition">Commander</a>
             <button aria-label="Déconnexion" type="button" data-action="logout-user" id="nav-logout-btn" class="hidden bg-accent/10 backdrop-blur-sm text-gray-200 hover:bg-accent px-4 py-2 rounded-full font-bold transition flex items-center gap-2">
               <i class="fas fa-sign-out-alt"></i> Quitter
@@ -123,12 +123,12 @@
           <a href="#" data-action="switch-favorites" id="mobile-favorites-link" class="hidden mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">Mes Favoris ❤️</a>
           <a href="#loyalty" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110" id="mobile-link-loyalty">Fidélité</a>
           <a href="#infos" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">Infos</a>
-          <a href="/admin.html" id="mobile-admin-btn" class="hidden mobile-link text-4xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110">Admin</a>
+          <a href="/admin.html" id="mobile-admin-btn" class="hidden mobile-link text-4xl font-bold text-danger hover:text-danger/80 transition transform hover:scale-110">Admin</a>
           <a href="#contact" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">Contact</a>
           <a href="#" id="mobile-burger-call-btn" class="hidden mobile-link text-2xl font-black bg-green-600 text-white px-8 py-4 rounded-full hover:bg-green-700 transition transform hover:scale-105 mt-6 shadow-lg shadow-green-600/30">
             <i class="fas fa-phone mr-2 animate-pulse"></i> Appeler
           </a>
-          <a href="#" data-action="logout-user" id="mobile-logout-btn" class="mobile-link text-xl font-bold text-red-500 hover:text-red-400 transition transform hover:scale-110 mt-8">Déconnexion</a>
+          <a href="#" data-action="logout-user" id="mobile-logout-btn" class="mobile-link text-xl font-bold text-danger hover:text-danger/80 transition transform hover:scale-110 mt-8">Déconnexion</a>
         </div>
       </nav>
 
@@ -255,7 +255,7 @@
             <div>
               <textarea name="message" id="message-field" rows="4" required placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition text-black"></textarea>
             </div>
-            <button type="submit" id="btn-submit-form" class="w-full py-4 rounded-xl font-bold text-white shadow-lg bg-primary hover:bg-accent transition transform hover:-translate-y-1">Envoyer le message</button>
+            <button type="submit" id="btn-submit-form" class="w-full py-4 rounded-xl font-bold text-on-primary shadow-lg bg-primary hover:bg-accent transition transform hover:-translate-y-1">Envoyer le message</button>
           </form>
         </div>
       </section>
@@ -367,7 +367,7 @@
             <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><i class="fas fa-eye" id="eye-icon"></i></button>
           </div>
           <div class="text-right"><button type="button" data-action="reset-password" class="text-sm text-gray-500 hover:text-red-600 transition">Oublié ?</button></div>
-          <button type="submit" id="auth-submit-btn" class="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2">Se connecter</button>
+          <button type="submit" id="auth-submit-btn" class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2">Se connecter</button>
         </form>
         <div class="mt-8 text-center text-sm bg-gray-50 p-4 rounded-xl">
           <span id="auth-switch-text" class="text-gray-600">Pas encore de compte ?</span>
@@ -450,7 +450,7 @@
 
     <div id="pwa-install-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700">
       <div class="flex items-center gap-3"><img id="pwa-banner-icon" src="{{ICON_URL}}" class="w-12 h-12 rounded-xl" alt="Icon" /><div><p class="font-bold text-sm">Garde-nous dans ta poche !</p><p id="pwa-install-hint" class="text-xs text-gray-300">Installe l'app pour tes points 🎁</p></div></div>
-      <button id="pwa-install-btn" class="bg-primary hover:bg-accent text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg">Installer</button>
+      <button id="pwa-install-btn" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg">Installer</button>
       <button id="pwa-close-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md"><i class="fas fa-times"></i></button>
     </div>
 
@@ -460,7 +460,7 @@
         <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0"><i class="fas fa-arrows-rotate text-primary text-lg"></i></div>
         <div><p class="font-bold text-sm">Nouvelle version dispo ✨</p><p class="text-xs text-gray-300">Rafraîchis pour les dernières améliorations.</p></div>
       </div>
-      <button id="pwa-refresh-btn" class="bg-primary hover:bg-accent text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
+      <button id="pwa-refresh-btn" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
       <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
     </div>
 
@@ -700,7 +700,7 @@
               <span class="menu-item-tag-vegan px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[9px] font-bold uppercase tracking-widest hidden">Vegan</span>
               <span class="menu-item-tag-spicy px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[9px] font-bold uppercase tracking-widest hidden">Pimenté</span>
             </div>
-            <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center transition-transform group-hover:scale-110 group-hover:bg-accent">
+            <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center transition-transform group-hover:scale-110 group-hover:bg-accent">
               <i class="fas fa-plus text-xs"></i>
             </div>
           </div>
