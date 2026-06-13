@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import fs from 'fs'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
+import { resolveFont } from './src/theme-fonts.js'
 
 const seoPath = resolve(__dirname, 'snacks-seo.json');
   let snacksSeo = {};
@@ -24,6 +25,9 @@ export default defineConfig(() => {
   const currentSnackId = process.env.SNACK_ID || 'Ym1YiO4Ue5Fb5UXlxr06'
   const seoData = snacksSeo[currentSnackId] || snacksSeo["Ym1YiO4Ue5Fb5UXlxr06"];
   const iconUrl = seoData.iconUrl || seoData.logoUrl;
+  // Fond de page = base claire de la palette (overscroll / pré-paint). Fallback theme_color
+  // si un tenant n'a pas encore de lightHex dans snacks-seo.json.
+  const lightHex = seoData.lightHex || seoData.theme_color;
 
   return {
     plugins: [
@@ -35,10 +39,28 @@ export default defineConfig(() => {
           const heroPreload = seoData.heroUrl
             ? `<link rel="preload" as="image" fetchpriority="high" href="${seoData.heroUrl}">`
             : '';
-          // Injecté en premier dans <head> : suppression absolue du flash blanc
+          // 🔤 Police du tenant (build-time, zéro FOUT). Si police système -> chaîne vide
+          // (pas de preconnect mort). display=swap est déjà dans l'href (cf. SAAS_FONTS).
+          const font = resolveFont(seoData.fontKey);
+          const fontLink = font.href
+            ? `<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="${font.href}">
+    <link rel="stylesheet" href="${font.href}">`
+            : '';
+          // Police posée dès le 1er octet (avant le boot JS) -> le font-family est correct au
+          // 1er paint, pas de bascule système->web font (FOUT). Le <link> (fontLink) charge le
+          // fichier ; ces vars l'APPLIQUENT. Le runtime (applyTheme) ne surcharge que si Firestore
+          // a explicitement un fontKey (override admin).
+          const fontVars = `--font-body:${font.body};--font-display:${font.display || font.body};`;
+          // Injecté en premier dans <head> dès le 1er octet : tue le flash blanc ET le flash
+          // de mauvaise couleur. Le FOND DE PAGE est la base claire (lightHex) — visible en
+          // overscroll / avant peinture du contenu. Le SPLASH (#boot-splash) garde --color-primary
+          // (couleur de marque pleine) via sa propre règle. --color-primary-light est posé ici
+          // pour que body et composants thémés aient la bonne base avant le boot du JS.
           const splashStyle = `<style>
-            :root,html,body{background:${seoData.theme_color} !important; color-scheme: light dark;}
-            :root{--color-primary:${seoData.theme_color};--logo-url:url("${iconUrl}")}
+            :root,html,body{background:${lightHex} !important; color-scheme: light dark;}
+            :root{--color-primary:${seoData.theme_color};--color-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
           </style>`;
           
           return html
@@ -51,6 +73,7 @@ export default defineConfig(() => {
             .replace(/\{\{SHADOW_CLASS\}\}/g, seoData.shadowClass)
             .replace(/\{\{HERO_URL\}\}/g, seoData.heroUrl || '')
             .replace('{{HERO_PRELOAD}}', heroPreload)
+            .replace('{{FONT_LINK}}', fontLink)
             .replace(/\{\{ICON_URL\}\}/g, iconUrl)
             .replace(/\{\{APP_SHORT_NAME\}\}/g, seoData.title.split('|')[0].trim())
             .replace(/\{\{CANONICAL_URL\}\}/g, seoData.canonicalUrl || '')

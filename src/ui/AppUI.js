@@ -5,6 +5,21 @@
 import { store } from "../core/Store.js";
 import { escapeHTML, safeURL, showToast } from "../utils.js";
 
+/**
+ * Garantit la présence d'un <link> de police web, sans doublon (idempotent).
+ * Couvre le cas "police changée à chaud" quand le <link> build-time n'existe pas.
+ * @param {string|null} href - URL de la feuille de police (Google Fonts). Null/absent => no-op.
+ */
+function ensureFontLink(href) {
+    if (!href) return;
+    if (document.querySelector(`link[data-font-link][href="${href}"]`)) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.setAttribute("data-font-link", "");
+    document.head.appendChild(link);
+}
+
 class AppUI {
     constructor() {
         this.init();
@@ -54,6 +69,17 @@ class AppUI {
         root.style.setProperty("--color-accent", accentHex);
         root.style.setProperty("--color-primary-light", lightHex);
         root.style.setProperty("--color-on-primary", onPrimaryHex);
+
+        // 🔤 Police — surcharge UNIQUEMENT si Firestore a un fontKey explicite (override admin).
+        // Sinon on laisse la valeur posée au build (snacks-seo.json) pour éviter tout FOUT.
+        const fonts = cfg.theme.fonts;
+        if (fonts?.key) {
+            root.style.setProperty("--font-body", fonts.body);
+            root.style.setProperty("--font-display", fonts.display || fonts.body);
+            // Charge le <link> au runtime si pas déjà injecté au build (changement admin à chaud).
+            // display=swap évite le FOIT (cf. SAAS_FONTS).
+            ensureFontLink(fonts.href);
+        }
     }
 
     /**
@@ -384,8 +410,9 @@ class AppUI {
             document.body.innerHTML = `<div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white text-center px-4"><i class="fas fa-tools text-6xl text-red-500 mb-6 animate-pulse"></i><h1 class="text-4xl font-black mb-4">${escapeHTML(cfg.identity?.name || "")}</h1><p class="text-gray-400">Maintenance en cours...</p></div>`;
             return;
         }
-        document.body.classList.add(cfg.theme.fontFamily || "font-sans");
-        
+        // 🔤 La police est désormais pilotée par --font-body (appliqué dans applyTheme),
+        // hérité par <body>. Plus de classList.add bugué (accumulation, jamais de remove).
+
         const showLoyalty = cfg.features?.enableLoyaltyCard !== false;
         ["loyalty", "nav-loyalty-link", "mobile-link-loyalty"].forEach(id => {
             const el = document.getElementById(id);

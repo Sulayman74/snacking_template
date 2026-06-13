@@ -37,15 +37,17 @@
     <noscript
       ><link
         rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     /></noscript>
     {{HERO_PRELOAD}}
     <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin />
     <link rel="preload" as="image" href="{{LOGO_URL}}" />
     <link rel="modulepreload" href="/src/app.js" />
     <link rel="stylesheet" href="/src/styles.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- 🔤 Police du tenant injectée au build (vite transformIndexHtml) selon snacks-seo.json.
+         Inclut preconnect + stylesheet display=swap UNIQUEMENT si police web (sinon vide :
+         plus de preconnect mort). Police connue dès le 1er octet -> zéro FOUT. -->
+    {{FONT_LINK}}
     <!-- Stripe.js est chargé À LA DEMANDE au tunnel checkout (src/checkout.js),
          pas en bloquant sur la home (perf LCP/INP — cf. CLAUDE.md §8.2). -->
     <script>

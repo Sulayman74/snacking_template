@@ -11,14 +11,25 @@
   --color-accent: #dc2626;
   --color-primary-light: #fee2e2;
   --color-on-primary: #ffffff;
+  /* 🔤 Polices pilotées au runtime (comme les couleurs). Tailwind v4 génère font-body /
+     font-display. Défaut = stack système (0 octet). Override JS via applyTheme :
+     root.style.setProperty('--font-body', "'Poppins', sans-serif"). */
+  --font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-body); /* titres ; = body tant qu'aucune police display distincte */
 }
 
 html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--color-primary);
+  /* Base CLAIRE de la palette (pas la couleur pleine) : overscroll + pré-paint montrent
+     la base, pas le primary saturé. Le splash garde --color-primary (moment de marque).
+     NB: vite injecte la même valeur en !important dès le 1er octet (anti-flash). */
+  background: var(--color-primary-light);
   min-height: 100%;
+  /* Police pilotée par le thème (héritée par tout le contenu). Remplace l'ancien
+     classList.add(font-sans) bugué dans AppUI. Override runtime via --font-body. */
+  font-family: var(--font-body);
   /* Empêche les rebonds bizarres sur mobile lors du scroll */
   overscroll-behavior-y: none;
 }
@@ -41,7 +52,6 @@ body {
   height: 50%;
   background: var(--color-primary);
   z-index: 1;
-  will-change: transform;
 }
 .splash-curtain-top    { top: 0; }
 .splash-curtain-bottom { bottom: 0; }
@@ -106,9 +116,11 @@ body {
 
 /* Mode 2 — rideau split */
 #boot-splash.splash-exit-2 .splash-curtain-top {
+  will-change: transform;
   animation: splash-curtain-up   0.7s cubic-bezier(0.76, 0, 0.24, 1) forwards;
 }
 #boot-splash.splash-exit-2 .splash-curtain-bottom {
+  will-change: transform;
   animation: splash-curtain-down 0.7s cubic-bezier(0.76, 0, 0.24, 1) forwards;
 }
 #boot-splash.splash-exit-2 {
@@ -174,7 +186,9 @@ body.is-offline::after {
 
 /* Effet Liquid Glass pour la barre de navigation mobile */
 .glass-nav {
-  background-color: var(--color-accent); /* Gris semi-transparent */
+  /* Translucide (72% accent + transparent) : SANS transparence, le backdrop-filter ne
+     laissait rien transparaître -> flou = coût GPU pur. Là, le blur(20px) sert vraiment. */
+  background-color: color-mix(in srgb, var(--color-accent) 72%, transparent);
   backdrop-filter: blur(20px); /* Le flou standard */
   -webkit-backdrop-filter: blur(20px); /* LE SECRET POUR IPHONE/SAFARI */
   border: 1px solid var(--color-primary); /* La bordure lumineuse */
@@ -256,4 +270,17 @@ body.is-offline::after {
 :focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--color-primary, #0A1B3F), 0 0 0 5px rgba(255, 255, 255, 0.65);
+}
+
+/* ♿ A11y — Respect du réglage système "réduire les animations" (CLAUDE.md §7 / WCAG 2.3.3).
+   Neutralise les animations infinies (.liquid-blob float, jumping-icon) et les transitions
+   pour les utilisateurs sensibles au mouvement, sans casser le rendu final (les états
+   `forwards` restent appliqués car l'anim joue en ~0ms). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
