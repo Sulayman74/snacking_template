@@ -24,6 +24,9 @@ export default defineConfig(() => {
   const currentSnackId = process.env.SNACK_ID || 'Ym1YiO4Ue5Fb5UXlxr06'
   const seoData = snacksSeo[currentSnackId] || snacksSeo["Ym1YiO4Ue5Fb5UXlxr06"];
   const iconUrl = seoData.iconUrl || seoData.logoUrl;
+  // Fond de page = base claire de la palette (overscroll / pré-paint). Fallback theme_color
+  // si un tenant n'a pas encore de lightHex dans snacks-seo.json.
+  const lightHex = seoData.lightHex || seoData.theme_color;
 
   return {
     plugins: [
@@ -35,10 +38,14 @@ export default defineConfig(() => {
           const heroPreload = seoData.heroUrl
             ? `<link rel="preload" as="image" fetchpriority="high" href="${seoData.heroUrl}">`
             : '';
-          // Injecté en premier dans <head> : suppression absolue du flash blanc
+          // Injecté en premier dans <head> dès le 1er octet : tue le flash blanc ET le flash
+          // de mauvaise couleur. Le FOND DE PAGE est la base claire (lightHex) — visible en
+          // overscroll / avant peinture du contenu. Le SPLASH (#boot-splash) garde --color-primary
+          // (couleur de marque pleine) via sa propre règle. --color-primary-light est posé ici
+          // pour que body et composants thémés aient la bonne base avant le boot du JS.
           const splashStyle = `<style>
-            :root,html,body{background:${seoData.theme_color} !important; color-scheme: light dark;}
-            :root{--color-primary:${seoData.theme_color};--logo-url:url("${iconUrl}")}
+            :root,html,body{background:${lightHex} !important; color-scheme: light dark;}
+            :root{--color-primary:${seoData.theme_color};--color-primary-light:${lightHex};--logo-url:url("${iconUrl}")}
           </style>`;
           
           return html

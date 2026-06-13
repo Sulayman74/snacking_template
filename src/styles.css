@@ -17,7 +17,10 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--color-primary);
+  /* Base CLAIRE de la palette (pas la couleur pleine) : overscroll + pré-paint montrent
+     la base, pas le primary saturé. Le splash garde --color-primary (moment de marque).
+     NB: vite injecte la même valeur en !important dès le 1er octet (anti-flash). */
+  background: var(--color-primary-light);
   min-height: 100%;
   /* Empêche les rebonds bizarres sur mobile lors du scroll */
   overscroll-behavior-y: none;
@@ -175,7 +178,9 @@ body.is-offline::after {
 
 /* Effet Liquid Glass pour la barre de navigation mobile */
 .glass-nav {
-  background-color: var(--color-accent); /* Gris semi-transparent */
+  /* Translucide (72% accent + transparent) : SANS transparence, le backdrop-filter ne
+     laissait rien transparaître -> flou = coût GPU pur. Là, le blur(20px) sert vraiment. */
+  background-color: color-mix(in srgb, var(--color-accent) 72%, transparent);
   backdrop-filter: blur(20px); /* Le flou standard */
   -webkit-backdrop-filter: blur(20px); /* LE SECRET POUR IPHONE/SAFARI */
   border: 1px solid var(--color-primary); /* La bordure lumineuse */

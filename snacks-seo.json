@@ -7,6 +7,8 @@
     "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/heroImg.webp?alt=media&token=a3de102d-b619-4a43-9601-cad75f7f82d2",
     "theme_color": "#16a34a",
+    "colorPalette": "forest",
+    "lightHex": "#dcfce7",
     "shadowClass": "shadow-green-600/40"
   },
   "PsobiuoeUzNmHnwGtaRu": {
@@ -17,6 +19,8 @@
     "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2FPsobiuoeUzNmHnwGtaRu%2Fobois.webp?alt=media&token=bb15c940-77ff-4b82-9ce6-39e716d528bc",
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2FPsobiuoeUzNmHnwGtaRu%2FheroImgpizza.webp?alt=media&token=52fccba1-fa06-4692-b01a-75a07efcfbac",
     "theme_color": "#4c1d95",
+    "colorPalette": "midnight",
+    "lightHex": "#f3e9ff",
     "shadowClass": "shadow-purple-600/40"
   },
   "4L9THuI6hIAqKjjZUn4s": {
@@ -27,6 +31,8 @@
     "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2F4L9THuI6hIAqKjjZUn4s%2Flagare.webp?alt=media&token=cda7f98d-ecc9-4122-8edb-40d2a49c63db",
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/produits%2F4L9THuI6hIAqKjjZUn4s%2FheroImg_pizz.webp?alt=media&token=0dfbe7bc-9fd0-4102-8ccd-7a71454e883d",
     "theme_color": "#0077b6",
+    "colorPalette": "ocean",
+    "lightHex": "#caf0f8",
     "shadowClass": "shadow-blue-600/40"
   },
   "umaGD0nOIWwgpyy8Ta4h": {
@@ -37,6 +43,8 @@
     "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/Belly_smash%2Ficon-maskable-512.png?alt=media&token=b7e4268c-10fa-4a91-be69-74f062f7cb31",
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/Belly_smash%2Fbelly.jpeg?alt=media&token=5ec9abd3-6e35-495a-9ee5-b484fef2780b",
     "theme_color": "#0a1b3f",
+    "colorPalette": "belly",
+    "lightHex": "#C8D8E9",
     "shadowClass": "shadow-blue-900/40"
   }
 }
