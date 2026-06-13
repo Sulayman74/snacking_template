@@ -6,6 +6,7 @@
 // / text-on-primary sont générés par le bloc @theme dans styles.css.
 import { store } from "./core/Store.js";
 import { doc, getDoc } from "./core/firebase.js";
+import { resolveFont } from "./theme-fonts.js";
 
 const SAAS_THEMES = {
   "ruby":      { primaryHex: "#dc2626", accentHex: "#dc2626", lightHex: "#fee2e2", onPrimaryHex: "#ffffff" },
@@ -48,8 +49,13 @@ try {
 
     // 🎯 RÉCUPÉRATION DU THÈME
     // On cherche la palette choisie. Si elle n'existe pas, on met "ruby" par défaut.
-    const paletteKey = data.colorPalette || "sunflower"; 
+    const paletteKey = data.colorPalette || "sunflower";
     const selectedTheme = SAAS_THEMES[paletteKey] || SAAS_THEMES["sunflower"];
+
+    // 🔤 RÉCUPÉRATION DE LA POLICE — défaut "system" (aucune requête réseau).
+    // Source de vérité runtime ; le <link> build-time vient de snacks-seo.json (cf. vite).
+    const fontKey = data.fontKey || "system";
+    const selectedFont = resolveFont(fontKey);
 
     // 🪄 ON REMPLACE LA CONFIG "EN DUR" PAR LES DONNÉES FIRESTORE
     const config = {
@@ -80,7 +86,15 @@ try {
       theme: {
         templateId: data.templateId || "classic",
         colorPalette: paletteKey,
-        fontFamily: data.fontFamily || "font-sans",
+        fontFamily: data.fontFamily || "font-sans", // legacy conservé (Read-Old, CLAUDE.md §5.1)
+        fontKey,
+        // 🔤 Police résolue — injectée dans --font-body/--font-display par applyTheme
+        fonts: {
+          key: fontKey,
+          body: selectedFont.body,
+          display: selectedFont.display,
+          href: selectedFont.href,
+        },
         // 🔥 LES COULEURS SONT MAINTENANT DES HEX — injectées dans CSS vars par applySaaSThemeToHTML
         colors: {
           primaryHex:   selectedTheme.primaryHex,

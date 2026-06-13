@@ -11,6 +11,11 @@
   --color-accent: #dc2626;
   --color-primary-light: #fee2e2;
   --color-on-primary: #ffffff;
+  /* 🔤 Polices pilotées au runtime (comme les couleurs). Tailwind v4 génère font-body /
+     font-display. Défaut = stack système (0 octet). Override JS via applyTheme :
+     root.style.setProperty('--font-body', "'Poppins', sans-serif"). */
+  --font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-body); /* titres ; = body tant qu'aucune police display distincte */
 }
 
 html,
@@ -22,6 +27,9 @@ body {
      NB: vite injecte la même valeur en !important dès le 1er octet (anti-flash). */
   background: var(--color-primary-light);
   min-height: 100%;
+  /* Police pilotée par le thème (héritée par tout le contenu). Remplace l'ancien
+     classList.add(font-sans) bugué dans AppUI. Override runtime via --font-body. */
+  font-family: var(--font-body);
   /* Empêche les rebonds bizarres sur mobile lors du scroll */
   overscroll-behavior-y: none;
 }

@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import fs from 'fs'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
+import { resolveFont } from './src/theme-fonts.js'
 
 const seoPath = resolve(__dirname, 'snacks-seo.json');
   let snacksSeo = {};
@@ -38,6 +39,15 @@ export default defineConfig(() => {
           const heroPreload = seoData.heroUrl
             ? `<link rel="preload" as="image" fetchpriority="high" href="${seoData.heroUrl}">`
             : '';
+          // 🔤 Police du tenant (build-time, zéro FOUT). Si police système -> chaîne vide
+          // (pas de preconnect mort). display=swap est déjà dans l'href (cf. SAAS_FONTS).
+          const font = resolveFont(seoData.fontKey);
+          const fontLink = font.href
+            ? `<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="${font.href}">
+    <link rel="stylesheet" href="${font.href}">`
+            : '';
           // Injecté en premier dans <head> dès le 1er octet : tue le flash blanc ET le flash
           // de mauvaise couleur. Le FOND DE PAGE est la base claire (lightHex) — visible en
           // overscroll / avant peinture du contenu. Le SPLASH (#boot-splash) garde --color-primary
@@ -58,6 +68,7 @@ export default defineConfig(() => {
             .replace(/\{\{SHADOW_CLASS\}\}/g, seoData.shadowClass)
             .replace(/\{\{HERO_URL\}\}/g, seoData.heroUrl || '')
             .replace('{{HERO_PRELOAD}}', heroPreload)
+            .replace('{{FONT_LINK}}', fontLink)
             .replace(/\{\{ICON_URL\}\}/g, iconUrl)
             .replace(/\{\{APP_SHORT_NAME\}\}/g, seoData.title.split('|')[0].trim())
             .replace(/\{\{CANONICAL_URL\}\}/g, seoData.canonicalUrl || '')
