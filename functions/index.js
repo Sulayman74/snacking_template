@@ -13,6 +13,7 @@ const fs = require("fs");
 const sharp = require("sharp");
 const admin = require("firebase-admin");
 const { getStripe, resolveSubscriptionId } = require("./lib/stripe");
+const { normalizeTvaRate, ventilateTva } = require("./lib/tva");
 
 // Initialisation de Firebase Admin
 admin.initializeApp();
@@ -321,6 +322,7 @@ async function assertCartPricesAreLegit(cartItems, paidAmountCents, snackId) {
   snaps.forEach((s) => { if (s.exists) products.set(s.id, s.data()); });
 
   let expectedItemsCents = 0;
+  const lines = [];
   for (const item of cartItems) {
     const product = products.get(item.productId);
     require_(!!product, `Produit introuvable : ${item.productId}.`);
@@ -332,7 +334,10 @@ async function assertCartPricesAreLegit(cartItems, paidAmountCents, snackId) {
     const ok = [...allowed].some((a) => Math.abs(a - paidCents) <= TOL);
     require_(ok, `Prix manipulé pour « ${item.nom} » (${item.prix} € non autorisé).`);
 
-    expectedItemsCents += paidCents * item.quantity;
+    const ttcCents = paidCents * item.quantity;
+    expectedItemsCents += ttcCents;
+    // tvaRate LU EN BASE (jamais du client) → ventilation TVA fiable (LOT A).
+    lines.push({ productId: item.productId, ttcCents, tvaRate: normalizeTvaRate(product.tvaRate) });
   }
 
   // Le montant réellement encaissé (immuable, source Stripe) doit AU MOINS couvrir
@@ -342,8 +347,9 @@ async function assertCartPricesAreLegit(cartItems, paidAmountCents, snackId) {
     "Montant encaissé inférieur à la valeur réelle du panier."
   );
 
-  // Sous-total articles (centimes), prix déjà validés → réutilisable (ex. minOrder).
-  return expectedItemsCents;
+  // itemsCents : sous-total articles (centimes), prix validés → réutilisable (minOrder).
+  // lines : ventilation par ligne (TTC + taux) pour le calcul tvaBreakdown (LOT A).
+  return { itemsCents: expectedItemsCents, lines };
 }
 
 // ============================================================================
@@ -1025,7 +1031,13 @@ exports.finalizeOrder = onCall(
       const stripeAccountId = snackData.stripeAccountId || null;
 
       const retrieveOptions = stripeAccountId ? { stripeAccount: stripeAccountId } : undefined;
-      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, retrieveOptions);
+      // Expand latest_charge.balance_transaction → frais Stripe RÉELS (fee/net),
+      // lus et non estimés (LOT A). En charge directe, la BT est sur le compte connecté.
+      paymentIntent = await stripe.paymentIntents.retrieve(
+        paymentIntentId,
+        { expand: ["latest_charge.balance_transaction"] },
+        retrieveOptions
+      );
     } catch (e) {
       throw new HttpsError("not-found", "PaymentIntent introuvable.");
     }
@@ -1051,7 +1063,7 @@ exports.finalizeOrder = onCall(
     // 🛡️ ANTI-FRAUDE PRIX — chaque prix unitaire doit correspondre à un prix réel
     // du produit en base, et le montant encaissé doit couvrir la valeur du panier.
     // On ne fait JAMAIS confiance au prix envoyé par le client (cf. CLAUDE.md §6.1).
-    const itemsCents = await assertCartPricesAreLegit(cartItems, paymentIntent.amount, snackId);
+    const { itemsCents, lines } = await assertCartPricesAreLegit(cartItems, paymentIntent.amount, snackId);
 
     // 🚚 ETA (heuristique simple) + livraison — TOUT recalculé serveur.
     const dcfg = snackData.delivery || {};
@@ -1123,6 +1135,22 @@ exports.finalizeOrder = onCall(
       readyAt: admin.firestore.Timestamp.fromMillis(Date.now() + totalMin * 60000),
     };
 
+    // 💶 SOCLE COMPTA (LOT A) — montants financiers persistés depuis des sources
+    // SERVEUR de confiance, en centimes. Read-Old/Write-New : les commandes
+    // antérieures n'ont aucun de ces champs (traitées en legacy côté compta).
+    // Commission plateforme = LUE sur le PI (jamais recalculée).
+    const commissionCents = Number(paymentIntent.application_fee_amount) || 0;
+    // Frais Stripe RÉELS via la balance_transaction (expand ci-dessus). Indispo
+    // (BT non encore disponible / non expandée) → null + flag pending (complété
+    // plus tard par le webhook/refresh, jamais bloquant pour la commande).
+    const charge = paymentIntent.latest_charge;
+    const bt = charge && typeof charge === "object" ? charge.balance_transaction : null;
+    const stripeFeeCents = bt && typeof bt === "object" && Number.isFinite(bt.fee) ? bt.fee : null;
+    const stripeNetCents = bt && typeof bt === "object" && Number.isFinite(bt.net) ? bt.net : null;
+
+    // Ventilation TVA (module pur) : lignes articles + frais livraison (10 %).
+    const tvaBreakdown = ventilateTva(lines, fraisCents);
+
     // 5. Créer la commande dans Firestore (uniquement si tout est vérifié)
     const newOrder = {
       snackId,
@@ -1148,6 +1176,14 @@ exports.finalizeOrder = onCall(
         statut: "paye",
         stripeSessionId: paymentIntentId,
       },
+      // 💶 Socle compta (LOT A) — tout en centimes, sources serveur.
+      commission: commissionCents, // application_fee plateforme (lu sur le PI)
+      stripeFee: stripeFeeCents, // frais Stripe réels (null si pas encore dispo)
+      stripeNet: stripeNetCents, // net après frais Stripe (null si pending)
+      stripeFeePending: stripeFeeCents === null,
+      tvaBreakdown, // ventilation par taux (centimes) — cf. lib/tva.js
+      // Bloc remboursement initialisé (alimenté par refundOrder — LOT B).
+      refund: { total: 0, commission: 0, count: 0, fullyRefunded: false, items: [] },
     };
 
     // create() échoue si le doc existe déjà → idempotence atomique contre la race
