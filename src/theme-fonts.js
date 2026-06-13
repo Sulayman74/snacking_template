@@ -30,6 +30,24 @@ export const SAAS_FONTS = {
     display: "'Inter', ui-sans-serif, system-ui, sans-serif",
     href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap",
   },
+  // Montserrat : géométrique large, premium urbain — pizza au feu de bois.
+  montserrat: {
+    body: "'Montserrat', ui-sans-serif, system-ui, sans-serif",
+    display: "'Montserrat', ui-sans-serif, system-ui, sans-serif",
+    href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap",
+  },
+  // Space Grotesk : grotesque au caractère marqué, moderne et tech.
+  spacegrotesk: {
+    body: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+    display: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+    href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap",
+  },
+  // Outfit : sans serré et net, branding trendy — smash burger.
+  outfit: {
+    body: "'Outfit', ui-sans-serif, system-ui, sans-serif",
+    display: "'Outfit', ui-sans-serif, system-ui, sans-serif",
+    href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap",
+  },
 };
 
 /**

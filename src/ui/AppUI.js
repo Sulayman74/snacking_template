@@ -70,13 +70,14 @@ class AppUI {
         root.style.setProperty("--color-primary-light", lightHex);
         root.style.setProperty("--color-on-primary", onPrimaryHex);
 
-        // 🔤 Police — même mécanique que les couleurs (var CSS pilotée au runtime).
+        // 🔤 Police — surcharge UNIQUEMENT si Firestore a un fontKey explicite (override admin).
+        // Sinon on laisse la valeur posée au build (snacks-seo.json) pour éviter tout FOUT.
         const fonts = cfg.theme.fonts;
-        if (fonts) {
+        if (fonts?.key) {
             root.style.setProperty("--font-body", fonts.body);
             root.style.setProperty("--font-display", fonts.display || fonts.body);
-            // Si la police web n'a pas été injectée au build (ex: changement admin à chaud),
-            // on charge le <link> au runtime. display=swap évite le FOIT (cf. SAAS_FONTS).
+            // Charge le <link> au runtime si pas déjà injecté au build (changement admin à chaud).
+            // display=swap évite le FOIT (cf. SAAS_FONTS).
             ensureFontLink(fonts.href);
         }
     }

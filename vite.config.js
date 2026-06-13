@@ -48,6 +48,11 @@ export default defineConfig(() => {
     <link rel="preload" as="style" href="${font.href}">
     <link rel="stylesheet" href="${font.href}">`
             : '';
+          // Police posée dès le 1er octet (avant le boot JS) -> le font-family est correct au
+          // 1er paint, pas de bascule système->web font (FOUT). Le <link> (fontLink) charge le
+          // fichier ; ces vars l'APPLIQUENT. Le runtime (applyTheme) ne surcharge que si Firestore
+          // a explicitement un fontKey (override admin).
+          const fontVars = `--font-body:${font.body};--font-display:${font.display || font.body};`;
           // Injecté en premier dans <head> dès le 1er octet : tue le flash blanc ET le flash
           // de mauvaise couleur. Le FOND DE PAGE est la base claire (lightHex) — visible en
           // overscroll / avant peinture du contenu. Le SPLASH (#boot-splash) garde --color-primary
@@ -55,7 +60,7 @@ export default defineConfig(() => {
           // pour que body et composants thémés aient la bonne base avant le boot du JS.
           const splashStyle = `<style>
             :root,html,body{background:${lightHex} !important; color-scheme: light dark;}
-            :root{--color-primary:${seoData.theme_color};--color-primary-light:${lightHex};--logo-url:url("${iconUrl}")}
+            :root{--color-primary:${seoData.theme_color};--color-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
           </style>`;
           
           return html

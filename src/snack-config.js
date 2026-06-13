@@ -52,10 +52,11 @@ try {
     const paletteKey = data.colorPalette || "sunflower";
     const selectedTheme = SAAS_THEMES[paletteKey] || SAAS_THEMES["sunflower"];
 
-    // 🔤 RÉCUPÉRATION DE LA POLICE — défaut "system" (aucune requête réseau).
-    // Source de vérité runtime ; le <link> build-time vient de snacks-seo.json (cf. vite).
-    const fontKey = data.fontKey || "system";
-    const selectedFont = resolveFont(fontKey);
+    // 🔤 RÉCUPÉRATION DE LA POLICE.
+    // key = null si ABSENT en Firestore -> applyTheme ne surcharge PAS la valeur déjà posée
+    // au build (snacks-seo.json). Si présent (même "system"), c'est un override explicite admin.
+    const fontKey = data.fontKey || null;
+    const selectedFont = resolveFont(fontKey); // resolveFont(null) -> police système
 
     // 🪄 ON REMPLACE LA CONFIG "EN DUR" PAR LES DONNÉES FIRESTORE
     const config = {

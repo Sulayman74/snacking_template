@@ -9,6 +9,7 @@
     "theme_color": "#16a34a",
     "colorPalette": "forest",
     "lightHex": "#dcfce7",
+    "fontKey": "poppins",
     "shadowClass": "shadow-green-600/40"
   },
   "PsobiuoeUzNmHnwGtaRu": {
@@ -21,6 +22,7 @@
     "theme_color": "#4c1d95",
     "colorPalette": "midnight",
     "lightHex": "#f3e9ff",
+    "fontKey": "montserrat",
     "shadowClass": "shadow-purple-600/40"
   },
   "4L9THuI6hIAqKjjZUn4s": {
@@ -33,6 +35,7 @@
     "theme_color": "#0077b6",
     "colorPalette": "ocean",
     "lightHex": "#caf0f8",
+    "fontKey": "spacegrotesk",
     "shadowClass": "shadow-blue-600/40"
   },
   "umaGD0nOIWwgpyy8Ta4h": {
@@ -45,6 +48,7 @@
     "theme_color": "#0a1b3f",
     "colorPalette": "belly",
     "lightHex": "#C8D8E9",
+    "fontKey": "outfit",
     "shadowClass": "shadow-blue-900/40"
   }
 }
