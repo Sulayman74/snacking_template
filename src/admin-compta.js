@@ -41,32 +41,39 @@ async function loadComptaDashboard() {
             where("date", "<=", endDate),
         ];
 
-        // 1) KPIs via AGRÉGATION serveur : facturée ~1 lecture / 1000 entrées
-        //    d'index, au lieu de lire toutes les commandes lourdes. LOT D : on
-        //    somme aussi les champs financiers (centimes) + la ventilation TVA.
-        //    Les commandes legacy sans ces champs sont ignorées par sum() → 0.
-        //    `tvaBreakdown."5.5"` a un point dans la clé → FieldPath (un field-path
-        //    en string "a.5.5.b" serait mal découpé).
-        const aggSnap = await getAggregateFromServer(
-            query(collection(db, "commandes"), ...baseConstraints),
-            {
+        // 1) KPIs via AGRÉGATION serveur (facturée ~1 lecture / 1000 entrées d'index).
+        //    ⚠️ Firestore limite à 5 agrégations par getAggregateFromServer ; on en a
+        //    14 (financier + ventilation TVA) → on DÉCOUPE en 3 lots ≤5, exécutés en
+        //    parallèle sur le MÊME filtre, puis on fusionne. Surcoût négligeable.
+        //    Clés `tvaBreakdown` imbriquées via FieldPath (segments explicites) : le
+        //    SDK client découpe un field-path string naïvement sur "." sans interpréter
+        //    les backticks → "5.5" et les segments numériques seraient mal ciblés.
+        //    Les commandes legacy sans ces champs sont ignorées par sum() → 0 (cf. UI).
+        const q = query(collection(db, "commandes"), ...baseConstraints);
+        const tb = (rate, field) => sum(new FieldPath("tvaBreakdown", rate, field));
+        const [aggA, aggB, aggC] = await Promise.all([
+            getAggregateFromServer(q, {
                 count: count(),
                 total: sum("total"),
                 commission: sum("commission"),
                 stripeFee: sum("stripeFee"),
                 refundTotal: sum("refund.total"),
+            }),
+            getAggregateFromServer(q, {
                 refundCommission: sum("refund.commission"),
-                ht5_5: sum(new FieldPath("tvaBreakdown", "5.5", "ht")),
-                tva5_5: sum(new FieldPath("tvaBreakdown", "5.5", "tva")),
-                ht10: sum("tvaBreakdown.10.ht"),
-                tva10: sum("tvaBreakdown.10.tva"),
-                ht20: sum("tvaBreakdown.20.ht"),
-                tva20: sum("tvaBreakdown.20.tva"),
-                htLiv: sum("tvaBreakdown.livraison.ht"),
-                tvaLiv: sum("tvaBreakdown.livraison.tva"),
-            }
-        );
-        const a = aggSnap.data();
+                ht5_5: tb("5.5", "ht"),
+                tva5_5: tb("5.5", "tva"),
+                ht10: tb("10", "ht"),
+                tva10: tb("10", "tva"),
+            }),
+            getAggregateFromServer(q, {
+                ht20: tb("20", "ht"),
+                tva20: tb("20", "tva"),
+                htLiv: tb("livraison", "ht"),
+                tvaLiv: tb("livraison", "tva"),
+            }),
+        ]);
+        const a = { ...aggA.data(), ...aggB.data(), ...aggC.data() };
         adminStore.setSalesAggregate({
             count: a.count,
             total: a.total,
