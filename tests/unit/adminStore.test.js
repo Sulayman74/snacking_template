@@ -314,14 +314,18 @@ describe("AdminStore.schedulePush", () => {
     ]);
     await expect(store.schedulePush({}, {}, {})).rejects.toThrow(/quota/i);
   });
-  it("OK → addDoc avec snackId + statut 'en_attente'", async () => {
+  it("OK → appelle la CF schedulePushCampaign avec snackId + champs", async () => {
     store.setConfig({ identity: { id: "s1" } });
-    const addDoc = vi.fn().mockResolvedValue({ id: "x" });
-    const fs = { addDoc, collection: vi.fn(() => ({})), serverTimestamp: vi.fn(() => "TS") };
-    await store.schedulePush({}, fs, { titre: "Promo" });
-    const data = addDoc.mock.calls[0][1];
-    expect(data.statut).toBe("en_attente");
-    expect(data.snackId).toBe("s1");
+    const callable = vi.fn().mockResolvedValue({ data: { ok: true, campaignId: "c1" } });
+    const httpsCallable = vi.fn(() => callable);
+    const fs = { httpsCallable, functions: {} };
+    const res = await store.schedulePush({}, fs, { titre: "Promo", message: "M", cible: "all" });
+    expect(httpsCallable).toHaveBeenCalledWith(fs.functions, "schedulePushCampaign");
+    const payload = callable.mock.calls[0][0];
+    expect(payload.snackId).toBe("s1");
+    expect(payload.titre).toBe("Promo");
+    expect(payload.cible).toBe("all");
+    expect(res).toEqual({ ok: true, campaignId: "c1" });
   });
 });
 

@@ -491,26 +491,38 @@ export class AdminStore extends EventTarget {
     }
 
     async schedulePush(db, fs, pushData) {
+        // Pré-check UX (le quota est de toute façon RÉ-ENFORCÉ côté serveur).
         const eligibility = this.getPushEligibility();
         if (!eligibility.canSend) throw new Error(eligibility.message);
 
+        if (!fs?.httpsCallable || !fs?.functions) throw new Error("Fonctions Firebase indisponibles.");
         const snackId = this.#state.config?.identity?.id || window.currentAdminSnackId;
         if (!snackId) throw new Error("Snack non identifié. Recharge l'onglet Configuration.");
 
         this.setSaving(true);
         try {
-            const { addDoc, collection, serverTimestamp } = fs;
-            await addDoc(collection(db, "campagnes_push"), {
-                ...pushData,
+            // Passe par la Cloud Function gardée (quota + rate-limit serveur), comme
+            // pushFlashOffer. Plus d'écriture client directe dans campagnes_push.
+            const callable = fs.httpsCallable(fs.functions, "schedulePushCampaign");
+            const res = await callable({
                 snackId,
-                dateCreation: serverTimestamp(),
-                statut: "en_attente",
-                stats: { envoye: 0, clics: 0 }
+                titre: pushData.titre,
+                message: pushData.message,
+                cible: pushData.cible,
+                actionUrl: pushData.actionUrl || null,
+                imageUrl: pushData.imageUrl || null,
+                dateEnvoiPrevue:
+                    pushData.dateEnvoiPrevue instanceof Date
+                        ? pushData.dateEnvoiPrevue.toISOString()
+                        : pushData.dateEnvoiPrevue,
             });
             this.setSaving(false);
-            return true;
+            return res?.data || { ok: true };
         } catch (error) {
             this.setSaving(false);
+            if (error?.code === "functions/resource-exhausted" || error?.message?.includes("resource-exhausted")) {
+                throw new Error("Quota mensuel atteint (2/2). Attendez le mois prochain.");
+            }
             throw error;
         }
     }

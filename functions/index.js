@@ -462,6 +462,23 @@ exports.processPushCampaigns = onSchedule(
     const thirtyDaysAgo = admin.firestore.Timestamp.fromDate(thirtyDaysAgoDate);
 
     try {
+      // 🩹 Récupération des campagnes ORPHELINES : si un run a claim une campagne
+      // (en_attente → en_cours) puis a crashé avant la finalisation, elle resterait
+      // bloquée en "en_cours" à vie. On la remet en file si elle y traîne > 15 min
+      // (claimedAt absent = orphelin d'avant ce correctif → toujours remis en file).
+      const STUCK_MS = 15 * 60 * 1000;
+      const stuckSnap = await db
+        .collection("campagnes_push")
+        .where("statut", "==", "en_cours")
+        .get();
+      for (const d of stuckSnap.docs) {
+        const claimedMs = d.data().claimedAt?.toMillis?.() || 0;
+        if (Date.now() - claimedMs > STUCK_MS) {
+          await d.ref.update({ statut: "en_attente" });
+          console.log(`🩹 Campagne ${d.id} orpheline (en_cours figé) → remise en file.`);
+        }
+      }
+
       const snapshot = await db
         .collection("campagnes_push")
         .where("statut", "==", "en_attente")
@@ -480,7 +497,11 @@ exports.processPushCampaigns = onSchedule(
             if (!fresh.exists || fresh.data().statut !== "en_attente") {
               throw new Error("already-claimed");
             }
-            tx.update(doc.ref, { statut: "en_cours" });
+            // claimedAt horodate le claim → permet la récupération des orphelines.
+            tx.update(doc.ref, {
+              statut: "en_cours",
+              claimedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
           });
         } catch (claimErr) {
           console.log(`Campagne ${doc.id} déjà réservée par un autre run — ignorée.`);
@@ -547,6 +568,9 @@ exports.processPushCampaigns = onSchedule(
           },
           data: {
             actionUrl: campagne.actionUrl || "",
+            // Tracking des clics : le SW renvoie campaignId/snackId à trackPushClick.
+            campaignId: doc.id,
+            snackId: campagne.snackId || "",
           },
           webpush: {
             fcm_options: {
@@ -599,11 +623,14 @@ exports.processPushCampaigns = onSchedule(
           }
         }
 
-        // Finalisation de la campagne en base
+        // Finalisation de la campagne en base. ⚠️ Chemins POINTÉS pour ne PAS
+        // écraser stats.clics (incrémenté de façon asynchrone par trackPushClick
+        // quand les clients cliquent sur la notification).
         await doc.ref.update({
           statut: "envoyee",
           dateEnvoiReelle: admin.firestore.FieldValue.serverTimestamp(),
-          stats: { envoye: totalSuccess, erreurs: totalErrors },
+          "stats.envoye": totalSuccess,
+          "stats.erreurs": totalErrors,
         });
 
         console.log(
@@ -1328,6 +1355,99 @@ exports.pushFlashOffer = onCall({ region: "europe-west1" }, async (request) => {
 });
 
 // ============================================================================
+// 📣 FONCTION : PROGRAMMER UNE CAMPAGNE PUSH (quota + rate-limit SERVEUR)
+// ============================================================================
+// Remplace l'écriture client directe dans `campagnes_push` : le quota mensuel
+// (2/mois/snack) et le rate-limit sont désormais ENFORCÉS côté serveur (un admin
+// ne peut plus le contourner). La création directe par le client est fermée par
+// firestore.rules (`campagnes_push` create:if false) — seules les CF (Admin SDK)
+// écrivent. Le cron `processPushCampaigns` envoie ensuite la campagne.
+exports.schedulePushCampaign = onCall({ region: "europe-west1" }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Authentification requise.");
+  }
+
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+  const { snackId, titre, message, cible, actionUrl, imageUrl, dateEnvoiPrevue } = data;
+  require_(V.isDocId(snackId), "snackId invalide.");
+  require_(V.isNonEmptyString(titre, 80), "Titre invalide.");
+  require_(V.isNonEmptyString(message, 200), "Message invalide.");
+  require_(["all", "active", "inactive"].includes(cible), "Cible invalide.");
+  require_(actionUrl == null || (V.isString(actionUrl) && actionUrl.length <= 300), "actionUrl invalide.");
+  require_(imageUrl == null || (V.isString(imageUrl) && imageUrl.length <= 1000), "imageUrl invalide.");
+
+  // 🛡️ Réservé à l'admin du snack + rate limit (5 / 60s, garde anti-burst).
+  await assertCallerIsSnackAdmin(request, snackId);
+  await enforceRateLimit({
+    key: callerKey(request, "schedulePush"),
+    max: 5,
+    windowMs: 60_000,
+  });
+
+  // Date d'envoi : ISO string (sérialisée par httpsCallable) → Timestamp. Défaut: maintenant.
+  let envoiDate = new Date(dateEnvoiPrevue);
+  if (Number.isNaN(envoiDate.getTime())) envoiDate = new Date();
+
+  // 🛡️ QUOTA SERVEUR — 2 campagnes / mois calendaire / snack (autorité serveur,
+  // miroir de getPushEligibility côté client mais NON contournable).
+  const now = new Date();
+  const monthStart = admin.firestore.Timestamp.fromDate(
+    new Date(now.getFullYear(), now.getMonth(), 1)
+  );
+  const monthlyAgg = await db
+    .collection("campagnes_push")
+    .where("snackId", "==", snackId)
+    .where("dateCreation", ">=", monthStart)
+    .count()
+    .get();
+  const MONTHLY_LIMIT = 2;
+  if (monthlyAgg.data().count >= MONTHLY_LIMIT) {
+    throw new HttpsError("resource-exhausted", "Quota mensuel de campagnes atteint (2/2).");
+  }
+
+  const ref = await db.collection("campagnes_push").add({
+    snackId,
+    titre,
+    message,
+    cible,
+    actionUrl: actionUrl || null,
+    imageUrl: imageUrl || null,
+    statut: "en_attente",
+    dateEnvoiPrevue: admin.firestore.Timestamp.fromDate(envoiDate),
+    dateCreation: admin.firestore.FieldValue.serverTimestamp(),
+    source: "scheduled",
+    stats: { envoye: 0, clics: 0 },
+  });
+
+  return { ok: true, campaignId: ref.id };
+});
+
+// ============================================================================
+// 📊 FONCTION : TRACKING CLIC PUSH (compteur best-effort)
+// ============================================================================
+// Appelée par le Service Worker (notificationclick) pour incrémenter stats.clics
+// de la campagne. Best-effort et NON authentifié (le SW n'a pas de contexte auth) :
+// un échec n'a aucun impact, au pire la stat est imprécise. cors:true gère le
+// préflight cross-origin. On n'incrémente que si la campagne existe.
+exports.trackPushClick = onRequest({ region: "europe-west9", cors: true }, async (req, res) => {
+  try {
+    const campaignId = (req.query.c || (req.body && req.body.campaignId) || "").toString();
+    if (V.isDocId(campaignId)) {
+      const ref = db.collection("campagnes_push").doc(campaignId);
+      const snap = await ref.get();
+      if (snap.exists) {
+        await ref.update({ "stats.clics": admin.firestore.FieldValue.increment(1) });
+      }
+    }
+  } catch (e) {
+    console.warn("[trackPushClick] échec :", e && e.message);
+  }
+  // Toujours 204 : fire-and-forget, on n'expose jamais d'erreur au SW.
+  res.status(204).end();
+});
+
+// ============================================================================
 // 📊 FONCTION : TRACKING UPSELL "SHOWN" (instrumentation légère)
 // ============================================================================
 // Incrémente le compteur `shown` des produits affichés dans la bottom-sheet
@@ -1790,7 +1910,16 @@ exports.getUpcomingFootballEvents = onCall(
     const url = `${FOOTBALL_API_BASE}/matches?competitions=${FOOTBALL_COMPETITIONS}&dateFrom=${dateFrom}&dateTo=${dateTo}`;
 
     try {
-      const resp = await fetch(url, { headers: { "X-Auth-Token": token } });
+      // ⏱️ Timeout 8s : sans AbortController, un upstream lent bloquerait la CF
+      // jusqu'au timeout par défaut (~60s). L'abort tombe dans le catch → cache stale.
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      let resp;
+      try {
+        resp = await fetch(url, { headers: { "X-Auth-Token": token }, signal: ctrl.signal });
+      } finally {
+        clearTimeout(timer);
+      }
 
       // Throttling awareness — l'auteur de l'API demande explicitement de
       // surveiller ce header pour ne pas saturer leur rate limiter.
