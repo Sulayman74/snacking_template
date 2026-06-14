@@ -193,6 +193,8 @@ class AppUI {
         const mobileAdminBtn = document.getElementById("mobile-admin-btn");
         const navFavoritesLink = document.getElementById("nav-favorites-link");
         const mobileFavoritesLink = document.getElementById("mobile-favorites-link");
+        const navLoyaltyCardBtn = document.getElementById("nav-loyalty-card-btn");
+        const mobileLoyaltyCardBtn = document.getElementById("mobile-loyalty-card-btn");
 
         const displayAction = user ? "remove" : "add";
         [navLogoutBtn, mobileLogoutBtn].forEach(btn => btn?.classList[displayAction]("hidden"));
@@ -200,9 +202,10 @@ class AppUI {
         const adminAction = (user && isAdmin) ? "remove" : "add";
         [navAdminBtn, mobileAdminBtn].forEach(btn => btn?.classList[adminAction]("hidden"));
 
-        // Favoris : visibles dès qu'un utilisateur est connecté.
+        // Favoris + accès rapide carte fidélité : visibles dès qu'un utilisateur est connecté.
         const favAction = user ? "remove" : "add";
-        [navFavoritesLink, mobileFavoritesLink].forEach(link => link?.classList[favAction]("hidden"));
+        [navFavoritesLink, mobileFavoritesLink, navLoyaltyCardBtn, mobileLoyaltyCardBtn]
+            .forEach(el => el?.classList[favAction]("hidden"));
     }
 
     updateLoyaltySection(cfg, user, isAdmin) {

@@ -70,8 +70,8 @@ function openClientCard() {
     modal.classList.add("flex");
     setTimeout(() => {
       modal.classList.remove("opacity-0");
-      const vCard = document.getElementById("virtual-card");
-      if (vCard) vCard.classList.remove("scale-95");
+      // Bottom sheet : on fait remonter le calque (slide-up) au lieu d'un scale.
+      document.getElementById("client-card-sheet")?.classList.remove("translate-y-full");
     }, 10);
 
     document.body.style.overflow = "hidden";
@@ -143,8 +143,8 @@ function closeClientCard() {
   }
 
   modal.classList.add("opacity-0");
-  const vCard = document.getElementById("virtual-card");
-  if (vCard) vCard.classList.add("scale-95");
+  // Bottom sheet : on fait redescendre le calque (slide-down).
+  document.getElementById("client-card-sheet")?.classList.add("translate-y-full");
 
   setTimeout(() => {
     modal.classList.add("hidden");
