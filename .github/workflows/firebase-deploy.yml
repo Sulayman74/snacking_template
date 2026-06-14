@@ -69,6 +69,10 @@ jobs:
         env:
           SNACK_ID: ${{ matrix.snack_id }}
           VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          # Clé du SITE reCAPTCHA v3 (publique) → App Check attache un token aux
+          # appels Firestore/Functions. Ne bloque RIEN tant que l'enforcement n'est
+          # pas activé côté Firebase Console (cf. APP_CHECK_SETUP.md).
+          VITE_APPCHECK_SITE_KEY: ${{ secrets.VITE_APPCHECK_SITE_KEY }}
         run: npm run build
 
       # Auth via le service account stocké dans les secrets GitHub
