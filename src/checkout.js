@@ -196,10 +196,10 @@ async function processCheckout() {
   try {
     // Chargement paresseux du SDK Stripe (retiré du <head> de la home pour le LCP).
     await loadStripeSdk();
-
-    if (!stripeInstance) {
-      stripeInstance = Stripe(stripePublicKey);
-    }
+    // ⚠️ L'instance Stripe.js est (ré)initialisée plus bas, APRÈS la réponse de la
+    // CF : en charge directe (Connect), elle DOIT cibler le compte connecté
+    // (`{ stripeAccount }`), sinon le Payment Element ne se monte pas (400 sur
+    // elements/sessions). On a besoin du `stripeAccountId` renvoyé par la CF.
 
     // 💡 Total recalculé APRÈS l'upsell pour intégrer les éventuels ajouts.
     const totalAmount = window.getCartTotal();
@@ -246,6 +246,16 @@ async function processCheckout() {
     if (!clientSecret) {
       throw new Error("Réponse de paiement invalide (clientSecret manquant).");
     }
+    // Compte connecté (charge directe) renvoyé par la CF, ou null (charge plateforme).
+    const connectedAccountId = response?.data?.stripeAccountId || null;
+
+    // (Ré)initialise Stripe.js EN CIBLANT le compte connecté si charge directe :
+    // sans `{ stripeAccount }`, Elements ne peut pas charger un PI du compte connecté
+    // (400 sur elements/sessions) et confirmPayment échoue (Element non monté).
+    stripeInstance = Stripe(
+      stripePublicKey,
+      connectedAccountId ? { stripeAccount: connectedAccountId } : undefined
+    );
 
     // 4. Créer et injecter le formulaire Stripe
     const appearance = { theme: "stripe" };
