@@ -60,6 +60,71 @@
       ]
     },
     {
+      "collectionGroup": "commandes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "snackId", "order": "ASCENDING" },
+        { "fieldPath": "mode", "order": "ASCENDING" },
+        { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commandes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "snackId", "order": "ASCENDING" },
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commandes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "snackId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "commission", "order": "ASCENDING" },
+        { "fieldPath": "refund.total", "order": "ASCENDING" },
+        { "fieldPath": "stripeFee", "order": "ASCENDING" },
+        { "fieldPath": "total", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commandes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "snackId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "refund.commission", "order": "ASCENDING" },
+        { "fieldPath": "tvaBreakdown.`10`.ht", "order": "ASCENDING" },
+        { "fieldPath": "tvaBreakdown.`10`.tva", "order": "ASCENDING" },
+        { "fieldPath": "tvaBreakdown.`5.5`.ht", "order": "ASCENDING" },
+        { "fieldPath": "tvaBreakdown.`5.5`.tva", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commandes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "snackId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "tvaBreakdown.`20`.ht", "order": "ASCENDING" },
+        { "fieldPath": "tvaBreakdown.`20`.tva", "order": "ASCENDING" },
+        { "fieldPath": "tvaBreakdown.livraison.ht", "order": "ASCENDING" },
+        { "fieldPath": "tvaBreakdown.livraison.tva", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commandes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "snackId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "total", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "produits",
       "queryScope": "COLLECTION",
       "fields": [
@@ -89,25 +154,6 @@
       "fields": [
         { "fieldPath": "snackId", "order": "ASCENDING" },
         { "fieldPath": "role", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "commandes",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "snackId", "order": "ASCENDING" },
-        { "fieldPath": "mode", "order": "ASCENDING" },
-        { "fieldPath": "statut", "order": "ASCENDING" },
-        { "fieldPath": "date", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "commandes",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "snackId", "order": "ASCENDING" },
-        { "fieldPath": "userId", "order": "ASCENDING" },
-        { "fieldPath": "date", "order": "DESCENDING" }
       ]
     }
   ],
