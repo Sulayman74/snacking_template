@@ -180,10 +180,33 @@ window.setComptaDateRange = (range) => {
             start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
             end = new Date(now.getFullYear(), now.getMonth(), 0);
             break;
+        case "quarter": {
+            // Trimestre civil en cours (le case manquait → la plage restait sur aujourd'hui).
+            const q = Math.floor(now.getMonth() / 3);
+            start = new Date(now.getFullYear(), q * 3, 1);
+            break;
+        }
     }
 
-    if (startInput) startInput.value = start.toISOString().split("T")[0];
-    if (endInput) endInput.value = end.toISOString().split("T")[0];
+    // Format LOCAL (YYYY-MM-DD) — `toISOString()` convertit en UTC et décalait la
+    // date d'un jour pour les fuseaux à l'est de UTC (ex. FR → veille).
+    const fmt = (d) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (startInput) startInput.value = fmt(start);
+    if (endInput) endInput.value = fmt(end);
+
+    // État actif des chips de période (le surlignage ne bougeait jamais de « Ce mois »).
+    // Auto-contenu : on lit le range depuis l'attribut onclick, pas besoin de data-*.
+    document.querySelectorAll('[onclick^="setComptaDateRange"]').forEach((b) => {
+        const m = (b.getAttribute("onclick") || "").match(/setComptaDateRange\('([^']+)'\)/);
+        const active = m && m[1] === range;
+        b.classList.toggle("bg-blue-100", active);
+        b.classList.toggle("text-blue-700", active);
+        b.classList.toggle("hover:bg-blue-200", active);
+        b.classList.toggle("bg-gray-100", !active);
+        b.classList.toggle("text-gray-700", !active);
+        b.classList.toggle("hover:bg-gray-200", !active);
+    });
 
     loadComptaDashboard();
 };
