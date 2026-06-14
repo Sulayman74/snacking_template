@@ -79,6 +79,10 @@ document.addEventListener("click", (event) => {
       window.updatePaymentStatus(id, paymentStatus);
       break;
     }
+    case "refund-order": {
+      window.handleRefundOrder?.(id);
+      break;
+    }
     case "toggle-product":
       window.handleToggleProductUI(id);
       break;
