@@ -191,6 +191,19 @@ async function main() {
     ok("D6. pushFlashOffer non-admin → permission-denied", /permission|administrateur/i.test(e?.message || ""), e?.message || String(e));
   }
 
+  // D7. getKitchenLoad rate limit (F6) : au-delà de 20 appels / 60s par caller → rejet.
+  // uid dédié (u_flood) pour un compteur propre, indépendant de D1–D3.
+  try {
+    for (let i = 0; i < 20; i++) {
+      await loadCalm({ data: { snackId: CALM }, auth: { uid: "u_flood" } }); // 20 OK (cache après le 1er)
+    }
+    let throttled = false;
+    try {
+      await loadCalm({ data: { snackId: CALM }, auth: { uid: "u_flood" } }); // 21e → resource-exhausted
+    } catch (e) { throttled = /trop de tentatives|resource-exhausted/i.test(e?.message || ""); }
+    ok("D7. getKitchenLoad rate limit (F6) → 21e appel rejeté", throttled, throttled ? "" : "non throttlé");
+  } catch (e) { ok("D7. getKitchenLoad rate limit (F6)", false, e?.message || String(e)); }
+
   const passed = results.filter(Boolean).length;
   console.log(`\n${passed}/${results.length} validations OK`);
   await test.cleanup?.();

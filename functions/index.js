@@ -1604,6 +1604,15 @@ exports.getKitchenLoad = onCall({ region: "europe-west1" }, async (request) => {
     throw new HttpsError("unauthenticated", "Authentification requise.");
   }
 
+  // 🛡️ Rate limit (F6) — appel légitime : 1 fois par ouverture de checkout (cache
+  // serveur 30s par-dessus). Borne l'énumération de la charge cuisine de snacks
+  // arbitraires et le martèlement (coût Firestore) par un client authentifié.
+  await enforceRateLimit({
+    key: callerKey(request, "getKitchenLoad"),
+    max: 20,
+    windowMs: 60_000,
+  });
+
   const data = request.data;
   require_(V.isPlainObject(data), "Payload invalide.");
   const { snackId } = data;
