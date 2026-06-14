@@ -50,7 +50,7 @@ function renderLastCampaignStats(last) {
     
     container.innerHTML = `
         <div class="space-y-3">
-            <div class="p-3 bg-gray-50 rounded-2xl border border-gray-100">
+            <div class="p-3 bg-surface-2 rounded-2xl border border-line">
                 <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Titre</p>
                 <p class="text-sm font-black text-gray-900 line-clamp-1">${escapeHTML(last.titre || "")}</p>
             </div>

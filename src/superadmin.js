@@ -154,18 +154,18 @@ function renderSnacksTable() {
         const mrrClient = (parseFloat(snack.prixAbonnement) || PRIX_ABONNEMENT_MENSUEL).toFixed(0);
         const powerBtnClass = snack.maintenanceMode
             ? "text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
-            : "text-gray-500 bg-gray-100 hover:bg-gray-200";
+            : "text-gray-500 bg-surface-2 hover:bg-surface-3";
 
         const stripeBadge = snack.stripeAccountId
             ? `<span class="bg-indigo-50 text-indigo-700 font-black px-2 py-0.5 rounded-md text-[10px]"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/></svg> Connecté</span>`
-            : `<span class="bg-gray-100 text-gray-500 font-bold px-2 py-0.5 rounded-md text-[10px]">Démo / Platform</span>`;
+            : `<span class="bg-surface-2 text-gray-500 font-bold px-2 py-0.5 rounded-md text-[10px]">Démo / Platform</span>`;
 
         return `
-            <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
+            <tr class="hover:bg-surface-2 transition border-b border-line last:border-0">
                 <td class="p-4">
                     <div class="font-bold text-gray-900 text-lg">${safeNom}</div>
                     <div class="text-xs text-gray-400 mt-1 flex items-center gap-2 flex-wrap">
-                        <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded">${safeId}</span>
+                        <span class="font-mono bg-surface-2 px-1.5 py-0.5 rounded">${safeId}</span>
                         <span class="bg-green-50 text-green-700 font-black px-2 py-0.5 rounded-md">${mrrClient} €/mois</span>
                         ${stripeBadge}
                     </div>
@@ -185,7 +185,7 @@ function renderSnacksTable() {
                     <button data-action="sub-link" data-snack-id="${safeId}" class="text-emerald-700 hover:text-white font-bold text-sm bg-emerald-50 hover:bg-emerald-600 px-3 py-2 rounded-lg transition" title="Générer un lien d'abonnement">
                         <i data-lucide="credit-card"></i>
                     </button>
-                    <button data-action="open-config" data-snack-id="${safeId}" class="text-gray-700 hover:text-white font-bold text-sm bg-gray-100 hover:bg-indigo-600 px-3 py-2 rounded-lg transition" title="Configurer les modules">
+                    <button data-action="open-config" data-snack-id="${safeId}" class="text-gray-700 hover:text-white font-bold text-sm bg-surface-2 hover:bg-indigo-600 px-3 py-2 rounded-lg transition" title="Configurer les modules">
                         <i data-lucide="settings"></i>
                     </button>
                     <button data-action="toggle-maintenance" data-snack-id="${safeId}" data-maintenance="${snack.maintenanceMode ? '1' : '0'}" class="font-bold text-sm px-3 py-2 rounded-lg transition ${powerBtnClass}" title="${snack.maintenanceMode ? 'Mettre en ligne' : 'Mettre en maintenance'}">
@@ -225,18 +225,18 @@ async function loadLogs() {
             const log = docSnap.data();
             const dateStr = log.timestamp ? log.timestamp.toDate().toLocaleString("fr-FR") : "N/A";
             
-            let levelClass = "text-gray-500 bg-gray-100";
+            let levelClass = "text-gray-500 bg-surface-2";
             if (log.level === "error") levelClass = "text-red-700 bg-red-50";
             else if (log.level === "warning") levelClass = "text-yellow-700 bg-yellow-50";
 
             rows.push(`
-                <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-0 text-sm">
+                <tr class="hover:bg-surface-2 transition border-b border-line last:border-0 text-sm">
                     <td class="p-4 text-gray-500 whitespace-nowrap">${dateStr}</td>
                     <td class="p-4 font-mono text-xs text-indigo-600">${escapeHTML(log.snackId || "N/A")}</td>
                     <td class="p-4"><span class="px-2 py-1 rounded font-bold text-[10px] uppercase ${levelClass}">${escapeHTML(log.action || "UNKNOWN")}</span></td>
                     <td class="p-4 font-bold text-gray-800">${escapeHTML(log.message || "")}</td>
                     <td class="p-4 text-right">
-                        <button class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded transition" onclick="alert('${escapeHTML((log.details || "").replace(/'/g, "\\'"))}')">Détails</button>
+                        <button class="text-xs bg-surface-2 hover:bg-surface-3 text-gray-600 px-2 py-1 rounded transition" onclick="alert('${escapeHTML((log.details || "").replace(/'/g, "\\'"))}')">Détails</button>
                     </td>
                 </tr>
             `);
@@ -305,13 +305,13 @@ function _setToggle(btn, isOn) {
     const onColor = isMaintenance ? "bg-yellow-500" : "bg-indigo-600";
     btn.setAttribute("data-state", isOn ? "on" : "off");
     if (isOn) {
-        btn.classList.remove("bg-gray-200");
+        btn.classList.remove("bg-surface-3");
         btn.classList.add(onColor);
         btn.querySelector("span").classList.remove("translate-x-1");
         btn.querySelector("span").classList.add("translate-x-6");
     } else {
         btn.classList.remove("bg-indigo-600", "bg-yellow-500");
-        btn.classList.add("bg-gray-200");
+        btn.classList.add("bg-surface-3");
         btn.querySelector("span").classList.remove("translate-x-6");
         btn.querySelector("span").classList.add("translate-x-1");
     }
@@ -583,7 +583,7 @@ function setSuperTab(which) {
     viewDash?.classList.toggle("hidden", isCompta);
     viewCompta?.classList.toggle("hidden", !isCompta);
     const active = "bg-gray-900 text-white";
-    const idle = "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50";
+    const idle = "bg-white text-gray-600 border border-line hover:bg-surface-2";
     if (tabDash) tabDash.className = `px-5 py-2.5 rounded-xl font-bold text-sm transition ${isCompta ? idle : active}`;
     if (tabCompta) tabCompta.className = `px-5 py-2.5 rounded-xl font-bold text-sm transition ${isCompta ? active : idle}`;
     if (isCompta) loadBillingData();
@@ -646,9 +646,9 @@ async function loadBillingData() {
             ? `<span class="text-gray-400">—</span>`
             : r.isFree
                 ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois · gratuit</span>`
-                : `<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois · 8%</span>`;
+                : `<span class="bg-surface-2 text-gray-600 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois · 8%</span>`;
         return `
-            <tr class="hover:bg-gray-50">
+            <tr class="hover:bg-surface-2">
                 <td class="p-4">
                     <div class="font-bold text-gray-900">${escapeHTML(r.nom)} ${r.maintenance ? '<span class="text-yellow-600 text-xs">(maintenance)</span>' : ''}</div>
                     <div class="font-mono text-[11px] text-gray-400">${escapeHTML(r.id)}</div>

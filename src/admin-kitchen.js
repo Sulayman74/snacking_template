@@ -130,7 +130,7 @@ export function createTicketElement(id, commande) {
       }
 
       return `
-            <li class="flex flex-col border-b border-gray-100/50 py-3 last:border-0">
+            <li class="flex flex-col border-b border-line/50 py-3 last:border-0">
                 <div class="flex items-start">
                     <span class="font-black text-lg text-red-600" aria-hidden="true">${escapeHTML(String(item.quantity))}x</span>
                     <span class="font-bold ml-2 text-gray-900 text-lg">${escapeHTML(item.nom)}</span>
@@ -197,7 +197,7 @@ export function createTicketElement(id, commande) {
   ticketDiv.setAttribute("data-status", commande.statut);
 
   ticketDiv.innerHTML = `
-        <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
+        <div class="flex justify-between items-start mb-4 pb-3 border-b border-line">
             <div>
                 <div class="flex items-center gap-2">
                   <h3 class="font-black text-2xl text-gray-900">${safeClientName}</h3>

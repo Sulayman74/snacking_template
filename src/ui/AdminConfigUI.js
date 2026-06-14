@@ -91,27 +91,27 @@ class AdminConfigUI {
         const safeBreakEnd = escapeHTML(h.breakEnd || "17:00");
 
         return `
-        <div class="day-row flex flex-col gap-2 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:border-blue-200">
+        <div class="day-row flex flex-col gap-2 p-4 bg-white rounded-2xl border border-line shadow-sm transition-all hover:border-blue-200">
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <span class="w-24 font-black text-gray-900 uppercase tracking-tight text-sm">${safeDay}</span>
 
                 <div class="flex items-center gap-2 ${isClosed ? "opacity-30 pointer-events-none" : ""}">
-                    <input type="time" class="hour-open p-2 rounded-xl border border-gray-200 font-bold text-gray-700 bg-gray-50 focus:border-blue-500 outline-none"
+                    <input type="time" class="hour-open p-2 rounded-xl border border-line font-bold text-gray-700 bg-surface-2 focus:border-blue-500 outline-none"
                         value="${safeOpen}" ${isClosed ? "disabled" : ""}>
                     <span class="text-gray-400 font-black">→</span>
-                    <input type="time" class="hour-close p-2 rounded-xl border border-gray-200 font-bold text-gray-700 bg-gray-50 focus:border-blue-500 outline-none"
+                    <input type="time" class="hour-close p-2 rounded-xl border border-line font-bold text-gray-700 bg-surface-2 focus:border-blue-500 outline-none"
                         value="${safeClose}" ${isClosed ? "disabled" : ""}>
                 </div>
 
                 <button type="button"
-                    class="break-toggle text-[10px] px-3 py-1.5 rounded-full font-black border transition-all ${hasBreak && !isClosed ? "bg-blue-600 border-blue-600 text-white" : "bg-gray-100 border-gray-200 text-gray-400"}"
+                    class="break-toggle text-[10px] px-3 py-1.5 rounded-full font-black border transition-all ${hasBreak && !isClosed ? "bg-blue-600 border-blue-600 text-white" : "bg-surface-2 border-line text-gray-400"}"
                     onclick="window.toggleBreakRow(this)"
                     ${isClosed ? "disabled" : ""}>
                     <i data-lucide="coffee" class="mr-1"></i> COUPURE
                 </button>
 
                 <label class="flex items-center gap-2 cursor-pointer ml-auto shrink-0 group">
-                    <input type="checkbox" class="hour-closed w-5 h-5 rounded-lg text-red-600 border-gray-200 focus:ring-red-500 transition-all cursor-pointer"
+                    <input type="checkbox" class="hour-closed w-5 h-5 rounded-lg text-red-600 border-line focus:ring-red-500 transition-all cursor-pointer"
                         ${isClosed ? "checked" : ""}
                         onchange="window.toggleDayClosed(this)">
                     <span class="text-xs font-black text-gray-400 group-hover:text-red-500 transition-colors">FERMÉ</span>
@@ -268,7 +268,7 @@ window.toggleBreakRow = (btn) => {
     
     btn.classList.toggle("bg-blue-600", isHidden);
     btn.classList.toggle("text-white", isHidden);
-    btn.classList.toggle("bg-gray-100", !isHidden);
+    btn.classList.toggle("bg-surface-2", !isHidden);
     btn.classList.toggle("text-gray-400", !isHidden);
 };
 

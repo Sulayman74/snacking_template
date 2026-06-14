@@ -26,7 +26,7 @@ class AdminUpsellUI {
 
         if (rows.length === 0) {
             this.tableEl.innerHTML = `
-                <div class="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                <div class="text-center py-12 bg-surface-2 rounded-2xl border-2 border-dashed border-line">
                     <i data-lucide="trending-up" class="text-3xl text-gray-200 mb-3"></i>
                     <p class="text-gray-400 font-bold">Aucune donnée d'upsell pour le moment.</p>
                     <p class="text-gray-300 text-sm mt-1">Les suggestions affichées et acceptées s'afficheront ici.</p>
@@ -38,7 +38,7 @@ class AdminUpsellUI {
         this.tableEl.innerHTML = `
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
-                    <thead class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <thead class="bg-surface-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                         <tr>
                             <th class="px-4 py-3">Produit</th>
                             <th class="px-4 py-3 text-right">Vues</th>
@@ -66,7 +66,7 @@ class AdminUpsellUI {
             ? "bg-green-100 text-green-700"
             : rate >= 10
                 ? "bg-amber-100 text-amber-700"
-                : "bg-gray-100 text-gray-500";
+                : "bg-surface-2 text-gray-500";
 
         return `
             <tr class="hover:bg-blue-50/30 transition-colors">
