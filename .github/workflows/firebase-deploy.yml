@@ -61,9 +61,14 @@ jobs:
         run: npm ci
 
       # Build avec SNACK_ID → dist/<snack_id>/ (utilisé tel quel par firebase.json)
+      # VITE_STRIPE_PUBLISHABLE_KEY injectée au build (F7) : sans elle, le bundle
+      # retombe sur la clé de TEST. Clé publishable = publique, unique pour tous les
+      # tenants (Connect route par compte côté serveur). Si créée en Variable plutôt
+      # qu'en Secret, remplacer `secrets.` par `vars.`.
       - name: 🏗️ Build — ${{ matrix.snack_id }}
         env:
           SNACK_ID: ${{ matrix.snack_id }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
         run: npm run build
 
       # Auth via le service account stocké dans les secrets GitHub
