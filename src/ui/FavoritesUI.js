@@ -89,7 +89,7 @@ class FavoritesUI {
     sorted.forEach((fav) => {
       const item = fav.item || {};
       const card = document.createElement("article");
-      card.className = "flex items-center gap-4 bg-surface p-4 rounded-2xl shadow-sm border border-gray-100";
+      card.className = "flex items-center gap-4 bg-surface p-4 rounded-2xl shadow-sm border border-line";
 
       const details = formatCustomizationDetails(item);
       const safeName = escapeHTML(fav.label || item.nom || "Favori");
@@ -97,7 +97,7 @@ class FavoritesUI {
       const imgSrc = item.image && item.image.trim() !== "" ? escapeHTML(item.image) : "";
 
       card.innerHTML = `
-        <div class="w-16 h-16 shrink-0 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center">
+        <div class="w-16 h-16 shrink-0 rounded-xl bg-surface-2 overflow-hidden flex items-center justify-center">
           ${imgSrc
             ? `<img src="${imgSrc}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                <span class="w-full h-full hidden items-center justify-center"><i data-lucide="heart" class="text-text-muted text-xl" aria-hidden="true"></i></span>`

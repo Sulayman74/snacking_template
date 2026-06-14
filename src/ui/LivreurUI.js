@@ -238,7 +238,7 @@ class LivreurUI {
     const el = this.els.courses;
     if (this.activeOrderId) { el.innerHTML = ""; return; } // on masque la liste pendant une livraison
     if (list.length === 0) {
-      el.innerHTML = `<div class="bg-white border border-dashed border-gray-300 rounded-2xl p-8 text-center text-gray-500">
+      el.innerHTML = `<div class="bg-white border border-dashed border-line rounded-2xl p-8 text-center text-gray-500">
         <i data-lucide="coffee" class="text-3xl text-gray-300 mb-3"></i>
         <p class="font-bold">Aucune course à récupérer.</p>
         <p class="text-sm">Les commandes prêtes apparaîtront ici.</p>
@@ -254,7 +254,7 @@ class LivreurUI {
     const items = (o.items || []).reduce((n, i) => n + (i.quantity || 1), 0);
     const dist = o.livraison?.distanceKm != null ? formatDistance(o.livraison.distanceKm) : "—";
     return `
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-3">
+      <div class="bg-white rounded-2xl shadow-sm border border-line p-4 mb-3">
         <div class="flex justify-between items-start gap-2 mb-2">
           <div class="min-w-0">
             <p class="font-black text-gray-900 truncate">${escapeHTML(o.clientNom || "Client")}</p>
@@ -302,7 +302,7 @@ class LivreurUI {
         <p class="text-gray-600 mb-1"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(client?.adresse || "Adresse")}</p>
         <p class="text-sm text-gray-500 mb-3">À <b id="active-distance" class="text-gray-900">…</b> de vous</p>
 
-        ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl mb-2 transition"><i data-lucide="navigation" class="mr-2"></i>Itinéraire</a>` : ""}
+        ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="block w-full text-center bg-surface-2 hover:bg-surface-3 text-gray-800 font-bold py-3 rounded-xl mb-2 transition"><i data-lucide="navigation" class="mr-2"></i>Itinéraire</a>` : ""}
 
         <button type="button" data-livreur-action="pickup" ${pickupDone ? "disabled" : ""}
           class="w-full ${pickupDone ? "bg-green-100 text-green-700 cursor-default" : "bg-gray-900 text-white hover:bg-black"} font-bold py-3 rounded-xl mb-2 transition active:scale-95">
@@ -575,7 +575,7 @@ class LivreurUI {
       : denied
         ? `<span class="text-[11px] text-amber-600 font-bold shrink-0 text-right">Bloqué — à réactiver<br>dans les réglages</span>`
         : `<button type="button" data-livreur-action="enable-${kind}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition shrink-0">Activer</button>`;
-    return `<div class="flex items-center justify-between gap-3 py-2 border-t border-gray-100 first:border-0">
+    return `<div class="flex items-center justify-between gap-3 py-2 border-t border-line first:border-0">
       <span class="font-bold text-gray-800 text-sm"><i data-lucide="${icon}" class="text-gray-400 mr-2"></i>${label}</span>
       ${right}
     </div>`;

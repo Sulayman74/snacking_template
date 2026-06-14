@@ -95,7 +95,7 @@ class MenuUI {
       const isTarget = pill.getAttribute("data-cat-id") === activeCatId;
       pill.classList.toggle("bg-gray-900", isTarget);
       pill.classList.toggle("text-on-dark", isTarget);
-      pill.classList.toggle("bg-gray-100", !isTarget);
+      pill.classList.toggle("bg-surface-2", !isTarget);
       pill.classList.toggle("text-text-muted", !isTarget);
 
       if (isTarget) {
@@ -205,7 +205,7 @@ class MenuUI {
       img.classList.add("grayscale", "opacity-50");
       
       const btn = clone.querySelector("[data-lucide='plus']").parentElement;
-      btn.className = "w-8 h-8 rounded-full bg-gray-300 text-text-muted flex items-center justify-center";
+      btn.className = "w-8 h-8 rounded-full bg-surface-3 text-text-muted flex items-center justify-center";
       btn.innerHTML = `<i data-lucide="ban" class="text-xs"></i>`;
     } 
     // 2. Sinon, on affiche le badge (string) ou le premier tag de l'array
@@ -252,7 +252,7 @@ class MenuUI {
     const categories = [...new Set(menu.map((p) => p.categorieId))].filter(Boolean);
     categories.forEach((catId) => {
       const btn = document.createElement("button");
-      btn.className = "cat-pill whitespace-nowrap px-4 py-2 rounded-xl bg-gray-100 text-text-muted font-bold text-sm transition-all active:scale-95 border-2 border-transparent";
+      btn.className = "cat-pill whitespace-nowrap px-4 py-2 rounded-xl bg-surface-2 text-text-muted font-bold text-sm transition-all active:scale-95 border-2 border-transparent";
       btn.textContent = this.getCategoryName(catId);
       btn.setAttribute("data-cat-id", catId);
       btn.onclick = () => {

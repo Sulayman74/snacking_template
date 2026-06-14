@@ -21,7 +21,7 @@
     <link rel="apple-touch-icon" href="/admin-icon-192.png" />
   </head>
   <body
-    class="bg-gray-100 text-gray-900 font-sans h-screen flex flex-col overflow-hidden"
+    class="bg-surface-2 text-gray-900 font-sans h-screen flex flex-col overflow-hidden"
   >
     <div class="app-bg" aria-hidden="true"></div>
     <audio
@@ -104,14 +104,14 @@
             type="email"
             id="admin-email-input"
             placeholder="Email professionnel"
-            class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition"
+            class="p-4 bg-surface-2 text-blue-700 border border-line rounded-xl focus:ring-2 focus:ring-black outline-none transition"
             
           />
           <input
             type="password"
             id="admin-password-input"
             placeholder="Mot de passe"
-            class="p-4 bg-gray-50 text-blue-700 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition"
+            class="p-4 bg-surface-2 text-blue-700 border border-line rounded-xl focus:ring-2 focus:ring-black outline-none transition"
             
           />
 
@@ -130,7 +130,7 @@
       </div>
     </div>
 
-<div class="flex h-screen bg-gray-100 overflow-hidden w-full relative">
+<div class="flex h-screen bg-surface-2 overflow-hidden w-full relative">
 
     <aside class="group hidden md:flex flex-col w-24 hover:w-72 transition-all duration-300 ease-in-out bg-gray-900 text-white shadow-2xl z-50 absolute top-0 left-0 h-full overflow-hidden">
         
@@ -212,22 +212,22 @@
         </div>
 
         <section id="view-cuisine" class="relative flex flex-col md:flex-row gap-6 p-4 pb-20 md:p-6 h-full min-h-full">
-            <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
+            <div class="flex-1 min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line">
+                <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
                     <h2 class="text-xl font-black text-gray-600 uppercase"><i data-lucide="car" class="text-gray-500 mr-2"></i> Attente Client</h2>
                     <span id="count-waiting" class="bg-gray-500 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
                 <div id="orders-waiting" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
             </div>
-            <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
+            <div class="flex-1 min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line">
+                <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
                     <h2 class="text-xl font-black text-gray-800 uppercase"><i data-lucide="flame" class="text-red-600 mr-2"></i> À Préparer</h2>
                     <span id="count-new" class="bg-red-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
                 <div id="orders-new" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
             </div>
-            <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
+            <div class="flex-1 min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line">
+                <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
                     <h2 class="text-xl font-black text-gray-800 uppercase"><i data-lucide="circle-check" class="text-green-600 mr-2"></i> Prêtes</h2>
                     <span id="count-ready" class="bg-green-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
@@ -235,7 +235,7 @@
             </div>
         </section>
 
-<section id="view-menu" class="hidden p-4 md:p-6 bg-gray-100 min-h-full">
+<section id="view-menu" class="hidden p-4 md:p-6 bg-surface-2 min-h-full">
                 <div class="max-screen mx-auto">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <div>
@@ -244,7 +244,7 @@
                         </div>
                         
                         <div class="flex gap-2">
-                            <button type="button" onclick="openCsvInfoModal()" class="bg-white border border-gray-300 text-gray-600 hover:text-blue-600 hover:border-blue-600 px-4 py-3 rounded-2xl font-bold shadow-sm transition flex items-center justify-center" aria-label="Aide format CSV">
+                            <button type="button" onclick="openCsvInfoModal()" class="bg-white border border-line text-gray-600 hover:text-blue-600 hover:border-blue-600 px-4 py-3 rounded-2xl font-bold shadow-sm transition flex items-center justify-center" aria-label="Aide format CSV">
                                 <i data-lucide="circle-help" class="text-xl"></i>
                             </button>
 
@@ -262,11 +262,11 @@
                     <div class="mb-6 flex flex-col md:flex-row gap-4">
                         <div class="relative flex-1">
                             <i data-lucide="search" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" id="admin-product-search" placeholder="Rechercher un produit (nom, description)..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl font-medium focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" oninput="if(window.filterAdminProducts) window.filterAdminProducts()">
+                            <input type="text" id="admin-product-search" placeholder="Rechercher un produit (nom, description)..." class="w-full pl-12 pr-4 py-3 bg-white border border-line rounded-2xl font-medium focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" oninput="if(window.filterAdminProducts) window.filterAdminProducts()">
                         </div>
                         <div class="relative w-full md:w-64">
                             <i data-lucide="filter" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <select id="admin-product-category" class="w-full pl-12 pr-10 py-3 bg-white border border-gray-200 rounded-2xl font-medium focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition appearance-none" onchange="if(window.filterAdminProducts) window.filterAdminProducts()">
+                            <select id="admin-product-category" class="w-full pl-12 pr-10 py-3 bg-white border border-line rounded-2xl font-medium focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition appearance-none" onchange="if(window.filterAdminProducts) window.filterAdminProducts()">
                                 <option value="">Toutes les catégories</option>
                                 <!-- Rempli dynamiquement -->
                             </select>
@@ -280,14 +280,14 @@
                 </div>
             </section>
 
-        <section id="view-marketing" class="hidden p-4 md:p-6 bg-gray-100 min-h-full pb-20 overflow-y-auto h-full">
+        <section id="view-marketing" class="hidden p-4 md:p-6 bg-surface-2 min-h-full pb-20 overflow-y-auto h-full">
             <div class="max-w-6xl mx-auto space-y-6">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 class="text-3xl font-black text-gray-900 tracking-tight">Marketing & Push</h2>
                         <p class="text-gray-500">Engagez vos clients avec des notifications ciblées.</p>
                     </div>
-                    <div id="marketing-quota-info" class="w-full md:w-64 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+                    <div id="marketing-quota-info" class="w-full md:w-64 bg-white p-4 rounded-2xl border border-line shadow-sm">
                         <!-- Injecté par AdminMarketingUI -->
                     </div>
                 </div>
@@ -298,7 +298,7 @@
                         <!-- 🌤️ Weather Insight (injecté par AdminMarketingUI / masqué si fail-safe) -->
                         <div id="weather-insight-card" class="hidden"></div>
 
-                        <form id="push-campaign-form" class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                        <form id="push-campaign-form" class="bg-white p-8 rounded-3xl shadow-sm border border-line space-y-6">
                             <h3 class="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
                                 <i data-lucide="circle-plus" class="text-blue-500"></i> Nouvelle Campagne
                             </h3>
@@ -306,16 +306,16 @@
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Titre de la notification</label>
-                                    <input type="text" id="push-title" required placeholder="Ex: C'est l'heure du goûter ! 🍦" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:border-blue-500 outline-none transition font-bold">
+                                    <input type="text" id="push-title" required placeholder="Ex: C'est l'heure du goûter ! 🍦" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition font-bold">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Message</label>
-                                    <textarea id="push-message" rows="3" required placeholder="Venez découvrir notre nouveau dessert..." class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:border-blue-500 outline-none transition font-medium"></textarea>
+                                    <textarea id="push-message" rows="3" required placeholder="Venez découvrir notre nouveau dessert..." class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition font-medium"></textarea>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Cible</label>
-                                        <select id="push-target" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:border-blue-500 outline-none font-bold">
+                                        <select id="push-target" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none font-bold">
                                             <option value="all">🚀 Tous les clients</option>
                                             <option value="active">🔥 Clients actifs (30j)</option>
                                             <option value="inactive">❄️ Clients inactifs</option>
@@ -323,12 +323,12 @@
                                     </div>
                                     <div>
                                         <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Programmation</label>
-                                        <input type="datetime-local" id="push-date" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:border-blue-500 outline-none font-bold">
+                                        <input type="datetime-local" id="push-date" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none font-bold">
                                     </div>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Lien Promotionnel</label>
-                                    <select id="push-product-link" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:border-blue-500 outline-none font-bold">
+                                    <select id="push-product-link" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none font-bold">
                                         <option value="">📱 Accueil de l'application</option>
                                     </select>
                                 </div>
@@ -358,7 +358,7 @@
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                        <div class="bg-white rounded-3xl p-6 border border-line shadow-sm">
                             <h3 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Dernière campagne</h3>
                             <div id="last-campaign-stats" class="space-y-4">
                                 <p class="text-xs text-gray-400 italic text-center py-4">Aucune donnée récente.</p>
@@ -380,16 +380,16 @@
 
                 <!-- KPIs + Stripe -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 lg:col-span-2">
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-line lg:col-span-2">
                         <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                             <i data-lucide="chart-line" class="text-blue-500"></i> Ce mois-ci
                         </h3>
                         <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <div class="bg-surface-2 p-4 rounded-xl border border-line">
                                 <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Total Encaissé</p>
                                 <p class="text-4xl font-black text-gray-900" id="compta-total-sales">-- €</p>
                             </div>
-                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <div class="bg-surface-2 p-4 rounded-xl border border-line">
                                 <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Commandes</p>
                                 <p class="text-4xl font-black text-gray-900" id="compta-total-orders">--</p>
                             </div>
@@ -409,35 +409,35 @@
                             </p>
                         </div>
                         <!-- Boutons masqués par défaut : AdminComptaUI.renderStripeStatus en affiche un seul. -->
-                        <button onclick="startStripeOnboarding()" id="btn-stripe-onboard" class="hidden w-full bg-white text-gray-900 font-black py-4 rounded-xl shadow-lg hover:bg-gray-100 transition active:scale-95 flex justify-center items-center gap-2 mt-4">
+                        <button onclick="startStripeOnboarding()" id="btn-stripe-onboard" class="hidden w-full bg-white text-gray-900 font-black py-4 rounded-xl shadow-lg hover:bg-surface-2 transition active:scale-95 flex justify-center items-center gap-2 mt-4">
                             Configurer les paiements <i data-lucide="arrow-right" class="text-sm text-gray-400"></i>
                         </button>
-                        <button onclick="openStripeExpressDashboard()" id="btn-stripe-dashboard" class="hidden w-full bg-white text-gray-900 font-black py-4 rounded-xl shadow-lg hover:bg-gray-100 transition active:scale-95 flex justify-center items-center gap-2 mt-4">
+                        <button onclick="openStripeExpressDashboard()" id="btn-stripe-dashboard" class="hidden w-full bg-white text-gray-900 font-black py-4 rounded-xl shadow-lg hover:bg-surface-2 transition active:scale-95 flex justify-center items-center gap-2 mt-4">
                             Ouvrir mon portail <i data-lucide="external-link" class="text-sm text-gray-400"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- Export avec filtre date -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-line">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <i data-lucide="file-spreadsheet" class="text-green-500"></i> Export Livre de Caisse
                     </h3>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="setComptaDateRange('today')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition">Aujourd'hui</button>
-                        <button onclick="setComptaDateRange('week')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition">Cette semaine</button>
+                        <button onclick="setComptaDateRange('today')" class="px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-gray-700 text-sm font-bold rounded-lg transition">Aujourd'hui</button>
+                        <button onclick="setComptaDateRange('week')" class="px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-gray-700 text-sm font-bold rounded-lg transition">Cette semaine</button>
                         <button onclick="setComptaDateRange('month')" class="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm font-bold rounded-lg transition">Ce mois</button>
-                        <button onclick="setComptaDateRange('last-month')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition">Mois précédent</button>
-                        <button onclick="setComptaDateRange('quarter')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition">Ce trimestre</button>
+                        <button onclick="setComptaDateRange('last-month')" class="px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-gray-700 text-sm font-bold rounded-lg transition">Mois précédent</button>
+                        <button onclick="setComptaDateRange('quarter')" class="px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-gray-700 text-sm font-bold rounded-lg transition">Ce trimestre</button>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3 items-end">
                         <div class="flex-1">
                             <label class="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">Du</label>
-                            <input type="date" id="compta-date-start" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="compta-date-start" class="w-full border border-line rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="flex-1">
                             <label class="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">Au</label>
-                            <input type="date" id="compta-date-end" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="compta-date-end" class="w-full border border-line rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <button onclick="exportComptaCSV()" id="btn-export-compta" class="whitespace-nowrap bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-md active:scale-95 flex items-center gap-2">
                             <i data-lucide="file-spreadsheet"></i> Exporter (CSV)
@@ -447,7 +447,7 @@
                 </div>
 
                 <!-- Historique des commandes -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-line">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <i data-lucide="list" class="text-purple-500"></i> Historique des ventes (ce mois)
                     </h3>
@@ -457,7 +457,7 @@
                 </div>
 
                 <!-- 📊 Performance Upsell -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-line">
                     <h3 class="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
                         <i data-lucide="trending-up" class="text-green-500"></i> Performance Upsell
                     </h3>
@@ -472,21 +472,21 @@
 
     </div>
 
-        <section id="view-config" class="hidden p-4 md:p-6 bg-gray-100 min-h-full pb-20 overflow-y-auto h-full">
+        <section id="view-config" class="hidden p-4 md:p-6 bg-surface-2 min-h-full pb-20 overflow-y-auto h-full">
             <div class="max-w-4xl mx-auto space-y-2 pb-20">
                 <div>
                     <h2 class="text-3xl font-black text-gray-900 tracking-tight">Configuration Générale</h2>
                     <p class="text-gray-500">Gérez l'identité de votre établissement, vos horaires et vos promotions.</p>
                 </div>
 
-                <div class="bg-white p-2 rounded-3xl shadow-sm border border-gray-200">
+                <div class="bg-white p-2 rounded-3xl shadow-sm border border-line">
                     <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
                         <i data-lucide="id-card" class="text-blue-500"></i> Identité & Promo
                     </h3>
                     <form id="config-identity-form" class="space-y-6">
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-2">Description courte (Hero)</label>
-                            <textarea id="config-description" rows="2" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="Ex: Les meilleurs burgers de la ville..."></textarea>
+                            <textarea id="config-description" rows="2" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition" placeholder="Ex: Les meilleurs burgers de la ville..."></textarea>
                         </div>
                         <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
                             <label class="block text-sm font-bold text-blue-800 mb-2">
@@ -503,7 +503,7 @@
                     </form>
                 </div>
 
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-line">
                     <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
                         <i data-lucide="bike" class="text-blue-500"></i> Livraison
                     </h3>
@@ -511,41 +511,41 @@
                     <form id="config-delivery-form" class="space-y-5">
                         <label class="flex items-center justify-between bg-blue-50 p-4 rounded-2xl border border-blue-100 cursor-pointer">
                             <span class="font-bold text-blue-800"><i data-lucide="toggle-right" class="mr-1"></i> Activer la livraison</span>
-                            <input type="checkbox" id="config-enable-delivery" class="w-6 h-6 rounded-lg text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer">
+                            <input type="checkbox" id="config-enable-delivery" class="w-6 h-6 rounded-lg text-blue-600 border-line focus:ring-blue-500 cursor-pointer">
                         </label>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Rayon de livraison (km)</label>
-                                <input type="number" step="0.5" min="0" id="config-delivery-radius" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="5">
+                                <input type="number" step="0.5" min="0" id="config-delivery-radius" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition" placeholder="5">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Frais de livraison (€)</label>
-                                <input type="number" step="0.5" min="0" id="config-delivery-fee" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="2.5">
+                                <input type="number" step="0.5" min="0" id="config-delivery-fee" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition" placeholder="2.5">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Commande minimum (€)</label>
-                                <input type="number" step="1" min="0" id="config-delivery-minorder" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="0">
+                                <input type="number" step="1" min="0" id="config-delivery-minorder" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition" placeholder="0">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Vitesse moyenne livreur (km/h)</label>
-                                <input type="number" step="1" min="1" id="config-delivery-speed" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="22">
+                                <input type="number" step="1" min="1" id="config-delivery-speed" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition" placeholder="22">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Temps de prépa de base (min)</label>
-                                <input type="number" step="1" min="1" id="config-delivery-prep" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="12">
+                                <input type="number" step="1" min="1" id="config-delivery-prep" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition" placeholder="12">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Min. ajoutées / commande en attente</label>
-                                <input type="number" step="1" min="0" id="config-delivery-queue" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="3">
+                                <input type="number" step="1" min="0" id="config-delivery-queue" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition" placeholder="3">
                             </div>
                         </div>
 
-                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                        <div class="bg-surface-2 p-4 rounded-2xl border border-line">
                             <p class="text-sm font-bold text-gray-700 mb-3"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i> Position du restaurant <span class="font-normal text-gray-400">(zone de livraison + calcul du temps)</span></p>
                             <div class="grid grid-cols-2 gap-3">
-                                <input type="number" step="any" id="config-resto-lat" class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="Latitude">
-                                <input type="number" step="any" id="config-resto-lng" class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="Longitude">
+                                <input type="number" step="any" id="config-resto-lat" class="w-full px-4 py-3 rounded-xl bg-white border border-line focus:border-blue-500 outline-none transition" placeholder="Latitude">
+                                <input type="number" step="any" id="config-resto-lng" class="w-full px-4 py-3 rounded-xl bg-white border border-line focus:border-blue-500 outline-none transition" placeholder="Longitude">
                             </div>
                             <button type="button" id="config-resto-locate" class="mt-3 text-sm font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-2">
                                 <i data-lucide="locate-fixed"></i> Utiliser ma position actuelle (depuis le resto)
@@ -560,7 +560,7 @@
                     </form>
                 </div>
 
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-line">
                     <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
                         <i data-lucide="contact" class="text-purple-500"></i> Coordonnées & Réseaux
                     </h3>
@@ -570,28 +570,28 @@
                                 <label class="block text-sm font-bold text-gray-700 mb-2">
                                     <i data-lucide="phone" class="text-gray-400 mr-1"></i> Téléphone
                                 </label>
-                                <input type="tel" id="config-phone" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-purple-500 outline-none transition" placeholder="06 12 34 56 78">
+                                <input type="tel" id="config-phone" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-purple-500 outline-none transition" placeholder="06 12 34 56 78">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">
                                     <i data-lucide="mail" class="text-gray-400 mr-1"></i> Email public
                                 </label>
-                                <input type="email" id="config-email" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-purple-500 outline-none transition" placeholder="contact@monresto.fr">
+                                <input type="email" id="config-email" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-purple-500 outline-none transition" placeholder="contact@monresto.fr">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
                             <div class="md:col-span-3">
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Adresse</label>
-                                <input type="text" id="config-street" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-purple-500 outline-none transition" placeholder="12 rue de la Gare">
+                                <input type="text" id="config-street" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-purple-500 outline-none transition" placeholder="12 rue de la Gare">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Code postal</label>
-                                <input type="text" id="config-zipcode" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-purple-500 outline-none transition" placeholder="74130">
+                                <input type="text" id="config-zipcode" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-purple-500 outline-none transition" placeholder="74130">
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Ville</label>
-                                <input type="text" id="config-city" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-purple-500 outline-none transition" placeholder="Bonneville">
+                                <input type="text" id="config-city" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-purple-500 outline-none transition" placeholder="Bonneville">
                             </div>
                         </div>
 
@@ -618,19 +618,19 @@
                                     <label class="block text-sm font-bold text-gray-700 mb-2">
                                         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-pink-500 mr-1 w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg> Instagram
                                     </label>
-                                    <input type="url" id="config-instagram" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-pink-500 outline-none transition" placeholder="https://instagram.com/...">
+                                    <input type="url" id="config-instagram" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-pink-500 outline-none transition" placeholder="https://instagram.com/...">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-2">
                                         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-blue-600 mr-1 w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg> Facebook
                                     </label>
-                                    <input type="url" id="config-facebook" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="https://facebook.com/...">
+                                    <input type="url" id="config-facebook" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-blue-500 outline-none transition" placeholder="https://facebook.com/...">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-2">
                                         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-gray-800 mr-1 w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg> TikTok
                                     </label>
-                                    <input type="url" id="config-tiktok" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-800 outline-none transition" placeholder="https://tiktok.com/@...">
+                                    <input type="url" id="config-tiktok" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-gray-800 outline-none transition" placeholder="https://tiktok.com/@...">
                                 </div>
                             </div>
                         </div>
@@ -643,7 +643,7 @@
                     </form>
                 </div>
 
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-line">
                     <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
                         <i data-lucide="clock" class="text-green-500"></i> Horaires d'ouverture
                     </h3>
@@ -662,7 +662,7 @@
         </section>
 
         <!-- VUE SUPPORT / FAQ -->
-        <section id="view-support" class="hidden p-4 md:p-8 h-full overflow-y-auto pb-24 md:pb-8 bg-gray-50">
+        <section id="view-support" class="hidden p-4 md:p-8 h-full overflow-y-auto pb-24 md:pb-8 bg-surface-2">
             <div class="max-w-4xl mx-auto space-y-6">
                 <div>
                     <h2 class="text-3xl font-black text-gray-900 tracking-tight">Support & FAQ</h2>
@@ -671,20 +671,20 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- FAQ -->
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-line">
                         <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
                             <i data-lucide="circle-help" class="text-blue-500"></i> Questions Fréquentes
                         </h3>
                         <div class="space-y-4">
-                            <details class="bg-gray-50 rounded-xl p-4 cursor-pointer">
+                            <details class="bg-surface-2 rounded-xl p-4 cursor-pointer">
                                 <summary class="font-bold text-gray-800">Comment modifier mes horaires ?</summary>
                                 <p class="text-sm text-gray-600 mt-2">Allez dans l'onglet "Configuration" (icône engrenage), puis descendez jusqu'à "Horaires d'ouverture". N'oubliez pas d'enregistrer !</p>
                             </details>
-                            <details class="bg-gray-50 rounded-xl p-4 cursor-pointer">
+                            <details class="bg-surface-2 rounded-xl p-4 cursor-pointer">
                                 <summary class="font-bold text-gray-800">Comment fonctionne le radar cuisine ?</summary>
                                 <p class="text-sm text-gray-600 mt-2">La cuisine reçoit un "ding" sonore pour chaque nouvelle commande payée en ligne. Cliquez sur "Marquer Prête" pour notifier le client sur son téléphone.</p>
                             </details>
-                            <details class="bg-gray-50 rounded-xl p-4 cursor-pointer">
+                            <details class="bg-surface-2 rounded-xl p-4 cursor-pointer">
                                 <summary class="font-bold text-gray-800">Où voir mes virements bancaires ?</summary>
                                 <p class="text-sm text-gray-600 mt-2">Allez dans l'onglet "Comptabilité" et cliquez sur le bouton "Tableau de bord bancaire" pour accéder à votre espace Stripe Express.</p>
                             </details>
@@ -700,7 +700,7 @@
                             <p class="text-blue-100 text-sm mb-6">Notre équipe technique est disponible de 9h à 18h pour vous accompagner.</p>
                         </div>
                         
-                        <a href="mailto:support@mysaas.com" class="w-full bg-white text-indigo-700 py-4 rounded-xl font-black shadow-md hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                        <a href="mailto:support@mysaas.com" class="w-full bg-white text-indigo-700 py-4 rounded-xl font-black shadow-md hover:bg-surface-2 transition flex items-center justify-center gap-2">
                             <i data-lucide="mail"></i> Ouvrir un Ticket
                         </a>
                         <p class="text-center text-xs text-indigo-200 mt-3">En cas d'urgence, appelez votre chargé de compte au 01 23 45 67 89.</p>
@@ -710,7 +710,7 @@
         </section>
 
         <!-- 🚚 VUE LIVREURS : gestion de la flotte (création + activation) -->
-        <section id="view-livreurs" class="hidden p-4 md:p-6 bg-gray-100 min-h-full pb-24 overflow-y-auto h-full">
+        <section id="view-livreurs" class="hidden p-4 md:p-6 bg-surface-2 min-h-full pb-24 overflow-y-auto h-full">
             <div class="max-w-3xl mx-auto">
                 <div class="flex items-center gap-3 mb-6">
                     <i data-lucide="bike" class="text-2xl text-gray-700"></i>
@@ -720,13 +720,13 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-line p-5 mb-6">
                     <h2 class="font-black text-gray-900 mb-4"><i data-lucide="user-plus" class="text-blue-500 mr-2"></i>Ajouter un livreur</h2>
                     <form id="add-driver-form" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input name="nom" type="text" required placeholder="Nom du livreur" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                        <input name="telephone" type="tel" placeholder="Téléphone (optionnel)" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                        <input name="email" type="email" required placeholder="Email de connexion" autocomplete="off" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                        <input name="password" type="text" required minlength="6" placeholder="Mot de passe (min. 6)" autocomplete="off" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input name="nom" type="text" required placeholder="Nom du livreur" class="border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input name="telephone" type="tel" placeholder="Téléphone (optionnel)" class="border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input name="email" type="email" required placeholder="Email de connexion" autocomplete="off" class="border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input name="password" type="text" required minlength="6" placeholder="Mot de passe (min. 6)" autocomplete="off" class="border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
                         <button type="submit" id="add-driver-btn" class="md:col-span-2 bg-gray-900 hover:bg-black text-white font-black py-3 rounded-xl transition active:scale-95 flex items-center justify-center gap-2">
                             <i data-lucide="plus"></i> Créer le compte livreur
                         </button>
@@ -747,7 +747,7 @@
             </div>
         </section>
 
-    <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center p-2 pb-[env(safe-area-inset-bottom) z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] fixed bottom-0 w-full">
+    <nav class="md:hidden bg-white border-t border-line flex justify-around items-center p-2 pb-[env(safe-area-inset-bottom) z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] fixed bottom-0 w-full">
         <button onclick="switchAdminTab('cuisine')" id="tab-cuisine-mobile" class="flex flex-col items-center gap-1 p-2 text-red-600 w-16">
             <i data-lucide="flame" class="text-xl"></i>
             <span class="text-[10px] font-bold">Cuisine</span>
@@ -813,12 +813,12 @@
                     this.style.display = 'none';
                     this.nextElementSibling.style.display = 'flex';
                   "
-                  class="absolute inset-0 w-full h-full rounded-xl object-cover shadow-sm border border-gray-200 z-10"
+                  class="absolute inset-0 w-full h-full rounded-xl object-cover shadow-sm border border-line z-10"
                 />
 
                 <div
                   id="edit-preview-fallback"
-                  class="absolute inset-0 rounded-xl bg-gray-100 shadow-inner flex flex-col items-center justify-center border border-gray-200 z-0 text-gray-300"
+                  class="absolute inset-0 rounded-xl bg-surface-2 shadow-inner flex flex-col items-center justify-center border border-line z-0 text-gray-300"
                 >
                   <i data-lucide="pizza" class="text-xl mb-1 opacity-40"></i>
                   <span class="text-[6px] font-black uppercase text-center opacity-50">Photo en<br>attente... 👨‍🍳</span>
@@ -842,7 +842,7 @@
               id="edit-nom"
               
               placeholder="Ex: Tacos XL, Burger Bacon..."
-              class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition font-bold"
+              class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-red-500 outline-none transition font-bold"
             />
           </div>
 
@@ -853,7 +853,7 @@
             <textarea
               id="edit-desc"
               rows="3"
-              class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"
+              class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black"
             ></textarea>
           </div>
 
@@ -863,7 +863,7 @@
             >
             <select
               id="edit-tags"
-              class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-medium"
+              class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-medium"
             >
               <option value="">Standard (L'algorithme choisit)</option>
               <option value="Star">⭐ Star (Forcer en Best-Seller)</option>
@@ -882,7 +882,7 @@
                 step="0.10"
                 id="edit-prix"
                 
-                class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-bold"
+                class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-bold"
               />
             </div>
 
@@ -906,7 +906,7 @@
             >
             <select
               id="edit-tva-rate"
-              class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-bold"
+              class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-bold"
             >
               <option value="10">10 % — Restauration (défaut)</option>
               <option value="20">20 % — Boisson alcoolisée</option>
@@ -996,7 +996,7 @@
           <div>
             <div>
             <label class="block text-sm font-bold text-gray-700 mb-2">Catégorie du Menu</label>
-            <select id="edit-category" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-medium">
+            <select id="edit-category" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition text-black font-medium">
               <option value="">Frites</option>
             </select>
             
@@ -1028,7 +1028,7 @@
             <button class="modal-confirm-btn w-full text-white font-bold py-4 rounded-xl transition-all shadow-lg transform hover:-translate-y-1 flex items-center justify-center gap-2">
               Confirmer
             </button>
-            <button class="modal-cancel-btn w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition">
+            <button class="modal-cancel-btn w-full bg-surface-2 hover:bg-surface-3 text-gray-800 font-bold py-3 rounded-xl transition">
               Annuler
             </button>
           </div>

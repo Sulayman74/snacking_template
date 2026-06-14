@@ -162,7 +162,7 @@ function startOrderTracking(orderId) {
 
           if (iconContainer) {
             iconContainer.className =
-              "w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+              "w-24 h-24 bg-surface-2 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           }
           window.swapIcon?.(icon, "car", "text-5xl text-text-muted transition-transform duration-500 animate-pulse");
           if (title) {
@@ -252,10 +252,10 @@ function startOrderTracking(orderId) {
             );
 
             subtitle.innerHTML = `
-              <div class="mt-6 p-6 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+              <div class="mt-6 p-6 bg-surface-2 rounded-3xl border-2 border-dashed border-line">
                 <p class="text-xs text-text-muted uppercase font-black tracking-widest mb-1">Code de retrait</p>
                 <p class="text-5xl font-black text-text mb-2 font-mono tracking-tighter">${secretCode}</p>
-                <div class="h-px bg-gray-200 w-12 mx-auto my-3"></div>
+                <div class="h-px bg-surface-3 w-12 mx-auto my-3"></div>
                 <p class="text-sm font-bold text-text-muted"><i data-lucide="user" class="mr-1 text-text-muted"></i> ${clientDisplay}</p>
               </div>
               <p class="mt-4 text-text-muted font-medium">${
@@ -345,7 +345,7 @@ function startOrderTracking(orderId) {
             subtitle.innerHTML = `<p class="text-text-muted font-medium mb-3">Bon appétit ! Merci pour votre commande.</p>${
               photo
                 ? `<a href="${safe}" target="_blank" rel="noopener" class="block">
-                     <img src="${safe}" alt="Preuve de livraison" class="mx-auto rounded-2xl max-h-48 shadow-md border border-gray-200">
+                     <img src="${safe}" alt="Preuve de livraison" class="mx-auto rounded-2xl max-h-48 shadow-md border border-line">
                      <span class="block mt-2 text-xs text-text-muted"><i data-lucide="zoom-in" class="mr-1"></i>Preuve de livraison · toucher pour agrandir</span>
                    </a>`
                 : ""

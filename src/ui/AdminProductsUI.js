@@ -127,8 +127,8 @@ class AdminProductsUI {
         const safeImg = p.image ? safeURL(p.image) : "";
         const prix = (parseFloat(p.prix) || 0).toFixed(2);
         return `
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 group ${!isAvailable ? 'opacity-75 grayscale-[0.5]' : ''}">
-                <div class="relative h-48 overflow-hidden bg-gray-50">
+            <div class="bg-white rounded-3xl shadow-sm border border-line overflow-hidden flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 group ${!isAvailable ? 'opacity-75 grayscale-[0.5]' : ''}">
+                <div class="relative h-48 overflow-hidden bg-surface-2">
                     ${p.image ? `
                         <img src="${safeImg}" alt="${safeNom}"
                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -153,7 +153,7 @@ class AdminProductsUI {
                 <div class="p-6 flex-1 flex flex-col">
                     <div class="flex justify-between items-start mb-2">
                         <h4 class="font-black text-xl text-gray-900">${safeNom}</h4>
-                        <button data-action="toggle-product-ui" data-id="${safeId}" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAvailable ? 'bg-green-500' : 'bg-gray-200'}">
+                        <button data-action="toggle-product-ui" data-id="${safeId}" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAvailable ? 'bg-green-500' : 'bg-surface-3'}">
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isAvailable ? 'translate-x-5' : 'translate-x-0'}"></span>
                         </button>
                     </div>
@@ -161,7 +161,7 @@ class AdminProductsUI {
                     <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
                         <span class="text-2xl font-black text-gray-900">${prix} €</span>
                         <div class="flex gap-2">
-                            <button data-action="open-edit-modal" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center">
+                            <button data-action="open-edit-modal" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-surface-2 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center">
                                 <i data-lucide="pen" class="text-sm"></i>
                             </button>
                             <button data-action="delete-product-ui" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-red-50 text-red-400 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">

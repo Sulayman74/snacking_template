@@ -43,9 +43,9 @@ window.addTailleRow = (nom = "", prix = "") => {
   row.className = "flex gap-2 items-center taille-row animate-fade-in";
   row.innerHTML = `
     <input type="text" placeholder="Ex: M, L, 33cm…" value="${escapeHTML(String(nom))}"
-      class="edit-taille-nom flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-500 outline-none text-sm font-bold">
+      class="edit-taille-nom flex-1 px-3 py-2 rounded-lg border border-line focus:border-blue-500 outline-none text-sm font-bold">
     <input type="number" step="0.10" min="0" placeholder="Prix" value="${prix !== "" ? prix : ""}"
-      class="edit-taille-prix w-24 px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-500 outline-none text-sm font-bold text-center">
+      class="edit-taille-prix w-24 px-3 py-2 rounded-lg border border-line focus:border-blue-500 outline-none text-sm font-bold text-center">
     <span class="text-gray-500 text-sm font-bold shrink-0">€</span>
     <button type="button" onclick="this.closest('.taille-row').remove()"
       class="w-8 h-8 shrink-0 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">

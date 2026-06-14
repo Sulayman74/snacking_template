@@ -234,7 +234,7 @@ class AdminMarketingUI {
                     <span class="text-gray-400">Quota mensuel</span>
                     <span class="${percentage >= 100 ? 'text-red-500' : 'text-gray-900'}">${parseInt(eligibility.count) || 0} / ${parseInt(eligibility.limit) || 0}</span>
                 </div>
-                <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="w-full h-2 bg-surface-2 rounded-full overflow-hidden">
                     <div class="h-full ${colorClass} transition-all duration-1000" style="width: ${safePct}%"></div>
                 </div>
                 <p class="text-[10px] text-gray-500 italic">${escapeHTML(eligibility.message || 'Utilisez vos notifications stratégiquement pour maximiser l\'impact.')}</p>
