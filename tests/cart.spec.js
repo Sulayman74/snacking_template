@@ -35,8 +35,9 @@ test.describe('Caisse Enregistreuse (Calcul du Panier)', () => {
     await page.evaluate(() => window.openCartModal());
 
     // 4. Ajoute une quantité (+1) via le bouton du panier
-    // On cherche le bouton "+" dans les articles du panier
-    const btnPlus = page.locator('#cart-items-container button').filter({ has: page.locator('.fa-plus') }).first();
+    // Sélecteur stable : la classe `.cart-item-plus` (celle que CartUI relie au
+    // onclick), insensible à la lib d'icônes (migration FontAwesome → Lucide).
+    const btnPlus = page.locator('#cart-items-container .cart-item-plus').first();
     await btnPlus.click();
 
     // 5. Vérifie que le total n'est pas cassé
