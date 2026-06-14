@@ -45,13 +45,13 @@ class ReorderUI {
     const total = (Number(order.total) || 0).toFixed(2);
 
     this.container.innerHTML = `
-      <div class="flex flex-col sm:flex-row sm:items-center gap-4 bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4 bg-surface p-5 rounded-3xl shadow-sm border border-gray-100">
         <div class="flex-1 min-w-0">
           <p class="text-xs font-black uppercase tracking-widest text-accent mb-1">
             <i class="fas fa-rotate-left mr-1" aria-hidden="true"></i> Commander à nouveau
           </p>
-          <p class="font-bold text-gray-900 truncate">${this.#summary(order.items)}</p>
-          <p class="text-sm font-black text-gray-500 mt-0.5">${total} ${escapeHTML(devise)}</p>
+          <p class="font-bold text-text truncate">${this.#summary(order.items)}</p>
+          <p class="text-sm font-black text-text-muted mt-0.5">${total} ${escapeHTML(devise)}</p>
         </div>
         <button type="button" data-action="reorder-last"
           class="shrink-0 bg-primary text-on-primary font-bold px-6 py-3 rounded-full shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">

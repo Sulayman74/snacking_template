@@ -331,14 +331,14 @@ class AppUI {
             const safeBreakStart = escapeHTML(h.breakStart || "");
             const safeBreakEnd = escapeHTML(h.breakEnd || "");
             const hoursText = h.closed
-                ? `<span class="text-red-500/50">Fermé</span>`
+                ? `<span class="text-danger/50">Fermé</span>`
                 : (h.hasBreak ? `${safeOpen}–${safeBreakStart} / ${safeBreakEnd}–${safeClose}` : `${safeOpen} – ${safeClose}`);
             if (isToday && heroStatus) {
                 const status = this.getOpeningStatus(h);
                 heroStatus.innerText = status.label;
-                heroStatus.className = `inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border rounded-full backdrop-blur-md text-white ${status.classes}`;
+                heroStatus.className = `inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border rounded-full backdrop-blur-md text-on-dark ${status.classes}`;
             }
-            return `<li class="flex justify-between items-center py-2 ${isToday ? "text-white/90 font-medium" : "text-white/40"}">
+            return `<li class="flex justify-between items-center py-2 ${isToday ? "text-on-dark/90 font-medium" : "text-on-dark/40"}">
                 <span class="flex items-center gap-2">
                     ${isToday ? `<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>` : `<span class="w-1.5 h-1.5 inline-block"></span>`}
                     ${escapeHTML(h.day || "")}

@@ -46,7 +46,7 @@ class CartUI {
         this.container.innerHTML = "";
 
         if (cart.length === 0) {
-            this.container.innerHTML = `<p class="text-center py-10 text-gray-500">Votre panier est vide.</p>`;
+            this.container.innerHTML = `<p class="text-center py-10 text-text-muted">Votre panier est vide.</p>`;
             if (this.checkoutBtn) {
                 this.checkoutBtn.disabled = true;
                 this.checkoutBtn.classList.add("opacity-50");

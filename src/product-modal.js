@@ -105,7 +105,7 @@ class ProductModalUI {
       document.getElementById("modal-fav-btn")?.classList.add("hidden");
       if (btn) {
         btn.textContent = "Épuisé";
-        btn.className = "w-full py-4 rounded-xl font-bold text-white bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2";
+        btn.className = "w-full py-4 rounded-xl font-bold text-on-dark bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2";
         btn.onclick = null;
       }
       return;
@@ -148,10 +148,10 @@ class ProductModalUI {
     if (isFav) {
       if (icon) icon.className = "fas fa-heart";
       btn.classList.add("text-red-500", "border-red-200");
-      btn.classList.remove("text-gray-400", "border-gray-200");
+      btn.classList.remove("text-text-muted", "border-gray-200");
     } else {
       if (icon) icon.className = "far fa-heart";
-      btn.classList.add("text-gray-400", "border-gray-200");
+      btn.classList.add("text-text-muted", "border-gray-200");
       btn.classList.remove("text-red-500", "border-red-200");
     }
   }
@@ -175,7 +175,7 @@ class ProductModalUI {
       this.currentProduct.tailleChoisie = item.tailles[0].nom;
 
       html += `<fieldset class="mb-4">
-        <legend class="text-lg font-black text-gray-900 mb-2 flex justify-between items-center">
+        <legend class="text-lg font-black text-text mb-2 flex justify-between items-center">
             <span>Taille</span>
             <span class="text-[10px] font-black bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-widest">Obligatoire</span>
         </legend>
@@ -187,7 +187,7 @@ class ProductModalUI {
                 <label class="relative cursor-pointer">
                     <input type="radio" name="taille_produit" value="${safeNom}" data-prix="${safePrix}" ${i === 0 ? "checked" : ""} class="sr-only peer" onchange="window.updateProductSize(this)">
                     <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
-                        <span class="font-bold text-gray-900">${safeNom}</span>
+                        <span class="font-bold text-text">${safeNom}</span>
                         <span class="font-black text-accent text-sm">${safePrix} ${escapeHTML(devise)}</span>
                     </div>
                 </label>
@@ -200,7 +200,7 @@ class ProductModalUI {
     else if (this.currentProduct.allowMenu) {
       const drinks = store.state.menu.filter(i => i.categorieId === "drinks" && i.isAvailable !== false);
       html += `<fieldset class="mb-4">
-        <legend class="text-lg font-black text-gray-900 mb-2 flex justify-between items-center">
+        <legend class="text-lg font-black text-text mb-2 flex justify-between items-center">
             <span>Formule</span>
             <span class="text-[10px] font-black bg-primary text-on-primary px-2 py-1 rounded uppercase tracking-widest">Obligatoire</span>
         </legend>
@@ -208,21 +208,21 @@ class ProductModalUI {
             <label class="relative cursor-pointer">
                 <input type="radio" name="formule" value="seul" checked class="sr-only peer" onchange="window.toggleDrinkSection()">
                 <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
-                    <span class="font-bold text-gray-900">Seul</span>
+                    <span class="font-bold text-text">Seul</span>
                     <span class="text-sm font-black text-gray-500">${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>
                 </div>
             </label>
             <label class="relative cursor-pointer">
                 <input type="radio" name="formule" value="menu" class="sr-only peer" onchange="window.toggleDrinkSection()">
                 <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
-                    <span class="font-bold text-gray-900">En Menu</span>
+                    <span class="font-bold text-text">En Menu</span>
                     <span class="text-sm font-black text-accent">+ ${this.currentProduct.prixMenu.toFixed(2)} ${devise}</span>
                 </div>
             </label>
         </div>
       </fieldset>
       <fieldset id="drink-section" class="mb-4 hidden opacity-0 transition-all">
-        <legend class="text-lg font-black text-gray-900 mb-2">Votre Boisson</legend>
+        <legend class="text-lg font-black text-text mb-2">Votre Boisson</legend>
         <div class="grid grid-cols-2 gap-3">
             ${drinks.slice(0, 6).map((d, i) => {
                 const safeNom = escapeHTML(d.nom || "");
@@ -231,7 +231,7 @@ class ProductModalUI {
                     <input type="radio" name="boisson" value="${safeNom}" ${i === 0 ? "checked" : ""} class="sr-only peer">
                     <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex items-center gap-2">
                         <i class="fas fa-glass-water text-accent"></i>
-                        <span class="font-bold text-gray-800 text-sm">${safeNom}</span>
+                        <span class="font-bold text-text text-sm">${safeNom}</span>
                     </div>
                 </label>
             `;}).join("")}
@@ -244,9 +244,9 @@ class ProductModalUI {
       const max = parseInt(item.choixSauces.max) || 2;
       const list = item.choixSauces.liste || ["Blanche", "Algérienne", "Samouraï", "Mayonnaise"];
       html += `<fieldset class="mb-4">
-        <legend class="text-lg font-black text-gray-900 mb-2 flex justify-between items-center">
+        <legend class="text-lg font-black text-text mb-2 flex justify-between items-center">
             <span>Sauces (${max} max)</span>
-            <span class="text-[10px] font-black bg-gray-900 text-white px-2 py-1 rounded-full uppercase tracking-widest">
+            <span class="text-[10px] font-black bg-gray-900 text-on-dark px-2 py-1 rounded-full uppercase tracking-widest">
                 <span id="sauce-counter-ui">0</span> / ${max}
             </span>
         </legend>
@@ -257,7 +257,7 @@ class ProductModalUI {
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="sauce" value="${safe}" data-max="${max}" class="sr-only peer sauce-checkbox" onchange="window.checkSauceLimit(event, ${max})">
                     <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex justify-center items-center">
-                        <span class="font-bold text-gray-800 text-sm">${safe}</span>
+                        <span class="font-bold text-text text-sm">${safe}</span>
                     </div>
                 </label>
             `;}).join("")}
@@ -270,9 +270,9 @@ class ProductModalUI {
     // par la cuisine (admin-kitchen), le panier et les favoris.
     if (this.currentProduct.hasCrudites && Array.isArray(this.currentProduct.crudites) && this.currentProduct.crudites.length) {
       html += `<fieldset class="mb-4">
-        <legend class="text-lg font-black text-gray-900 mb-2 flex justify-between items-center">
+        <legend class="text-lg font-black text-text mb-2 flex justify-between items-center">
             <span>Crudités</span>
-            <span class="text-[10px] font-black bg-gray-900 text-white px-2 py-1 rounded-full uppercase tracking-widest">À retirer</span>
+            <span class="text-[10px] font-black bg-gray-900 text-on-dark px-2 py-1 rounded-full uppercase tracking-widest">À retirer</span>
         </legend>
         <div class="grid grid-cols-2 gap-3">
             ${this.currentProduct.crudites.map(c => {
@@ -281,7 +281,7 @@ class ProductModalUI {
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="crudite" value="${safe}" class="sr-only peer crudite-checkbox">
                     <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-red-400 peer-checked:bg-red-50 transition-all flex justify-center items-center">
-                        <span class="font-bold text-gray-800 text-sm">Sans ${safe}</span>
+                        <span class="font-bold text-text text-sm">Sans ${safe}</span>
                     </div>
                 </label>
             `;}).join("")}
@@ -332,11 +332,11 @@ class ProductModalUI {
 
     if (isOrderingEnabled) {
       btn.innerHTML = `<span>Ajouter - ${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
-      btn.className = "w-full py-4 rounded-xl font-bold text-white bg-gray-900 hover:bg-primary hover:scale-105 transition-all flex justify-center items-center gap-2";
+      btn.className = "w-full py-4 rounded-xl font-bold text-on-dark bg-gray-900 hover:bg-primary hover:scale-105 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => window.confirmAddToCart();
     } else {
       btn.textContent = "Fermer";
-      btn.className = "w-full py-4 rounded-xl font-bold text-gray-800 bg-gray-100 hover:bg-gray-200 transition-all flex justify-center items-center gap-2";
+      btn.className = "w-full py-4 rounded-xl font-bold text-text bg-gray-100 hover:bg-gray-200 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => this.close();
     }
   }

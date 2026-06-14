@@ -156,7 +156,7 @@ function startOrderTracking(orderId) {
         if (commande.statut === "en_attente_client") {
           if (trackingBadge) {
             trackingBadge.className =
-              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
+              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-on-dark px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
           }
           if (badgeText) badgeText.textContent = "En attente de votre arrivée";
 
@@ -166,11 +166,11 @@ function startOrderTracking(orderId) {
           }
           if (icon) {
             icon.className =
-              "fas fa-car text-5xl text-gray-500 transition-transform duration-500 animate-pulse";
+              "fas fa-car text-5xl text-text-muted transition-transform duration-500 animate-pulse";
           }
           if (title) {
             title.textContent = "Commande reçue !";
-            title.className = "text-3xl font-black text-gray-900 tracking-tight";
+            title.className = "text-3xl font-black text-text tracking-tight";
           }
           if (subtitle) {
             subtitle.innerHTML =
@@ -181,7 +181,7 @@ function startOrderTracking(orderId) {
             actionBtn.innerHTML =
               "<i class='fas fa-car mr-2' aria-hidden='true'></i> Je suis à 5 min / Sur place";
             actionBtn.className =
-              "w-full bg-blue-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
+              "w-full bg-blue-600 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Signaler mon arrivée au restaurant pour lancer la cuisson");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "notify-arrival");
@@ -193,7 +193,7 @@ function startOrderTracking(orderId) {
         else if (commande.statut === "nouvelle") {
           if (trackingBadge) {
             trackingBadge.className =
-              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
+              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-on-dark px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
           }
           if (badgeText) badgeText.textContent = "Commande en cours";
 
@@ -207,7 +207,7 @@ function startOrderTracking(orderId) {
           }
           if (title) {
             title.textContent = "En cuisine !";
-            title.className = "text-3xl font-black text-gray-900 tracking-tight";
+            title.className = "text-3xl font-black text-text tracking-tight";
           }
           if (subtitle) {
             const eta = etaText(commande);
@@ -221,7 +221,7 @@ function startOrderTracking(orderId) {
           if (actionBtn) {
             actionBtn.textContent = "Super, j'attends !";
             actionBtn.className =
-              "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
+              "w-full bg-gray-900 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Fermer la fenêtre de suivi de commande");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
@@ -234,7 +234,7 @@ function startOrderTracking(orderId) {
         else if (commande.statut === "prete") {
           if (trackingBadge) {
             trackingBadge.className =
-              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
+              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-on-dark px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
           }
           if (badgeText) badgeText.textContent = "C'EST PRÊT !";
 
@@ -262,12 +262,12 @@ function startOrderTracking(orderId) {
 
             subtitle.innerHTML = `
               <div class="mt-6 p-6 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                <p class="text-xs text-gray-400 uppercase font-black tracking-widest mb-1">Code de retrait</p>
-                <p class="text-5xl font-black text-gray-900 mb-2 font-mono tracking-tighter">${secretCode}</p>
+                <p class="text-xs text-text-muted uppercase font-black tracking-widest mb-1">Code de retrait</p>
+                <p class="text-5xl font-black text-text mb-2 font-mono tracking-tighter">${secretCode}</p>
                 <div class="h-px bg-gray-200 w-12 mx-auto my-3"></div>
-                <p class="text-sm font-bold text-gray-600"><i class="fas fa-user mr-1 text-gray-400"></i> ${clientDisplay}</p>
+                <p class="text-sm font-bold text-text-muted"><i class="fas fa-user mr-1 text-text-muted"></i> ${clientDisplay}</p>
               </div>
-              <p class="mt-4 text-gray-500 font-medium">${
+              <p class="mt-4 text-text-muted font-medium">${
                 commande.mode === "delivery"
                   ? "Un livreur va récupérer votre commande. Gardez ce code pour la remise."
                   : "Présentez cet écran au comptoir pour récupérer votre commande."
@@ -280,7 +280,7 @@ function startOrderTracking(orderId) {
               ? "<i class='fas fa-motorcycle mr-2' aria-hidden='true'></i> Super, j'attends le livreur"
               : "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
             actionBtn.className =
-              "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
+              "w-full bg-green-600 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
             actionBtn.setAttribute("aria-label", deliv ? "Fermer la fenêtre. Un livreur va arriver." : "Fermer la fenêtre. Commande prête à être retirée.");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
@@ -301,7 +301,7 @@ function startOrderTracking(orderId) {
         else if (commande.statut === "en_livraison") {
           if (trackingBadge) {
             trackingBadge.className =
-              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
+              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-blue-600 text-on-dark px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
           }
           if (badgeText) badgeText.textContent = "EN LIVRAISON";
           if (iconContainer) {
@@ -314,7 +314,7 @@ function startOrderTracking(orderId) {
           }
           if (title) {
             title.textContent = "En livraison !";
-            title.className = "text-3xl font-black text-gray-900 tracking-tight";
+            title.className = "text-3xl font-black text-text tracking-tight";
           }
           if (subtitle) {
             const driverPos = commande.livreur?.position;
@@ -324,12 +324,12 @@ function startOrderTracking(orderId) {
               distLine = `Votre livreur est à <b class="text-blue-600">${formatDistance(haversineKm(driverPos, dest))}</b> de chez vous.`;
             }
             const driverName = window.escapeHTML(commande.livreur?.nom || "Votre livreur");
-            subtitle.innerHTML = `<span class="block text-gray-600">${distLine}</span><span class="block mt-2 text-sm text-gray-400"><i class="fas fa-user mr-1"></i>${driverName}</span>`;
+            subtitle.innerHTML = `<span class="block text-text-muted">${distLine}</span><span class="block mt-2 text-sm text-text-muted"><i class="fas fa-user mr-1"></i>${driverName}</span>`;
           }
           if (actionBtn) {
             actionBtn.innerHTML = "<i class='fas fa-check mr-2'></i> Suivre";
             actionBtn.className =
-              "w-full bg-gray-900 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
+              "w-full bg-gray-900 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Fermer le suivi de livraison.");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
@@ -354,11 +354,11 @@ function startOrderTracking(orderId) {
           if (subtitle) {
             const photo = commande.livreur?.dropoffUrl;
             const safe = window.safeURL ? window.safeURL(photo) : photo;
-            subtitle.innerHTML = `<p class="text-gray-500 font-medium mb-3">Bon appétit ! Merci pour votre commande.</p>${
+            subtitle.innerHTML = `<p class="text-text-muted font-medium mb-3">Bon appétit ! Merci pour votre commande.</p>${
               photo
                 ? `<a href="${safe}" target="_blank" rel="noopener" class="block">
                      <img src="${safe}" alt="Preuve de livraison" class="mx-auto rounded-2xl max-h-48 shadow-md border border-gray-200">
-                     <span class="block mt-2 text-xs text-gray-400"><i class="fas fa-magnifying-glass-plus mr-1"></i>Preuve de livraison · toucher pour agrandir</span>
+                     <span class="block mt-2 text-xs text-text-muted"><i class="fas fa-magnifying-glass-plus mr-1"></i>Preuve de livraison · toucher pour agrandir</span>
                    </a>`
                 : ""
             }`;
@@ -366,7 +366,7 @@ function startOrderTracking(orderId) {
           if (actionBtn) {
             actionBtn.innerHTML = "<i class='fas fa-thumbs-up mr-2'></i> Parfait, merci !";
             actionBtn.className =
-              "w-full bg-green-600 text-white font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
+              "w-full bg-green-600 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Fermer. Commande livrée.");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
