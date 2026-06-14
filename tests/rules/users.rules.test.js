@@ -61,6 +61,11 @@ describe("users.update — tenant-scope strict (R3)", () => {
     const db = testEnv.authenticatedContext("admin_A").firestore();
     await assertFails(updateDoc(doc(db, "users", "driver_A"), { rewardsAvailable: { snackA: 99 } }));
   });
+
+  it("REFUSE l'admin de forger l'horodatage anti-doublon (loyaltyLastCredit, LOT F3)", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertFails(updateDoc(doc(db, "users", "driver_A"), { loyaltyLastCredit: { snackA: 0 } }));
+  });
 });
 
 describe("users.create — verrouillage (R3)", () => {

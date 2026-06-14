@@ -124,6 +124,25 @@ async function cleanupInvalidFcmToken(userId, error) {
 // Palier fidélité partagé (scan boutique ET commande payée). À MAX → menu offert.
 const MAX_LOYALTY_POINTS = 10;
 
+// 🛡️ ANTI-DOUBLON (F3) — fenêtre pendant laquelle un client ne peut gagner qu'UN
+// point par snack, TOUS CANAUX confondus (scan boutique + commande en ligne). Évite
+// le double crédit pour un même achat (ex. commande en ligne puis scan du QR au
+// comptoir). Configurable par snack via loyalty.creditCooldownMin (0 = désactivé).
+const DEFAULT_LOYALTY_COOLDOWN_MS = 10 * 60_000; // 10 min
+
+/**
+ * Résout la fenêtre anti-doublon (ms) d'un snack : loyalty.creditCooldownMin (minutes,
+ * 0 désactive) sinon le défaut. Lue UNE fois par l'appelant et passée au helper, pour
+ * que scan et commande partagent EXACTEMENT le même cooldown (unification F3).
+ * @param {Object} snackData - Document snacks/{snackId}.
+ * @returns {number} Durée du cooldown en millisecondes (>= 0).
+ */
+function resolveLoyaltyCooldownMs(snackData) {
+  const min = Number(snackData?.loyalty?.creditCooldownMin);
+  if (Number.isFinite(min) && min >= 0) return Math.round(min * 60_000);
+  return DEFAULT_LOYALTY_COOLDOWN_MS;
+}
+
 /**
  * Crédite n point(s) de fidélité (EARNING) sur pointsBySnack.{snackId}, dans une transaction.
  *
@@ -132,28 +151,43 @@ const MAX_LOYALTY_POINTS = 10;
  *   - Au franchissement du palier, on N'écrase PAS le point gagné : le total est
  *     reporté (`total % MAX`) et chaque palier complété banque une récompense durable
  *     dans rewardsAvailable.{snackId} (`floor(total / MAX)`). Plus aucun point perdu.
- *   - La récompense est désormais PERSISTÉE (banque) puis consommée par une action
- *     explicite de redemption (cf. redeemLoyaltyReward) — l'ancien modèle "remise à 0
- *     au crédit suivant" pouvait silencieusement consommer un menu offert lors d'une
- *     commande en ligne (client facturé plein tarif). Corrigé ici.
+ *   - La récompense est PERSISTÉE (banque) puis consommée par redeemLoyaltyReward.
  *
- * N'émet PAS le push (effet de bord à faire APRÈS commit) et ne touche PAS
- * loyaltyLastScan (cooldown propre au scan). Read-Old/Write-New : les docs sans
- * rewardsAvailable sont traités comme 0 (zéro migration).
+ * Anti-doublon (LOT F3) : si un crédit a déjà eu lieu sur la fenêtre `cooldownMs`
+ * (loyaltyLastCredit.{snackId}, écrit ICI à chaque crédit → unifié scan + commande),
+ * on NE crédite PAS et on renvoie `{skipped:true}` (l'appelant décide : le scan lève
+ * une erreur lisible, la commande payée ignore silencieusement). N'émet PAS le push
+ * (effet de bord après commit). Read-Old/Write-New : champs absents traités comme 0.
  *
  * @param {FirebaseFirestore.Transaction} tx - Transaction Firestore en cours.
  * @param {FirebaseFirestore.DocumentReference} clientRef - Réf. du doc users/{uid}.
  * @param {string} snackId - Clé de partitionnement multi-tenant.
  * @param {number} [n=1] - Nombre de points à créditer (1 en pratique : scan & commande).
- * @returns {Promise<{points:number, max:number, reward:boolean, earned:number, rewardsAvailable:number, fcmToken:(string|null)}>}
+ * @param {number} [cooldownMs=DEFAULT_LOYALTY_COOLDOWN_MS] - Fenêtre anti-doublon (0 = off).
+ * @returns {Promise<{skipped:boolean, points:number, max:number, reward:boolean, earned:number, rewardsAvailable:number, fcmToken:(string|null)}>}
  * @throws {HttpsError} not-found si le doc client n'existe pas.
  */
-async function creditLoyaltyPoints(tx, clientRef, snackId, n = 1) {
+async function creditLoyaltyPoints(tx, clientRef, snackId, n = 1, cooldownMs = DEFAULT_LOYALTY_COOLDOWN_MS) {
   const snap = await tx.get(clientRef);
   if (!snap.exists) throw new HttpsError("not-found", "Client introuvable.");
   const d = snap.data();
   const current = (d.pointsBySnack || {})[snackId] || 0;
   const availableBefore = (d.rewardsAvailable || {})[snackId] || 0;
+
+  // 🛡️ Cooldown anti-doublon (F3) — tous canaux confondus via loyaltyLastCredit.
+  const lastCredit = (d.loyaltyLastCredit || {})[snackId];
+  const lastMs = lastCredit && lastCredit.toMillis ? lastCredit.toMillis() : 0;
+  if (cooldownMs > 0 && lastMs && Date.now() - lastMs < cooldownMs) {
+    return {
+      skipped: true,
+      points: current,
+      max: MAX_LOYALTY_POINTS,
+      reward: false,
+      earned: 0,
+      rewardsAvailable: availableBefore,
+      fcmToken: d.fcmToken || null,
+    };
+  }
 
   // Report : le point gagné compte toujours, même au franchissement du palier.
   const total = current + n;
@@ -161,11 +195,16 @@ async function creditLoyaltyPoints(tx, clientRef, snackId, n = 1) {
   const newPoints = total % MAX_LOYALTY_POINTS;          // progression reportée 0..MAX-1
   const newAvailable = availableBefore + earned;
 
-  const update = { [`pointsBySnack.${snackId}`]: newPoints };
+  const update = {
+    [`pointsBySnack.${snackId}`]: newPoints,
+    // Horodatage unifié du dernier crédit (anti-doublon F3, scan + commande).
+    [`loyaltyLastCredit.${snackId}`]: admin.firestore.FieldValue.serverTimestamp(),
+  };
   if (earned > 0) update[`rewardsAvailable.${snackId}`] = newAvailable;
   tx.update(clientRef, update);
 
   return {
+    skipped: false,
     points: newPoints,
     max: MAX_LOYALTY_POINTS,
     reward: earned > 0,
@@ -1338,10 +1377,18 @@ exports.finalizeOrder = onCall(
     // livraison (mode-agnostique). Ancré dans le bloc post-création idempotent
     // (les retries retournent §4/§5 avant ce point) → jamais de double crédit.
     // try/catch isolé : un échec fidélité ne casse jamais une commande déjà payée.
+    // Anti-doublon F3 : le cooldown unifié (loyaltyLastCredit) peut SKIP ce crédit si
+    // un point vient d'être gagné (ex. scan boutique juste avant) — skip silencieux,
+    // jamais d'erreur sur une commande déjà payée.
     try {
       const clientRef = db.collection("users").doc(uid);
-      const res = await db.runTransaction((tx) => creditLoyaltyPoints(tx, clientRef, snackId, 1));
-      if (res.reward) await sendRewardPush(uid, res.fcmToken, snackId);
+      const cooldownMs = resolveLoyaltyCooldownMs(snackData);
+      const res = await db.runTransaction((tx) => creditLoyaltyPoints(tx, clientRef, snackId, 1, cooldownMs));
+      if (res.skipped) {
+        console.log(`finalizeOrder fidélité ignorée (anti-doublon F3) pour ${uid} / ${snackId}.`);
+      } else if (res.reward) {
+        await sendRewardPush(uid, res.fcmToken, snackId);
+      }
     } catch (loyErr) {
       console.error("finalizeOrder crédit fidélité échoué :", loyErr);
     }
@@ -1899,8 +1946,10 @@ exports.createSnackAdmin = onCall({ region: "europe-west1" }, async (request) =>
 // ❤️ FIDÉLITÉ : crédit d'un point côté SERVEUR (transaction + anti double-scan)
 // ============================================================================
 // Remplace l'écriture client du scanner (src/scanner.js). L'admin du snack (ou
-// superadmin) scanne le QR (uid client) → +1 point, ou remise à 0 + récompense
-// au palier de 10. Transaction = pas de race au seuil ; cooldown = pas de double-scan.
+// superadmin) scanne le QR (uid client) → +1 point (report + banque au palier de 10).
+// Transaction = pas de race au seuil ; cooldown anti-doublon UNIFIÉ (F3) dans le
+// helper (loyaltyLastCredit) → couvre le re-scan accidentel ET le cumul avec une
+// commande en ligne récente. Le snack peut régler la fenêtre (loyalty.creditCooldownMin).
 exports.awardLoyaltyPoint = onCall({ region: "europe-west1" }, async (request) => {
   const data = request.data;
   require_(V.isPlainObject(data), "Payload invalide.");
@@ -1911,30 +1960,18 @@ exports.awardLoyaltyPoint = onCall({ region: "europe-west1" }, async (request) =
   await assertCallerIsSnackAdmin(request, snackId);
   await enforceRateLimit({ key: callerKey(request, "awardLoyaltyPoint"), max: 60, windowMs: 60_000 });
 
-  const COOLDOWN_MS = 20_000; // anti double-scan accidentel
+  // Cooldown lu sur le snack (même source que finalizeOrder → fenêtre unifiée F3).
+  const snackSnap = await db.collection("snacks").doc(snackId).get();
+  const cooldownMs = resolveLoyaltyCooldownMs(snackSnap.exists ? snackSnap.data() : {});
   const clientRef = db.collection("users").doc(clientUid);
 
-  const result = await db.runTransaction(async (tx) => {
-    // Anti-rejeu : refuse un re-scan trop rapproché (double-scan accidentel).
-    // Lecture dédiée au cooldown (loyaltyLastScan), propre au scan boutique.
-    const snap = await tx.get(clientRef);
-    if (!snap.exists) {
-      throw new HttpsError("not-found", "Ce QR code n'est pas dans la base.");
-    }
-    const lastScan = (snap.data().loyaltyLastScan || {})[snackId];
-    const lastMs = lastScan && lastScan.toMillis ? lastScan.toMillis() : 0;
-    if (lastMs && Date.now() - lastMs < COOLDOWN_MS) {
-      throw new HttpsError("failed-precondition", "Carte déjà scannée à l'instant.");
-    }
+  const result = await db.runTransaction((tx) => creditLoyaltyPoints(tx, clientRef, snackId, 1, cooldownMs));
 
-    // Crédit via le helper partagé (scan + commande) → +1 point, palier/reset unifiés.
-    const res = await creditLoyaltyPoints(tx, clientRef, snackId, 1);
-    // Marque l'instant du scan (cooldown spécifique boutique, hors helper).
-    tx.update(clientRef, {
-      [`loyaltyLastScan.${snackId}`]: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    return res;
-  });
+  // Anti-doublon : un point a déjà été gagné récemment (scan OU commande) → on
+  // refuse explicitement pour informer l'admin (UX scanner), sans rien créditer.
+  if (result.skipped) {
+    throw new HttpsError("failed-precondition", "Point déjà crédité à l'instant (anti-doublon).");
+  }
 
   // Push de palier émis APRÈS commit (jamais dans la transaction, qui peut rejouer).
   if (result.reward) await sendRewardPush(clientUid, result.fcmToken, snackId);
