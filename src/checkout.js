@@ -331,7 +331,10 @@ async function submitStripePayment() {
   try {
     const { error, paymentIntent } = await stripeInstance.confirmPayment({
       elements: stripeElements,
-      confirmParams: {},
+      // return_url OBLIGATOIRE dès qu'un moyen de paiement redirige (3DS mobile, wallets…) :
+      // sans elle, confirmPayment THROW (≠ erreur retournée) -> échec mobile. Avec
+      // redirect:"if_required", la majorité des cartes restent inline (return_url = filet).
+      confirmParams: { return_url: window.location.origin + window.location.pathname },
       redirect: "if_required",
     });
 
