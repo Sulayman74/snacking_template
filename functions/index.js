@@ -920,7 +920,11 @@ exports.createPaymentIntent = onCall(
 
       const paymentIntent = await stripe.paymentIntents.create(params, requestOptions);
 
-      return { clientSecret: paymentIntent.client_secret };
+      // `stripeAccountId` est renvoyé au client : en charge DIRECTE, Stripe.js doit
+      // initialiser Elements avec `{ stripeAccount }` (sinon elements/sessions → 400,
+      // la clé plateforme ne voit pas le PI du compte connecté). Non sensible : c'est
+      // un identifiant de compte (les docs `snacks` sont déjà en lecture publique).
+      return { clientSecret: paymentIntent.client_secret, stripeAccountId: stripeAccountId || null };
     } catch (error) {
       console.error("❌ Erreur Stripe PaymentIntent :", error);
       if (error instanceof HttpsError) throw error;
