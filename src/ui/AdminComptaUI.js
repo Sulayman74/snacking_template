@@ -281,9 +281,13 @@ class AdminComptaUI {
     }
 
     renderTableRow(s) {
-        const date = s.date?.toDate ? s.date.toDate() : new Date(s.date);
-        const dateStr = escapeHTML(date.toLocaleDateString([], { day: '2-digit', month: '2-digit' }));
-        const timeStr = escapeHTML(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        // Date robuste : Timestamp Firestore, ms/ISO, ou absente. Une commande sans
+        // `date` valide (legacy / serverTimestamp non résolu) ne doit pas afficher
+        // « Invalid Date » mais « — ».
+        const d = s.date?.toDate ? s.date.toDate() : (s.date != null ? new Date(s.date) : null);
+        const valid = d && !isNaN(d.getTime());
+        const dateStr = valid ? escapeHTML(d.toLocaleDateString([], { day: '2-digit', month: '2-digit' })) : "—";
+        const timeStr = valid ? escapeHTML(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : "";
 
         return `
             <tr class="hover:bg-blue-50/30 transition-colors group">
