@@ -1,6 +1,21 @@
 @import "tailwindcss";
 @import "./app-bg.css"; /* 🌈 fond mesh dérivé du thème (après Tailwind pour cascader sur les vars) */
 
+/* 🌗 DARK MODE (Tailwind v4 — configuré en CSS, pas de tailwind.config.js).
+   Axe ORTHOGONAL à la palette : palette = data-theme (posé par AppUI), mode = classe .dark
+   sur <html> (les deux coexistent). Le variant `dark:` répond à DEUX sources :
+     1. classe .dark explicite (toggle manuel persistant, cf. src/theme-mode.js) ;
+     2. préférence OS prefers-color-scheme: dark, SAUF si l'utilisateur a forcé le clair
+        (classe .light sur <html>) -> 3 états : clair / sombre / système.
+   Les composants consommant les tokens neutres (text-text, bg-surface…) basculent SEULS :
+   il suffit de redéfinir les valeurs sombres des tokens une fois (cf. bloc .dark plus bas). */
+@custom-variant dark {
+  &:where(.dark, .dark *) { @slot; }
+  @media (prefers-color-scheme: dark) {
+    &:where(:not(.light *)) { @slot; }
+  }
+}
+
 /* ============================================================================
    🎨 DESIGN TOKENS SAAS — Variables CSS pilotées par JS au runtime
    Tailwind v4 génère bg-primary, text-accent, border-primary,
@@ -44,6 +59,39 @@ body {
   /* Empêche les rebonds bizarres sur mobile lors du scroll */
   overscroll-behavior-y: none;
 }
+
+/* 🌗 Valeurs SOMBRES des tokens neutres — définies UNE seule fois.
+   theme-mode.js (et le script anti-flash inline) posent TOUJOURS la classe .dark de façon
+   explicite, y compris en mode "système" (résolu via matchMedia). Une seule règle suffit
+   donc ici ; le @media du @custom-variant n'est qu'un filet pré-hydratation / sans-JS.
+   La palette (--color-primary/-accent), pilotée par AppUI, reste inchangée : seul le NEUTRE
+   bascule, donc les 6 palettes fonctionnent en sombre sans réglage par palette. */
+.dark {
+  --color-surface: #1a1d23;     /* cartes / surfaces */
+  --color-text: #e5e7eb;        /* texte principal */
+  --color-text-muted: #9ca3af;  /* texte secondaire */
+  --color-danger: #f87171;      /* rouge plus clair -> lisible sur fond sombre (= red-400) */
+  --bg-base: #0f1115;           /* base du mesh + fond de page en sombre */
+  color-scheme: dark;           /* accorde scrollbars / inputs natifs / form controls */
+}
+
+/* Fond de page sombre : doit battre le `:root,html,body{background:… !important}` injecté
+   par vite (anti-flash clair). On gagne par SPÉCIFICITÉ supérieure (html.dark > html/body). */
+html.dark,
+html.dark body {
+  background: var(--bg-base) !important;
+}
+
+/* 🩹 Stopgap sombre pour les neutres ENCORE en dur (bg-gray-50/100, bordures) que la passe
+   "profondeur" (PR1b) n'a pas encore tokenisés. Sans ça, des panneaux/inputs clairs et des
+   bordures vives traîneraient sur fond sombre. À RETIRER quand ces neutres passeront aux tokens. */
+.dark .bg-gray-50,
+.dark .bg-gray-100 { background-color: #23272f; }
+.dark .bg-gray-200 { background-color: #2d323b; }
+.dark .border,
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 { border-color: #2d323b; }
 
 #boot-splash {
   position: fixed;

@@ -30,3 +30,16 @@
     radial-gradient(at 82% 86%, color-mix(in srgb, var(--color-accent,  transparent) 15%, transparent) 0, transparent 52%),
     radial-gradient(at  6% 92%, color-mix(in srgb, var(--color-primary, transparent) 10%, transparent) 0, transparent 46%);
 }
+
+/* 🌗 Mesh SOMBRE — base = --bg-base (posée dans .dark), nappes REMONTÉES car les couleurs
+   de marque saturées se voient moins sur fond sombre. Une seule règle pour les 6 palettes
+   (les nappes restent dérivées de --color-primary/-accent pilotés par AppUI). Placée APRÈS
+   la règle belly : à spécificité égale (0,2,0) le sombre l'emporte sur le réglage clair. */
+.dark .app-bg {
+  background-color: var(--bg-base, #0f1115);
+  background-image:
+    radial-gradient(at 18% 12%, color-mix(in srgb, var(--color-accent,  transparent) 24%, transparent) 0, transparent 46%),
+    radial-gradient(at 86% 10%, color-mix(in srgb, var(--color-primary, transparent) 18%, transparent) 0, transparent 42%),
+    radial-gradient(at 82% 86%, color-mix(in srgb, var(--color-accent,  transparent) 20%, transparent) 0, transparent 52%),
+    radial-gradient(at  6% 92%, color-mix(in srgb, var(--color-primary, transparent) 16%, transparent) 0, transparent 46%);
+}

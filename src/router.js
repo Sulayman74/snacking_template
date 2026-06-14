@@ -12,6 +12,10 @@ document.addEventListener("click", async (event) => {
   const id = target.getAttribute("data-id");
 
   switch (action) {
+    case "cycle-theme":
+      window.cycleThemeMode?.();
+      break;
+
     case "switch-home":
       window.triggerVibration?.("light");
       window.closeFavoritesView?.();
