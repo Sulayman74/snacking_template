@@ -68,7 +68,7 @@ export class Store extends EventTarget {
     /**
      * Confronte un article re-commandé (favori, ancienne commande) au menu courant.
      * Courtoisie UX uniquement : la barrière de sécurité reste le recalcul serveur
-     * de finalizeOrder (functions/index.js, assertCartPricesAreLegit).
+     * de createPaymentIntent/finalizeOrder (functions/index.js, computeAuthoritativeOrder).
      *
      * Réplique le calcul de prix client (src/product-modal.js) : prix de base ou
      * prix de la taille choisie, + supplément menu (menuPriceAdd || 2.5) en formule.

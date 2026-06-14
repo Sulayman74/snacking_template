@@ -326,10 +326,12 @@ function allowedUnitPriceCents(product) {
   return set;
 }
 
-// Vérifie que CHAQUE prix unitaire facturé correspond à un prix réel du produit
-// en base, puis que le montant encaissé par Stripe couvre au moins la somme des
-// articles. Lève une HttpsError si une manipulation de prix est détectée.
-async function assertCartPricesAreLegit(cartItems, paidAmountCents, snackId) {
+// Vérifie que CHAQUE prix unitaire facturé correspond à un prix réel du produit en
+// base (anti-fraude) et calcule le sous-total articles + la ventilation TVA. La
+// couverture par l'encaissement Stripe est vérifiée par l'appelant (finalizeOrder),
+// car createPaymentIntent appelle ce helper AVANT tout débit (le montant n'existe
+// pas encore). Lève une HttpsError si une manipulation de prix est détectée.
+async function priceCartItems(cartItems, snackId) {
   const TOL = 1; // ±1 centime (arrondis flottants)
 
   // Lecture groupée des produits (un getAll au lieu de N getDoc).
@@ -359,16 +361,96 @@ async function assertCartPricesAreLegit(cartItems, paidAmountCents, snackId) {
     lines.push({ productId: item.productId, ttcCents, tvaRate: normalizeTvaRate(product.tvaRate) });
   }
 
-  // Le montant réellement encaissé (immuable, source Stripe) doit AU MOINS couvrir
-  // la valeur des articles. La livraison ne peut qu'ajouter par-dessus.
-  require_(
-    paidAmountCents + TOL >= expectedItemsCents,
-    "Montant encaissé inférieur à la valeur réelle du panier."
-  );
-
   // itemsCents : sous-total articles (centimes), prix validés → réutilisable (minOrder).
   // lines : ventilation par ligne (TTC + taux) pour le calcul tvaBreakdown (LOT A).
   return { itemsCents: expectedItemsCents, lines };
+}
+
+/**
+ * Recalcule et VALIDE le total d'une commande à partir de sources SERVEUR de
+ * confiance (prix produits en base, config livraison du snack). Source de vérité
+ * UNIQUE (DRY) consommée par createPaymentIntent (montant du PaymentIntent, fixé
+ * AVANT débit → anti charge orpheline F1) ET finalizeOrder (montant de la commande).
+ * Lève une HttpsError si fraude prix / adresse hors-zone / panier sous le minimum.
+ * @param {Object} snackData - Document snacks/{snackId} (config livraison incluse).
+ * @param {string} snackId - Clé multi-tenant.
+ * @param {Array<Object>} cartItems - Articles du panier (prix recalculés en base).
+ * @param {"collect"|"delivery"} orderMode - Mode de la commande.
+ * @param {Object|null} livraison - Adresse client {lat,lng,adresse} (mode delivery).
+ * @returns {Promise<{itemsCents:number, lines:Array, fraisCents:number, totalCents:number, livraisonData:(Object|null), distanceKm:(number|null)}>}
+ * @throws {HttpsError} prix manipulé / out-of-range / minimum non atteint.
+ */
+async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison) {
+  const { itemsCents, lines } = await priceCartItems(cartItems, snackId);
+
+  let livraisonData = null;
+  let distanceKm = null;
+  let fraisCents = 0;
+
+  if (orderMode === "delivery") {
+    const dcfg = snackData.delivery || {};
+    const resto = { lat: numberOrNull(snackData.restaurantLat), lng: numberOrNull(snackData.restaurantLng) };
+    const client = { lat: livraison.lat, lng: livraison.lng };
+    const d = haversineKm(resto, client);
+    const hasDist = Number.isFinite(d);
+    distanceKm = hasDist ? d : null;
+
+    // 🛡️ REJET HORS-ZONE — autorité serveur sur la zone. On n'enforce que si un
+    // rayon est configuré et la distance calculable (resto non géocodé / rayon
+    // absent → permissif, cohérent avec le quoteDelivery client). Borne <= radiusKm.
+    const radiusKm = Number(dcfg.radiusKm);
+    if (Number.isFinite(radiusKm) && radiusKm > 0 && hasDist && d > radiusKm) {
+      throw new HttpsError("out-of-range", "Adresse hors de la zone de livraison de ce restaurant.");
+    }
+
+    // 🛡️ PANIER MINIMUM — uniquement en livraison, sur le SOUS-TOTAL articles.
+    const minOrder = Number(dcfg.minOrder);
+    if (Number.isFinite(minOrder) && minOrder > 0 && itemsCents < Math.round(minOrder * 100)) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Minimum de commande pour la livraison : ${minOrder.toFixed(2)} €.`
+      );
+    }
+
+    livraisonData = {
+      adresse: (livraison.adresse || "").toString().slice(0, 300),
+      lat: client.lat,
+      lng: client.lng,
+      distanceKm: hasDist ? Math.round(d * 10) / 10 : null,
+      frais: isFiniteNum(dcfg.frais) ? dcfg.frais : 0, // frais issus de la config (jamais du client)
+    };
+    fraisCents = Math.round((livraisonData.frais || 0) * 100);
+  }
+
+  return { itemsCents, lines, fraisCents, totalCents: itemsCents + fraisCents, livraisonData, distanceKm };
+}
+
+/**
+ * Rembourse (best-effort) une charge devenue ORPHELINE : le PaymentIntent a réussi
+ * (client débité) mais la commande est rejetée APRÈS débit (prix manipulé entre la
+ * création du PI et la finalisation, panier divergent…). Évite de laisser de l'argent
+ * encaissé sans contrepartie (F1). Idempotent (clé), no-op si déjà remboursé, et ne
+ * masque JAMAIS l'erreur de validation d'origine (on log seulement en cas d'échec).
+ * @param {import("stripe").Stripe} stripe - Client Stripe.
+ * @param {Object} paymentIntent - PI récupéré (latest_charge éventuellement expandé).
+ * @param {string|null} stripeAccountId - Compte connecté (charge directe) ou null.
+ * @returns {Promise<void>}
+ */
+async function refundOrphanChargeBestEffort(stripe, paymentIntent, stripeAccountId) {
+  try {
+    const charge = paymentIntent.latest_charge;
+    const alreadyRefunded =
+      charge && typeof charge === "object" &&
+      (charge.refunded === true || Number(charge.amount_refunded) > 0);
+    if (alreadyRefunded) return;
+
+    const opts = { idempotencyKey: `orphan_refund_${paymentIntent.id}` };
+    if (stripeAccountId) opts.stripeAccount = stripeAccountId;
+    await stripe.refunds.create({ payment_intent: paymentIntent.id }, opts);
+    console.warn(`↩️ Charge orpheline remboursée (PI ${paymentIntent.id}) : commande rejetée après débit.`);
+  } catch (refundErr) {
+    console.error(`❌ Échec remboursement auto charge orpheline (PI ${paymentIntent.id}) :`, refundErr);
+  }
 }
 
 // ============================================================================
@@ -695,10 +777,16 @@ exports.createPaymentIntent = onCall(
     const data = request.data;
     require_(V.isPlainObject(data), "Payload invalide.");
 
-    const { amount, currency, description, metadata, snackId } = data;
+    // 🛡️ ANTI CHARGE ORPHELINE (F1) — le montant du PaymentIntent est désormais
+    // RECALCULÉ côté serveur depuis le panier + la config livraison (jamais le
+    // `amount` client, conservé seulement pour compat/traçabilité). On valide donc
+    // le panier AVANT de débiter : prix manipulé / hors-zone / minimum → rejet sans
+    // aucune charge. Le client recalculait déjà côté UI ; ici c'est l'autorité.
+    const { currency, description, metadata, snackId, cartItems, mode, livraison } = data;
 
-    require_(V.isPositiveInt(amount, 1_000_000), "Montant invalide.");
-    require_(amount >= 50, "Montant inférieur au minimum (0,50 €).");
+    require_(V.isDocId(snackId), "snackId invalide.");
+    require_(V.isArray(cartItems) && cartItems.length > 0, "cartItems vide ou invalide.");
+    require_(cartItems.length <= 100, "Panier trop volumineux.");
     require_(
       currency === undefined || (V.isString(currency) && /^[a-z]{3}$/i.test(currency)),
       "Devise invalide."
@@ -712,48 +800,63 @@ exports.createPaymentIntent = onCall(
       metadata === undefined || V.isPlainObject(metadata),
       "Metadata invalides."
     );
-    require_(
-      snackId === undefined || snackId === null || V.isDocId(snackId),
-      "snackId invalide."
-    );
+
+    // Validation détaillée de chaque item (même contrat que finalizeOrder).
+    for (const item of cartItems) {
+      require_(V.isPlainObject(item), "Item de panier invalide.");
+      require_(V.isNonEmptyString(item.nom, 200), "Nom d'item invalide.");
+      require_(
+        typeof item.prix === "number" && item.prix >= 0 && item.prix < 10_000,
+        "Prix d'item invalide."
+      );
+      require_(V.isPositiveInt(item.quantity, 100), "Quantité d'item invalide.");
+    }
+
+    // 🚚 Mode + adresse de livraison (collect par défaut → legacy inchangé).
+    const orderMode = mode === "delivery" ? "delivery" : "collect";
+    if (orderMode === "delivery") {
+      require_(V.isPlainObject(livraison), "livraison requise pour une commande en livraison.");
+      require_(isFiniteNum(livraison.lat) && Math.abs(livraison.lat) <= 90, "Latitude de livraison invalide.");
+      require_(isFiniteNum(livraison.lng) && Math.abs(livraison.lng) <= 180, "Longitude de livraison invalide.");
+      require_(
+        livraison.adresse === undefined ||
+          livraison.adresse === null ||
+          (V.isString(livraison.adresse) && livraison.adresse.length <= 300),
+        "Adresse de livraison invalide."
+      );
+    }
 
     try {
-      // 1. Récupération des infos du Snack (Tenant)
-      let stripeAccountId = null;
-      let applicationFeeAmount = 0;
+      // 1. Récupération du Snack (Tenant) + config Stripe Connect.
+      const snackDoc = await db.collection("snacks").doc(snackId).get();
+      const snackData = snackDoc.exists ? (snackDoc.data() || {}) : {};
+      const stripeAccountId = snackData.stripeAccountId || null;
 
-      if (snackId) {
-        const snackDoc = await db.collection("snacks").doc(snackId).get();
-        if (snackDoc.exists) {
-          const snackData = snackDoc.data();
-          stripeAccountId = snackData.stripeAccountId;
-
-          // 🛡️ Garde : compte connecté créé mais onboarding NON terminé
-          // (statut synchronisé par account.updated / getStripeAccountStatus).
-          // On bloque seulement si explicitement false → sinon comportement inchangé.
-          if (stripeAccountId && snackData.stripeChargesEnabled === false) {
-            throw new HttpsError(
-              "failed-precondition",
-              "Le compte Stripe du restaurant n'a pas terminé sa configuration."
-            );
-          }
-
-          // Règle Métier : 0% les 6 premiers mois, puis 8%
-          if (stripeAccountId) {
-             const createdAt = snackData.createdAt?.toDate() || new Date();
-             const now = new Date();
-             const diffMonths = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
-             
-             if (diffMonths >= 6) {
-                 applicationFeeAmount = Math.round(amount * 0.08);
-             }
-          }
-        }
+      // 🛡️ Garde : compte connecté créé mais onboarding NON terminé.
+      if (stripeAccountId && snackData.stripeChargesEnabled === false) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Le compte Stripe du restaurant n'a pas terminé sa configuration."
+        );
       }
 
-      // 2. Préparation des paramètres du PaymentIntent
+      // 2. 🛡️ MONTANT AUTORITATIF — recalcul + validation panier/zone/minimum AVANT
+      //    tout débit. Toute manipulation rejette ici, sans charge orpheline (F1).
+      const { totalCents } = await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison);
+      require_(totalCents >= 50, "Montant inférieur au minimum (0,50 €).");
+
+      // Règle Métier : 0% les 6 premiers mois, puis 8% (sur le total SERVEUR).
+      let applicationFeeAmount = 0;
+      if (stripeAccountId) {
+        const createdAt = snackData.createdAt?.toDate() || new Date();
+        const now = new Date();
+        const diffMonths = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
+        if (diffMonths >= 6) applicationFeeAmount = Math.round(totalCents * 0.08);
+      }
+
+      // 3. Préparation des paramètres du PaymentIntent (montant = total serveur).
       const params = {
-        amount,
+        amount: totalCents,
         currency: currency ? currency.toLowerCase() : "eur",
         description: description || "Commande en ligne",
         // Metadata SERVEUR de confiance (traçabilité) en plus de celles du client.
@@ -761,13 +864,13 @@ exports.createPaymentIntent = onCall(
         // donc déjà traçable sans le dupliquer ici.
         metadata: sanitizeStripeMetadata({
           ...(metadata || {}),
-          snack_id: snackId || "",
+          snack_id: snackId,
           client_email: request.auth?.token?.email || metadata?.clientEmail || "",
         }),
         automatic_payment_methods: { enabled: true },
       };
-      
-      // 3. Optionnel : Routage Stripe Connect
+
+      // 4. Optionnel : Routage Stripe Connect (charge directe sur le compte connecté).
       let requestOptions = undefined;
       if (stripeAccountId) {
           if (applicationFeeAmount > 0) {
@@ -1079,71 +1182,39 @@ exports.finalizeOrder = onCall(
       return { orderId };
     }
 
-    // 🛡️ ANTI-FRAUDE PRIX — chaque prix unitaire doit correspondre à un prix réel
-    // du produit en base, et le montant encaissé doit couvrir la valeur du panier.
-    // On ne fait JAMAIS confiance au prix envoyé par le client (cf. CLAUDE.md §6.1).
-    const { itemsCents, lines } = await assertCartPricesAreLegit(cartItems, paymentIntent.amount, snackId);
+    // 🛡️ MONTANT AUTORITATIF + VALIDATION — recalcul serveur (prix/zone/minimum)
+    // via le helper partagé avec createPaymentIntent (DRY). Le client est DÉJÀ
+    // débité (PI succeeded) : si la commande est jugée invalide ICI (cas résiduel,
+    // ex. prix produit modifié entre la création du PI et la finalisation, ou panier
+    // divergent), on rembourse AUTOMATIQUEMENT la charge avant de propager l'erreur
+    // — plus de charge orpheline (F1). Le chemin nominal est déjà validé en amont
+    // par createPaymentIntent, donc ce filet ne se déclenche qu'exceptionnellement.
+    let itemsCents, lines, fraisCents, livraisonData, distanceKm;
+    try {
+      ({ itemsCents, lines, fraisCents, livraisonData, distanceKm } =
+        await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison));
 
-    // 🚚 ETA (heuristique simple) + livraison — TOUT recalculé serveur.
+      // 🛡️ TOTAL ATTENDU SERVEUR = articles + frais de livraison (config). On EXIGE
+      // que l'encaissement Stripe le couvre. ±1c (arrondis flottants).
+      require_(
+        paymentIntent.amount + 1 >= itemsCents + fraisCents,
+        "Montant encaissé inférieur au total attendu (articles + livraison)."
+      );
+    } catch (validationErr) {
+      await refundOrphanChargeBestEffort(stripe, paymentIntent, snackData.stripeAccountId || null);
+      throw validationErr;
+    }
+    const expectedTotalCents = itemsCents + fraisCents;
+
+    // 🚚 ETA (heuristique simple) — file cuisine + vitesse moyenne config.
     const dcfg = snackData.delivery || {};
     const avgSpeedKmh = isFiniteNum(dcfg.avgSpeedKmh) && dcfg.avgSpeedKmh > 0 ? dcfg.avgSpeedKmh : 22;
-
     const queueCount = await getKitchenQueueCount(snackId);
     const prepMin = computePrepMin(snackData, queueCount);
-
-    let livraisonData = null;
-    let deliveryMin = null;
-    if (orderMode === "delivery") {
-      const resto = { lat: numberOrNull(snackData.restaurantLat), lng: numberOrNull(snackData.restaurantLng) };
-      const client = { lat: livraison.lat, lng: livraison.lng };
-      const distanceKm = haversineKm(resto, client);
-      const hasDist = Number.isFinite(distanceKm);
-
-      // 🛡️ REJET HORS-ZONE — le serveur est l'autorité sur la zone de livraison,
-      // pas le client. On ne rejette QUE si un rayon est réellement configuré et
-      // la distance calculable (resto non géocodé / rayon absent → on n'enforce
-      // pas, cohérent avec le quoteDelivery client qui reste permissif). Borne
-      // <= radiusKm pour matcher exactement la règle inRange du front.
-      const radiusKm = Number(dcfg.radiusKm);
-      if (Number.isFinite(radiusKm) && radiusKm > 0 && hasDist && distanceKm > radiusKm) {
-        throw new HttpsError(
-          "out-of-range",
-          "Adresse hors de la zone de livraison de ce restaurant."
-        );
-      }
-
-      // 🛡️ PANIER MINIMUM — comme le client (checkout.js), uniquement en livraison
-      // et sur le SOUS-TOTAL articles (hors frais de livraison). N'enforce que si
-      // un minimum est configuré. itemsCents : prix déjà validés côté serveur.
-      const minOrder = Number(dcfg.minOrder);
-      if (Number.isFinite(minOrder) && minOrder > 0 && itemsCents < Math.round(minOrder * 100)) {
-        throw new HttpsError(
-          "failed-precondition",
-          `Minimum de commande pour la livraison : ${minOrder.toFixed(2)} €.`
-        );
-      }
-
-      deliveryMin = hasDist ? Math.max(1, Math.round((distanceKm / avgSpeedKmh) * 60)) : 0;
-      livraisonData = {
-        adresse: (livraison.adresse || "").toString().slice(0, 300),
-        lat: client.lat,
-        lng: client.lng,
-        distanceKm: hasDist ? Math.round(distanceKm * 10) / 10 : null,
-        frais: isFiniteNum(dcfg.frais) ? dcfg.frais : 0, // frais issus de la config (jamais du client)
-      };
-    }
-
-    // 🛡️ TOTAL ATTENDU SERVEUR = articles (prix déjà validés) + frais de livraison
-    // (issus de la config, en mode delivery). On EXIGE que l'encaissement Stripe le
-    // couvre : ferme la faille où un client en livraison ne paie que le sous-total
-    // (frais non encaissés alors que livraison.frais est stocké). ±1c (arrondis).
-    const fraisCents =
-      orderMode === "delivery" && livraisonData ? Math.round((livraisonData.frais || 0) * 100) : 0;
-    const expectedTotalCents = itemsCents + fraisCents;
-    require_(
-      paymentIntent.amount + 1 >= expectedTotalCents,
-      "Montant encaissé inférieur au total attendu (articles + livraison)."
-    );
+    const deliveryMin =
+      orderMode === "delivery"
+        ? (Number.isFinite(distanceKm) ? Math.max(1, Math.round((distanceKm / avgSpeedKmh) * 60)) : 0)
+        : null;
 
     const totalMin = prepMin + (deliveryMin || 0);
     const etaData = {

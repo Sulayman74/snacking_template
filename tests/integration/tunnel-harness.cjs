@@ -66,12 +66,20 @@ const setMaint = (v) => snackSub.set({ stripeSubscriptionId: SUB, maintenanceMod
 const getMaint = async () => (await snackSub.get()).data()?.maintenanceMode;
 
 async function main() {
+  // Seed produit + snack pour le recalcul serveur du montant (anti charge orpheline F1).
+  const PI_SNACK = "snack_pi_harness";
+  const PI_PROD = "prod_pi_harness";
+  await db.collection("snacks").doc(PI_SNACK).set({ nom: "PI Harness" });
+  await db.collection("produits").doc(PI_PROD).set({ snackId: PI_SNACK, nom: "Burger PI", prix: 10 });
+  const piCart = [{ productId: PI_PROD, nom: "Burger PI", prix: 10, quantity: 1 }];
+
   // ===== A. createPaymentIntent (onCall) via firebase-functions-test =====
+  // Le montant du PI est RECALCULÉ serveur (10,00 € → 1000c), jamais le client.
   let piId = null;
   try {
     const wrapped = test.wrap(myFunctions.createPaymentIntent);
     const out = await wrapped({
-      data: { amount: 1000, currency: "eur", description: "Harness test" },
+      data: { snackId: PI_SNACK, cartItems: piCart, currency: "eur", description: "Harness test" },
       auth: { uid: "u_harness", token: { email: "harness@test.dev" } },
     });
     const cs = out?.clientSecret;
