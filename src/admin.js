@@ -84,6 +84,14 @@ document.addEventListener("click", (event) => {
       window.handleRefundOrder?.(id);
       break;
     }
+    case "order-detail": {
+      window.openOrderDetail?.(id);
+      break;
+    }
+    case "close-order-detail": {
+      window.closeOrderDetail?.();
+      break;
+    }
     case "toggle-product":
       window.handleToggleProductUI(id);
       break;

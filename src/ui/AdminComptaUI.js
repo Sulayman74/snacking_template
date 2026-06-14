@@ -1,6 +1,7 @@
 import { adminStore } from "../core/AdminStore.js";
 import { escapeHTML, showToast } from "../utils.js";
 import { functions, httpsCallable } from "../core/firebase.js";
+import { computeOrderRow } from "../services/comptaService.js";
 
 class AdminComptaUI {
     constructor() {
@@ -307,8 +308,8 @@ class AdminComptaUI {
                     </span>
                 </td>
                 <td class="px-4 py-4 text-right">
-                    <button class="w-8 h-8 rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center ml-auto">
-                        <i data-lucide="eye" class="text-xs"></i>
+                    <button type="button" data-action="order-detail" data-id="${escapeHTML(s.id)}" aria-label="Voir le détail de la commande" class="w-8 h-8 rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center ml-auto">
+                        <i data-lucide="eye" class="text-xs pointer-events-none"></i>
                     </button>
                 </td>
             </tr>
@@ -348,6 +349,119 @@ class AdminComptaUI {
         document.body.removeChild(link);
         showToast("Export terminé !", "success");
     }
+
+    // ====================================================================
+    // 🧾 FICHE COMMANDE (modale) — ouverte depuis le bouton Détails de
+    // l'historique. Affiche TOUTE la commande (y compris terminée) + permet le
+    // remboursement, ce que le radar cuisine ne peut pas (commandes actives only).
+    // ====================================================================
+    openOrderDetail(orderId) {
+        const order = (adminStore.state.salesData || []).find((o) => o.id === orderId);
+        if (!order) { showToast("Commande introuvable (recharge l'onglet).", "error"); return; }
+
+        let modal = document.getElementById("order-detail-modal");
+        if (!modal) {
+            modal = document.createElement("div");
+            modal.id = "order-detail-modal";
+            modal.className = "fixed inset-0 z-[60] hidden items-end sm:items-center justify-center bg-black/50";
+            // Clic sur le fond (hors carte) → fermeture.
+            modal.addEventListener("click", (e) => { if (e.target === modal) this.closeOrderDetail(); });
+            document.body.appendChild(modal);
+        }
+        modal.innerHTML = this.renderOrderDetailModal(order);
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        window.lucide?.createIcons?.(); // re-render des icônes Lucide injectées
+    }
+
+    closeOrderDetail() {
+        const modal = document.getElementById("order-detail-modal");
+        if (modal) { modal.classList.add("hidden"); modal.classList.remove("flex"); }
+    }
+
+    renderOrderDetailModal(order) {
+        const r = computeOrderRow(order);
+        const eur = (n) => `${(Number(n) || 0).toFixed(2).replace(".", ",")} €`;
+        const d = order.date?.toDate ? order.date.toDate() : (order.date != null ? new Date(order.date) : null);
+        const dateStr = d && !isNaN(d.getTime())
+            ? d.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+            : "—";
+        const mode = order.mode === "delivery" ? "Livraison" : "Click & Collect";
+        const payStatut = escapeHTML(order.paiement?.statut || "—");
+        const canRefund = (order.paiement?.methode || "carte_bancaire") === "carte_bancaire"
+            && (order.paiement?.statut === "paye" || order.paiement?.statut === "partiellement_rembourse");
+
+        const items = (order.items || []).map((it) => {
+            const opts = [];
+            if (it.tailleChoisie) opts.push(escapeHTML(it.tailleChoisie));
+            if (it.boissonNom) opts.push(escapeHTML(it.boissonNom));
+            if (Array.isArray(it.sauces) && it.sauces.length) opts.push(it.sauces.map(escapeHTML).join(" + "));
+            const optStr = opts.length ? `<span class="text-gray-400"> · ${opts.join(" · ")}</span>` : "";
+            const lineTtc = (Number(it.prix) || 0) * (Number(it.quantity) || 0);
+            return `<div class="flex justify-between text-sm py-1">
+                <span class="text-gray-700"><b>${Number(it.quantity) || 0}×</b> ${escapeHTML(it.nom || "?")}${optStr}</span>
+                <span class="font-bold text-gray-900 tabular-nums">${eur(lineTtc)}</span></div>`;
+        }).join("") || `<p class="text-xs text-gray-400">Aucun article.</p>`;
+
+        const tvaLines = [["5,5 %", r.ht5_5, r.tva5_5], ["10 %", r.ht10, r.tva10], ["20 %", r.ht20, r.tva20]]
+            .filter(([, ht, tva]) => ht > 0 || tva > 0)
+            .map(([lbl, ht, tva]) => `<div class="flex justify-between text-xs"><span class="text-gray-500">TVA ${lbl} <span class="text-gray-400">(HT ${eur(ht)})</span></span><span class="tabular-nums">${eur(tva)}</span></div>`).join("");
+
+        const stripeFeeStr = (order.stripeFee == null || order.stripeFeePending)
+            ? `<span class="text-amber-600">en attente</span>` : eur(r.stripeFee);
+
+        const refundItems = Array.isArray(order.refund?.items) ? order.refund.items : [];
+        const refundHist = refundItems.length
+            ? refundItems.map((it) => {
+                const rd = it.at?.toDate ? it.at.toDate() : (it.at != null ? new Date(it.at) : null);
+                const rdStr = rd && !isNaN(rd.getTime()) ? rd.toLocaleDateString("fr-FR") : "";
+                return `<div class="flex justify-between text-xs"><span class="text-gray-500">${eur((Number(it.amount) || 0) / 100)} <span class="text-gray-400">· ${escapeHTML(it.reason || "")} ${rdStr}</span></span><span class="text-gray-400">${it.source === "stripe" ? "Stripe" : "App"}</span></div>`;
+            }).join("")
+            : `<p class="text-xs text-gray-400">Aucun remboursement.</p>`;
+
+        return `
+        <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between">
+                <div>
+                    <p class="font-black text-gray-900">Commande <span class="font-mono">${escapeHTML(order.secretCode || "—")}</span></p>
+                    <p class="text-xs text-gray-400">${dateStr} · ${mode}</p>
+                </div>
+                <button type="button" data-action="close-order-detail" aria-label="Fermer" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center"><i data-lucide="x" class="pointer-events-none"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-bold">${escapeHTML(order.statut || "—")}</span>
+                    <span class="px-2 py-0.5 rounded bg-green-100 text-green-700 font-bold">Paiement : ${payStatut}</span>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase font-black text-gray-400 mb-1">Client</p>
+                    <p class="text-sm text-gray-700">${escapeHTML(order.clientNom || "—")} <span class="text-gray-400">${escapeHTML(order.clientEmail || "")}</span></p>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase font-black text-gray-400 mb-1">Articles</p>
+                    ${items}
+                </div>
+                <div class="border-t border-gray-100 pt-3">
+                    <div class="flex justify-between text-sm font-bold"><span>Total TTC</span><span class="tabular-nums">${eur(r.ttc)}</span></div>
+                    ${r.fraisLivraison > 0 ? `<div class="flex justify-between text-xs text-gray-500"><span>dont frais livraison</span><span class="tabular-nums">${eur(r.fraisLivraison)}</span></div>` : ""}
+                    ${tvaLines ? `<div class="mt-2 space-y-0.5">${tvaLines}</div>` : `<p class="text-xs text-gray-400 mt-1">Commande non ventilée (antérieure au socle compta).</p>`}
+                </div>
+                <div class="border-t border-gray-100 pt-3 space-y-0.5">
+                    <p class="text-[10px] uppercase font-black text-gray-400 mb-1">Compta</p>
+                    <div class="flex justify-between text-xs"><span class="text-gray-500">Commission plateforme</span><span class="tabular-nums">${eur(r.commission)}</span></div>
+                    <div class="flex justify-between text-xs"><span class="text-gray-500">Frais Stripe</span><span class="tabular-nums">${stripeFeeStr}</span></div>
+                    <div class="flex justify-between text-sm font-black pt-1"><span>CA net</span><span class="tabular-nums" style="color:var(--color-primary,#1E2938)">${eur(r.net)}</span></div>
+                </div>
+                <div class="border-t border-gray-100 pt-3">
+                    <p class="text-[10px] uppercase font-black text-gray-400 mb-1">Remboursements ${(Number(order.refund?.total) || 0) > 0 ? `· ${eur((Number(order.refund.total) || 0) / 100)}` : ""}</p>
+                    ${refundHist}
+                </div>
+                ${canRefund
+                    ? `<button type="button" data-action="refund-order" data-id="${escapeHTML(order.id)}" class="w-full mt-1 bg-white text-red-600 border border-red-200 hover:bg-red-50 font-bold py-3 rounded-xl transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="rotate-ccw" class="pointer-events-none"></i> Rembourser</button>`
+                    : (order.paiement?.statut === "rembourse" ? `<p class="text-center text-xs font-bold text-gray-400">Commande remboursée.</p>` : "")}
+            </div>
+        </div>`;
+    }
 }
 
 export const adminComptaUI = new AdminComptaUI();
@@ -355,3 +469,5 @@ export const adminComptaUI = new AdminComptaUI();
 // Bridges globaux
 window.exportComptaCSV = () => adminComptaUI.handleExport();
 window.startStripeOnboarding = () => adminComptaUI.startOnboarding();
+window.openOrderDetail = (id) => adminComptaUI.openOrderDetail(id);
+window.closeOrderDetail = () => adminComptaUI.closeOrderDetail();

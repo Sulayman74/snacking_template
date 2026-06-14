@@ -408,8 +408,13 @@ async function handleRefundOrder(orderId) {
       `Remboursé ${rembourse.toFixed(2).replace(".", ",")} €${res?.data?.fullyRefunded ? " (total)" : " (partiel)"} ✓`,
       "success"
     );
-    // Le radar (onSnapshot) reflète le nouveau paiement.statut automatiquement ;
-    // la compta se met à jour au prochain chargement de l'onglet.
+    // Le radar (onSnapshot) reflète le nouveau paiement.statut automatiquement.
+    // Si la fiche commande (onglet Compta) est ouverte : on rafraîchit la liste
+    // puis on ré-affiche la fiche avec le bloc remboursement à jour.
+    const detail = document.getElementById("order-detail-modal");
+    if (detail && !detail.classList.contains("hidden") && typeof window.loadComptaDashboard === "function") {
+      try { await window.loadComptaDashboard(); window.openOrderDetail?.(orderId); } catch (_) { /* non bloquant */ }
+    }
   } catch (e) {
     console.error("refundOrder :", e);
     const code = e?.code || "";
