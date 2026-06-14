@@ -90,19 +90,19 @@ window.openCsvInfoModal = () => {
 // Remplace le bloc modal.innerHTML par celui-ci :
 modal.innerHTML = `
     <div class="bg-white w-full max-w-2xl rounded-3xl p-6 relative shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto font-sans">
-        <button onclick="document.getElementById('csv-info-modal-js').remove()" class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-gray-100 rounded-full transition flex justify-center items-center">
+        <button onclick="document.getElementById('csv-info-modal-js').remove()" class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-surface-2 rounded-full transition flex justify-center items-center">
             <i data-lucide="x" class="text-xl"></i>
         </button>
         
-        <h3 class="text-2xl font-black text-gray-900 mb-2 border-b border-gray-100 pb-4">
+        <h3 class="text-2xl font-black text-gray-900 mb-2 border-b border-line pb-4">
             <i data-lucide="file-spreadsheet" class="text-blue-500 mr-2"></i> Guide d'importation
         </h3>
 
         <p class="text-gray-600 mb-6 mt-4">Importez toute votre carte en une seconde. Utilisez un fichier <strong>.csv</strong> avec le point-virgule (;) comme séparateur.</p>
 
-        <div class="overflow-x-auto mb-6 border border-gray-100 rounded-xl">
+        <div class="overflow-x-auto mb-6 border border-line rounded-xl">
             <table class="w-full text-left text-xs">
-                <thead class="bg-gray-50 text-gray-500 uppercase">
+                <thead class="bg-surface-2 text-gray-500 uppercase">
                     <tr>
                         <th class="px-3 py-2">Nom</th>
                         <th class="px-3 py-2">Prix</th>
@@ -142,7 +142,7 @@ modal.innerHTML = `
             <button onclick="window.downloadCsvTemplate()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
                 <i data-lucide="download"></i> Télécharger le modèle
             </button>
-            <button onclick="document.getElementById('csv-info-modal-js').remove()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 rounded-xl transition">
+            <button onclick="document.getElementById('csv-info-modal-js').remove()" class="flex-1 bg-surface-2 hover:bg-surface-3 text-gray-800 font-bold py-4 rounded-xl transition">
                 J'ai compris
             </button>
         </div>

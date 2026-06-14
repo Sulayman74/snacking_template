@@ -45,7 +45,7 @@ class ReorderUI {
     const total = (Number(order.total) || 0).toFixed(2);
 
     this.container.innerHTML = `
-      <div class="flex flex-col sm:flex-row sm:items-center gap-4 bg-surface p-5 rounded-3xl shadow-sm border border-gray-100">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4 bg-surface p-5 rounded-3xl shadow-sm border border-line">
         <div class="flex-1 min-w-0">
           <p class="text-xs font-black uppercase tracking-widest text-accent mb-1">
             <i data-lucide="rotate-ccw" class="mr-1" aria-hidden="true"></i> Commander à nouveau

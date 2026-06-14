@@ -87,12 +87,12 @@ function thumb(url, label, time) {
   const safe = window.safeURL ? window.safeURL(url) : url;
   if (!url) {
     return `<div class="flex flex-col items-center gap-1 opacity-40">
-      <div class="w-16 h-16 rounded-lg bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400"><i data-lucide="image"></i></div>
+      <div class="w-16 h-16 rounded-lg bg-surface-2 border border-dashed border-line flex items-center justify-center text-gray-400"><i data-lucide="image"></i></div>
       <span class="text-[10px] text-gray-400">${label}</span>
     </div>`;
   }
   return `<button type="button" data-photo="${escapeHTML(safe)}" class="flex flex-col items-center gap-1 group">
-    <img src="${escapeHTML(safe)}" alt="${label}" loading="lazy" class="w-16 h-16 object-cover rounded-lg border border-gray-200 group-hover:ring-2 group-hover:ring-blue-400 transition cursor-zoom-in">
+    <img src="${escapeHTML(safe)}" alt="${label}" loading="lazy" class="w-16 h-16 object-cover rounded-lg border border-line group-hover:ring-2 group-hover:ring-blue-400 transition cursor-zoom-in">
     <span class="text-[10px] text-gray-500">${label}${time ? " · " + time : ""}</span>
   </button>`;
 }
@@ -102,7 +102,7 @@ function renderDeliveries(list) {
   if (!el) return;
 
   if (list.length === 0) {
-    el.innerHTML = `<div class="bg-white border border-dashed border-gray-300 rounded-2xl p-6 text-center text-gray-500 text-sm">Aucune livraison en cours ou récente.</div>`;
+    el.innerHTML = `<div class="bg-white border border-dashed border-line rounded-2xl p-6 text-center text-gray-500 text-sm">Aucune livraison en cours ou récente.</div>`;
     return;
   }
 
@@ -114,7 +114,7 @@ function renderDeliveries(list) {
         : `<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 animate-pulse">En livraison</span>`;
       const lv = o.livreur || {};
       return `
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+      <div class="bg-white rounded-2xl shadow-sm border border-line p-4">
         <div class="flex justify-between items-start gap-2 mb-3">
           <div class="min-w-0">
             <p class="font-black text-gray-900 truncate">${escapeHTML(o.clientNom || "Client")}</p>
@@ -162,7 +162,7 @@ function renderDrivers(drivers) {
   if (!listEl) return;
 
   if (drivers.length === 0) {
-    listEl.innerHTML = `<div class="bg-white border border-dashed border-gray-300 rounded-2xl p-8 text-center text-gray-500">
+    listEl.innerHTML = `<div class="bg-white border border-dashed border-line rounded-2xl p-8 text-center text-gray-500">
       <i data-lucide="bike" class="text-3xl text-gray-300 mb-3"></i>
       <p class="font-bold">Aucun livreur pour l'instant.</p>
       <p class="text-sm">Ajoutez votre premier livreur ci-dessus.</p>
@@ -175,15 +175,15 @@ function renderDrivers(drivers) {
       const actif = d.actif !== false;
       const initials = (d.nom || "?").trim().slice(0, 2).toUpperCase();
       return `
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex items-center gap-4">
+      <div class="bg-white rounded-2xl shadow-sm border border-line p-4 flex items-center gap-4">
         <div class="w-11 h-11 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center shrink-0">${escapeHTML(initials)}</div>
         <div class="min-w-0 flex-1">
           <p class="font-black text-gray-900 truncate">${escapeHTML(d.nom || "Livreur")}</p>
           <p class="text-xs text-gray-500 truncate">${escapeHTML(d.email || "")}${d.telephone ? " · " + escapeHTML(d.telephone) : ""}</p>
         </div>
-        <span class="text-xs font-bold px-2.5 py-1 rounded-full ${actif ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}">${actif ? "Actif" : "Inactif"}</span>
+        <span class="text-xs font-bold px-2.5 py-1 rounded-full ${actif ? "bg-green-100 text-green-700" : "bg-surface-3 text-gray-500"}">${actif ? "Actif" : "Inactif"}</span>
         <button type="button" data-driver-toggle="${escapeHTML(d.id)}" data-actif="${actif}"
-          class="shrink-0 text-sm font-bold px-3 py-2 rounded-lg transition active:scale-95 ${actif ? "bg-gray-100 text-gray-700 hover:bg-gray-200" : "bg-green-600 text-white hover:bg-green-700"}">
+          class="shrink-0 text-sm font-bold px-3 py-2 rounded-lg transition active:scale-95 ${actif ? "bg-surface-2 text-gray-700 hover:bg-surface-3" : "bg-green-600 text-white hover:bg-green-700"}">
           ${actif ? "Désactiver" : "Activer"}
         </button>
       </div>`;

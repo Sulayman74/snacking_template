@@ -61,12 +61,12 @@ class ProductModalUI {
       const applyFallback = () => {
         modalImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='100%25' height='100%25' fill='transparent'/><text x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='bold' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle'>👨‍🍳 Photo en cours...</text></svg>";
         modalImg.classList.remove("object-cover");
-        modalImg.classList.add("object-contain", "p-6", "bg-gray-50");
+        modalImg.classList.add("object-contain", "p-6", "bg-surface-2");
       };
 
       const removeFallbackStyles = () => {
         modalImg.classList.add("object-cover");
-        modalImg.classList.remove("object-contain", "p-6", "bg-gray-50");
+        modalImg.classList.remove("object-contain", "p-6", "bg-surface-2");
       };
 
       if (item.image) {
@@ -148,10 +148,10 @@ class ProductModalUI {
     if (isFav) {
       icon?.classList.add("fill-current"); // cœur plein (Lucide = contour, rempli via fill-current)
       btn.classList.add("text-red-500", "border-red-200");
-      btn.classList.remove("text-text-muted", "border-gray-200");
+      btn.classList.remove("text-text-muted", "border-line");
     } else {
       icon?.classList.remove("fill-current");
-      btn.classList.add("text-text-muted", "border-gray-200");
+      btn.classList.add("text-text-muted", "border-line");
       btn.classList.remove("text-red-500", "border-red-200");
     }
   }
@@ -186,7 +186,7 @@ class ProductModalUI {
                 return `
                 <label class="relative cursor-pointer">
                     <input type="radio" name="taille_produit" value="${safeNom}" data-prix="${safePrix}" ${i === 0 ? "checked" : ""} class="sr-only peer" onchange="window.updateProductSize(this)">
-                    <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
+                    <div class="p-4 border-2 border-line rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
                         <span class="font-bold text-text">${safeNom}</span>
                         <span class="font-black text-accent text-sm">${safePrix} ${escapeHTML(devise)}</span>
                     </div>
@@ -207,14 +207,14 @@ class ProductModalUI {
         <div class="grid grid-cols-2 gap-3">
             <label class="relative cursor-pointer">
                 <input type="radio" name="formule" value="seul" checked class="sr-only peer" onchange="window.toggleDrinkSection()">
-                <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
+                <div class="p-4 border-2 border-line rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
                     <span class="font-bold text-text">Seul</span>
                     <span class="text-sm font-black text-gray-500">${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>
                 </div>
             </label>
             <label class="relative cursor-pointer">
                 <input type="radio" name="formule" value="menu" class="sr-only peer" onchange="window.toggleDrinkSection()">
-                <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
+                <div class="p-4 border-2 border-line rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
                     <span class="font-bold text-text">En Menu</span>
                     <span class="text-sm font-black text-accent">+ ${this.currentProduct.prixMenu.toFixed(2)} ${devise}</span>
                 </div>
@@ -229,7 +229,7 @@ class ProductModalUI {
                 return `
                 <label class="relative cursor-pointer">
                     <input type="radio" name="boisson" value="${safeNom}" ${i === 0 ? "checked" : ""} class="sr-only peer">
-                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex items-center gap-2">
+                    <div class="p-3 border-2 border-line rounded-xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex items-center gap-2">
                         <i data-lucide="glass-water" class="text-accent"></i>
                         <span class="font-bold text-text text-sm">${safeNom}</span>
                     </div>
@@ -256,7 +256,7 @@ class ProductModalUI {
                 return `
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="sauce" value="${safe}" data-max="${max}" class="sr-only peer sauce-checkbox" onchange="window.checkSauceLimit(event, ${max})">
-                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex justify-center items-center">
+                    <div class="p-3 border-2 border-line rounded-xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex justify-center items-center">
                         <span class="font-bold text-text text-sm">${safe}</span>
                     </div>
                 </label>
@@ -280,7 +280,7 @@ class ProductModalUI {
                 return `
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="crudite" value="${safe}" class="sr-only peer crudite-checkbox">
-                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-danger peer-checked:bg-danger/15 transition-all flex justify-center items-center">
+                    <div class="p-3 border-2 border-line rounded-xl peer-checked:border-danger peer-checked:bg-danger/15 transition-all flex justify-center items-center">
                         <span class="font-bold text-text text-sm">Sans ${safe}</span>
                     </div>
                 </label>
@@ -336,7 +336,7 @@ class ProductModalUI {
       btn.onclick = () => window.confirmAddToCart();
     } else {
       btn.textContent = "Fermer";
-      btn.className = "w-full py-4 rounded-xl font-bold text-text bg-gray-100 hover:bg-gray-200 transition-all flex justify-center items-center gap-2";
+      btn.className = "w-full py-4 rounded-xl font-bold text-text bg-surface-2 hover:bg-surface-3 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => this.close();
     }
   }

@@ -136,7 +136,7 @@ class AdminComptaUI {
 
         // Ligne de cascade avec barre proportionnelle au CA brut.
         const bar = (label, val, kind, extra = "") => {
-            const barCls = kind === "deduct" ? "bg-red-400" : "bg-gray-300";
+            const barCls = kind === "deduct" ? "bg-red-400" : "bg-surface-3";
             const valCls = kind === "deduct" ? "text-red-600" : "text-gray-900";
             const style = kind === "net" ? 'background:var(--color-primary,#1E2938)' : "";
             return `
@@ -145,7 +145,7 @@ class AdminComptaUI {
                         <span class="text-gray-500">${label} ${extra}</span>
                         <span class="font-bold ${valCls} tabular-nums">${kind === "deduct" ? "−" : ""}${val} €</span>
                     </div>
-                    <div class="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                    <div class="h-1.5 rounded-full bg-surface-2 overflow-hidden">
                         <div class="h-full rounded-full ${style ? "" : barCls}" style="width:${barPct(val)}%;${style}"></div>
                     </div>
                 </div>`;
@@ -188,18 +188,18 @@ class AdminComptaUI {
 
         // Cartes secondaires optionnelles (affichées seulement si pertinentes).
         const deliveryCard = kpis.deliveryShare !== null
-            ? `<div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            ? `<div class="bg-surface-2 p-3 rounded-xl border border-line">
                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Part livraison</p>
                    <p class="text-xl font-black text-gray-900">${kpis.deliveryShare} %</p>
                </div>` : "";
         const upsellCard = Number(kpis.upsellRevenue) > 0
-            ? `<div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            ? `<div class="bg-surface-2 p-3 rounded-xl border border-line">
                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Upsell généré</p>
                    <p class="text-xl font-black text-gray-900">${kpis.upsellRevenue} €</p>
                </div>` : "";
 
         this.kpiExtrasEl.innerHTML = `
-            <div class="sm:col-span-2 lg:col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+            <div class="sm:col-span-2 lg:col-span-3 bg-surface-2 p-4 rounded-2xl border border-line">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-[10px] text-gray-500 font-black uppercase tracking-wider">Du brut au net</p>
                     ${fr.active ? `<span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-500/15 text-green-600">Franchise 0 % · ${fr.monthsRemaining} mois</span>` : ""}
@@ -210,26 +210,26 @@ class AdminComptaUI {
                     ${bar("Remboursements", kpis.refundTotal, "deduct")}
                     ${commissionBlock}
                     ${bar("Frais Stripe", kpis.stripeFee, "deduct")}
-                    <div class="pt-2 mt-1 border-t border-gray-200">
+                    <div class="pt-2 mt-1 border-t border-line">
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-sm font-black text-gray-900">CA net encaissé</span>
                             <span class="text-2xl font-black tabular-nums" style="color:var(--color-primary,#1E2938)">${kpis.caNet} €</span>
                         </div>
-                        <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div class="h-2 rounded-full bg-surface-2 overflow-hidden">
                             <div class="h-full rounded-full" style="width:${barPct(kpis.caNetNum)}%;background:var(--color-primary,#1E2938)"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="bg-surface-2 p-3 rounded-xl border border-line">
                 <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Panier Moyen</p>
                 <p class="text-xl font-black text-gray-900">${kpis.avg} €</p>
             </div>
             ${deliveryCard}
             ${upsellCard}
 
-            <div class="sm:col-span-2 lg:col-span-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="sm:col-span-2 lg:col-span-3 bg-surface-2 p-3 rounded-xl border border-line">
                 <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">TVA collectée par taux</p>
                 <div class="space-y-1.5">${tvaRows}</div>
                 <p class="text-[10px] text-gray-400 mt-2 leading-snug">
@@ -245,7 +245,7 @@ class AdminComptaUI {
 
         if (sales.length === 0) {
             this.historyTableEl.innerHTML = `
-                <div class="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                <div class="text-center py-12 bg-surface-2 rounded-2xl border-2 border-dashed border-line">
                     <i data-lucide="search" class="text-3xl text-gray-200 mb-3"></i>
                     <p class="text-gray-400 font-bold">Aucune vente sur cette période.</p>
                 </div>
@@ -264,7 +264,7 @@ class AdminComptaUI {
             ${truncatedNote}
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
-                    <thead class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <thead class="bg-surface-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                         <tr>
                             <th class="px-4 py-3">Date</th>
                             <th class="px-4 py-3">Client</th>

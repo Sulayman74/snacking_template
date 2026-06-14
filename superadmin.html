@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="/src/styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body class="bg-gray-50 font-sans text-gray-800">
+<body class="bg-surface-2 font-sans text-gray-800">
     <div class="app-bg" aria-hidden="true"></div>
 
     <div id="saas-loader" class="fixed inset-0 bg-gray-900 z-[100] flex flex-col items-center justify-center text-white">
@@ -48,7 +48,7 @@
         <!-- Onglets superadmin -->
         <div class="flex gap-2 mb-6">
             <button id="sa-tab-dashboard" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-gray-900 text-white transition">📊 Tableau de bord</button>
-            <button id="sa-tab-compta" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition">🧾 Compta / Facturation</button>
+            <button id="sa-tab-compta" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-gray-600 border border-line hover:bg-surface-2 transition">🧾 Compta / Facturation</button>
         </div>
 
         <div id="view-dashboard">
@@ -72,8 +72,8 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+        <div class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden">
+            <div class="p-6 border-b border-line flex justify-between items-center bg-surface-2">
                 <h2 class="text-xl font-black text-gray-800">Restaurants Clients (Tenants)</h2>
                 <button id="btn-open-new-snack" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 transition flex items-center gap-2 transform hover:scale-105">
                     <i data-lucide="plus"></i> Nouveau Client
@@ -83,7 +83,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-gray-100 text-gray-500 text-xs uppercase tracking-wider">
+                        <tr class="bg-surface-2 text-gray-500 text-xs uppercase tracking-wider">
                             <th class="p-4 font-bold">Restaurant & Thème</th>
                             <th class="p-4 font-bold text-center">Statut / Accès</th>
                             <th class="p-4 font-bold text-center">Modules SaaS</th>
@@ -102,17 +102,17 @@
         </div>
 
         <!-- VUE LOGS / MONITORING -->
-        <div id="view-logs" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mt-8">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+        <div id="view-logs" class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden mt-8">
+            <div class="p-6 border-b border-line flex justify-between items-center bg-surface-2">
                 <h2 class="text-xl font-black text-gray-800"><i data-lucide="bug" class="text-red-500 mr-2"></i> System Logs & Erreurs</h2>
-                <button id="btn-refresh-logs" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition flex items-center gap-2">
+                <button id="btn-refresh-logs" class="bg-surface-2 text-gray-700 px-4 py-2 rounded-xl font-bold shadow-sm hover:bg-surface-3 transition flex items-center gap-2">
                     <i data-lucide="refresh-cw"></i> Actualiser
                 </button>
             </div>
             
             <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead class="sticky top-0 bg-gray-100 shadow-sm z-10">
+                    <thead class="sticky top-0 bg-surface-2 shadow-sm z-10">
                         <tr class="text-gray-500 text-xs uppercase tracking-wider">
                             <th class="p-4 font-bold">Date</th>
                             <th class="p-4 font-bold">Snack ID</th>
@@ -154,8 +154,8 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50 flex-wrap gap-3">
+            <div class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden">
+                <div class="p-6 border-b border-line flex justify-between items-center bg-surface-2 flex-wrap gap-3">
                     <div>
                         <h2 class="text-xl font-black text-gray-800">Facturation par client — <span id="compta-month-label"></span></h2>
                         <p class="text-xs text-gray-400 mt-1">Abonnement SaaS + commission transactionnelle (8 % après 6 mois de gratuité). CA estimé depuis les commandes.</p>
@@ -167,7 +167,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-500 text-xs uppercase tracking-wider">
+                            <tr class="bg-surface-2 text-gray-500 text-xs uppercase tracking-wider">
                                 <th class="p-4 font-bold">Client</th>
                                 <th class="p-4 font-bold text-center">Ancienneté</th>
                                 <th class="p-4 font-bold text-right">Abonnement</th>
@@ -187,7 +187,7 @@
 
     <div id="modal-new-snack" class="fixed inset-0 bg-gray-900/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-lg rounded-3xl p-8 relative shadow-2xl">
-            <button id="btn-close-modal" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 w-8 h-8 rounded-full transition flex items-center justify-center">
+            <button id="btn-close-modal" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-surface-2 w-8 h-8 rounded-full transition flex items-center justify-center">
                 <i data-lucide="x"></i>
             </button>
             
@@ -196,24 +196,24 @@
             <form id="form-new-snack" class="space-y-5">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">Nom du Restaurant</label>
-                    <input type="text" id="input-snack-name" required placeholder="Ex: O'Tacos Fusion" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition">
+                    <input type="text" id="input-snack-name" required placeholder="Ex: O'Tacos Fusion" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition">
                 </div>
                 <div class="mt-4">
                     <label class="block text-sm font-bold text-gray-700 mb-1">Nom de domaine (Optionnel)</label>
-                    <input type="text" id="input-snack-domain" placeholder="ex: kebabbonneville.fr" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-500 outline-none transition">
+                    <input type="text" id="input-snack-domain" placeholder="ex: kebabbonneville.fr" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-indigo-500 outline-none transition">
                     <p class="text-xs text-gray-400 mt-1">Laissez vide pour utiliser le lien de prévisualisation gratuit.</p>
                 </div>
 
                 <div class="mt-4">
                     <label class="block text-sm font-bold text-gray-700 mb-1">Email de l'admin du resto</label>
-                    <input type="email" id="input-snack-admin-email" required placeholder="ex: patron@monresto.fr" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition">
+                    <input type="email" id="input-snack-admin-email" required placeholder="ex: patron@monresto.fr" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition">
                     <p class="text-xs text-gray-400 mt-1">Un compte admin est créé ; un mot de passe temporaire vous sera affiché à transmettre.</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Type de Cuisine</label>
-                        <select id="input-snack-type" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-500 outline-none">
+                        <select id="input-snack-type" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-indigo-500 outline-none">
                             <option value="Tacos & Burgers">Tacos & Burgers</option>
                             <option value="Pizzeria">Pizzeria</option>
                             <option value="Sushi & Poké">Sushi & Poké</option>
@@ -223,7 +223,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Palette de Couleur</label>
-                        <select id="input-snack-theme" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-500 outline-none">
+                        <select id="input-snack-theme" class="w-full px-4 py-3 rounded-xl bg-surface-2 border border-line focus:border-indigo-500 outline-none">
                             <option value="ruby">🔴 Ruby Red</option>
                             <option value="ocean">🔵 Ocean Blue</option>
                             <option value="forest">🟢 Forest Green</option>
@@ -245,7 +245,7 @@
                 <p class="text-sm text-gray-500 mb-5">Le snack démarre <b>en maintenance</b>. Voici les infos à conserver/transmettre.</p>
 
                 <div class="space-y-3">
-                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div class="bg-surface-2 border border-line rounded-xl p-3 flex items-center justify-between gap-2">
                         <div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wider text-gray-400">Snack ID</p><p id="success-snack-id" class="font-mono text-sm text-gray-900 break-all"></p></div>
                         <button type="button" data-copy="success-snack-id" class="copy-btn shrink-0 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg text-sm font-bold"><i data-lucide="copy"></i></button>
                     </div>
@@ -285,12 +285,12 @@
     <!-- ================================================================ -->
     <div id="modal-config-snack" class="fixed inset-0 bg-gray-900/80 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-lg rounded-3xl p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
-            <button id="btn-close-config-modal" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 w-8 h-8 rounded-full transition flex items-center justify-center">
+            <button id="btn-close-config-modal" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-surface-2 w-8 h-8 rounded-full transition flex items-center justify-center">
                 <i data-lucide="x"></i>
             </button>
 
             <h3 class="text-2xl font-black text-gray-900 mb-0.5" id="config-modal-title">Configurer</h3>
-            <p class="text-xs text-gray-400 font-mono mb-6 pb-4 border-b border-gray-100" id="config-modal-snack-id"></p>
+            <p class="text-xs text-gray-400 font-mono mb-6 pb-4 border-b border-line" id="config-modal-snack-id"></p>
 
             <!-- MODULES -->
             <div class="mb-6">
@@ -304,21 +304,21 @@
                             <p class="text-xs text-yellow-600 mt-0.5">Le site est inaccessible aux clients</p>
                         </div>
                         <button id="cfg-maintenanceMode" onclick="window.toggleConfigFlag(this)" data-state="off"
-                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-surface-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
                             <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Autres modules -->
-                <div class="space-y-0 bg-gray-50 rounded-2xl border border-gray-100 divide-y divide-gray-200 overflow-hidden">
+                <div class="space-y-0 bg-surface-2 rounded-2xl border border-line divide-y divide-gray-200 overflow-hidden">
                     <div class="flex items-center justify-between px-4 py-3">
                         <div>
                             <p class="font-bold text-sm text-gray-800"><i data-lucide="shopping-bag" class="text-indigo-500 mr-2 w-4"></i>Click & Collect</p>
                             <p class="text-xs text-gray-400 ml-6">Commandes en ligne à emporter</p>
                         </div>
                         <button id="cfg-enableClickAndCollect" onclick="window.toggleConfigFlag(this)" data-state="off"
-                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-surface-3 focus:outline-none shrink-0">
                             <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
                         </button>
                     </div>
@@ -328,7 +328,7 @@
                             <p class="text-xs text-gray-400 ml-6">Redirige vers Uber Eats / lien perso</p>
                         </div>
                         <button id="cfg-enableDelivery" onclick="window.toggleConfigFlag(this)" data-state="off"
-                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-surface-3 focus:outline-none shrink-0">
                             <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
                         </button>
                     </div>
@@ -338,7 +338,7 @@
                             <p class="text-xs text-gray-400 ml-6">Programme de tampons / points</p>
                         </div>
                         <button id="cfg-enableLoyaltyCard" onclick="window.toggleConfigFlag(this)" data-state="off"
-                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-surface-3 focus:outline-none shrink-0">
                             <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
                         </button>
                     </div>
@@ -348,7 +348,7 @@
                             <p class="text-xs text-gray-400 ml-6">Campagnes marketing, promotions</p>
                         </div>
                         <button id="cfg-enablePushNotifs" onclick="window.toggleConfigFlag(this)" data-state="off"
-                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-surface-3 focus:outline-none shrink-0">
                             <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
                         </button>
                     </div>
@@ -358,7 +358,7 @@
                             <p class="text-xs text-gray-400 ml-6">Redirection automatique vers Google Avis</p>
                         </div>
                         <button id="cfg-enableSmartReview" onclick="window.toggleConfigFlag(this)" data-state="off"
-                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-surface-3 focus:outline-none shrink-0">
                             <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
                         </button>
                     </div>
@@ -368,7 +368,7 @@
                             <p class="text-xs text-gray-400 ml-6">Bouton "Partager" sur les fiches produit</p>
                         </div>
                         <button id="cfg-enableViralShare" onclick="window.toggleConfigFlag(this)" data-state="off"
-                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-surface-3 focus:outline-none shrink-0">
                             <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
                         </button>
                     </div>
@@ -378,7 +378,7 @@
                             <p class="text-xs text-gray-400 ml-6">Suggestion desserts/boissons avant Stripe</p>
                         </div>
                         <button id="cfg-enableUpsell" onclick="window.toggleConfigFlag(this)" data-state="off"
-                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-gray-200 focus:outline-none shrink-0">
+                            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 bg-surface-3 focus:outline-none shrink-0">
                             <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 translate-x-1"></span>
                         </button>
                     </div>
@@ -392,17 +392,17 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-600 mb-1">Tampons pour récompense</label>
                         <input type="number" id="cfg-maxPoints" min="1" max="50" value="10"
-                            class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-400 outline-none text-sm font-bold text-center">
+                            class="w-full px-3 py-2.5 rounded-xl bg-surface-2 border border-line focus:border-indigo-400 outline-none text-sm font-bold text-center">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 mb-1">Abonnement mensuel (€)</label>
                         <input type="number" id="cfg-prixAbonnement" min="0" step="1" value="49"
-                            class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-400 outline-none text-sm font-bold text-center">
+                            class="w-full px-3 py-2.5 rounded-xl bg-surface-2 border border-line focus:border-indigo-400 outline-none text-sm font-bold text-center">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 mb-1">Palette de couleur</label>
                         <select id="cfg-colorPalette"
-                            class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-400 outline-none text-sm font-medium">
+                            class="w-full px-3 py-2.5 rounded-xl bg-surface-2 border border-line focus:border-indigo-400 outline-none text-sm font-medium">
                             <option value="ruby">🔴 Ruby Red</option>
                             <option value="ocean">🔵 Ocean Blue</option>
                             <option value="forest">🟢 Forest Green</option>
@@ -414,7 +414,7 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-600 mb-1">Domaine personnalisé</label>
                         <input type="text" id="cfg-domaine" placeholder="ex: monsite.fr"
-                            class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-400 outline-none text-sm">
+                            class="w-full px-3 py-2.5 rounded-xl bg-surface-2 border border-line focus:border-indigo-400 outline-none text-sm">
                     </div>
                 <div class="grid grid-cols-2 gap-3 mt-3">
                     <div class="col-span-2">
@@ -449,20 +449,20 @@
     <!-- Modal : lien d'abonnement SaaS (montant choisi) -->
     <div id="modal-sub-link" class="fixed inset-0 bg-gray-900/80 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl">
-            <button id="btn-close-sub" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 w-8 h-8 rounded-full transition flex items-center justify-center"><i data-lucide="x"></i></button>
+            <button id="btn-close-sub" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-surface-2 w-8 h-8 rounded-full transition flex items-center justify-center"><i data-lucide="x"></i></button>
             <h3 class="text-2xl font-black text-gray-900 mb-1">Lien d'abonnement</h3>
             <p class="text-sm text-gray-500 mb-5"><span id="sub-snack-name" class="font-bold text-gray-900"></span> — choisis le montant mensuel à proposer.</p>
 
             <div class="grid grid-cols-3 gap-3 mb-4">
-                <button type="button" class="sub-amount py-4 rounded-xl border-2 border-gray-200 font-black text-lg hover:border-indigo-500 hover:bg-indigo-50 transition" data-amount="20">20 €</button>
-                <button type="button" class="sub-amount py-4 rounded-xl border-2 border-gray-200 font-black text-lg hover:border-indigo-500 hover:bg-indigo-50 transition" data-amount="39">39 €</button>
-                <button type="button" class="sub-amount py-4 rounded-xl border-2 border-gray-200 font-black text-lg hover:border-indigo-500 hover:bg-indigo-50 transition" data-amount="49">49 €</button>
+                <button type="button" class="sub-amount py-4 rounded-xl border-2 border-line font-black text-lg hover:border-indigo-500 hover:bg-indigo-50 transition" data-amount="20">20 €</button>
+                <button type="button" class="sub-amount py-4 rounded-xl border-2 border-line font-black text-lg hover:border-indigo-500 hover:bg-indigo-50 transition" data-amount="39">39 €</button>
+                <button type="button" class="sub-amount py-4 rounded-xl border-2 border-line font-black text-lg hover:border-indigo-500 hover:bg-indigo-50 transition" data-amount="49">49 €</button>
             </div>
 
             <div id="sub-link-result" class="hidden">
                 <label class="block text-xs font-black uppercase tracking-wider text-gray-400 mb-1">Lien à envoyer au resto</label>
                 <div class="flex gap-2">
-                    <input id="sub-link-input" readonly class="flex-1 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm font-mono text-gray-700 truncate">
+                    <input id="sub-link-input" readonly class="flex-1 px-3 py-2 rounded-lg bg-surface-2 border border-line text-sm font-mono text-gray-700 truncate">
                     <button id="btn-copy-sub-link" type="button" class="shrink-0 bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition"><i data-lucide="copy"></i></button>
                 </div>
                 <p class="text-[11px] text-gray-400 mt-2">Envoie-le par email/WhatsApp. Au paiement, le snack passe automatiquement en ligne.</p>
