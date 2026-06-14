@@ -57,8 +57,19 @@ function getDeliveryPayload() {
       : null;
   return { mode: isDelivery ? "delivery" : "collect", livraison };
 }
+// 🔑 Clé PUBLISHABLE Stripe (pk_…) — publique par nature, mais doit varier par
+// environnement (F7). Source : VITE_STRIPE_PUBLISHABLE_KEY (injectée au build).
+// Fallback : clé de TEST pour que le dev local fonctionne sans config ; en build de
+// prod, l'absence de la variable est signalée (évite de partir en pk_test sans le voir).
+const STRIPE_TEST_PUBLISHABLE_KEY =
+  "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J";
 const stripePublicKey =
-  "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || STRIPE_TEST_PUBLISHABLE_KEY;
+if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY && !import.meta.env.DEV) {
+  console.warn(
+    "⚠️ VITE_STRIPE_PUBLISHABLE_KEY non configurée — build en clé de TEST. Définis la clé live pour la prod.",
+  );
+}
 
 /**
  * Charge le SDK Stripe.js à la demande (1ère ouverture du tunnel de paiement).
