@@ -28,7 +28,10 @@
     "test:unit:watch": "vitest",
     "test:loyalty": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/loyalty-harness.cjs\"",
     "test:rules": "firebase emulators:exec --only firestore --project snacking-template \"vitest run --config vitest.rules.config.js\"",
-    "test:refund": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/refund-harness.cjs\""
+    "test:refund": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/refund-harness.cjs\"",
+    "test:tunnel": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/tunnel-harness.cjs\"",
+    "test:r1": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/r1-delivery-harness.cjs\"",
+    "test:orphan": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/orphan-charge-harness.cjs\""
   },
   "repository": {
     "type": "git",

@@ -10,6 +10,53 @@ import { auth, functions, httpsCallable } from "./core/firebase.js";
 
 let stripeElements = null;
 let stripeInstance = null;
+
+/**
+ * Construit le payload `cartItems` envoyé au serveur (createPaymentIntent ET
+ * finalizeOrder). Source UNIQUE (DRY) : le serveur recalcule les prix depuis la
+ * base, donc les deux appels doivent décrire le MÊME panier (le total du PI et le
+ * total de la commande sont recalculés à l'identique côté serveur).
+ * @returns {Array<Object>} Articles normalisés pour les Cloud Functions.
+ */
+function buildOrderItemsPayload() {
+  return window.cart.map((item) => ({
+    id: item.id,
+    productId: item.productId || (typeof item.id === "string" ? item.id.split("-")[0] : null),
+    nom: item.nom,
+    // Le panier stocke `formule`/`taille` (cf. product-modal #buildCartItem).
+    // On garde `item.type`/`item.tailleChoisie` en fallback pour tout item legacy.
+    type: item.formule || item.type || "seul",
+    boissonNom: item.boisson || null,
+    sauces: item.sauces || [],
+    sansCrudites: item.sansCrudites || [],
+    tailleChoisie: item.taille || item.tailleChoisie || null,
+    prix: item.prix || item.prixBase || 0, // Requis par la Cloud Function (recalculé serveur)
+    prixBase: item.prixBase || item.prix,
+    prixMenuAdd: item.prixMenuAdd || 0,
+    quantity: item.quantity,
+    // 📊 Attribution upsell : tag posé par UpsellUI lors d'un ajout via la bottom-sheet.
+    viaUpsell: item.viaUpsell === true,
+  }));
+}
+
+/**
+ * Snapshot du mode + adresse de livraison (collect par défaut). Le SERVEUR recalcule
+ * distance/frais/zone à partir de l'adresse — on n'envoie que les coordonnées capturées.
+ * @returns {{mode: "collect"|"delivery", livraison: (Object|null)}}
+ */
+function getDeliveryPayload() {
+  const delivery = window.store?.state?.delivery || { mode: "collect" };
+  const isDelivery = delivery.mode === "delivery";
+  const livraison =
+    isDelivery && delivery.address
+      ? {
+          adresse: delivery.address.adresse || "",
+          lat: delivery.address.lat,
+          lng: delivery.address.lng,
+        }
+      : null;
+  return { mode: isDelivery ? "delivery" : "collect", livraison };
+}
 const stripePublicKey =
   "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
 
@@ -166,11 +213,18 @@ async function processCheckout() {
       .map((item) => `${item.quantity}x ${item.nom}`)
       .join(", ");
 
+    // 🛡️ Le SERVEUR recalcule le montant du PaymentIntent depuis le panier + la
+    // config livraison (anti charge orpheline F1) : on lui envoie le panier et le
+    // mode. `amount` reste transmis pour compat/traçabilité mais n'est plus l'autorité.
+    const { mode, livraison } = getDeliveryPayload();
     const response = await createPaymentIntent({
       snackId: cfg.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06",
       amount: Math.round(totalAmount * 100),
       currency: "eur",
       description: `Commande Web - ${cfg.identity.name}`,
+      cartItems: buildOrderItemsPayload(),
+      mode,
+      livraison,
       metadata: {
         ticket: ticketSummary.substring(0, 500),
         clientEmail: currentUser.email,
@@ -191,7 +245,14 @@ async function processCheckout() {
     paymentElement.mount("#payment-element");
   } catch (error) {
     console.error("❌ Erreur préparation paiement :", error);
-    window.showToast("Erreur de connexion sécurisée au paiement.", "error");
+    // Rejet métier AVANT débit (panier/zone/minimum recalculés serveur) → on affiche
+    // le motif lisible. Erreurs techniques → message générique (pas de fuite interne).
+    const code = error?.code || "";
+    const isBusiness = /failed-precondition|out-of-range|invalid-argument|resource-exhausted/.test(code);
+    window.showToast(
+      isBusiness && error?.message ? error.message : "Erreur de connexion sécurisée au paiement.",
+      "error",
+    );
     if (typeof closePaymentSheet === "function") closePaymentSheet();
   } finally {
     btn.innerHTML = originalText;
@@ -281,41 +342,12 @@ async function finalizeOrderInFirestore(stripePaymentId) {
   const currentUser = auth?.currentUser;
 
   try {
-    const cartItems = window.cart.map((item) => ({
-      id: item.id,
-      productId: item.productId || (typeof item.id === "string" ? item.id.split("-")[0] : null),
-      nom: item.nom,
-      // Le panier stocke `formule`/`taille` (cf. product-modal #buildCartItem).
-      // On garde `item.type`/`item.tailleChoisie` en fallback pour tout item legacy.
-      type: item.formule || item.type || "seul",
-      boissonNom: item.boisson || null,
-      sauces: item.sauces || [],
-      sansCrudites: item.sansCrudites || [],
-      tailleChoisie: item.taille || item.tailleChoisie || null,
-      prix: item.prix || item.prixBase || 0, // IMPORTANT: Requis par la Cloud Function
-      prixBase: item.prixBase || item.prix,
-      prixMenuAdd: item.prixMenuAdd || 0,
-      quantity: item.quantity,
-      // 📊 Attribution upsell : tag posé par UpsellUI lors d'un ajout via la
-      // bottom-sheet. Le serveur (finalizeOrder) agrège accepted/revenue.
-      viaUpsell: item.viaUpsell === true,
-    }));
-
-    // Montant en centimes pour vérification côté serveur
+    // Mêmes helpers que createPaymentIntent (DRY) : le serveur recalcule prix +
+    // total à l'identique pour les deux appels. `totalCents` reste envoyé pour
+    // traçabilité mais n'est pas l'autorité (recalcul serveur, cf. CLAUDE.md §6.1).
+    const cartItems = buildOrderItemsPayload();
     const totalCents = Math.round(window.getCartTotal() * 100);
-
-    // 🚚 Données livraison (mode + adresse). Le SERVEUR recalcule distance/frais/ETA
-    // (anti-manipulation) ; on n'envoie que l'adresse + coordonnées capturées.
-    const delivery = window.store?.state?.delivery || { mode: "collect" };
-    const isDelivery = delivery.mode === "delivery";
-    const livraison =
-      isDelivery && delivery.address
-        ? {
-            adresse: delivery.address.adresse || "",
-            lat: delivery.address.lat,
-            lng: delivery.address.lng,
-          }
-        : null;
+    const { mode, livraison } = getDeliveryPayload();
 
     const finalizeOrder = httpsCallable(functions, "finalizeOrder");
     const result = await finalizeOrder({
@@ -326,7 +358,7 @@ async function finalizeOrderInFirestore(stripePaymentId) {
       clientEmail: currentUser.email,
       clientNom: currentUser.displayName || currentUser.email.split("@")[0],
       referrerId: localStorage.getItem("referralBy") || null,
-      mode: isDelivery ? "delivery" : "collect",
+      mode,
       livraison,
     });
 
