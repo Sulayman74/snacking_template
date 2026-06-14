@@ -94,13 +94,19 @@
             <img id="nav-logo" src="" alt="Logo" class="h-10 w-10 object-contain rounded-xl hidden" />
             <span id="nav-name" class="text-xl font-bold uppercase tracking-wider text-on-dark drop-shadow-md"></span>
           </a>
-          <button aria-label="Bouton du Menu" id="mobile-menu-btn" class="md:hidden text-2xl text-on-dark focus:outline-none transition-transform duration-300 drop-shadow-md">
-            <i data-lucide="menu"></i>
-          </button>
+          <div class="flex items-center gap-3 md:hidden">
+            <button type="button" id="mobile-loyalty-card-btn" data-action="open-client-card" aria-label="Ma carte de fidélité" title="Ma carte de fidélité" class="hidden text-2xl text-on-dark drop-shadow-md transition-transform active:scale-90">
+              <i data-lucide="qr-code"></i>
+            </button>
+            <button aria-label="Bouton du Menu" id="mobile-menu-btn" class="text-2xl text-on-dark focus:outline-none transition-transform duration-300 drop-shadow-md">
+              <i data-lucide="menu"></i>
+            </button>
+          </div>
           <div class="hidden md:flex items-center gap-4">
             <a href="#" data-action="switch-menu" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">La Carte</a>
             <a href="#" data-action="switch-favorites" id="nav-favorites-link" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md"><i data-lucide="heart" aria-hidden="true" class="text-accent mr-1"></i>Mes Favoris</a>
             <a href="#loyalty" id="nav-loyalty-link" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md">Fidélité</a>
+            <button type="button" id="nav-loyalty-card-btn" data-action="open-client-card" aria-label="Ma carte de fidélité" title="Ma carte de fidélité" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md"><i data-lucide="qr-code" aria-hidden="true" class="text-accent mr-1"></i>Ma carte</button>
             <a href="#infos" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">Infos</a>
             <button type="button" data-action="cycle-theme" aria-label="Thème système — changer de thème" title="Thème système" class="text-on-dark/80 hover:text-on-dark hover:bg-on-dark/10 w-9 h-9 flex items-center justify-center rounded-full text-lg transition drop-shadow-md"><i data-lucide="contrast" aria-hidden="true"></i></button>
             <a href="/admin.html" id="nav-admin-btn" class="hidden text-danger hover:text-danger/80 font-bold transition drop-shadow-md"><i data-lucide="settings"></i> Admin</a>
@@ -374,8 +380,14 @@
       <span id="snackbar-message" class="font-medium text-sm md:text-base">Message ici</span>
     </div>
 
-    <div id="client-card-modal" class="fixed inset-0 bg-gray-900/90 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300 opacity-0">
-      <div id="virtual-card" class="w-full max-w-sm rounded-3xl relative shadow-2xl overflow-hidden transform transition-transform scale-95 border border-white/20">
+    <div id="client-card-modal" class="fixed inset-0 z-100 hidden transition-opacity duration-300 opacity-0">
+      <!-- backdrop : clic = fermeture -->
+      <div data-action="close-client-card" class="absolute inset-0 bg-gray-900/90 backdrop-blur-md"></div>
+      <!-- 🪪 Bottom sheet : slide-up depuis le bas (pattern panier). Calque distinct du backdrop
+           -> cliquer la carte ne déclenche pas la fermeture. loyalty.js bascule translate-y-full. -->
+      <div id="client-card-sheet" class="fixed bottom-0 inset-x-0 z-[101] flex flex-col items-center px-4 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[94vh] overflow-y-auto transform translate-y-full transition-transform duration-300 ease-out">
+        <div class="w-12 h-1.5 rounded-full bg-on-dark/30 mb-4 shrink-0" aria-hidden="true"></div>
+        <div id="virtual-card" class="w-full max-w-sm rounded-3xl relative shadow-2xl overflow-hidden border border-white/20">
         <div id="card-bg-gradient" class="absolute inset-0 bg-linear-to-br from-red-500 to-orange-600 z-0"></div>
         <div class="relative z-10 p-6 text-on-dark flex flex-col h-full">
           <div class="flex justify-between items-start mb-6">
@@ -414,10 +426,11 @@
 
           <p id="card-user-email" class="text-[10px] opacity-60 mt-4 text-center font-mono w-full truncate"></p>
         </div>
+        </div>
+        <button data-action="close-client-card" class="mt-6 text-on-dark/70 hover:text-on-dark flex items-center gap-2 transition-transform hover:scale-105">
+          <i data-lucide="circle-x" class="text-2xl"></i><span class="uppercase tracking-widest text-xs font-bold">Fermer</span>
+        </button>
       </div>
-      <button data-action="close-client-card" class="mt-8 text-on-dark/70 hover:text-on-dark flex flex-col items-center gap-2 transition-transform hover:scale-110">
-        <i data-lucide="circle-x" class="text-5xl"></i><span class="uppercase tracking-widest text-xs font-bold">Fermer la carte</span>
-      </button>
     </div>
 
     <div id="admin-scanner-modal" class="fixed inset-0 bg-gray-900/95 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
