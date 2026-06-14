@@ -134,12 +134,12 @@ class AdminProductsUI {
                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                              onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
                         <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-300 hidden">
-                            <i class="fas fa-pizza-slice text-4xl mb-2 opacity-20"></i>
+                            <i data-lucide="pizza" class="text-4xl mb-2 opacity-20"></i>
                             <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Photo absente... 👨‍🍳</span>
                         </div>
                     ` : `
                         <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
-                            <i class="fas fa-pizza-slice text-4xl mb-2 opacity-20"></i>
+                            <i data-lucide="pizza" class="text-4xl mb-2 opacity-20"></i>
                             <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Pas de photo... 👨‍🍳</span>
                         </div>
                     `}
@@ -162,10 +162,10 @@ class AdminProductsUI {
                         <span class="text-2xl font-black text-gray-900">${prix} €</span>
                         <div class="flex gap-2">
                             <button data-action="open-edit-modal" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center">
-                                <i class="fas fa-pen text-sm"></i>
+                                <i data-lucide="pen" class="text-sm"></i>
                             </button>
                             <button data-action="delete-product-ui" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-red-50 text-red-400 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">
-                                <i class="fas fa-trash text-sm"></i>
+                                <i data-lucide="trash" class="text-sm"></i>
                             </button>
                         </div>
                     </div>
@@ -210,7 +210,7 @@ class AdminProductsUI {
         if (this.form) this.form.reset();
         
         document.getElementById("edit-modal-title").textContent = productId ? `Modifier : ${product.nom}` : "➕ Nouveau Produit";
-        document.getElementById("save-product-btn").innerHTML = productId ? '<i class="fas fa-save mr-2"></i> Enregistrer' : '<i class="fas fa-plus mr-2"></i> Créer le produit';
+        document.getElementById("save-product-btn").innerHTML = productId ? '<i data-lucide="save" class="mr-2"></i> Enregistrer' : '<i data-lucide="plus" class="mr-2"></i> Créer le produit';
 
         if (product) {
             document.getElementById("edit-nom").value = product.nom || "";
@@ -281,7 +281,7 @@ class AdminProductsUI {
         e.preventDefault();
         const btn = document.getElementById("save-product-btn");
         const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sauvegarde...';
+        btn.innerHTML = '<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Sauvegarde...';
         btn.disabled = true;
 
         try {

@@ -47,7 +47,7 @@ class AdminComptaUI {
 
         if (!complete) {
             onboardBtn.innerHTML = (hasAccount ? "Terminer la configuration" : "Configurer les paiements") +
-                ' <i class="fas fa-arrow-right text-sm text-gray-400"></i>';
+                ' <i data-lucide="arrow-right" class="text-sm text-gray-400"></i>';
         }
 
         const badge = document.getElementById("stripe-status-badge");
@@ -98,7 +98,7 @@ class AdminComptaUI {
     async startOnboarding() {
         const btn = document.getElementById("btn-stripe-onboard");
         const original = btn?.innerHTML;
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Connexion Stripe…'; }
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Connexion Stripe…'; }
         try {
             const fn = httpsCallable(functions, "getStripeOnboardingLink");
             const res = await fn({ snackId: window.currentAdminSnackId, origin: window.location.origin });
@@ -245,7 +245,7 @@ class AdminComptaUI {
         if (sales.length === 0) {
             this.historyTableEl.innerHTML = `
                 <div class="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                    <i class="fas fa-search text-3xl text-gray-200 mb-3"></i>
+                    <i data-lucide="search" class="text-3xl text-gray-200 mb-3"></i>
                     <p class="text-gray-400 font-bold">Aucune vente sur cette période.</p>
                 </div>
             `;
@@ -256,7 +256,7 @@ class AdminComptaUI {
         // restent exacts (agrégat serveur). Au-delà, inviter à l'export CSV complet.
         const truncatedNote = sales.length >= 200 ? `
             <div class="mb-3 px-4 py-2 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 text-xs font-bold">
-                <i class="fas fa-circle-info mr-1"></i> 200 commandes les plus récentes affichées. Les totaux restent exacts ; utilisez l'export CSV pour le détail complet.
+                <i data-lucide="info" class="mr-1"></i> 200 commandes les plus récentes affichées. Les totaux restent exacts ; utilisez l'export CSV pour le détail complet.
             </div>` : "";
 
         this.historyTableEl.innerHTML = `
@@ -304,7 +304,7 @@ class AdminComptaUI {
                 </td>
                 <td class="px-4 py-4 text-right">
                     <button class="w-8 h-8 rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center ml-auto">
-                        <i class="fas fa-eye text-xs"></i>
+                        <i data-lucide="eye" class="text-xs"></i>
                     </button>
                 </td>
             </tr>

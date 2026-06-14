@@ -107,7 +107,7 @@ class AdminConfigUI {
                     class="break-toggle text-[10px] px-3 py-1.5 rounded-full font-black border transition-all ${hasBreak && !isClosed ? "bg-blue-600 border-blue-600 text-white" : "bg-gray-100 border-gray-200 text-gray-400"}"
                     onclick="window.toggleBreakRow(this)"
                     ${isClosed ? "disabled" : ""}>
-                    <i class="fas fa-coffee mr-1"></i> COUPURE
+                    <i data-lucide="coffee" class="mr-1"></i> COUPURE
                 </button>
 
                 <label class="flex items-center gap-2 cursor-pointer ml-auto shrink-0 group">
@@ -246,7 +246,7 @@ class AdminConfigUI {
             if (isSaving) {
                 btn.disabled = true;
                 btn.dataset.originalHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sauvegarde...';
+                btn.innerHTML = '<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Sauvegarde...';
             } else {
                 btn.disabled = false;
                 if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;

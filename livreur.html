@@ -11,11 +11,7 @@
     <link rel="manifest" href="/livreur.webmanifest" />
     <!-- iOS : icône d'écran d'accueil (Safari ignore les icons du manifest). -->
     <link rel="apple-touch-icon" href="/livreur-icon-192.png" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link rel="stylesheet" href="/src/styles.css" />
+<link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body class="bg-gray-100 min-h-screen text-gray-900 antialiased">
     <div class="app-bg" aria-hidden="true"></div>
@@ -25,7 +21,7 @@
       <div class="w-full max-w-sm">
         <div class="text-center mb-8">
           <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center mb-4 shadow-lg">
-            <i class="fas fa-motorcycle text-3xl text-white"></i>
+            <i data-lucide="bike" class="text-3xl text-white"></i>
           </div>
           <h1 class="text-2xl font-black text-white">Espace Livreur</h1>
           <p class="text-gray-400 text-sm mt-1">Connectez-vous pour démarrer votre tournée.</p>
@@ -37,7 +33,7 @@
             class="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <button id="driver-login-btn" type="submit"
             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-xl transition active:scale-95 flex items-center justify-center gap-2">
-            <i class="fas fa-right-to-bracket"></i> Se connecter
+            <i data-lucide="log-in"></i> Se connecter
           </button>
           <p id="driver-login-error" class="hidden text-center text-red-400 text-sm"></p>
         </form>
@@ -55,15 +51,15 @@
         </div>
         <button id="driver-help-btn" type="button" title="Comment ça marche"
           class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition">
-          <i class="fas fa-circle-question"></i>
+          <i data-lucide="circle-help"></i>
         </button>
         <button id="driver-notif-btn" type="button" title="Activer les notifications"
           class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition">
-          <i class="fas fa-bell"></i>
+          <i data-lucide="bell"></i>
         </button>
         <button id="driver-logout-btn" type="button" title="Se déconnecter"
           class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition">
-          <i class="fas fa-right-from-bracket"></i>
+          <i data-lucide="log-out"></i>
         </button>
       </header>
 
@@ -80,24 +76,24 @@
     <!-- 📲 BANDEAU INSTALLATION (A2HS) — affiché par src/livreur.js -->
     <div id="livreur-install-banner" class="fixed pointer-events-none bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-blue-600 text-white p-4 rounded-2xl shadow-2xl z-[190] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between gap-3">
       <div class="flex items-center gap-3 min-w-0">
-        <i class="fas fa-circle-down text-2xl shrink-0"></i>
+        <i data-lucide="circle-arrow-down" class="text-2xl shrink-0"></i>
         <div class="min-w-0">
           <p class="font-bold text-sm">Installer l'app Livreur</p>
           <p id="livreur-install-hint" class="text-xs text-blue-100">Accès rapide + notifications.</p>
         </div>
       </div>
       <button id="livreur-install-btn" class="bg-white text-blue-700 px-4 py-2 rounded-xl font-black text-sm shrink-0 active:scale-95 transition">Installer</button>
-      <button id="livreur-install-close" class="absolute -top-2 -right-2 bg-gray-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+      <button id="livreur-install-close" class="absolute -top-2 -right-2 bg-gray-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i data-lucide="x"></i></button>
     </div>
 
     <!-- 🔄 BANDEAU MISE À JOUR (pattern "prompt") — affiché par src/livreur.js -->
     <div id="pwa-update-banner" class="fixed pointer-events-none bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/85 backdrop-blur-lg text-white p-4 rounded-2xl shadow-2xl z-[200] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-white/10">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0"><i class="fas fa-arrows-rotate text-blue-400 text-lg"></i></div>
+        <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0"><i data-lucide="refresh-cw" class="text-blue-400 text-lg"></i></div>
         <div><p class="font-bold text-sm">Nouvelle version dispo ✨</p><p class="text-xs text-gray-300">Rafraîchis quand tu es disponible.</p></div>
       </div>
       <button id="pwa-refresh-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
-      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i data-lucide="x"></i></button>
     </div>
 
     <!-- Inputs photo (PoD) déclenchés par l'UI -->
@@ -109,8 +105,8 @@
       <p id="pod-preview-title" class="text-white font-bold mb-3">Aperçu</p>
       <img id="pod-preview-img" alt="Aperçu de la photo" class="max-h-[60vh] max-w-full rounded-2xl border border-white/10 object-contain bg-gray-900" />
       <div class="flex gap-3 mt-5 w-full max-w-sm">
-        <button id="pod-retake-btn" type="button" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl active:scale-95 transition"><i class="fas fa-rotate-left mr-2"></i>Reprendre</button>
-        <button id="pod-confirm-btn" type="button" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl active:scale-95 transition"><i class="fas fa-paper-plane mr-2"></i>Envoyer</button>
+        <button id="pod-retake-btn" type="button" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl active:scale-95 transition"><i data-lucide="rotate-ccw" class="mr-2"></i>Reprendre</button>
+        <button id="pod-confirm-btn" type="button" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl active:scale-95 transition"><i data-lucide="send" class="mr-2"></i>Envoyer</button>
       </div>
     </div>
 
@@ -118,8 +114,8 @@
     <div id="driver-help-modal" class="hidden fixed inset-0 z-[220] items-center justify-center bg-black/70 p-4">
       <div class="bg-white rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto p-6 shadow-2xl">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-black text-gray-900"><i class="fas fa-motorcycle text-blue-500 mr-2"></i>Comment ça marche</h2>
-          <button id="driver-help-close" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200" aria-label="Fermer"><i class="fas fa-times"></i></button>
+          <h2 class="text-xl font-black text-gray-900"><i data-lucide="bike" class="text-blue-500 mr-2"></i>Comment ça marche</h2>
+          <button id="driver-help-close" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200" aria-label="Fermer"><i data-lucide="x"></i></button>
         </div>
         <ol class="space-y-4 text-sm text-gray-700">
           <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center">1</span><div><b>Active notifications & localisation</b> à la connexion (carte « Activer mon espace »).</div></li>
@@ -127,9 +123,9 @@
           <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center">3</span><div>Au resto, fais la <b>photo de prise en charge</b> (étape 1) → vérifie l'aperçu → Envoyer.</div></li>
           <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center">4</span><div>Roule vers le client : il est <b>prévenu de ta distance</b> automatiquement.</div></li>
           <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center">5</span><div>Arrivé (&lt; 200 m), le bouton <b>« J'ai livré »</b> se débloque → photo de dépôt (étape 2) → Envoyer.</div></li>
-          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-green-100 text-green-700 font-black flex items-center justify-center"><i class="fas fa-check"></i></span><div>C'est livré ! La commande disparaît de ta liste.</div></li>
+          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-green-100 text-green-700 font-black flex items-center justify-center"><i data-lucide="check"></i></span><div>C'est livré ! La commande disparaît de ta liste.</div></li>
         </ol>
-        <p class="mt-4 text-xs text-gray-400"><i class="fas fa-lightbulb mr-1"></i>Garde l'app ouverte pendant la course (l'écran reste allumé). Sur iPhone, installe l'app pour recevoir les notifications.</p>
+        <p class="mt-4 text-xs text-gray-400"><i data-lucide="lightbulb" class="mr-1"></i>Garde l'app ouverte pendant la course (l'écran reste allumé). Sur iPhone, installe l'app pour recevoir les notifications.</p>
         <button id="driver-help-ok" type="button" class="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl active:scale-95 transition">J'ai compris</button>
       </div>
     </div>

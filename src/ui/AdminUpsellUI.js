@@ -27,7 +27,7 @@ class AdminUpsellUI {
         if (rows.length === 0) {
             this.tableEl.innerHTML = `
                 <div class="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                    <i class="fas fa-arrow-trend-up text-3xl text-gray-200 mb-3"></i>
+                    <i data-lucide="trending-up" class="text-3xl text-gray-200 mb-3"></i>
                     <p class="text-gray-400 font-bold">Aucune donnée d'upsell pour le moment.</p>
                     <p class="text-gray-300 text-sm mt-1">Les suggestions affichées et acceptées s'afficheront ici.</p>
                 </div>

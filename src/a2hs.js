@@ -56,7 +56,7 @@ export function setupA2HS({ bannerId, btnId, closeId, hintId } = {}) {
   if (isIOS && !isStandalone) {
     document.getElementById(btnId)?.classList.add("hidden");
     const hint = hintId ? document.getElementById(hintId) : null;
-    if (hint) hint.innerHTML = 'Partager <i class="fas fa-arrow-up-from-bracket"></i> → « Sur l\'écran d\'accueil »';
+    if (hint) hint.innerHTML = 'Partager <i data-lucide="upload"></i> → « Sur l\'écran d\'accueil »';
     setTimeout(show, 1500);
   }
 }

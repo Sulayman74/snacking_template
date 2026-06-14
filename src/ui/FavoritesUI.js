@@ -71,11 +71,11 @@ class FavoritesUI {
     if (favorites.length === 0) {
       this.container.innerHTML = `
         <div class="text-center py-20 px-6">
-          <i class="fas fa-heart text-6xl text-text-muted mb-6" aria-hidden="true"></i>
+          <i data-lucide="heart" class="text-6xl text-text-muted mb-6" aria-hidden="true"></i>
           <h3 class="text-xl font-black text-text mb-2">Aucun favori pour l'instant</h3>
           <p class="text-text-muted mb-8 max-w-sm mx-auto">Personnalisez un produit (sauces, options…) puis touchez le cœur ❤️ pour le retrouver ici et le recommander en un clin d'œil.</p>
           <button data-action="switch-menu" class="bg-primary text-on-primary font-bold px-8 py-4 rounded-full shadow-lg hover:-translate-y-1 transition-all">
-            <i class="fas fa-utensils mr-2" aria-hidden="true"></i> Voir la carte
+            <i data-lucide="utensils" class="mr-2" aria-hidden="true"></i> Voir la carte
           </button>
         </div>`;
       return;
@@ -100,8 +100,8 @@ class FavoritesUI {
         <div class="w-16 h-16 shrink-0 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center">
           ${imgSrc
             ? `<img src="${imgSrc}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-               <span class="w-full h-full hidden items-center justify-center"><i class="fas fa-heart text-text-muted text-xl" aria-hidden="true"></i></span>`
-            : `<i class="fas fa-heart text-text-muted text-xl" aria-hidden="true"></i>`}
+               <span class="w-full h-full hidden items-center justify-center"><i data-lucide="heart" class="text-text-muted text-xl" aria-hidden="true"></i></span>`
+            : `<i data-lucide="heart" class="text-text-muted text-xl" aria-hidden="true"></i>`}
         </div>
         <div class="flex-1 min-w-0">
           <p class="font-bold text-text truncate">${safeName}</p>
@@ -110,10 +110,10 @@ class FavoritesUI {
         </div>
         <div class="flex flex-col gap-2 shrink-0">
           <button type="button" class="fav-reorder-btn bg-primary text-on-primary text-sm font-bold px-4 py-2 rounded-full hover:scale-105 transition-transform flex items-center gap-1">
-            <i class="fas fa-cart-plus" aria-hidden="true"></i> Ajouter
+            <i data-lucide="shopping-cart" aria-hidden="true"></i> Ajouter
           </button>
           <button type="button" aria-label="Retirer ${safeName} des favoris" class="fav-remove-btn text-text-muted hover:text-danger text-sm transition-colors">
-            <i class="fas fa-trash-alt" aria-hidden="true"></i>
+            <i data-lucide="trash-2" aria-hidden="true"></i>
           </button>
         </div>`;
 

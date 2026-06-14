@@ -29,7 +29,7 @@ async function loadDriversView() {
 
   bindDriverForm();
 
-  listEl.innerHTML = `<p class="text-center text-gray-400 py-8"><i class="fas fa-spinner fa-spin"></i> Chargement…</p>`;
+  listEl.innerHTML = `<p class="text-center text-gray-400 py-8"><i data-lucide="loader-circle" class="animate-spin"></i> Chargement…</p>`;
 
   try {
     // Composite (snackId, role) — cf. firestore.indexes.json.
@@ -56,7 +56,7 @@ async function loadDeliveriesLog(snackId) {
   const el = document.getElementById("deliveries-log");
   if (!el) return;
   bindLightbox();
-  el.innerHTML = `<p class="text-center text-gray-400 py-6"><i class="fas fa-spinner fa-spin"></i></p>`;
+  el.innerHTML = `<p class="text-center text-gray-400 py-6"><i data-lucide="loader-circle" class="animate-spin"></i></p>`;
 
   try {
     // Réutilise l'index commandes(snackId, statut, date). On filtre mode en JS.
@@ -87,7 +87,7 @@ function thumb(url, label, time) {
   const safe = window.safeURL ? window.safeURL(url) : url;
   if (!url) {
     return `<div class="flex flex-col items-center gap-1 opacity-40">
-      <div class="w-16 h-16 rounded-lg bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400"><i class="fas fa-image"></i></div>
+      <div class="w-16 h-16 rounded-lg bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400"><i data-lucide="image"></i></div>
       <span class="text-[10px] text-gray-400">${label}</span>
     </div>`;
   }
@@ -118,8 +118,8 @@ function renderDeliveries(list) {
         <div class="flex justify-between items-start gap-2 mb-3">
           <div class="min-w-0">
             <p class="font-black text-gray-900 truncate">${escapeHTML(o.clientNom || "Client")}</p>
-            <p class="text-sm text-gray-500 truncate"><i class="fas fa-location-dot text-blue-500 mr-1"></i>${escapeHTML(o.livraison?.adresse || "—")}</p>
-            <p class="text-xs text-gray-400 mt-0.5"><i class="fas fa-motorcycle mr-1"></i>${escapeHTML(lv.nom || "—")}${o.livraison?.distanceKm != null ? " · " + escapeHTML(String(o.livraison.distanceKm)) + " km" : ""}</p>
+            <p class="text-sm text-gray-500 truncate"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(o.livraison?.adresse || "—")}</p>
+            <p class="text-xs text-gray-400 mt-0.5"><i data-lucide="bike" class="mr-1"></i>${escapeHTML(lv.nom || "—")}${o.livraison?.distanceKm != null ? " · " + escapeHTML(String(o.livraison.distanceKm)) + " km" : ""}</p>
           </div>
           ${badge}
         </div>
@@ -163,7 +163,7 @@ function renderDrivers(drivers) {
 
   if (drivers.length === 0) {
     listEl.innerHTML = `<div class="bg-white border border-dashed border-gray-300 rounded-2xl p-8 text-center text-gray-500">
-      <i class="fas fa-motorcycle text-3xl text-gray-300 mb-3"></i>
+      <i data-lucide="bike" class="text-3xl text-gray-300 mb-3"></i>
       <p class="font-bold">Aucun livreur pour l'instant.</p>
       <p class="text-sm">Ajoutez votre premier livreur ci-dessus.</p>
     </div>`;
@@ -234,7 +234,7 @@ function bindDriverForm() {
 
     const original = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Création…`;
+    btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i> Création…`;
     try {
       const createDriver = httpsCallable(functions, "createDriver");
       await createDriver(payload);

@@ -56,10 +56,11 @@ export function showToast(message, type = "success") {
 
     if (type === "success") {
         toast.classList.add("bg-gray-900", "text-on-dark");
-        icon.className = "fas fa-check-circle text-green-400";
+        icon.setAttribute("data-lucide", "circle-check");
+        icon.classList.add("text-green-400");
     } else {
         toast.classList.add("bg-danger", "text-on-dark");
-        icon.className = "fas fa-exclamation-triangle text-on-dark";
+        icon.setAttribute("data-lucide", "triangle-alert");
     }
 
     container.appendChild(toast);

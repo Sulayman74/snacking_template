@@ -10,11 +10,7 @@
 
     <meta name="robots" content="noindex, nofollow" />
 
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link rel="stylesheet" href="/src/styles.css" />
+<link rel="stylesheet" href="/src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <meta name="theme-color" content="#111827" />
@@ -37,37 +33,37 @@
     <!-- 🔄 BANDEAU MISE À JOUR (pattern "prompt") — câblé par src/admin.js -->
     <div id="pwa-update-banner" class="fixed pointer-events-none bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/90 backdrop-blur-lg text-white p-4 rounded-2xl shadow-2xl z-[200] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-white/10">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0"><i class="fas fa-arrows-rotate text-blue-400 text-lg"></i></div>
+        <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0"><i data-lucide="refresh-cw" class="text-blue-400 text-lg"></i></div>
         <div><p class="font-bold text-sm">Nouvelle version dispo ✨</p><p class="text-xs text-gray-300">Mettez à jour entre deux services.</p></div>
       </div>
       <button id="pwa-refresh-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
-      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i data-lucide="x"></i></button>
     </div>
 
     <!-- 📲 BANDEAU INSTALLATION (A2HS) — câblé par src/admin.js (tablette cuisine) -->
     <div id="admin-install-banner" class="fixed pointer-events-none bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-blue-600 text-white p-4 rounded-2xl shadow-2xl z-[190] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between gap-3">
       <div class="flex items-center gap-3 min-w-0">
-        <i class="fas fa-circle-down text-2xl shrink-0"></i>
+        <i data-lucide="circle-arrow-down" class="text-2xl shrink-0"></i>
         <div class="min-w-0">
           <p class="font-bold text-sm">Installer l'app Cuisine</p>
           <p id="admin-install-hint" class="text-xs text-blue-100">Plein écran sur la tablette de service.</p>
         </div>
       </div>
       <button id="admin-install-btn" class="bg-white text-blue-700 px-4 py-2 rounded-xl font-black text-sm shrink-0 active:scale-95 transition">Installer</button>
-      <button id="admin-install-close" class="absolute -top-2 -right-2 bg-gray-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+      <button id="admin-install-close" class="absolute -top-2 -right-2 bg-gray-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i data-lucide="x"></i></button>
     </div>
 
     <!-- 🔔 BANDEAU ACTIVATION ALERTES (push nouvelles commandes) — câblé par src/admin-notifs.js -->
     <div id="admin-notif-banner" class="fixed pointer-events-none bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/90 backdrop-blur-lg text-white p-4 rounded-2xl shadow-2xl z-[185] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between gap-3 border border-white/10">
       <div class="flex items-center gap-3 min-w-0">
-        <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0"><i class="fas fa-bell text-amber-400 text-lg"></i></div>
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0"><i data-lucide="bell" class="text-amber-400 text-lg"></i></div>
         <div class="min-w-0">
           <p class="font-bold text-sm">Alertes nouvelles commandes</p>
           <p id="admin-notif-hint" class="text-xs text-gray-300">Soyez prévenu même écran en veille.</p>
         </div>
       </div>
       <button id="admin-notif-btn" class="bg-amber-500 hover:bg-amber-600 text-gray-900 px-4 py-2 rounded-xl font-black text-sm shrink-0 active:scale-95 transition">Activer</button>
-      <button id="admin-notif-close" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+      <button id="admin-notif-close" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i data-lucide="x"></i></button>
     </div>
 
     <!-- 🔍 LIGHTBOX (aperçu plein écran des preuves photo) -->
@@ -79,7 +75,7 @@
       id="startup-overlay"
       class="fixed inset-0 bg-gray-900 z-100 flex flex-col items-center justify-center text-white p-6 transition-opacity duration-500"
     >
-      <i class="fas fa-lock text-6xl mb-6 text-gray-500" id="startup-icon"></i>
+      <i data-lucide="lock" id="startup-icon" class="text-6xl mb-6 text-gray-500"></i>
       <h1 class="text-3xl font-black mb-2 text-center" id="startup-title">
         Vérification de l'accès...
       </h1>
@@ -90,7 +86,7 @@
         id="start-shift-btn"
         class="hidden bg-green-600 hover:bg-green-700 text-white font-bold text-2xl py-6 px-12 rounded-2xl shadow-[0_0_30px_rgba(22,163,74,0.4)] animate-pulse transition transform hover:scale-105"
       >
-        <i class="fas fa-play mr-3"></i> DÉMARRER LE SERVICE
+        <i data-lucide="play" class="mr-3"></i> DÉMARRER LE SERVICE
       </button>
       <a
         href="index.html"
@@ -145,31 +141,31 @@
 
         <nav class="flex-1 py-4 space-y-2 overflow-y-auto overflow-x-hidden">
             <button onclick="switchAdminTab('cuisine')" id="tab-cuisine-desktop" class="w-full flex items-center px-6 py-4 bg-gray-800 text-white rounded-r-2xl font-bold shadow transition hover:bg-gray-700">
-                <i class="fas fa-fire text-red-500 text-xl w-8 text-center shrink-0"></i>
+                <i data-lucide="flame" class="text-red-500 text-xl w-8 text-center shrink-0"></i>
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Commandes</span>
             </button>
             <button onclick="switchAdminTab('menu')" id="tab-menu-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
-                <i class="fas fa-hamburger text-yellow-500 text-xl w-8 text-center shrink-0"></i>
+                <i data-lucide="sandwich" class="text-yellow-500 text-xl w-8 text-center shrink-0"></i>
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Menu & Stocks</span>
             </button>
             <button onclick="switchAdminTab('marketing')" id="tab-marketing-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
-                <i class="fas fa-bullhorn text-blue-500 text-xl w-8 text-center shrink-0"></i>
+                <i data-lucide="megaphone" class="text-blue-500 text-xl w-8 text-center shrink-0"></i>
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Marketing Push</span>
             </button>
             <button onclick="switchAdminTab('compta')" id="tab-compta-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
-              <i class="fas fa-file-invoice-dollar text-green-500 text-xl w-8 text-center shrink-0"></i>
+              <i data-lucide="file-text" class="text-green-500 text-xl w-8 text-center shrink-0"></i>
               <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Comptabilité</span>
             </button>
             <button onclick="switchAdminTab('config')" id="tab-config-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
-                <i class="fas fa-cog text-gray-500 text-xl w-8 text-center shrink-0"></i>
+                <i data-lucide="settings" class="text-gray-500 text-xl w-8 text-center shrink-0"></i>
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Configuration</span>
             </button>
             <button onclick="switchAdminTab('livreurs')" id="tab-livreurs-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
-                <i class="fas fa-motorcycle text-blue-400 text-xl w-8 text-center shrink-0"></i>
+                <i data-lucide="bike" class="text-blue-400 text-xl w-8 text-center shrink-0"></i>
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Livreurs</span>
             </button>
             <button onclick="switchAdminTab('support')" id="tab-support-desktop" class="w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
-                <i class="fas fa-life-ring text-blue-400 text-xl w-8 text-center shrink-0"></i>
+                <i data-lucide="life-buoy" class="text-blue-400 text-xl w-8 text-center shrink-0"></i>
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Support / FAQ</span>
             </button>
         </nav>
@@ -178,12 +174,12 @@
             <div class="flex items-center bg-gray-800 p-2 rounded-xl whitespace-nowrap">
                 <div id="admin-initials" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold shrink-0 ml-1"></div>
                 <a  href="index.html" class="text-accent hover:text-green-500 transition p-2 ml-2" aria-label="Se déconnecter">
-                    <i class="fa-solid fa-door-open"></i>
+                    <i data-lucide="door-open"></i>
                 </a>
                 <div class="ml-3 flex-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden flex justify-between items-center">
                     <span id="admin-email-desktop" class="font-mono text-xs text-gray-300 truncate w-24"></span>
                     <button onclick="logoutAdmin()" class="text-primary hover:text-red-500 transition p-2 ml-2" aria-label="Se déconnecter">
-                        <i class="fas fa-sign-out-alt"></i>
+                        <i data-lucide="log-out"></i>
                     </button>
                 </div>
             </div>
@@ -197,10 +193,10 @@
             </div>
             <div>
               <a  href="index.html" class="text-gray-400 hover:text-green-500 transition p-2 ml-2" aria-label="Se déconnecter">
-                <i class="fa-solid fa-door-open text-lg"></i>
+                <i data-lucide="door-open" class="text-lg"></i>
               </a>
               <button onclick="logoutAdmin()" class="text-gray-400 hover:text-red-500 transition">
-                <i class="fas fa-sign-out-alt text-lg"></i>
+                <i data-lucide="log-out" class="text-lg"></i>
               </button>
             </div>
         </header>
@@ -218,21 +214,21 @@
         <section id="view-cuisine" class="relative flex flex-col md:flex-row gap-6 p-4 pb-20 md:p-6 h-full min-h-full">
             <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
-                    <h2 class="text-xl font-black text-gray-600 uppercase"><i class="fas fa-car text-gray-500 mr-2"></i> Attente Client</h2>
+                    <h2 class="text-xl font-black text-gray-600 uppercase"><i data-lucide="car" class="text-gray-500 mr-2"></i> Attente Client</h2>
                     <span id="count-waiting" class="bg-gray-500 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
                 <div id="orders-waiting" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
             </div>
             <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
-                    <h2 class="text-xl font-black text-gray-800 uppercase"><i class="fas fa-fire text-red-600 mr-2"></i> À Préparer</h2>
+                    <h2 class="text-xl font-black text-gray-800 uppercase"><i data-lucide="flame" class="text-red-600 mr-2"></i> À Préparer</h2>
                     <span id="count-new" class="bg-red-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
                 <div id="orders-new" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
             </div>
             <div class="flex-1 min-w-75 bg-gray-200 rounded-2xl p-4 flex flex-col max-h-full border border-gray-300">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
-                    <h2 class="text-xl font-black text-gray-800 uppercase"><i class="fas fa-check-circle text-green-600 mr-2"></i> Prêtes</h2>
+                    <h2 class="text-xl font-black text-gray-800 uppercase"><i data-lucide="circle-check" class="text-green-600 mr-2"></i> Prêtes</h2>
                     <span id="count-ready" class="bg-green-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
                 <div id="orders-ready" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
@@ -249,37 +245,37 @@
                         
                         <div class="flex gap-2">
                             <button type="button" onclick="openCsvInfoModal()" class="bg-white border border-gray-300 text-gray-600 hover:text-blue-600 hover:border-blue-600 px-4 py-3 rounded-2xl font-bold shadow-sm transition flex items-center justify-center" aria-label="Aide format CSV">
-                                <i class="fas fa-question-circle text-xl"></i>
+                                <i data-lucide="circle-help" class="text-xl"></i>
                             </button>
 
                             <input type="file" id="csv-import-input" accept=".csv" class="hidden" onchange="importProductsCSV(event)">
                             <button type="button" onclick="document.getElementById('csv-import-input').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-2xl font-bold shadow-sm transition flex items-center gap-2 hidden sm:flex">
-                                <i class="fas fa-file-upload"></i> Importer
+                                <i data-lucide="file-up"></i> Importer
                             </button>
                             
                             <button type="button" onclick="openAddProductModal()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition flex items-center gap-2">
-                                <i class="fas fa-plus"></i> Nouveau
+                                <i data-lucide="plus"></i> Nouveau
                             </button>
                         </div>
                     </div>
                     
                     <div class="mb-6 flex flex-col md:flex-row gap-4">
                         <div class="relative flex-1">
-                            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <i data-lucide="search" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                             <input type="text" id="admin-product-search" placeholder="Rechercher un produit (nom, description)..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl font-medium focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" oninput="if(window.filterAdminProducts) window.filterAdminProducts()">
                         </div>
                         <div class="relative w-full md:w-64">
-                            <i class="fas fa-filter absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <i data-lucide="filter" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                             <select id="admin-product-category" class="w-full pl-12 pr-10 py-3 bg-white border border-gray-200 rounded-2xl font-medium focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition appearance-none" onchange="if(window.filterAdminProducts) window.filterAdminProducts()">
                                 <option value="">Toutes les catégories</option>
                                 <!-- Rempli dynamiquement -->
                             </select>
-                            <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                            <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                         </div>
                     </div>
 
                     <div id="admin-products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
-                        <p class="text-gray-500 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Chargement des produits...</p>
+                        <p class="text-gray-500 font-bold"><i data-lucide="loader-circle" class="animate-spin mr-2"></i> Chargement des produits...</p>
                     </div>
                 </div>
             </section>
@@ -304,7 +300,7 @@
 
                         <form id="push-campaign-form" class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
                             <h3 class="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                                <i class="fas fa-plus-circle text-blue-500"></i> Nouvelle Campagne
+                                <i data-lucide="circle-plus" class="text-blue-500"></i> Nouvelle Campagne
                             </h3>
                             
                             <div class="space-y-4">
@@ -339,13 +335,13 @@
                             </div>
 
                             <button type="submit" id="btn-send-push" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-700 hover:-translate-y-1 transition-all active:scale-95 flex justify-center items-center gap-2">
-                                <i class="fas fa-paper-plane"></i> Programmer la campagne
+                                <i data-lucide="send"></i> Programmer la campagne
                             </button>
 
                             <!-- ⚡ Offre flash : envoi immédiat au segment actifs, REFUSÉ si la
                                  cuisine est en charge (rushMode décidé serveur via getKitchenLoad). -->
                             <button type="button" id="btn-flash-offer" class="w-full bg-orange-500 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-orange-600 hover:-translate-y-1 transition-all active:scale-95 flex justify-center items-center gap-2">
-                                <i class="fas fa-bolt"></i> Envoyer une offre flash
+                                <i data-lucide="zap"></i> Envoyer une offre flash
                             </button>
                             <p id="flash-offer-hint" class="text-[10px] text-gray-500 italic text-center"></p>
                         </form>
@@ -355,7 +351,7 @@
                     <div class="space-y-6">
                         <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg">
                             <h3 class="text-lg font-black mb-4 flex items-center gap-2">
-                                <i class="fas fa-lightbulb text-yellow-300"></i> Smart Advisor
+                                <i data-lucide="lightbulb" class="text-yellow-300"></i> Smart Advisor
                             </h3>
                             <div id="marketing-tips-container" class="space-y-3">
                                 <!-- Injecté par AdminMarketingUI -->
@@ -386,7 +382,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 lg:col-span-2">
                         <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <i class="fas fa-chart-line text-blue-500"></i> Ce mois-ci
+                            <i data-lucide="chart-line" class="text-blue-500"></i> Ce mois-ci
                         </h3>
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
@@ -405,7 +401,7 @@
                     <div id="stripe-connect-card" class="bg-gradient-to-br from-indigo-900 to-gray-900 rounded-2xl p-6 shadow-md text-white flex flex-col justify-between">
                         <div>
                             <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
-                                <i class="fas fa-university text-indigo-400"></i> Virements
+                                <i data-lucide="landmark" class="text-indigo-400"></i> Virements
                                 <span id="stripe-status-badge" class="ml-auto text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-gray-700 text-gray-300">…</span>
                             </h3>
                             <p id="stripe-card-text" class="text-gray-300 text-sm mb-4 leading-relaxed">
@@ -414,10 +410,10 @@
                         </div>
                         <!-- Boutons masqués par défaut : AdminComptaUI.renderStripeStatus en affiche un seul. -->
                         <button onclick="startStripeOnboarding()" id="btn-stripe-onboard" class="hidden w-full bg-white text-gray-900 font-black py-4 rounded-xl shadow-lg hover:bg-gray-100 transition active:scale-95 flex justify-center items-center gap-2 mt-4">
-                            Configurer les paiements <i class="fas fa-arrow-right text-sm text-gray-400"></i>
+                            Configurer les paiements <i data-lucide="arrow-right" class="text-sm text-gray-400"></i>
                         </button>
                         <button onclick="openStripeExpressDashboard()" id="btn-stripe-dashboard" class="hidden w-full bg-white text-gray-900 font-black py-4 rounded-xl shadow-lg hover:bg-gray-100 transition active:scale-95 flex justify-center items-center gap-2 mt-4">
-                            Ouvrir mon portail <i class="fas fa-external-link-alt text-sm text-gray-400"></i>
+                            Ouvrir mon portail <i data-lucide="external-link" class="text-sm text-gray-400"></i>
                         </button>
                     </div>
                 </div>
@@ -425,7 +421,7 @@
                 <!-- Export avec filtre date -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-file-excel text-green-500"></i> Export Livre de Caisse
+                        <i data-lucide="file-spreadsheet" class="text-green-500"></i> Export Livre de Caisse
                     </h3>
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button onclick="setComptaDateRange('today')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition">Aujourd'hui</button>
@@ -444,7 +440,7 @@
                             <input type="date" id="compta-date-end" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <button onclick="exportComptaCSV()" id="btn-export-compta" class="whitespace-nowrap bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-md active:scale-95 flex items-center gap-2">
-                            <i class="fas fa-file-excel"></i> Exporter (CSV)
+                            <i data-lucide="file-spreadsheet"></i> Exporter (CSV)
                         </button>
                     </div>
                     <p class="text-xs text-gray-400 mt-3">L'export inclut les colonnes TTC, HT et TVA (10% restauration rapide). Une ligne de totaux est ajoutée en bas du fichier.</p>
@@ -453,7 +449,7 @@
                 <!-- Historique des commandes -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-list-alt text-purple-500"></i> Historique des ventes (ce mois)
+                        <i data-lucide="list" class="text-purple-500"></i> Historique des ventes (ce mois)
                     </h3>
                     <div id="compta-history-table">
                         <p class="text-center text-gray-300 py-8">Chargement en cours...</p>
@@ -463,7 +459,7 @@
                 <!-- 📊 Performance Upsell -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                     <h3 class="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
-                        <i class="fas fa-arrow-trend-up text-green-500"></i> Performance Upsell
+                        <i data-lucide="trending-up" class="text-green-500"></i> Performance Upsell
                     </h3>
                     <p class="text-xs text-gray-400 mb-4">Suggestions affichées vs ajoutées au panier, et chiffre d'affaires attribuable (cumul).</p>
                     <div id="upsell-stats-table">
@@ -485,7 +481,7 @@
 
                 <div class="bg-white p-2 rounded-3xl shadow-sm border border-gray-200">
                     <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
-                        <i class="fas fa-id-card text-blue-500"></i> Identité & Promo
+                        <i data-lucide="id-card" class="text-blue-500"></i> Identité & Promo
                     </h3>
                     <form id="config-identity-form" class="space-y-6">
                         <div>
@@ -494,14 +490,14 @@
                         </div>
                         <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
                             <label class="block text-sm font-bold text-blue-800 mb-2">
-                                <i class="fas fa-tag mr-1"></i> Promo Phare (S'affiche en haut du site)
+                                <i data-lucide="tag" class="mr-1"></i> Promo Phare (S'affiche en haut du site)
                             </label>
                             <input type="text" id="config-promo" class="w-full px-4 py-3 rounded-xl bg-white border border-blue-200 focus:border-blue-500 outline-none transition font-bold text-blue-900" placeholder="Ex: 2 Pizzas achetées = la 3ème OFFERTE !">
                             <p class="text-[10px] text-blue-400 mt-2 italic">Laissez vide pour masquer le bandeau promo.</p>
                         </div>
                         <div class="flex justify-end">
                             <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 transition flex items-center gap-2">
-                                <i class="fas fa-save"></i> Enregistrer l'identité
+                                <i data-lucide="save"></i> Enregistrer l'identité
                             </button>
                         </div>
                     </form>
@@ -509,12 +505,12 @@
 
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
                     <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
-                        <i class="fas fa-motorcycle text-blue-500"></i> Livraison
+                        <i data-lucide="bike" class="text-blue-500"></i> Livraison
                     </h3>
                     <p class="text-sm text-gray-500 mb-5">Activez et paramétrez votre livraison interne (flotte propre, zéro commission plateforme).</p>
                     <form id="config-delivery-form" class="space-y-5">
                         <label class="flex items-center justify-between bg-blue-50 p-4 rounded-2xl border border-blue-100 cursor-pointer">
-                            <span class="font-bold text-blue-800"><i class="fas fa-toggle-on mr-1"></i> Activer la livraison</span>
+                            <span class="font-bold text-blue-800"><i data-lucide="toggle-right" class="mr-1"></i> Activer la livraison</span>
                             <input type="checkbox" id="config-enable-delivery" class="w-6 h-6 rounded-lg text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer">
                         </label>
 
@@ -546,19 +542,19 @@
                         </div>
 
                         <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-                            <p class="text-sm font-bold text-gray-700 mb-3"><i class="fas fa-location-dot text-blue-500 mr-1"></i> Position du restaurant <span class="font-normal text-gray-400">(zone de livraison + calcul du temps)</span></p>
+                            <p class="text-sm font-bold text-gray-700 mb-3"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i> Position du restaurant <span class="font-normal text-gray-400">(zone de livraison + calcul du temps)</span></p>
                             <div class="grid grid-cols-2 gap-3">
                                 <input type="number" step="any" id="config-resto-lat" class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="Latitude">
                                 <input type="number" step="any" id="config-resto-lng" class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="Longitude">
                             </div>
                             <button type="button" id="config-resto-locate" class="mt-3 text-sm font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-2">
-                                <i class="fas fa-location-crosshairs"></i> Utiliser ma position actuelle (depuis le resto)
+                                <i data-lucide="locate-fixed"></i> Utiliser ma position actuelle (depuis le resto)
                             </button>
                         </div>
 
                         <div class="flex justify-end">
                             <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 transition flex items-center gap-2">
-                                <i class="fas fa-save"></i> Enregistrer la livraison
+                                <i data-lucide="save"></i> Enregistrer la livraison
                             </button>
                         </div>
                     </form>
@@ -566,19 +562,19 @@
 
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
                     <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
-                        <i class="fas fa-address-book text-purple-500"></i> Coordonnées & Réseaux
+                        <i data-lucide="contact" class="text-purple-500"></i> Coordonnées & Réseaux
                     </h3>
                     <form id="config-contact-form" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">
-                                    <i class="fas fa-phone text-gray-400 mr-1"></i> Téléphone
+                                    <i data-lucide="phone" class="text-gray-400 mr-1"></i> Téléphone
                                 </label>
                                 <input type="tel" id="config-phone" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-purple-500 outline-none transition" placeholder="06 12 34 56 78">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">
-                                    <i class="fas fa-envelope text-gray-400 mr-1"></i> Email public
+                                    <i data-lucide="mail" class="text-gray-400 mr-1"></i> Email public
                                 </label>
                                 <input type="email" id="config-email" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-purple-500 outline-none transition" placeholder="contact@monresto.fr">
                             </div>
@@ -601,7 +597,7 @@
 
                         <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 space-y-4">
                             <p class="text-xs font-black text-amber-800 uppercase tracking-wider">
-                                <i class="fab fa-google mr-1"></i> Google
+                                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="mr-1 w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg> Google
                             </p>
                             <div>
                                 <label class="block text-sm font-bold text-amber-900 mb-2">URL Google Maps (fiche)</label>
@@ -620,19 +616,19 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-2">
-                                        <i class="fab fa-instagram text-pink-500 mr-1"></i> Instagram
+                                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-pink-500 mr-1 w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg> Instagram
                                     </label>
                                     <input type="url" id="config-instagram" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-pink-500 outline-none transition" placeholder="https://instagram.com/...">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-2">
-                                        <i class="fab fa-facebook text-blue-600 mr-1"></i> Facebook
+                                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-blue-600 mr-1 w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg> Facebook
                                     </label>
                                     <input type="url" id="config-facebook" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none transition" placeholder="https://facebook.com/...">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-2">
-                                        <i class="fab fa-tiktok text-gray-800 mr-1"></i> TikTok
+                                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-gray-800 mr-1 w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg> TikTok
                                     </label>
                                     <input type="url" id="config-tiktok" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-800 outline-none transition" placeholder="https://tiktok.com/@...">
                                 </div>
@@ -641,7 +637,7 @@
 
                         <div class="flex justify-end">
                             <button type="submit" class="bg-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-purple-700 transition flex items-center gap-2">
-                                <i class="fas fa-save"></i> Enregistrer les coordonnées
+                                <i data-lucide="save"></i> Enregistrer les coordonnées
                             </button>
                         </div>
                     </form>
@@ -649,7 +645,7 @@
 
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
                     <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
-                        <i class="fas fa-clock text-green-500"></i> Horaires d'ouverture
+                        <i data-lucide="clock" class="text-green-500"></i> Horaires d'ouverture
                     </h3>
                     <form id="config-hours-form" class="space-y-4 ">
                         <div id="config-hours-grid" class="space-y-3">
@@ -657,7 +653,7 @@
                         </div>
                         <div class="pt-4 flex justify-end">
                             <button type="submit" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-green-700 transition flex items-center gap-2">
-                                <i class="fas fa-save"></i> Mettre à jour les horaires
+                                <i data-lucide="save"></i> Mettre à jour les horaires
                             </button>
                         </div>
                     </form>
@@ -677,7 +673,7 @@
                     <!-- FAQ -->
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
                         <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
-                            <i class="fas fa-question-circle text-blue-500"></i> Questions Fréquentes
+                            <i data-lucide="circle-help" class="text-blue-500"></i> Questions Fréquentes
                         </h3>
                         <div class="space-y-4">
                             <details class="bg-gray-50 rounded-xl p-4 cursor-pointer">
@@ -699,13 +695,13 @@
                     <div class="bg-gradient-to-br from-indigo-600 to-blue-700 p-6 rounded-3xl shadow-lg text-white flex flex-col justify-between">
                         <div>
                             <h3 class="text-xl font-black mb-2 flex items-center gap-2">
-                                <i class="fas fa-headset"></i> Contacter votre agence Web
+                                <i data-lucide="headset"></i> Contacter votre agence Web
                             </h3>
                             <p class="text-blue-100 text-sm mb-6">Notre équipe technique est disponible de 9h à 18h pour vous accompagner.</p>
                         </div>
                         
                         <a href="mailto:support@mysaas.com" class="w-full bg-white text-indigo-700 py-4 rounded-xl font-black shadow-md hover:bg-gray-50 transition flex items-center justify-center gap-2">
-                            <i class="fas fa-envelope"></i> Ouvrir un Ticket
+                            <i data-lucide="mail"></i> Ouvrir un Ticket
                         </a>
                         <p class="text-center text-xs text-indigo-200 mt-3">En cas d'urgence, appelez votre chargé de compte au 01 23 45 67 89.</p>
                     </div>
@@ -717,7 +713,7 @@
         <section id="view-livreurs" class="hidden p-4 md:p-6 bg-gray-100 min-h-full pb-24 overflow-y-auto h-full">
             <div class="max-w-3xl mx-auto">
                 <div class="flex items-center gap-3 mb-6">
-                    <i class="fas fa-motorcycle text-2xl text-gray-700"></i>
+                    <i data-lucide="bike" class="text-2xl text-gray-700"></i>
                     <div>
                         <h1 class="text-2xl font-black text-gray-900">Mes Livreurs</h1>
                         <p class="text-sm text-gray-500">Gérez votre flotte de livraison interne (zéro commission).</p>
@@ -725,14 +721,14 @@
                 </div>
 
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
-                    <h2 class="font-black text-gray-900 mb-4"><i class="fas fa-user-plus text-blue-500 mr-2"></i>Ajouter un livreur</h2>
+                    <h2 class="font-black text-gray-900 mb-4"><i data-lucide="user-plus" class="text-blue-500 mr-2"></i>Ajouter un livreur</h2>
                     <form id="add-driver-form" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input name="nom" type="text" required placeholder="Nom du livreur" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
                         <input name="telephone" type="tel" placeholder="Téléphone (optionnel)" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
                         <input name="email" type="email" required placeholder="Email de connexion" autocomplete="off" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
                         <input name="password" type="text" required minlength="6" placeholder="Mot de passe (min. 6)" autocomplete="off" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
                         <button type="submit" id="add-driver-btn" class="md:col-span-2 bg-gray-900 hover:bg-black text-white font-black py-3 rounded-xl transition active:scale-95 flex items-center justify-center gap-2">
-                            <i class="fas fa-plus"></i> Créer le compte livreur
+                            <i data-lucide="plus"></i> Créer le compte livreur
                         </button>
                     </form>
                     <p class="text-[11px] text-gray-400 mt-3">Le livreur se connecte sur <b>/livreur.html</b> avec cet email et ce mot de passe.</p>
@@ -741,7 +737,7 @@
                 <div id="drivers-list" class="space-y-3"></div>
 
                 <div class="flex items-center gap-3 mt-8 mb-4">
-                    <i class="fas fa-camera-retro text-xl text-gray-700"></i>
+                    <i data-lucide="camera" class="text-xl text-gray-700"></i>
                     <div>
                         <h2 class="text-xl font-black text-gray-900">Livraisons récentes</h2>
                         <p class="text-sm text-gray-500">Preuves photo (prise en charge & dépôt) et suivi.</p>
@@ -753,31 +749,31 @@
 
     <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center p-2 pb-[env(safe-area-inset-bottom) z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] fixed bottom-0 w-full">
         <button onclick="switchAdminTab('cuisine')" id="tab-cuisine-mobile" class="flex flex-col items-center gap-1 p-2 text-red-600 w-16">
-            <i class="fas fa-fire text-xl"></i>
+            <i data-lucide="flame" class="text-xl"></i>
             <span class="text-[10px] font-bold">Cuisine</span>
         </button>
         <button onclick="switchAdminTab('menu')" id="tab-menu-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
-            <i class="fas fa-hamburger text-xl"></i>
+            <i data-lucide="sandwich" class="text-xl"></i>
             <span class="text-[10px] font-bold">Menu</span>
         </button>
         <button onclick="switchAdminTab('marketing')" id="tab-marketing-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
-            <i class="fas fa-bullhorn text-xl"></i>
+            <i data-lucide="megaphone" class="text-xl"></i>
             <span class="text-[10px] font-bold">Push</span>
         </button>
         <button onclick="switchAdminTab('compta')" id="tab-compta-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
-          <i class="fas fa-file-invoice-dollar text-xl"></i>
+          <i data-lucide="file-text" class="text-xl"></i>
           <span class="text-[10px] font-bold">Compta</span>
         </button>
         <button onclick="switchAdminTab('config')" id="tab-config-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
-            <i class="fas fa-cog text-xl"></i>
+            <i data-lucide="settings" class="text-xl"></i>
             <span class="text-[10px] font-bold">Réglages</span>
         </button>
         <button onclick="switchAdminTab('livreurs')" id="tab-livreurs-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
-            <i class="fas fa-motorcycle text-xl text-blue-400"></i>
+            <i data-lucide="bike" class="text-xl text-blue-400"></i>
             <span class="text-[10px] font-bold">Livreurs</span>
         </button>
         <button onclick="switchAdminTab('support')" id="tab-support-mobile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16">
-            <i class="fas fa-life-ring text-xl text-blue-400"></i>
+            <i data-lucide="life-buoy" class="text-xl text-blue-400"></i>
             <span class="text-[10px] font-bold">Support</span>
         </button>
     </nav>
@@ -792,7 +788,7 @@
         class="bg-white w-full max-w-lg rounded-3xl p-6 relative shadow-2xl transform transition-transform scale-95 max-h-[90vh] overflow-y-auto"
       >
        <button data-action="close-modal" data-modal-id="edit-product-modal" class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-gray-400/40 p-1 rounded-full transition z-10">
-          <i class="fas fa-times text-xl flex justify-center items-center"></i>
+          <i data-lucide="x" class="text-xl flex justify-center items-center"></i>
         </button>
 
         <h3
@@ -824,7 +820,7 @@
                   id="edit-preview-fallback"
                   class="absolute inset-0 rounded-xl bg-gray-100 shadow-inner flex flex-col items-center justify-center border border-gray-200 z-0 text-gray-300"
                 >
-                  <i class="fas fa-pizza-slice text-xl mb-1 opacity-40"></i>
+                  <i data-lucide="pizza" class="text-xl mb-1 opacity-40"></i>
                   <span class="text-[6px] font-black uppercase text-center opacity-50">Photo en<br>attente... 👨‍🍳</span>
                 </div>
               </div>
@@ -969,14 +965,14 @@
             <div class="flex items-center gap-3">
               <input type="checkbox" id="edit-has-tailles" class="w-5 h-5 text-violet-600 rounded focus:ring-violet-500 cursor-pointer" />
               <label class="font-bold text-violet-800 text-sm cursor-pointer" for="edit-has-tailles">
-                <i class="fas fa-pizza-slice mr-1"></i> Ce produit a plusieurs tailles (pizzas...)
+                <i data-lucide="pizza" class="mr-1"></i> Ce produit a plusieurs tailles (pizzas...)
               </label>
             </div>
             <div id="edit-tailles-container" class="hidden mt-3">
               <div class="flex justify-between items-center mb-2">
                 <label class="text-xs font-bold text-violet-700">Tailles disponibles et leurs prix</label>
                 <button type="button" onclick="window.addTailleRow()" class="text-xs bg-violet-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-violet-700 transition flex items-center gap-1">
-                  <i class="fas fa-plus text-[10px]"></i> Ajouter
+                  <i data-lucide="plus" class="text-[10px]"></i> Ajouter
                 </button>
               </div>
               <div id="edit-tailles-list" class="space-y-2">
@@ -989,7 +985,7 @@
           <!-- ALLERGÈNES (14 réglementaires UE - INCO 1169/2011) -->
           <div class="mb-4 bg-amber-50 p-4 rounded-xl border border-amber-100">
             <label class="block font-bold text-amber-800 text-sm mb-1">
-              <i class="fas fa-triangle-exclamation mr-1"></i> Allergènes présents
+              <i data-lucide="triangle-alert" class="mr-1"></i> Allergènes présents
             </label>
             <p class="text-xs text-amber-600 mb-3">Coche les allergènes que contient ce produit (affichés au client).</p>
             <div id="edit-allergens-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -1011,7 +1007,7 @@
             id="save-product-btn"
             class="w-full py-4 mt-4 bg-green-600 text-white rounded-xl font-bold shadow-lg hover:bg-green-700 transition flex items-center justify-center gap-2"
           >
-            <i class="fas fa-save"></i> Enregistrer
+            <i data-lucide="save"></i> Enregistrer
           </button>
         </form>
       </div>
@@ -1023,7 +1019,7 @@
         <div class="modal-content bg-white w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl transform transition-all scale-95 opacity-0 border border-red-100 relative overflow-hidden">
           <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -mt-10 w-32 h-32 rounded-full bg-red-500/10 blur-2xl pointer-events-none"></div>
           
-          <i class="modal-icon fas fa-exclamation-triangle text-5xl text-red-500 mb-4 relative z-10 animate-pulse"></i>
+          <i data-lucide="triangle-alert" class="modal-icon text-5xl text-red-500 mb-4 relative z-10 animate-pulse"></i>
           
           <h3 class="modal-title text-2xl font-black text-gray-900 mb-2 tracking-tight relative z-10">Confirmation</h3>
           <p class="modal-message text-sm text-gray-500 mb-8 font-medium relative z-10"></p>
@@ -1040,7 +1036,7 @@
       </div>
     </template>
     <div id="admin-snackbar" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-full shadow-2xl z-[250] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 w-max max-w-[90vw]">
-  <i id="admin-snackbar-icon" class="fas fa-check-circle text-green-400 text-2xl"></i>
+  <i id="admin-snackbar-icon" data-lucide="circle-check" class="text-green-400 text-2xl"></i>
   <span id="admin-snackbar-message" class="font-medium">Message</span>
 </div>
 

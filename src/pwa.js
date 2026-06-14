@@ -48,7 +48,6 @@ setupA2HS({
 function setupPullToRefresh() {
   const scrollArea = document.getElementById("full-menu");
   const ptrIndicator = document.getElementById("ptr-indicator");
-  const ptrIcon = document.getElementById("ptr-icon");
 
   if (!scrollArea || !ptrIndicator) return;
 
@@ -68,7 +67,9 @@ function setupPullToRefresh() {
     // progress : 0 (caché) → 1 (seuil atteint)
     const clipped = Math.min(progress, 1.15);
     ptrIndicator.style.transform = `translateX(-50%) translateY(${-100 + clipped * 100}%)`;
-    ptrIcon.style.transform      = `rotate(${clipped * 180}deg)`;
+    // re-query : swapIcon (spinner ⟷ flèche) recrée l'élément, donc pas de réf capturée.
+    const pi = document.getElementById("ptr-icon");
+    if (pi) pi.style.transform = `rotate(${clipped * 180}deg)`;
     ptrIndicator.style.opacity   = Math.min(clipped * 2, 1);
   }
 
@@ -78,7 +79,7 @@ function setupPullToRefresh() {
     pulling  = true;
     triggered = false;
     ptrIndicator.style.transition = "none";
-    ptrIcon.className = "fas fa-arrow-down text-xl";
+    window.swapIcon?.(document.getElementById("ptr-icon"), "arrow-down", "text-xl");
   }, { passive: true });
 
   // passive: false pour pouvoir bloquer le scroll natif pendant le PTR
@@ -109,7 +110,7 @@ function setupPullToRefresh() {
     if (triggered) {
       // Maintenir l'indicateur visible pendant le reload
       ptrIndicator.style.transform = "translateX(-50%) translateY(-10%)";
-      ptrIcon.className = "fas fa-spinner fa-spin text-xl";
+      window.swapIcon?.(document.getElementById("ptr-icon"), "loader-circle", "animate-spin text-xl");
       if (typeof window.triggerVibration === "function")
         window.triggerVibration("success");
 
@@ -119,7 +120,7 @@ function setupPullToRefresh() {
     // Masquer l'indicateur
     setIndicator(0);
     setTimeout(() => {
-      ptrIcon.className = "fas fa-arrow-down text-xl";
+      window.swapIcon?.(document.getElementById("ptr-icon"), "arrow-down", "text-xl");
     }, 300);
   });
 }

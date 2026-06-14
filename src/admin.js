@@ -5,6 +5,7 @@
 // import "./bridge.js";
 import "./firebase-init.js";
 import "./snack-config.js";
+import "./icons.js";
 import "./admin-kitchen.js";
 import "./admin-products.js";
 import "./admin-marketing.js";
@@ -285,8 +286,7 @@ onAuthStateChanged(auth, async (user) => {
       }
 
       loginSection.classList.add("hidden");
-      startupIcon.className =
-        "fas fa-check-circle text-6xl mb-6 text-green-500 animate-bounce";
+      window.swapIcon?.(document.getElementById("startup-icon"), "circle-check", "text-6xl mb-6 text-green-500 animate-bounce");
       startupTitle.innerText = "Accès Autorisé";
       startupDesc.innerText =
         "Cliquez ci-dessous pour activer le radar de cuisine.";
@@ -301,7 +301,7 @@ onAuthStateChanged(auth, async (user) => {
       );
     }
   } else {
-    startupIcon.className = "fas fa-lock text-6xl mb-6 text-gray-300";
+    window.swapIcon?.(document.getElementById("startup-icon"), "lock", "text-6xl mb-6 text-gray-300");
     startupTitle.innerText = "Espace Sécurisé";
     startupDesc.innerText =
       "Veuillez vous identifier pour accéder au terminal.";
@@ -322,7 +322,7 @@ if (adminLoginForm) {
     const errorMsg = document.getElementById("admin-login-error");
 
     const originalText = btn.innerHTML;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Vérification...`;
+    btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i> Vérification...`;
     btn.disabled = true;
     errorMsg.classList.add("hidden");
 
@@ -339,8 +339,7 @@ if (adminLoginForm) {
 }
 
 function refuseAccess(message) {
-  document.getElementById("startup-icon").className =
-    "fas fa-ban text-6xl mb-6 text-red-500";
+  window.swapIcon?.(document.getElementById("startup-icon"), "ban", "text-6xl mb-6 text-red-500");
   document.getElementById("startup-title").innerText = "Accès Refusé";
   document.getElementById("startup-desc").innerText = message;
   document.getElementById("back-home-btn").classList.remove("hidden");
@@ -366,7 +365,7 @@ document.getElementById("start-shift-btn")?.addEventListener("click", () => {
 window.openStripeExpressDashboard = async () => {
   const btn = document.getElementById("btn-stripe-dashboard");
   const originalText = btn.innerHTML;
-  btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connexion Stripe...`;
+  btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i> Connexion Stripe...`;
   btn.disabled = true;
 
   try {

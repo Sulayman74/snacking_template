@@ -49,7 +49,7 @@ window.addTailleRow = (nom = "", prix = "") => {
     <span class="text-gray-500 text-sm font-bold shrink-0">€</span>
     <button type="button" onclick="this.closest('.taille-row').remove()"
       class="w-8 h-8 shrink-0 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
-      <i class="fas fa-times text-xs"></i>
+      <i data-lucide="x" class="text-xs"></i>
     </button>
   `;
   container.appendChild(row);

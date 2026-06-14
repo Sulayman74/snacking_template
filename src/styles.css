@@ -93,6 +93,18 @@ html.dark body {
 .dark .border-gray-200,
 .dark .border-gray-300 { border-color: #2d323b; }
 
+/* ✨ Icônes Lucide : taille pilotée par la font-size (classes text-*) comme l'était Font
+   Awesome. createIcons recopie les classes du <i data-lucide> sur le <svg class="lucide …">,
+   donc text-xl/-2xl/… dimensionnent via 1em. vertical-align aligne sur la ligne de base ;
+   flex-shrink:0 évite l'écrasement dans les rangées flex. Couleur = currentColor (hérité). */
+.lucide {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.125em;
+  flex-shrink: 0;
+}
+
 #boot-splash {
   position: fixed;
   inset: 0;

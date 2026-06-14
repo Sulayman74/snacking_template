@@ -91,11 +91,11 @@ window.openCsvInfoModal = () => {
 modal.innerHTML = `
     <div class="bg-white w-full max-w-2xl rounded-3xl p-6 relative shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto font-sans">
         <button onclick="document.getElementById('csv-info-modal-js').remove()" class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-gray-100 rounded-full transition flex justify-center items-center">
-            <i class="fas fa-times text-xl"></i>
+            <i data-lucide="x" class="text-xl"></i>
         </button>
         
         <h3 class="text-2xl font-black text-gray-900 mb-2 border-b border-gray-100 pb-4">
-            <i class="fas fa-file-csv text-blue-500 mr-2"></i> Guide d'importation
+            <i data-lucide="file-spreadsheet" class="text-blue-500 mr-2"></i> Guide d'importation
         </h3>
 
         <p class="text-gray-600 mb-6 mt-4">Importez toute votre carte en une seconde. Utilisez un fichier <strong>.csv</strong> avec le point-virgule (;) comme séparateur.</p>
@@ -140,7 +140,7 @@ modal.innerHTML = `
 
         <div class="flex flex-col sm:flex-row gap-3 mt-8">
             <button onclick="window.downloadCsvTemplate()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
-                <i class="fas fa-download"></i> Télécharger le modèle
+                <i data-lucide="download"></i> Télécharger le modèle
             </button>
             <button onclick="document.getElementById('csv-info-modal-js').remove()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 rounded-xl transition">
                 J'ai compris

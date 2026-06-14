@@ -9,6 +9,7 @@ import { setupSWUpdatePrompt } from "./sw-update.js";
 import { setupA2HS } from "./a2hs.js";
 import "./utils.js";
 import "./firebase-init.js";
+import "./icons.js";
 import "./ui/LivreurUI.js";
 
 // SW + bandeau de mise à jour (pattern prompt mutualisé) : jamais d'auto-reload
