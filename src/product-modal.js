@@ -186,7 +186,7 @@ class ProductModalUI {
                 return `
                 <label class="relative cursor-pointer">
                     <input type="radio" name="taille_produit" value="${safeNom}" data-prix="${safePrix}" ${i === 0 ? "checked" : ""} class="sr-only peer" onchange="window.updateProductSize(this)">
-                    <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
+                    <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
                         <span class="font-bold text-text">${safeNom}</span>
                         <span class="font-black text-accent text-sm">${safePrix} ${escapeHTML(devise)}</span>
                     </div>
@@ -207,14 +207,14 @@ class ProductModalUI {
         <div class="grid grid-cols-2 gap-3">
             <label class="relative cursor-pointer">
                 <input type="radio" name="formule" value="seul" checked class="sr-only peer" onchange="window.toggleDrinkSection()">
-                <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
+                <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
                     <span class="font-bold text-text">Seul</span>
                     <span class="text-sm font-black text-gray-500">${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>
                 </div>
             </label>
             <label class="relative cursor-pointer">
                 <input type="radio" name="formule" value="menu" class="sr-only peer" onchange="window.toggleDrinkSection()">
-                <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex flex-col items-center">
+                <div class="p-4 border-2 border-gray-100 rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
                     <span class="font-bold text-text">En Menu</span>
                     <span class="text-sm font-black text-accent">+ ${this.currentProduct.prixMenu.toFixed(2)} ${devise}</span>
                 </div>
@@ -229,7 +229,7 @@ class ProductModalUI {
                 return `
                 <label class="relative cursor-pointer">
                     <input type="radio" name="boisson" value="${safeNom}" ${i === 0 ? "checked" : ""} class="sr-only peer">
-                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex items-center gap-2">
+                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex items-center gap-2">
                         <i data-lucide="glass-water" class="text-accent"></i>
                         <span class="font-bold text-text text-sm">${safeNom}</span>
                     </div>
@@ -256,7 +256,7 @@ class ProductModalUI {
                 return `
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="sauce" value="${safe}" data-max="${max}" class="sr-only peer sauce-checkbox" onchange="window.checkSauceLimit(event, ${max})">
-                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex justify-center items-center">
+                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex justify-center items-center">
                         <span class="font-bold text-text text-sm">${safe}</span>
                     </div>
                 </label>
@@ -280,7 +280,7 @@ class ProductModalUI {
                 return `
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="crudite" value="${safe}" class="sr-only peer crudite-checkbox">
-                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-red-400 peer-checked:bg-red-50 transition-all flex justify-center items-center">
+                    <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-danger peer-checked:bg-danger/15 transition-all flex justify-center items-center">
                         <span class="font-bold text-text text-sm">Sans ${safe}</span>
                     </div>
                 </label>

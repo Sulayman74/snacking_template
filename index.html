@@ -143,7 +143,7 @@
       <section id="bestsellers" class="py-16 bg-gray-50">
         <div class="container mx-auto px-4">
           <div class="text-center mb-10">
-            <h2 class="text-4xl text-black uppercase font-bold mb-3 tracking-tight">Nos Stars</h2>
+            <h2 class="text-4xl text-text uppercase font-bold mb-3 tracking-tight">Nos Stars</h2>
             <p class="text-text-muted text-lg">Les favoris du moment, validés par la team.</p>
           </div>
           <div id="bestsellers-container" class="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-auto md:px-0">
@@ -198,7 +198,7 @@
       <section id="loyalty" class="py-5 hidden bg-surface">
         <div class="container mx-auto px-4">
           <h2 class="text-4xl text-center font-black text-text mb-4 tracking-tight">Bons plans</h2>
-          <div id="loyalty-card" class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-black border shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]" style="border-color: var(--color-primary)">
+          <div id="loyalty-card" class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-text border shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]" style="border-color: var(--color-primary)">
             <div id="loyalty-blur" class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full blur-[80px] opacity-30 pointer-events-none" style="background-color: var(--color-accent);"></div>
             <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
               <div class="text-center md:text-left flex-1">
@@ -221,7 +221,7 @@
         <div class="container mx-auto px-4 text-center">
           <h2 class="md:text-4xl text-2xl font-black text-text mb-6 tracking-tight">Donnez-nous votre avis</h2>
           <div class="bg-gray-100 rounded-3xl p-8 max-w-lg mx-auto border border-accent shadow-sm">
-            <h3 class="text-xl text-black font-bold mb-4">Et vous, c'était comment ?</h3>
+            <h3 class="text-xl text-text font-bold mb-4">Et vous, c'était comment ?</h3>
             <div class="flex justify-center items-center gap-3 text-4xl mb-4 cursor-pointer" id="interactive-stars">
               <i data-lucide="star" data-value="1" class="text-text-muted hover:text-yellow-400 transition"></i>
               <i data-lucide="star" data-value="2" class="text-text-muted hover:text-yellow-400 transition"></i>
@@ -243,10 +243,10 @@
           <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-4 bg-surface p-6 md:p-10 rounded-3xl shadow-xl">
             <input type="hidden" name="source_avis" id="source-avis" value="contact_direct" />
             <div>
-              <input type="text" name="contact" id="contact-field" required placeholder="Email ou Téléphone" class="w-full text-black px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition" />
+              <input type="text" name="contact" id="contact-field" required placeholder="Email ou Téléphone" class="w-full text-text px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition" />
             </div>
             <div>
-              <textarea name="message" id="message-field" rows="4" required placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition text-black"></textarea>
+              <textarea name="message" id="message-field" rows="4" required placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition text-text"></textarea>
             </div>
             <button type="submit" id="btn-submit-form" class="w-full py-4 rounded-xl font-bold text-on-primary shadow-lg bg-primary hover:bg-accent transition transform hover:-translate-y-1">Envoyer le message</button>
           </form>
@@ -342,7 +342,7 @@
     <!-- MODALES (Auth, Snack, Card, Scanner, etc.) -->
     <div id="auth-modal" class="fixed inset-0 bg-gray-900/80 z-[100] hidden items-center justify-center p-4 backdrop-blur-md opacity-0 transition-opacity duration-300">
       <div class="bg-surface w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95">
-        <button data-action="toggle-auth-modal" class="absolute top-4 right-4 text-text-muted hover:text-black bg-gray-100 p-2 rounded-full transition">
+        <button data-action="toggle-auth-modal" class="absolute top-4 right-4 text-text-muted hover:text-text bg-gray-100 p-2 rounded-full transition">
           <i data-lucide="x"></i>
         </button>
         <div class="text-center mb-6">
@@ -354,9 +354,9 @@
         </button>
         <div class="flex items-center mb-6"><div class="grow border-t"></div><span class="mx-4 text-text-muted text-sm font-medium">OU</span><div class="grow border-t"></div></div>
         <form id="auth-form" class="space-y-5">
-          <input type="email" id="auth-email" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 outline-none transition text-black" placeholder="Email" />
+          <input type="email" id="auth-email" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 outline-none transition text-text" placeholder="Email" />
           <div class="relative">
-            <input type="password" id="auth-password" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 outline-none transition text-black pr-12" placeholder="Mot de passe" />
+            <input type="password" id="auth-password" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 outline-none transition text-text pr-12" placeholder="Mot de passe" />
             <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"><i data-lucide="eye" id="eye-icon"></i></button>
           </div>
           <div class="text-right"><button type="button" data-action="reset-password" class="text-sm text-text-muted hover:text-red-600 transition">Oublié ?</button></div>
@@ -465,7 +465,7 @@
         <div class="p-3 md:p-8 pb-24 md:pb-8 flex-1 flex flex-col">
           <h3 id="modal-title" class="text-3xl font-black text-text tracking-tight mb-4"></h3>
           <p id="modal-desc" class="text-text-muted text-lg mb-6 flex-grow"></p>
-          <button id="modal-share-btn" class="hidden w-full py-3 my-2 text-black rounded-full bg-accent/20 font-bold hover:bg-gray-200 transition-all justify-center items-center"><i data-lucide="share-2" class="mr-1"></i> Partager à un pote</button>
+          <button id="modal-share-btn" class="hidden w-full py-3 my-2 text-text rounded-full bg-accent/20 font-bold hover:bg-gray-200 transition-all justify-center items-center"><i data-lucide="share-2" class="mr-1"></i> Partager à un pote</button>
           <div id="modal-allergens-container" class="mb-3 p-4 bg-gray-50 border border-dashed border-blue-200 rounded-xl hidden"><h4 class="font-bold text-xs text-text-muted uppercase tracking-widest mb-2"><i data-lucide="info" class="mr-1"></i> Infos & Allergènes</h4><p id="modal-allergens" class="text-text text-sm font-medium"></p></div>
           <div id="modal-options-container" class="mb-1 hidden"></div>
           <div class="mt-auto flex items-center gap-3">
@@ -657,7 +657,7 @@
           <button type="button" class="cart-item-minus w-8 h-8 text-text-muted hover:bg-gray-200 rounded-md transition">
             <i data-lucide="minus" class="text-xs"></i>
           </button>
-          <span class="cart-item-quantity font-bold w-4 text-black text-center text-sm"></span>
+          <span class="cart-item-quantity font-bold w-4 text-text text-center text-sm"></span>
           <button type="button" class="cart-item-plus w-8 h-8 text-text-muted hover:bg-gray-200 rounded-md transition">
             <i data-lucide="plus" class="text-xs"></i>
           </button>
