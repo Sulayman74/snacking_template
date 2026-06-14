@@ -170,7 +170,7 @@
         <div id="ptr-indicator" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md z-[70]">
           <i class="fas fa-arrow-down text-gray-300 text-xl transition-transform" id="ptr-icon"></i>
         </div>
-        <div class="sticky top-0 z-50 bg-accent/40 backdrop-blur-xl border-b border-gray-400 shadow-sm">
+        <div class="sticky top-0 z-50 bg-accent/40 backdrop-blur-xl border-b border-gray-400 shadow-sm pt-[env(safe-area-inset-top)]">
           <div class="container mx-auto px-4 py-3 flex items-center gap-3">
             <div class="relative flex-1">
               <input type="text" id="menu-search-input" placeholder="Un p'tit creux ?" class="w-full pl-10 pr-10 py-3 bg-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all text-gray-800 font-medium text-sm" />
@@ -191,7 +191,7 @@
       </section>
 
       <section id="favorites-view" role="dialog" aria-modal="true" aria-labelledby="favorites-title" class="hidden opacity-0 h-full w-full bg-gray-100 fixed inset-0 z-60 overflow-y-auto transition-opacity duration-300">
-        <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-xl border-b border-gray-200 shadow-sm">
+        <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-xl border-b border-gray-200 shadow-sm pt-[env(safe-area-inset-top)]">
           <div class="container mx-auto px-4 py-4 flex items-center justify-between gap-3">
             <h2 id="favorites-title" class="text-xl font-black text-gray-900 flex items-center gap-2"><i class="fas fa-heart text-red-500" aria-hidden="true"></i> Mes Favoris</h2>
             <button data-action="close-favorites" aria-label="Fermer mes favoris" class="w-11 h-11 shrink-0 bg-gray-100 border border-gray-200 rounded-2xl shadow-sm flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors">
@@ -325,7 +325,7 @@
     </main>
 
     <!-- NAVIGATION MOBILE -->
-    <nav id="mobile-nav-container" class="md:hidden fixed bottom-6 inset-x-0 z-[60] flex justify-center pointer-events-none pb-[env(safe-area-inset-bottom)]">
+    <nav id="mobile-nav-container" class="md:hidden fixed bottom-6 inset-x-0 z-[60] flex justify-center pointer-events-none">
       <div id="mobile-nav" class="w-full isolate max-w-md pointer-events-auto relative rounded-4xl p-1.5 transition-all duration-300 mx-4">
         <div class="absolute inset-0 bg-gray-700/80 backdrop-blur-lg rounded-4xl border border-accent/20 shadow-2xl z-0"></div>
         <div id="mobile-nav-grid" class="relative z-10 grid grid-cols-3 h-14 gap-1">
