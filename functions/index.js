@@ -125,16 +125,27 @@ async function cleanupInvalidFcmToken(userId, error) {
 const MAX_LOYALTY_POINTS = 10;
 
 /**
- * Crédite n point(s) de fidélité sur pointsBySnack.{snackId}, dans une transaction.
- * Sémantique identique au scan boutique : à partir du palier (current >= MAX), le crédit
- * suivant déclenche la récompense + remise à 0 ; sinon on incrémente. N'émet PAS le push
- * (effet de bord à faire APRÈS commit) et ne touche PAS loyaltyLastScan (cooldown propre au
- * scan). Retourne de quoi décider du push après la transaction.
+ * Crédite n point(s) de fidélité (EARNING) sur pointsBySnack.{snackId}, dans une transaction.
+ *
+ * Modèle "report + banque" (LOT F2 — traçabilité fidélité) :
+ *   - Le compteur pointsBySnack.{snackId} ne représente QUE la progression 0..MAX-1.
+ *   - Au franchissement du palier, on N'écrase PAS le point gagné : le total est
+ *     reporté (`total % MAX`) et chaque palier complété banque une récompense durable
+ *     dans rewardsAvailable.{snackId} (`floor(total / MAX)`). Plus aucun point perdu.
+ *   - La récompense est désormais PERSISTÉE (banque) puis consommée par une action
+ *     explicite de redemption (cf. redeemLoyaltyReward) — l'ancien modèle "remise à 0
+ *     au crédit suivant" pouvait silencieusement consommer un menu offert lors d'une
+ *     commande en ligne (client facturé plein tarif). Corrigé ici.
+ *
+ * N'émet PAS le push (effet de bord à faire APRÈS commit) et ne touche PAS
+ * loyaltyLastScan (cooldown propre au scan). Read-Old/Write-New : les docs sans
+ * rewardsAvailable sont traités comme 0 (zéro migration).
+ *
  * @param {FirebaseFirestore.Transaction} tx - Transaction Firestore en cours.
  * @param {FirebaseFirestore.DocumentReference} clientRef - Réf. du doc users/{uid}.
  * @param {string} snackId - Clé de partitionnement multi-tenant.
  * @param {number} [n=1] - Nombre de points à créditer (1 en pratique : scan & commande).
- * @returns {Promise<{points:number, max:number, reward:boolean, fcmToken:(string|null)}>}
+ * @returns {Promise<{points:number, max:number, reward:boolean, earned:number, rewardsAvailable:number, fcmToken:(string|null)}>}
  * @throws {HttpsError} not-found si le doc client n'existe pas.
  */
 async function creditLoyaltyPoints(tx, clientRef, snackId, n = 1) {
@@ -142,18 +153,26 @@ async function creditLoyaltyPoints(tx, clientRef, snackId, n = 1) {
   if (!snap.exists) throw new HttpsError("not-found", "Client introuvable.");
   const d = snap.data();
   const current = (d.pointsBySnack || {})[snackId] || 0;
+  const availableBefore = (d.rewardsAvailable || {})[snackId] || 0;
 
-  let newPoints;
-  let reward = false;
-  if (current >= MAX_LOYALTY_POINTS) {
-    newPoints = 0;            // palier atteint → menu offert, carte remise à 0
-    reward = true;
-  } else {
-    newPoints = current + n;  // n=1 en pratique (scan & commande)
-  }
+  // Report : le point gagné compte toujours, même au franchissement du palier.
+  const total = current + n;
+  const earned = Math.floor(total / MAX_LOYALTY_POINTS); // récompenses banquées (0 ou 1 en pratique)
+  const newPoints = total % MAX_LOYALTY_POINTS;          // progression reportée 0..MAX-1
+  const newAvailable = availableBefore + earned;
 
-  tx.update(clientRef, { [`pointsBySnack.${snackId}`]: newPoints });
-  return { points: newPoints, max: MAX_LOYALTY_POINTS, reward, fcmToken: d.fcmToken || null };
+  const update = { [`pointsBySnack.${snackId}`]: newPoints };
+  if (earned > 0) update[`rewardsAvailable.${snackId}`] = newAvailable;
+  tx.update(clientRef, update);
+
+  return {
+    points: newPoints,
+    max: MAX_LOYALTY_POINTS,
+    reward: earned > 0,
+    earned,
+    rewardsAvailable: newAvailable,
+    fcmToken: d.fcmToken || null,
+  };
 }
 
 /**
@@ -1849,7 +1868,74 @@ exports.awardLoyaltyPoint = onCall({ region: "europe-west1" }, async (request) =
   // Push de palier émis APRÈS commit (jamais dans la transaction, qui peut rejouer).
   if (result.reward) await sendRewardPush(clientUid, result.fcmToken, snackId);
 
-  return { points: result.points, max: result.max, reward: result.reward };
+  // rewardsAvailable remonté au scanner pour proposer la consommation immédiate.
+  return {
+    points: result.points,
+    max: result.max,
+    reward: result.reward,
+    rewardsAvailable: result.rewardsAvailable,
+  };
+});
+
+// ============================================================================
+// 🎟️ FIDÉLITÉ : CONSOMMATION D'UNE RÉCOMPENSE (menu offert) — TRACÉE (LOT F2)
+// ============================================================================
+// Décrémente rewardsAvailable.{snackId}, incrémente rewardsRedeemed.{snackId} et
+// écrit un enregistrement d'audit dans loyaltyRewards (réconciliation compta /
+// arbitrage de litige). Réservé à l'admin du snack (ou superadmin). Idempotence :
+// chaque appel consomme AU PLUS une récompense (transaction). Normalise au passage
+// les cartes "legacy" restées à pointsBySnack >= MAX (ancien modèle) → la récompense
+// implicite (floor(points/MAX)) est convertie sans perte.
+exports.redeemLoyaltyReward = onCall({ region: "europe-west1" }, async (request) => {
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+  const { clientUid, snackId } = data;
+  require_(V.isDocId(clientUid), "clientUid invalide.");
+  require_(V.isDocId(snackId), "snackId invalide.");
+
+  await assertCallerIsSnackAdmin(request, snackId);
+  await enforceRateLimit({ key: callerKey(request, "redeemLoyaltyReward"), max: 60, windowMs: 60_000 });
+
+  const clientRef = db.collection("users").doc(clientUid);
+  const auditRef = db.collection("loyaltyRewards").doc();
+
+  const result = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(clientRef);
+    if (!snap.exists) throw new HttpsError("not-found", "Ce QR code n'est pas dans la base.");
+    const d = snap.data();
+    const points = (d.pointsBySnack || {})[snackId] || 0;
+    const available = (d.rewardsAvailable || {})[snackId] || 0;
+
+    // Récompenses réellement disponibles = banque + paliers "legacy" non reportés.
+    const effective = available + Math.floor(points / MAX_LOYALTY_POINTS);
+    if (effective < 1) {
+      throw new HttpsError("failed-precondition", "Aucun menu offert disponible pour ce client.");
+    }
+
+    const newPoints = points % MAX_LOYALTY_POINTS; // normalise les cartes legacy
+    const newAvailable = effective - 1;            // consomme une récompense
+    const redeemedBefore = (d.rewardsRedeemed || {})[snackId] || 0;
+
+    tx.update(clientRef, {
+      [`pointsBySnack.${snackId}`]: newPoints,
+      [`rewardsAvailable.${snackId}`]: newAvailable,
+      [`rewardsRedeemed.${snackId}`]: redeemedBefore + 1,
+    });
+
+    // Trace d'audit (source serveur, Admin SDK → hors rules) : qui, quand, combien.
+    tx.set(auditRef, {
+      snackId,
+      clientUid,
+      redeemedBy: request.auth.uid,
+      redeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+      pointsBefore: points,
+      rewardsAvailableAfter: newAvailable,
+    });
+
+    return { rewardsAvailable: newAvailable, points: newPoints };
+  });
+
+  return result;
 });
 
 // ============================================================================

@@ -77,19 +77,55 @@ async function onScanSuccess(decodedText) {
     const functions = getFunctions(getApp(), "europe-west1");
     const awardLoyaltyPoint = httpsCallable(functions, "awardLoyaltyPoint");
     const res = await awardLoyaltyPoint({ clientUid: decodedText, snackId: adminSnackId });
-    const { points, max, reward } = res.data || {};
+    const { points, max, reward, rewardsAvailable = 0 } = res.data || {};
 
     if (reward) {
-      window.showToast("🎉 BINGO ! Donnez un Menu Gratuit ! (Carte remise à 0)", "success");
-    } else if (points === max) {
-      window.showToast("✅ Point ajouté ! Le client gagne son menu ! 🎁", "success");
+      // Le palier vient d'être franchi : le menu offert est BANQUÉ (plus de remise
+      // à 0 silencieuse), il sera consommé explicitement ci-dessous si l'admin le donne.
+      window.showToast("🎉 Palier atteint ! Un menu offert a été crédité.", "success");
     } else {
       window.showToast(`✅ Point ajouté ! Total actuel : ${points}/${max}`, "success");
+    }
+
+    // 🎟️ CONSOMMATION TRACÉE : si le client a au moins un menu offert disponible,
+    // on propose à l'admin de l'utiliser maintenant (décrément + audit serveur).
+    if (rewardsAvailable > 0) {
+      await proposeRewardRedemption(functions, decodedText, adminSnackId, rewardsAvailable);
     }
   } catch (error) {
     console.error("❌ Erreur scan fidélité :", error);
     // Les HttpsError du serveur exposent un message lisible (QR inconnu, cooldown…).
     window.showToast(error?.message || "Erreur de communication avec le serveur.", "error");
+  }
+}
+
+/**
+ * Propose à l'admin de consommer un menu offert disponible et, si confirmé, appelle
+ * la Cloud Function redeemLoyaltyReward (décrément rewardsAvailable + trace d'audit).
+ * @param {import("firebase/functions").Functions} functions - Instance Functions (eu-west1).
+ * @param {string} clientUid - uid du client (issu du QR).
+ * @param {string} snackId - Snack courant de l'admin.
+ * @param {number} available - Nombre de menus offerts disponibles avant consommation.
+ * @returns {Promise<void>}
+ */
+async function proposeRewardRedemption(functions, clientUid, snackId, available) {
+  const ok = window.confirm(
+    `🎁 Ce client a ${available} menu(s) offert(s).\nEn utiliser un maintenant (offrir le menu) ?`,
+  );
+  if (!ok) return;
+
+  try {
+    const redeemLoyaltyReward = httpsCallable(functions, "redeemLoyaltyReward");
+    const res = await redeemLoyaltyReward({ clientUid, snackId });
+    const remaining = res?.data?.rewardsAvailable ?? 0;
+    window.showToast(
+      `✅ Menu offert validé ! Restant : ${remaining}.`,
+      "success",
+    );
+    if (typeof window.triggerVibration === "function") window.triggerVibration("jackpot");
+  } catch (error) {
+    console.error("❌ Erreur consommation récompense :", error);
+    window.showToast(error?.message || "Erreur lors de la validation du menu offert.", "error");
   }
 }
 
