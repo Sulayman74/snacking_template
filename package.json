@@ -68,5 +68,6 @@
     "firebase-functions": "^7.2.3",
     "html5-qrcode": "^2.3.8",
     "lucide": "^1.18.0"
+    "qrcode": "^1.5.4"
   }
 }

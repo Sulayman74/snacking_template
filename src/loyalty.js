@@ -15,6 +15,24 @@ import {
 
 let unsubscribeClientCard = null;
 
+/**
+ * Génère le QR de la carte fidélité LOCALEMENT (lib `qrcode` importée à la demande)
+ * et l'injecte comme data-URL. Remplace l'ancien appel à api.qrserver.com (fuite de
+ * l'uid client vers un tiers + dépendance réseau externe). Best-effort : un échec
+ * laisse simplement l'image vide, sans casser l'ouverture de la carte.
+ * @param {HTMLImageElement} imgEl - Élément <img> cible du QR.
+ * @param {string} data - Donnée encodée (uid client, lu par le scanner admin).
+ * @returns {Promise<void>}
+ */
+async function renderLoyaltyQr(imgEl, data) {
+  try {
+    const QRCode = (await import("qrcode")).default;
+    imgEl.src = await QRCode.toDataURL(String(data), { width: 200, margin: 1 });
+  } catch (e) {
+    console.error("Erreur génération QR fidélité :", e);
+  }
+}
+
 function openClientCard() {
   const user = auth?.currentUser;
   if (!user) return;
@@ -40,8 +58,10 @@ function openClientCard() {
   const userEmail = document.getElementById("card-user-email");
   const qrImg = document.getElementById("card-qr-img");
   if (userEmail) userEmail.innerText = user.email;
-  if (qrImg)
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${user.uid}`;
+  // 🔒 QR généré LOCALEMENT (F5) — auparavant via api.qrserver.com, ce qui envoyait
+  // l'uid du client à un tiers. La lib `qrcode` est importée dynamiquement (hors
+  // bundle principal : la carte fidélité est ouverte à la demande, cf. perf §8.2).
+  if (qrImg) renderLoyaltyQr(qrImg, user.uid);
 
   // 3. Affichage de la modale avec animation
   const modal = document.getElementById("client-card-modal");

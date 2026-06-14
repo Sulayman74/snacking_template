@@ -920,7 +920,11 @@ exports.createPaymentIntent = onCall(
 
       const paymentIntent = await stripe.paymentIntents.create(params, requestOptions);
 
-      return { clientSecret: paymentIntent.client_secret };
+      // `stripeAccountId` est renvoyé au client : en charge DIRECTE, Stripe.js doit
+      // initialiser Elements avec `{ stripeAccount }` (sinon elements/sessions → 400,
+      // la clé plateforme ne voit pas le PI du compte connecté). Non sensible : c'est
+      // un identifiant de compte (les docs `snacks` sont déjà en lecture publique).
+      return { clientSecret: paymentIntent.client_secret, stripeAccountId: stripeAccountId || null };
     } catch (error) {
       console.error("❌ Erreur Stripe PaymentIntent :", error);
       if (error instanceof HttpsError) throw error;
@@ -1603,6 +1607,15 @@ exports.getKitchenLoad = onCall({ region: "europe-west1" }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Authentification requise.");
   }
+
+  // 🛡️ Rate limit (F6) — appel légitime : 1 fois par ouverture de checkout (cache
+  // serveur 30s par-dessus). Borne l'énumération de la charge cuisine de snacks
+  // arbitraires et le martèlement (coût Firestore) par un client authentifié.
+  await enforceRateLimit({
+    key: callerKey(request, "getKitchenLoad"),
+    max: 20,
+    windowMs: 60_000,
+  });
 
   const data = request.data;
   require_(V.isPlainObject(data), "Payload invalide.");

@@ -11,6 +11,7 @@ import { getApp } from "firebase/app";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
 let html5Qrcode = null;
+let Html5QrcodeCls = null;
 
 window.openAdminScanner = async () => {
   const modal = document.getElementById("admin-scanner-modal");
@@ -20,20 +21,15 @@ window.openAdminScanner = async () => {
   await new Promise((resolve) => setTimeout(resolve, 150));
 
   try {
-    if (!window.Html5Qrcode) {
+    // 🔒 Lib chargée depuis le BUNDLE (dépendance npm html5-qrcode), plus depuis
+    // unpkg (F5) : supprime le script CDN tiers sans SRI. Import dynamique → code
+    // splitting (la caméra n'est chargée que par l'admin qui scanne, cf. perf §8.2).
+    if (!Html5QrcodeCls) {
       window.showToast("Chargement de la caméra...", "info");
-
-      await new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = "https://unpkg.com/html5-qrcode";
-        script.type = "text/javascript";
-        script.onload = resolve;
-        script.onerror = () => reject("Impossible de charger le script QR Code");
-        document.body.appendChild(script);
-      });
+      ({ Html5Qrcode: Html5QrcodeCls } = await import("html5-qrcode"));
     }
 
-    html5Qrcode = new window.Html5Qrcode("reader");
+    html5Qrcode = new Html5QrcodeCls("reader");
 
     await html5Qrcode.start(
       { facingMode: "environment" },

@@ -57,8 +57,19 @@ function getDeliveryPayload() {
       : null;
   return { mode: isDelivery ? "delivery" : "collect", livraison };
 }
+// 🔑 Clé PUBLISHABLE Stripe (pk_…) — publique par nature, mais doit varier par
+// environnement (F7). Source : VITE_STRIPE_PUBLISHABLE_KEY (injectée au build).
+// Fallback : clé de TEST pour que le dev local fonctionne sans config ; en build de
+// prod, l'absence de la variable est signalée (évite de partir en pk_test sans le voir).
+const STRIPE_TEST_PUBLISHABLE_KEY =
+  "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J";
 const stripePublicKey =
-  "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J"; // ⚠️ REMPLACE PAR TA CLÉ PUBLIQUE STRIPE (pk_test_...)
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || STRIPE_TEST_PUBLISHABLE_KEY;
+if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY && !import.meta.env.DEV) {
+  console.warn(
+    "⚠️ VITE_STRIPE_PUBLISHABLE_KEY non configurée — build en clé de TEST. Définis la clé live pour la prod.",
+  );
+}
 
 /**
  * Charge le SDK Stripe.js à la demande (1ère ouverture du tunnel de paiement).
@@ -185,10 +196,10 @@ async function processCheckout() {
   try {
     // Chargement paresseux du SDK Stripe (retiré du <head> de la home pour le LCP).
     await loadStripeSdk();
-
-    if (!stripeInstance) {
-      stripeInstance = Stripe(stripePublicKey);
-    }
+    // ⚠️ L'instance Stripe.js est (ré)initialisée plus bas, APRÈS la réponse de la
+    // CF : en charge directe (Connect), elle DOIT cibler le compte connecté
+    // (`{ stripeAccount }`), sinon le Payment Element ne se monte pas (400 sur
+    // elements/sessions). On a besoin du `stripeAccountId` renvoyé par la CF.
 
     // 💡 Total recalculé APRÈS l'upsell pour intégrer les éventuels ajouts.
     const totalAmount = window.getCartTotal();
@@ -235,6 +246,16 @@ async function processCheckout() {
     if (!clientSecret) {
       throw new Error("Réponse de paiement invalide (clientSecret manquant).");
     }
+    // Compte connecté (charge directe) renvoyé par la CF, ou null (charge plateforme).
+    const connectedAccountId = response?.data?.stripeAccountId || null;
+
+    // (Ré)initialise Stripe.js EN CIBLANT le compte connecté si charge directe :
+    // sans `{ stripeAccount }`, Elements ne peut pas charger un PI du compte connecté
+    // (400 sur elements/sessions) et confirmPayment échoue (Element non monté).
+    stripeInstance = Stripe(
+      stripePublicKey,
+      connectedAccountId ? { stripeAccount: connectedAccountId } : undefined
+    );
 
     // 4. Créer et injecter le formulaire Stripe
     const appearance = { theme: "stripe" };

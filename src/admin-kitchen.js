@@ -181,6 +181,16 @@ export function createTicketElement(id, commande) {
     ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition flex items-center gap-1 hover:bg-green-200"><i data-lucide="circle-check"></i> PAYÉ</button>`
     : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition flex items-center gap-1 animate-pulse hover:bg-orange-200"><i data-lucide="receipt"></i> ENCAISSER</button>`;
 
+  // 💸 Remboursement (LOT B → UI). Disponible sur une commande payée (ou déjà
+  // partiellement remboursée). refundOrder valide tout côté serveur ; ici on
+  // ne fait qu'ouvrir le flux. Carte bancaire uniquement (espèces non concernées).
+  const onlineCard = (commande.paiement?.methode || "carte_bancaire") === "carte_bancaire";
+  const refundBtnHtml = onlineCard && (paymentStatus === "paye" || paymentStatus === "partiellement_rembourse")
+    ? `<button type="button" data-action="refund-order" data-id="${id}" aria-label="Rembourser cette commande" class="w-full mt-2 bg-white text-red-600 border border-red-200 hover:bg-red-50 font-bold py-2 rounded-xl text-sm transition active:scale-95 flex items-center justify-center gap-2"><i class="fas fa-rotate-left"></i> Rembourser${paymentStatus === "partiellement_rembourse" ? " (partiel)" : ""}</button>`
+    : paymentStatus === "rembourse"
+      ? `<p class="w-full mt-2 text-center text-xs font-bold text-gray-400"><i class="fas fa-circle-check mr-1"></i>Remboursé</p>`
+      : "";
+
   const ticketDiv = document.createElement("div");
   ticketDiv.id = `ticket-${id}`;
   ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up`;
@@ -203,6 +213,7 @@ export function createTicketElement(id, commande) {
         ${deliveryHtml}
         <ul class="mb-5 text-gray-800 space-y-1">${itemsHtml}</ul>
         ${btnHtml}
+        ${refundBtnHtml}
     `;
 
   return ticketDiv;
@@ -356,7 +367,66 @@ async function updatePaymentStatus(orderId, currentStatus) {
   }
 }
 
+/**
+ * Rembourse une commande via la Cloud Function refundOrder (LOT B). Tout est
+ * (re)validé serveur (admin du snack, montant ≤ restant, idempotence). Ici on ne
+ * fait qu'ouvrir le flux : montant total par défaut, ou partiel si saisi.
+ * @param {string} orderId
+ */
+async function handleRefundOrder(orderId) {
+  // Saisie du montant : vide = total. Virgule FR acceptée.
+  const raw = window.prompt(
+    "Remboursement — montant en € (laisser VIDE pour un remboursement TOTAL) :",
+    ""
+  );
+  if (raw === null) return; // annulé
+
+  const trimmed = raw.trim();
+  let amountCents; // undefined = total
+  if (trimmed !== "") {
+    const euros = parseFloat(trimmed.replace(",", "."));
+    if (!Number.isFinite(euros) || euros <= 0) {
+      window.showToast("Montant invalide.", "error");
+      return;
+    }
+    amountCents = Math.round(euros * 100);
+  }
+
+  const confirmMsg =
+    amountCents === undefined
+      ? "Rembourser la TOTALITÉ de cette commande ?"
+      : `Rembourser ${(amountCents / 100).toFixed(2).replace(".", ",")} € ?`;
+  if (!window.confirm(confirmMsg)) return;
+
+  try {
+    window.showToast("Remboursement en cours…", "info");
+    const callable = httpsCallable(functions, "refundOrder");
+    const payload = amountCents === undefined ? { orderId } : { orderId, amount: amountCents };
+    const res = await callable(payload);
+    const rembourse = (Number(res?.data?.amount) || 0) / 100;
+    window.showToast(
+      `Remboursé ${rembourse.toFixed(2).replace(".", ",")} €${res?.data?.fullyRefunded ? " (total)" : " (partiel)"} ✓`,
+      "success"
+    );
+    // Le radar (onSnapshot) reflète le nouveau paiement.statut automatiquement ;
+    // la compta se met à jour au prochain chargement de l'onglet.
+  } catch (e) {
+    console.error("refundOrder :", e);
+    const code = e?.code || "";
+    const msg =
+      code.includes("permission-denied")
+        ? "Action réservée à l'administrateur du snack."
+        : code.includes("not-found")
+          ? "Commande introuvable."
+          : /hors limites|déjà intégralement|non remboursable/i.test(e?.message || "")
+            ? e.message
+            : "Échec du remboursement. Réessayez.";
+    window.showToast(msg, "error");
+  }
+}
+
 window.startKitchenRadar = startKitchenRadar;
 window.stopKitchenRadar = stopKitchenRadar;
 window.updateOrderStatus = updateOrderStatus;
 window.updatePaymentStatus = updatePaymentStatus;
+window.handleRefundOrder = handleRefundOrder;

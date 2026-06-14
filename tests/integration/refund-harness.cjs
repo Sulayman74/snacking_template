@@ -48,6 +48,12 @@ const OTHER = "snack_refund_other";
 const PRODUCT = "prod_refund_harness";
 const UNIT_EUR = 10; // 10,00 € → 1000 c
 
+// 🔗 Compte connecté TEST (acct_…) optionnel → active le scénario Connect (6).
+// Absent = scénario skippé proprement (le reste du harness tourne sans Connect).
+const CONNECT_ACCT = process.env.STRIPE_TEST_CONNECT_ACCOUNT || null;
+const SNACK_CONNECT = "snack_refund_connect";
+const PRODUCT_CONNECT = "prod_refund_connect";
+
 const results = [];
 const ok = (name, cond, detail) => {
   results.push(!!cond);
@@ -67,6 +73,22 @@ async function makeSucceededPI(amountCents) {
 
 const cart = (eur) => [{ productId: PRODUCT, nom: "Tacos test", prix: eur, quantity: 1 }];
 
+// PaymentIntent TEST "succeeded" SUR le compte connecté, avec application_fee
+// (charge directe) → finalizeOrder y lira la commission + la balance transaction.
+async function makeConnectSucceededPI(amountCents, feeCents) {
+  return stripe.paymentIntents.create(
+    {
+      amount: amountCents,
+      currency: "eur",
+      payment_method: "pm_card_visa",
+      confirm: true,
+      application_fee_amount: feeCents,
+      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+    },
+    { stripeAccount: CONNECT_ACCT }
+  );
+}
+
 async function seed() {
   await db.collection("produits").doc(PRODUCT).set({ snackId: SNACK, nom: "Tacos test", prix: UNIT_EUR, tvaRate: 10 });
   // Snacks SANS stripeAccountId → charge plateforme (le refund n'a pas de header Connect).
@@ -76,6 +98,15 @@ async function seed() {
   await db.collection("users").doc("a_admin").set({ role: "admin", snackId: SNACK });
   await db.collection("users").doc("a_other").set({ role: "admin", snackId: OTHER });
   await db.collection("users").doc("c_user").set({ role: "client", pointsBySnack: {} });
+
+  // Scénario Connect (optionnel) : snack rattaché au compte connecté test.
+  if (CONNECT_ACCT) {
+    await db.collection("produits").doc(PRODUCT_CONNECT).set({ snackId: SNACK_CONNECT, nom: "Connect test", prix: UNIT_EUR, tvaRate: 10 });
+    await db.collection("snacks").doc(SNACK_CONNECT).set({ nom: "Snack Connect Harness", stripeAccountId: CONNECT_ACCT, stripeChargesEnabled: true });
+    await db.collection("users").doc("a_connect").set({ role: "admin", snackId: SNACK_CONNECT });
+    // Client FRAIS dédié : c_user a déjà saturé sa fenêtre finalizeOrder (5/60s).
+    await db.collection("users").doc("c_connect").set({ role: "client", pointsBySnack: {} });
+  }
 }
 
 // Crée une commande payée (collect) de `eur` € et renvoie son orderId (= PI id).
@@ -157,6 +188,35 @@ async function main() {
       otherDenied && clientDenied && o.refund.total === 0,
       `other=${otherDenied} client=${clientDenied} refund.total=${o.refund.total}`);
   } catch (e) { ok("5. Gating", false, e?.message || String(e)); }
+
+  // ===== 6. CONNECT : charge directe + application_fee rendue au prorata =====
+  if (CONNECT_ACCT) {
+    try {
+      const cents = UNIT_EUR * 100;              // 1000
+      const feeCents = Math.round(cents * 0.08); // 80 (commission 8 %)
+      const pi = await makeConnectSucceededPI(cents, feeCents);
+      await finalize({
+        data: {
+          paymentIntentId: pi.id, snackId: SNACK_CONNECT,
+          cartItems: [{ productId: PRODUCT_CONNECT, nom: "Connect test", prix: UNIT_EUR, quantity: 1 }],
+          clientEmail: "k@test.dev", clientNom: "Connect", totalCents: cents, mode: "collect",
+        },
+        auth: { uid: "c_connect", token: { email: "k@test.dev" } },
+      });
+      const before = await getOrder(pi.id);
+      const out = await refund({ data: { orderId: pi.id }, auth: admAuth("a_connect") });
+      const o = await getOrder(pi.id);
+      ok("6. Connect → commission lue (80c) + rendue au prorata sur refund total",
+        before.commission === feeCents &&
+        out.commissionRefunded === feeCents &&
+        o.refund.total === cents &&
+        o.refund.commission === feeCents &&
+        o.refund.fullyRefunded === true,
+        `commission=${before.commission} stripeFee=${before.stripeFee} refundedComm=${out.commissionRefunded} refund.total=${o.refund.total}`);
+    } catch (e) { ok("6. Connect application_fee refund", false, e?.message || String(e)); }
+  } else {
+    console.log("⏭️  6. Connect skippé (STRIPE_TEST_CONNECT_ACCOUNT absent dans functions/.env.local)");
+  }
 
   const passed = results.filter(Boolean).length;
   console.log(`\n${passed}/${results.length} validations OK`);
