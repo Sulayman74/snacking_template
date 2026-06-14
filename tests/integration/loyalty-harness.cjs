@@ -8,6 +8,8 @@
 //   5. Scan QR (awardLoyaltyPoint) → +1 via le helper partagé (non-régression)
 //   6. Client SANS fcmToken au palier → crédit OK, pas de crash
 //   7. redeemLoyaltyReward → consomme 1 menu banqué + trace d'audit (LOT F2)
+//   8. Anti-doublon (F3) : re-scan rapproché du même client → REJET
+//   9. Anti-doublon (F3) cross-canal : commande payée puis scan → REJET
 // Lancé via `firebase emulators:exec --only firestore`. Clés lues depuis
 // functions/.env.local (gitignored). Aucun appel FCM réel : les scénarios à
 // récompense utilisent un client sans fcmToken (sendRewardPush = no-op).
@@ -169,6 +171,28 @@ async function main() {
       `before=${before} after=${avail} audits=${auditSnap.size}`,
     );
   } catch (e) { ok("7. redeemLoyaltyReward", false, e?.message || String(e)); }
+
+  // ===== 8. ANTI-DOUBLON (F3) re-scan rapproché du même client → REJET, points inchangés =====
+  try {
+    const before = await getPoints("c_scan"); // crédité au test 5
+    let rejected = false;
+    try {
+      await award({ data: { clientUid: "c_scan", snackId: SNACK }, auth: { uid: "a_admin", token: { email: "admin@test.dev" } } });
+    } catch (e) { rejected = /doublon|déjà/i.test(e?.message || ""); }
+    const after = await getPoints("c_scan");
+    ok("8. Anti-doublon F3 — re-scan rapproché → REJET, points inchangés", rejected && after === before, `rejected=${rejected} points ${before}→${after}`);
+  } catch (e) { ok("8. Anti-doublon re-scan", false, e?.message || String(e)); }
+
+  // ===== 9. ANTI-DOUBLON (F3) CROSS-CANAL : commande (test 1) puis scan → REJET =====
+  try {
+    const before = await getPoints("u_collect"); // crédité via finalizeOrder au test 1
+    let rejected = false;
+    try {
+      await award({ data: { clientUid: "u_collect", snackId: SNACK }, auth: { uid: "a_admin", token: { email: "admin@test.dev" } } });
+    } catch (e) { rejected = /doublon|déjà/i.test(e?.message || ""); }
+    const after = await getPoints("u_collect");
+    ok("9. Anti-doublon F3 cross-canal — commande puis scan → REJET", rejected && after === before, `rejected=${rejected} points ${before}→${after}`);
+  } catch (e) { ok("9. Anti-doublon cross-canal", false, e?.message || String(e)); }
 
   const passed = results.filter(Boolean).length;
   console.log(`\n${passed}/${results.length} validations OK`);
