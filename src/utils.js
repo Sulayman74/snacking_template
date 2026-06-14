@@ -55,11 +55,11 @@ export function showToast(message, type = "success") {
     msg.textContent = message;
 
     if (type === "success") {
-        toast.classList.add("bg-gray-900", "text-white");
+        toast.classList.add("bg-gray-900", "text-on-dark");
         icon.className = "fas fa-check-circle text-green-400";
     } else {
-        toast.classList.add("bg-danger", "text-white");
-        icon.className = "fas fa-exclamation-triangle text-white";
+        toast.classList.add("bg-danger", "text-on-dark");
+        icon.className = "fas fa-exclamation-triangle text-on-dark";
     }
 
     container.appendChild(toast);
@@ -112,7 +112,7 @@ export function formatCustomizationDetails(item) {
         parts.push(`<span class="text-danger font-black">⚠️ ${item.sansCrudites.map((c) => escapeHTML(c)).join(", ")}</span>`);
     }
     return parts.length > 0
-        ? parts.join(" <span class='text-gray-300'>|</span> ")
+        ? parts.join(" <span class='text-text-muted'>|</span> ")
         : "";
 }
 

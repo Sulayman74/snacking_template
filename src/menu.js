@@ -94,9 +94,9 @@ class MenuUI {
     pills.forEach((pill) => {
       const isTarget = pill.getAttribute("data-cat-id") === activeCatId;
       pill.classList.toggle("bg-gray-900", isTarget);
-      pill.classList.toggle("text-white", isTarget);
+      pill.classList.toggle("text-on-dark", isTarget);
       pill.classList.toggle("bg-gray-100", !isTarget);
-      pill.classList.toggle("text-gray-600", !isTarget);
+      pill.classList.toggle("text-text-muted", !isTarget);
 
       if (isTarget) {
         // Centrage horizontal de la pille DANS la nav uniquement (pas d'ancêtre vertical).
@@ -144,7 +144,7 @@ class MenuUI {
       header.className = "flex items-center gap-3 mb-6";
       
       const title = document.createElement("h2");
-      title.className = "text-2xl font-black text-gray-900 uppercase tracking-tight";
+      title.className = "text-2xl font-black text-text uppercase tracking-tight";
       title.textContent = this.getCategoryName(catId);
       
       header.appendChild(title);
@@ -201,11 +201,11 @@ class MenuUI {
     // 1. Épuisé prend toujours la priorité visuelle absolue
     if (p.isAvailable === false) {
       badge.textContent = "Épuisé";
-      badge.className = "menu-item-badge absolute top-3 right-3 bg-red-600/90 backdrop-blur px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter text-white shadow-sm";
+      badge.className = "menu-item-badge absolute top-3 right-3 bg-danger/90 backdrop-blur px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter text-on-dark shadow-sm";
       img.classList.add("grayscale", "opacity-50");
       
       const btn = clone.querySelector(".fa-plus").parentElement;
-      btn.className = "w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center";
+      btn.className = "w-8 h-8 rounded-full bg-gray-300 text-text-muted flex items-center justify-center";
       btn.innerHTML = `<i class="fas fa-ban text-xs"></i>`;
     } 
     // 2. Sinon, on affiche le badge (string) ou le premier tag de l'array
@@ -252,7 +252,7 @@ class MenuUI {
     const categories = [...new Set(menu.map((p) => p.categorieId))].filter(Boolean);
     categories.forEach((catId) => {
       const btn = document.createElement("button");
-      btn.className = "cat-pill whitespace-nowrap px-4 py-2 rounded-xl bg-gray-100 text-gray-600 font-bold text-sm transition-all active:scale-95 border-2 border-transparent";
+      btn.className = "cat-pill whitespace-nowrap px-4 py-2 rounded-xl bg-gray-100 text-text-muted font-bold text-sm transition-all active:scale-95 border-2 border-transparent";
       btn.textContent = this.getCategoryName(catId);
       btn.setAttribute("data-cat-id", catId);
       btn.onclick = () => {

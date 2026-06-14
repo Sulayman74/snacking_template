@@ -78,7 +78,7 @@
       setTimeout(removeBootSplash, MAX_SPLASH);
     </script>
   </head>
-  <body class="text-gray-800" style="background:{{THEME_COLOR}}">
+  <body class="text-text" style="background:{{THEME_COLOR}}">
     <!-- 🌈 Fond mesh dérivé du thème (décoratif, hors flux, 0 CLS) -->
     <div class="app-bg" aria-hidden="true"></div>
     <!-- BANDEAU PROMO DYNAMIQUE -->
@@ -103,16 +103,16 @@
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
           <a href="#" class="flex items-center gap-2">
             <img id="nav-logo" src="" alt="Logo" class="h-10 w-10 object-contain rounded-xl hidden" />
-            <span id="nav-name" class="text-xl font-bold uppercase tracking-wider text-white drop-shadow-md"></span>
+            <span id="nav-name" class="text-xl font-bold uppercase tracking-wider text-on-dark drop-shadow-md"></span>
           </a>
-          <button aria-label="Bouton du Menu" id="mobile-menu-btn" class="md:hidden text-2xl text-white focus:outline-none transition-transform duration-300 drop-shadow-md">
+          <button aria-label="Bouton du Menu" id="mobile-menu-btn" class="md:hidden text-2xl text-on-dark focus:outline-none transition-transform duration-300 drop-shadow-md">
             <i class="fas fa-bars"></i>
           </button>
           <div class="hidden md:flex items-center gap-4">
-            <a href="#" data-action="switch-menu" class="text-white hover:text-primary font-medium transition drop-shadow-md">La Carte</a>
-            <a href="#" data-action="switch-favorites" id="nav-favorites-link" class="hidden text-white hover:text-primary font-medium transition drop-shadow-md"><i class="fas fa-heart text-accent mr-1" aria-hidden="true"></i>Mes Favoris</a>
-            <a href="#loyalty" id="nav-loyalty-link" class="hidden text-white hover:text-primary font-medium transition drop-shadow-md">Fidélité</a>
-            <a href="#infos" class="text-white hover:text-primary font-medium transition drop-shadow-md">Infos</a>
+            <a href="#" data-action="switch-menu" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">La Carte</a>
+            <a href="#" data-action="switch-favorites" id="nav-favorites-link" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md"><i class="fas fa-heart text-accent mr-1" aria-hidden="true"></i>Mes Favoris</a>
+            <a href="#loyalty" id="nav-loyalty-link" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md">Fidélité</a>
+            <a href="#infos" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">Infos</a>
             <a href="/admin.html" id="nav-admin-btn" class="hidden text-danger hover:text-danger/80 font-bold transition drop-shadow-md"><i class="fas fa-cog"></i> Admin</a>
             <a href="#" id="cta-nav" class="ml-4 bg-primary px-6 py-2 rounded-full font-bold text-on-primary shadow-lg transform hover:scale-105 transition">Commander</a>
             <button aria-label="Déconnexion" type="button" data-action="logout-user" id="nav-logout-btn" class="hidden bg-accent/10 backdrop-blur-sm text-gray-200 hover:bg-accent px-4 py-2 rounded-full font-bold transition flex items-center gap-2">
@@ -121,13 +121,13 @@
           </div>
         </div>
         <div id="mobile-menu-overlay" class="fixed h-screen inset-0 z-40 bg-gray-900 hidden flex-col items-center justify-center space-y-10 opacity-0 transition-opacity duration-300">
-          <a href="#" data-action="switch-menu" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">La Carte</a>
-          <a href="#" data-action="switch-favorites" id="mobile-favorites-link" class="hidden mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">Mes Favoris ❤️</a>
-          <a href="#loyalty" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110" id="mobile-link-loyalty">Fidélité</a>
-          <a href="#infos" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">Infos</a>
+          <a href="#" data-action="switch-menu" class="mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110">La Carte</a>
+          <a href="#" data-action="switch-favorites" id="mobile-favorites-link" class="hidden mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110">Mes Favoris ❤️</a>
+          <a href="#loyalty" class="mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110" id="mobile-link-loyalty">Fidélité</a>
+          <a href="#infos" class="mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110">Infos</a>
           <a href="/admin.html" id="mobile-admin-btn" class="hidden mobile-link text-4xl font-bold text-danger hover:text-danger/80 transition transform hover:scale-110">Admin</a>
-          <a href="#contact" class="mobile-link text-4xl font-bold text-white hover:text-accent transition transform hover:scale-110">Contact</a>
-          <a href="#" id="mobile-burger-call-btn" class="hidden mobile-link text-2xl font-black bg-green-600 text-white px-8 py-4 rounded-full hover:bg-green-700 transition transform hover:scale-105 mt-6 shadow-lg shadow-green-600/30">
+          <a href="#contact" class="mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110">Contact</a>
+          <a href="#" id="mobile-burger-call-btn" class="hidden mobile-link text-2xl font-black bg-green-600 text-on-dark px-8 py-4 rounded-full hover:bg-green-700 transition transform hover:scale-105 mt-6 shadow-lg shadow-green-600/30">
             <i class="fas fa-phone mr-2 animate-pulse"></i> Appeler
           </a>
           <a href="#" data-action="logout-user" id="mobile-logout-btn" class="mobile-link text-xl font-bold text-danger hover:text-danger/80 transition transform hover:scale-110 mt-8">Déconnexion</a>
@@ -137,7 +137,7 @@
       <header id="hero" class="relative h-[80vh] flex items-center justify-center bg-gray-800 overflow-hidden transition-all duration-700">
         <img id="hero-img" src="{{HERO_URL}}" fetchpriority="high" loading="eager" decoding="async" alt="" class="absolute inset-0 w-full h-full object-cover object-center" />
         <div class="absolute inset-0 bg-black/50"></div>
-        <div class="relative z-10 text-center px-4 max-w-4xl w-full mx-auto text-white flex flex-col items-center">
+        <div class="relative z-10 text-center px-4 max-w-4xl w-full mx-auto text-on-dark flex flex-col items-center">
           <span id="hero-status" class="inline-block px-3 py-1 mb-4 text-sm font-bold uppercase tracking-widest border border-white/30 rounded-full backdrop-blur-sm empty:bg-white/20 empty:block empty:w-32 empty:h-8 empty:animate-pulse empty:border-transparent"></span>
           <h1 id="hero-title" class="text-5xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg empty:bg-white/20 empty:block empty:mx-auto empty:rounded-2xl empty:w-3/4 empty:h-16 md:empty:h-24 empty:animate-pulse"></h1>
           <p id="hero-desc" class="text-xl md:text-2xl mb-8 font-light text-gray-200 drop-shadow-md empty:bg-white/20 empty:block empty:mx-auto empty:rounded-xl empty:w-1/2 empty:h-8 empty:animate-pulse"></p>
@@ -153,13 +153,13 @@
         <div class="container mx-auto px-4">
           <div class="text-center mb-10">
             <h2 class="text-4xl text-black uppercase font-bold mb-3 tracking-tight">Nos Stars</h2>
-            <p class="text-gray-500 text-lg">Les favoris du moment, validés par la team.</p>
+            <p class="text-text-muted text-lg">Les favoris du moment, validés par la team.</p>
           </div>
           <div id="bestsellers-container" class="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-auto md:px-0">
             <!-- SKELETONS INJECTÉS PAR JS -->
           </div>
           <div class="text-center">
-            <button data-action="switch-menu" class="bg-gray-800 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300">
+            <button data-action="switch-menu" class="bg-gray-800 text-on-dark px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300">
               Voir toute la carte <i class="fas fa-arrow-right ml-2 text-accent"></i>
             </button>
           </div>
@@ -167,19 +167,19 @@
       </section>
 
       <section id="full-menu" class="hidden h-full w-full bg-gray-300 fixed inset-0 z-50 overflow-y-auto">
-        <div id="ptr-indicator" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md z-[70]">
-          <i class="fas fa-arrow-down text-gray-300 text-xl transition-transform" id="ptr-icon"></i>
+        <div id="ptr-indicator" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-surface rounded-full shadow-md z-[70]">
+          <i class="fas fa-arrow-down text-text-muted text-xl transition-transform" id="ptr-icon"></i>
         </div>
         <div class="sticky top-0 z-50 bg-accent/40 backdrop-blur-xl border-b border-gray-400 shadow-sm pt-[env(safe-area-inset-top)]">
           <div class="container mx-auto px-4 py-3 flex items-center gap-3">
             <div class="relative flex-1">
-              <input type="text" id="menu-search-input" placeholder="Un p'tit creux ?" class="w-full pl-10 pr-10 py-3 bg-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all text-gray-800 font-medium text-sm" />
-              <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-              <button id="clear-search-btn" aria-label="Effacer la recherche" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600">
+              <input type="text" id="menu-search-input" placeholder="Un p'tit creux ?" class="w-full pl-10 pr-10 py-3 bg-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-primary focus:bg-surface outline-none transition-all text-text font-medium text-sm" />
+              <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-sm"></i>
+              <button id="clear-search-btn" aria-label="Effacer la recherche" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text">
                 <i class="fas fa-times-circle text-lg"></i>
               </button>
             </div>
-            <button data-action="switch-home" class="w-11 h-11 shrink-0 bg-white border border-accent rounded-2xl shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
+            <button data-action="switch-home" class="w-11 h-11 shrink-0 bg-surface border border-accent rounded-2xl shadow-sm flex items-center justify-center text-text-muted hover:text-red-500 transition-colors">
               <i class="fas fa-times text-red-500 text-lg"></i>
             </button>
           </div>
@@ -191,10 +191,10 @@
       </section>
 
       <section id="favorites-view" role="dialog" aria-modal="true" aria-labelledby="favorites-title" class="hidden opacity-0 h-full w-full bg-gray-100 fixed inset-0 z-60 overflow-y-auto transition-opacity duration-300">
-        <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-xl border-b border-gray-200 shadow-sm pt-[env(safe-area-inset-top)]">
+        <div class="sticky top-0 z-10 bg-surface/90 backdrop-blur-xl border-b border-gray-200 shadow-sm pt-[env(safe-area-inset-top)]">
           <div class="container mx-auto px-4 py-4 flex items-center justify-between gap-3">
-            <h2 id="favorites-title" class="text-xl font-black text-gray-900 flex items-center gap-2"><i class="fas fa-heart text-red-500" aria-hidden="true"></i> Mes Favoris</h2>
-            <button data-action="close-favorites" aria-label="Fermer mes favoris" class="w-11 h-11 shrink-0 bg-gray-100 border border-gray-200 rounded-2xl shadow-sm flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors">
+            <h2 id="favorites-title" class="text-xl font-black text-text flex items-center gap-2"><i class="fas fa-heart text-red-500" aria-hidden="true"></i> Mes Favoris</h2>
+            <button data-action="close-favorites" aria-label="Fermer mes favoris" class="w-11 h-11 shrink-0 bg-gray-100 border border-gray-200 rounded-2xl shadow-sm flex items-center justify-center text-text-muted hover:text-red-500 transition-colors">
               <i class="fas fa-times text-lg" aria-hidden="true"></i>
             </button>
           </div>
@@ -204,9 +204,9 @@
         </div>
       </section>
 
-      <section id="loyalty" class="py-5 hidden bg-white">
+      <section id="loyalty" class="py-5 hidden bg-surface">
         <div class="container mx-auto px-4">
-          <h2 class="text-4xl text-center font-black text-gray-900 mb-4 tracking-tight">Bons plans</h2>
+          <h2 class="text-4xl text-center font-black text-text mb-4 tracking-tight">Bons plans</h2>
           <div id="loyalty-card" class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-black border shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]" style="border-color: var(--color-primary)">
             <div id="loyalty-blur" class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full blur-[80px] opacity-30 pointer-events-none" style="background-color: var(--color-accent);"></div>
             <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
@@ -214,7 +214,7 @@
                 <h3 class="text-4xl font-bold mb-4 tracking-tight" id="loyalty-title">Club Fidélité</h3>
                 <p class="mb-8 text-lg opacity-90 font-light" id="loyalty-desc">Gagnez des points à chaque commande !</p>
                 <div class="flex gap-4 justify-center md:justify-start">
-                  <button type="button" id="loyalty-main-btn" data-action="toggle-auth-modal" class="bg-white px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 active:scale-95" style="color: var(--color-primary);">Connexion</button>
+                  <button type="button" id="loyalty-main-btn" data-action="toggle-auth-modal" class="bg-surface px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 active:scale-95" style="color: var(--color-primary);">Connexion</button>
                 </div>
               </div>
               <div class="relative text-8xl md:text-9xl">
@@ -226,19 +226,19 @@
         </div>
       </section>
 
-      <section id="reviews" class="py-8 bg-white">
+      <section id="reviews" class="py-8 bg-surface">
         <div class="container mx-auto px-4 text-center">
-          <h2 class="md:text-4xl text-2xl font-black text-gray-900 mb-6 tracking-tight">Donnez-nous votre avis</h2>
+          <h2 class="md:text-4xl text-2xl font-black text-text mb-6 tracking-tight">Donnez-nous votre avis</h2>
           <div class="bg-gray-100 rounded-3xl p-8 max-w-lg mx-auto border border-accent shadow-sm">
             <h3 class="text-xl text-black font-bold mb-4">Et vous, c'était comment ?</h3>
             <div class="flex justify-center items-center gap-3 text-4xl mb-4 cursor-pointer" id="interactive-stars">
-              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="1"></i>
-              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="2"></i>
-              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="3"></i>
-              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="4"></i>
-              <i class="far fa-star text-gray-300 hover:text-yellow-400 transition" data-value="5"></i>
+              <i class="far fa-star text-text-muted hover:text-yellow-400 transition" data-value="1"></i>
+              <i class="far fa-star text-text-muted hover:text-yellow-400 transition" data-value="2"></i>
+              <i class="far fa-star text-text-muted hover:text-yellow-400 transition" data-value="3"></i>
+              <i class="far fa-star text-text-muted hover:text-yellow-400 transition" data-value="4"></i>
+              <i class="far fa-star text-text-muted hover:text-yellow-400 transition" data-value="5"></i>
             </div>
-            <p id="rating-feedback" class="text-gray-600 font-medium min-h-[1.5rem]"></p>
+            <p id="rating-feedback" class="text-text-muted font-medium min-h-[1.5rem]"></p>
           </div>
         </div>
       </section>
@@ -246,10 +246,10 @@
       <section id="contact" class="py-10 bg-gray-100">
         <div class="container mx-auto px-4 max-w-2xl">
           <div class="text-center mb-8">
-            <h2 id="form-title" class="text-4xl font-black text-gray-900 mb-4 tracking-tight">Une question ?</h2>
-            <p id="form-desc" class="text-gray-600 text-lg">Nous sommes là pour vous répondre.</p>
+            <h2 id="form-title" class="text-4xl font-black text-text mb-4 tracking-tight">Une question ?</h2>
+            <p id="form-desc" class="text-text-muted text-lg">Nous sommes là pour vous répondre.</p>
           </div>
-          <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-4 bg-white p-6 md:p-10 rounded-3xl shadow-xl">
+          <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-4 bg-surface p-6 md:p-10 rounded-3xl shadow-xl">
             <input type="hidden" name="source_avis" id="source-avis" value="contact_direct" />
             <div>
               <input type="text" name="contact" id="contact-field" required placeholder="Email ou Téléphone" class="w-full text-black px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 outline-none transition" />
@@ -262,7 +262,7 @@
         </div>
       </section>
 
-<footer id="infos" class="relative overflow-hidden bg-gray-900 text-white pt-16 pb-32 md:pb-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
+<footer id="infos" class="relative overflow-hidden bg-gray-900 text-on-dark pt-16 pb-32 md:pb-16 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
   
   <div class="liquid-blob absolute -top-24 -left-24 w-64 h-64 md:w-96 md:h-96 rounded-full blur-3xl pointer-events-none opacity-40" style="background-color: var(--color-accent);"></div>
   <div class="liquid-blob absolute -bottom-24 -right-24 w-64 h-64 md:w-96 md:h-96 rounded-full blur-3xl pointer-events-none opacity-20" style="background-color: var(--color-primary);"></div>
@@ -276,7 +276,7 @@
           <i id="find-us" class="fas fa-map-marker-alt text-accent"></i> Nous trouver
         </h4>
         <p id="footer-address" class="text-base md:text-lg mb-4 font-light text-gray-200 leading-relaxed"></p>
-        <p id="footer-phone" class="text-lg md:text-xl font-bold text-white mb-6 hover:scale-105 transition-transform"></p>
+        <p id="footer-phone" class="text-lg md:text-xl font-bold text-on-dark mb-6 hover:scale-105 transition-transform"></p>
         
         <div id="socials-container" class="flex gap-6 text-2xl pt-6 border-t border-gray-700/50 w-full justify-center md:justify-start">
           </div>
@@ -297,12 +297,12 @@
         
         <div class="flex flex-col items-center md:items-start space-y-6 text-center md:text-left order-2 md:order-1">
           <p class="text-gray-400 text-xs tracking-wide">
-            &copy; 2026 <span id="footer-copy-name" class="text-white font-medium">Resto</span> • Tous droits réservés.
+            &copy; 2026 <span id="footer-copy-name" class="text-on-dark font-medium">Resto</span> • Tous droits réservés.
           </p>
           <nav class="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-3">
-            <a href="legal.html" class="text-gray-500 hover:text-white text-[10px] uppercase tracking-widest transition-colors underline decoration-gray-800 underline-offset-4">Mentions Légales</a>
-            <a href="legal.html#cgu" class="text-gray-500 hover:text-white text-[10px] uppercase tracking-widest transition-colors underline decoration-gray-800 underline-offset-4">CGU</a>
-            <a href="legal.html#rgpd" class="text-gray-500 hover:text-white text-[10px] uppercase tracking-widest transition-colors underline decoration-gray-800 underline-offset-4">Confidentialité</a>
+            <a href="legal.html" class="text-gray-500 hover:text-on-dark text-[10px] uppercase tracking-widest transition-colors underline decoration-gray-800 underline-offset-4">Mentions Légales</a>
+            <a href="legal.html#cgu" class="text-gray-500 hover:text-on-dark text-[10px] uppercase tracking-widest transition-colors underline decoration-gray-800 underline-offset-4">CGU</a>
+            <a href="legal.html#rgpd" class="text-gray-500 hover:text-on-dark text-[10px] uppercase tracking-widest transition-colors underline decoration-gray-800 underline-offset-4">Confidentialité</a>
           </nav>
         </div>
 
@@ -311,7 +311,7 @@
           <a href="https://sulayman74.github.io/portfolio_Sirikone/" target="_blank" rel="noopener" 
              class="flex items-center gap-3 text-gray-300 text-xs font-light bg-white/5 hover:bg-white/10 px-5 py-2.5 rounded-full border border-gray-700/50 transition-all hover:border-accent/50">
             <span class="opacity-60">Propulsé par</span>
-            <span class="text-white font-bold tracking-tighter group-hover:text-accent transition-colors">CodeCrafters™</span>
+            <span class="text-on-dark font-bold tracking-tighter group-hover:text-accent transition-colors">CodeCrafters™</span>
           </a>
           <div class="mt-6 text-[9px] text-gray-600 max-w-[250px] leading-relaxed text-center md:text-right">
             Protégé par reCAPTCHA. <a href="#" class="hover:text-gray-400">Privacy</a> & <a href="#" class="hover:text-gray-400">Terms</a>.
@@ -350,35 +350,35 @@
 
     <!-- MODALES (Auth, Snack, Card, Scanner, etc.) -->
     <div id="auth-modal" class="fixed inset-0 bg-gray-900/80 z-[100] hidden items-center justify-center p-4 backdrop-blur-md opacity-0 transition-opacity duration-300">
-      <div class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95">
-        <button data-action="toggle-auth-modal" class="absolute top-4 right-4 text-gray-300 hover:text-black bg-gray-100 p-2 rounded-full transition">
+      <div class="bg-surface w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95">
+        <button data-action="toggle-auth-modal" class="absolute top-4 right-4 text-text-muted hover:text-black bg-gray-100 p-2 rounded-full transition">
           <i class="fas fa-times"></i>
         </button>
         <div class="text-center mb-6">
-          <h3 id="auth-title" class="text-3xl font-black text-gray-900 tracking-tight">Bienvenue !</h3>
-          <p id="auth-subtitle" class="text-gray-500 mt-2">Connectez-vous pour votre fidélité.</p>
+          <h3 id="auth-title" class="text-3xl font-black text-text tracking-tight">Bienvenue !</h3>
+          <p id="auth-subtitle" class="text-text-muted mt-2">Connectez-vous pour votre fidélité.</p>
         </div>
-        <button type="button" id="btn-google-login" class="w-full flex items-center justify-center gap-3 px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition shadow-sm mb-6">
+        <button type="button" id="btn-google-login" class="w-full flex items-center justify-center gap-3 px-4 py-4 bg-surface border border-gray-300 rounded-xl text-text font-bold hover:bg-gray-50 transition shadow-sm mb-6">
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google" /> Continuer avec Google
         </button>
-        <div class="flex items-center mb-6"><div class="grow border-t"></div><span class="mx-4 text-gray-400 text-sm font-medium">OU</span><div class="grow border-t"></div></div>
+        <div class="flex items-center mb-6"><div class="grow border-t"></div><span class="mx-4 text-text-muted text-sm font-medium">OU</span><div class="grow border-t"></div></div>
         <form id="auth-form" class="space-y-5">
           <input type="email" id="auth-email" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 outline-none transition text-black" placeholder="Email" />
           <div class="relative">
             <input type="password" id="auth-password" required class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 outline-none transition text-black pr-12" placeholder="Mot de passe" />
-            <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><i class="fas fa-eye" id="eye-icon"></i></button>
+            <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"><i class="fas fa-eye" id="eye-icon"></i></button>
           </div>
-          <div class="text-right"><button type="button" data-action="reset-password" class="text-sm text-gray-500 hover:text-red-600 transition">Oublié ?</button></div>
+          <div class="text-right"><button type="button" data-action="reset-password" class="text-sm text-text-muted hover:text-red-600 transition">Oublié ?</button></div>
           <button type="submit" id="auth-submit-btn" class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2">Se connecter</button>
         </form>
         <div class="mt-8 text-center text-sm bg-gray-50 p-4 rounded-xl">
-          <span id="auth-switch-text" class="text-gray-600">Pas encore de compte ?</span>
+          <span id="auth-switch-text" class="text-text-muted">Pas encore de compte ?</span>
           <button data-action="switch-auth-mode" type="button" id="auth-switch-btn" class="text-red-600 font-bold ml-1">S'inscrire</button>
         </div>
       </div>
     </div>
 
-    <div id="snackbar" class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-full shadow-2xl z-[200] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 w-max max-w-[90vw]">
+    <div id="snackbar" class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-on-dark px-6 py-4 rounded-full shadow-2xl z-[200] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 w-max max-w-[90vw]">
       <i id="snackbar-icon" class="fas fa-check-circle text-green-400 text-2xl"></i>
       <span id="snackbar-message" class="font-medium text-sm md:text-base">Message ici</span>
     </div>
@@ -386,10 +386,10 @@
     <div id="client-card-modal" class="fixed inset-0 bg-gray-900/90 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300 opacity-0">
       <div id="virtual-card" class="w-full max-w-sm rounded-3xl relative shadow-2xl overflow-hidden transform transition-transform scale-95 border border-white/20">
         <div id="card-bg-gradient" class="absolute inset-0 bg-linear-to-br from-red-500 to-orange-600 z-0"></div>
-        <div class="relative z-10 p-6 text-white flex flex-col h-full">
+        <div class="relative z-10 p-6 text-on-dark flex flex-col h-full">
           <div class="flex justify-between items-start mb-6">
             <h3 id="card-program-name" class="text-xl font-black uppercase tracking-widest opacity-90">Team Fusion</h3>
-            <i class="fas fa-wifi text-white/60 rotate-90 text-3xl"></i>
+            <i class="fas fa-wifi text-on-dark/60 rotate-90 text-3xl"></i>
           </div>
           <div class="flex items-center justify-between bg-white/10 rounded-2xl p-4 backdrop-blur-md mb-6 border border-white/20">
             <div class="flex flex-col">
@@ -399,24 +399,24 @@
             <div class="bg-white p-2 rounded-xl w-24 h-24 flex items-center justify-center"><img id="card-qr-img" src="" alt="QR" class="w-full h-full object-contain" /></div>
           </div>
           <div class="w-full mt-2">
-            <div class="flex justify-between text-xs font-bold mb-2"><span id="progress-text" class="text-white/90 uppercase">Encore 10 points avant récompense</span><i class="fas fa-gift text-yellow-300 text-lg"></i></div>
+            <div class="flex justify-between text-xs font-bold mb-2"><span id="progress-text" class="text-on-dark/90 uppercase">Encore 10 points avant récompense</span><i class="fas fa-gift text-yellow-300 text-lg"></i></div>
             <div class="w-full bg-black/30 rounded-full h-3 overflow-hidden shadow-inner border border-white/10"><div id="card-progress-bar" class="bg-linear-to-r from-yellow-400 to-yellow-200 h-full rounded-full transition-all duration-1000 ease-out w-[0%]"></div></div>
           </div>
           
           <!-- BOUTON ACTIVER LES NOTIFICATIONS (visible uniquement si permission "default") -->
-          <button id="promo-notif-btn" data-action="request-notif" class="hidden mt-6 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
+          <button id="promo-notif-btn" data-action="request-notif" class="hidden mt-6 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-on-dark font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
             <i class="fas fa-bell text-yellow-300 group-hover:animate-pulse"></i>
             <span class="text-xs tracking-widest">ACTIVER LES NOTIFICATIONS 🔔</span>
           </button>
 
           <!-- INFO NOTIF BLOQUÉE (visible si permission "denied") -->
-          <div id="promo-notif-denied" class="hidden mt-6 w-full bg-red-500/20 backdrop-blur-md text-white py-3 px-4 rounded-2xl flex items-center justify-center gap-2 border border-red-300/30 text-[11px] font-bold text-center">
+          <div id="promo-notif-denied" class="hidden mt-6 w-full bg-red-500/20 backdrop-blur-md text-on-dark py-3 px-4 rounded-2xl flex items-center justify-center gap-2 border border-red-300/30 text-[11px] font-bold text-center">
             <i class="fas fa-bell-slash text-red-300"></i>
             <span>Notifications bloquées dans votre navigateur</span>
           </div>
 
           <!-- BOUTON PARRAINAGE -->
-          <button onclick="shareReferralLink()" class="mt-3 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
+          <button onclick="shareReferralLink()" class="mt-3 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-on-dark font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
             <i class="fas fa-gift text-yellow-300 group-hover:animate-bounce"></i>
             <span class="text-xs tracking-widest">OFFRE UNE FRITE À UN AMI 🍟</span>
           </button>
@@ -424,16 +424,16 @@
           <p id="card-user-email" class="text-[10px] opacity-60 mt-4 text-center font-mono w-full truncate"></p>
         </div>
       </div>
-      <button data-action="close-client-card" class="mt-8 text-white/70 hover:text-white flex flex-col items-center gap-2 transition-transform hover:scale-110">
+      <button data-action="close-client-card" class="mt-8 text-on-dark/70 hover:text-on-dark flex flex-col items-center gap-2 transition-transform hover:scale-110">
         <i class="fas fa-times-circle text-5xl"></i><span class="uppercase tracking-widest text-xs font-bold">Fermer la carte</span>
       </button>
     </div>
 
     <div id="admin-scanner-modal" class="fixed inset-0 bg-gray-900/95 z-100 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
-      <div class="w-full max-w-lg h-[85vh] md:h-auto bg-white rounded-3xl overflow-hidden shadow-2xl relative flex flex-col">
-        <div class="p-5 bg-gray-900 text-white flex justify-between items-center z-10 shadow-md shrink-0">
+      <div class="w-full max-w-lg h-[85vh] md:h-auto bg-surface rounded-3xl overflow-hidden shadow-2xl relative flex flex-col">
+        <div class="p-5 bg-gray-900 text-on-dark flex justify-between items-center z-10 shadow-md shrink-0">
           <h3 class="font-bold text-lg"><i class="fas fa-qrcode text-red-500 mr-2 animate-pulse"></i>Scanner Client</h3>
-          <button data-action="close-admin-scanner" class="text-gray-300 hover:text-white bg-gray-800 p-2 rounded-full transition hover:bg-red-600"><i class="fas fa-times w-5 h-5 flex items-center justify-center"></i></button>
+          <button data-action="close-admin-scanner" class="text-gray-300 hover:text-on-dark bg-gray-800 p-2 rounded-full transition hover:bg-red-600"><i class="fas fa-times w-5 h-5 flex items-center justify-center"></i></button>
         </div>
         <div class="relative w-full flex-1 bg-black flex items-center justify-center overflow-hidden min-h-[50vh]">
           <div id="reader" class="w-full h-full absolute inset-0 [&>video]:object-cover"></div>
@@ -446,39 +446,39 @@
             </div>
           </div>
         </div>
-        <div class="p-6 bg-white text-center z-10 shrink-0"><p class="text-gray-900 font-black text-xl mb-1 tracking-tight">Visez le QR Code</p><p class="text-sm text-gray-500 font-medium">La caméra s'adapte automatiquement.</p></div>
+        <div class="p-6 bg-surface text-center z-10 shrink-0"><p class="text-text font-black text-xl mb-1 tracking-tight">Visez le QR Code</p><p class="text-sm text-text-muted font-medium">La caméra s'adapte automatiquement.</p></div>
       </div>
     </div>
 
-    <div id="pwa-install-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700">
+    <div id="pwa-install-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-on-dark p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700">
       <div class="flex items-center gap-3"><img id="pwa-banner-icon" src="{{ICON_URL}}" class="w-12 h-12 rounded-xl" alt="Icon" /><div><p class="font-bold text-sm">Garde-nous dans ta poche !</p><p id="pwa-install-hint" class="text-xs text-gray-300">Installe l'app pour tes points 🎁</p></div></div>
       <button id="pwa-install-btn" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg">Installer</button>
-      <button id="pwa-close-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md"><i class="fas fa-times"></i></button>
+      <button id="pwa-close-btn" class="absolute -top-2 -right-2 bg-gray-700 text-on-dark w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md"><i class="fas fa-times"></i></button>
     </div>
 
     <!-- 🔄 BANDEAU MISE À JOUR (pattern "prompt") — affiché par src/pwa.js sur onNeedRefresh -->
-    <div id="pwa-update-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/80 backdrop-blur-lg text-white p-4 rounded-2xl shadow-2xl z-[95] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-white/10">
+    <div id="pwa-update-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/80 backdrop-blur-lg text-on-dark p-4 rounded-2xl shadow-2xl z-[95] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-white/10">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0"><i class="fas fa-arrows-rotate text-primary text-lg"></i></div>
         <div><p class="font-bold text-sm">Nouvelle version dispo ✨</p><p class="text-xs text-gray-300">Rafraîchis pour les dernières améliorations.</p></div>
       </div>
       <button id="pwa-refresh-btn" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
-      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
+      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-on-dark w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i class="fas fa-times"></i></button>
     </div>
 
     <div id="product-modal-backdrop" data-action="close-product-modal" class="fixed inset-0 bg-gray-900/70 z-70 hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
-    <div id="product-modal" class="fixed bottom-0 left-0 md:left-1/2 w-full md:max-w-2xl bg-white rounded-t-3xl md:rounded-3xl shadow-2xl z-[80] transform md:-translate-x-1/2 translate-y-full md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:pointer-events-none md:scale-95 md:h-auto transition-all duration-300 max-h-[90vh] overflow-y-auto">
-      <button data-action="close-product-modal" class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg z-20 text-gray-800 hover:bg-gray-100 transition"><i class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i></button>
+    <div id="product-modal" class="fixed bottom-0 left-0 md:left-1/2 w-full md:max-w-2xl bg-surface rounded-t-3xl md:rounded-3xl shadow-2xl z-[80] transform md:-translate-x-1/2 translate-y-full md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:pointer-events-none md:scale-95 md:h-auto transition-all duration-300 max-h-[90vh] overflow-y-auto">
+      <button data-action="close-product-modal" class="absolute top-4 right-4 bg-surface/90 backdrop-blur p-2 rounded-full shadow-lg z-20 text-text hover:bg-gray-100 transition"><i class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i></button>
       <div class="relative flex flex-col md:flex-row">
         <div class="h-54 md:h-auto md:w-2/5 relative"><img id="modal-img" alt="item" src="" class="w-full h-full object-cover rounded-t-3xl md:rounded-t-none md:rounded-l-3xl" /></div>
         <div class="p-3 md:p-8 pb-24 md:pb-8 flex-1 flex flex-col">
-          <h3 id="modal-title" class="text-3xl font-black text-gray-900 tracking-tight mb-4"></h3>
-          <p id="modal-desc" class="text-gray-600 text-lg mb-6 flex-grow"></p>
+          <h3 id="modal-title" class="text-3xl font-black text-text tracking-tight mb-4"></h3>
+          <p id="modal-desc" class="text-text-muted text-lg mb-6 flex-grow"></p>
           <button id="modal-share-btn" class="hidden w-full py-3 my-2 text-black rounded-full bg-accent/20 font-bold hover:bg-gray-200 transition-all justify-center items-center"><i class="fas fa-share-nodes mr-1"></i> Partager à un pote</button>
-          <div id="modal-allergens-container" class="mb-3 p-4 bg-gray-50 border border-dashed border-blue-200 rounded-xl hidden"><h4 class="font-bold text-xs text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-info-circle mr-1"></i> Infos & Allergènes</h4><p id="modal-allergens" class="text-gray-700 text-sm font-medium"></p></div>
+          <div id="modal-allergens-container" class="mb-3 p-4 bg-gray-50 border border-dashed border-blue-200 rounded-xl hidden"><h4 class="font-bold text-xs text-text-muted uppercase tracking-widest mb-2"><i class="fas fa-info-circle mr-1"></i> Infos & Allergènes</h4><p id="modal-allergens" class="text-text text-sm font-medium"></p></div>
           <div id="modal-options-container" class="mb-1 hidden"></div>
           <div class="mt-auto flex items-center gap-3">
-            <button type="button" id="modal-fav-btn" aria-pressed="false" aria-label="Ajouter aux favoris" class="hidden shrink-0 w-14 h-14 rounded-xl border-2 border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-500 transition-all flex items-center justify-center text-xl"><i class="far fa-heart" aria-hidden="true"></i></button>
+            <button type="button" id="modal-fav-btn" aria-pressed="false" aria-label="Ajouter aux favoris" class="hidden shrink-0 w-14 h-14 rounded-xl border-2 border-gray-200 text-text-muted hover:border-red-200 hover:text-red-500 transition-all flex items-center justify-center text-xl"><i class="far fa-heart" aria-hidden="true"></i></button>
             <button type="button" id="modal-cta" class="flex-1"></button>
           </div>
         </div>
@@ -486,10 +486,10 @@
     </div>
 
     <div id="cart-backdrop" data-action="close-cart" class="fixed inset-0 bg-gray-900/60 z-90 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm"></div>
-    <div id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" inert class="fixed bottom-0 left-0 w-full bg-white rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[85vh]">
-      <div class="flex justify-between items-center p-6 border-b"><h2 id="cart-title" class="text-xl font-bold text-gray-900">Mon Panier 🛒</h2><button data-action="close-cart" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"><i class="fas fa-times"></i></button></div>
+    <div id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" inert class="fixed bottom-0 left-0 w-full bg-surface rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="flex justify-between items-center p-6 border-b"><h2 id="cart-title" class="text-xl font-bold text-text">Mon Panier 🛒</h2><button data-action="close-cart" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-text-muted hover:bg-gray-200 transition"><i class="fas fa-times"></i></button></div>
       <div id="cart-items-container" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
-      <div class="p-6 bg-gray-50 rounded-t-3xl border-t border-gray-200 pb-safe"><div id="delivery-section" class="empty:hidden"></div><div class="flex justify-between items-center mb-4"><span class="text-gray-500 font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-gray-900">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center">Valider ma commande</button></div>
+      <div class="p-6 bg-gray-50 rounded-t-3xl border-t border-gray-200 pb-safe"><div id="delivery-section" class="empty:hidden"></div><div class="flex justify-between items-center mb-4"><span class="text-text-muted font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-text">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center">Valider ma commande</button></div>
     </div>
 
 <div id="payment-bottom-sheet" class="fixed inset-0 z-[100] hidden items-end justify-center bg-black/60 opacity-0 transition-opacity duration-300 backdrop-blur-sm">
@@ -497,34 +497,34 @@
   <div class="absolute inset-0" onclick="closePaymentSheet()"></div>
   
   <div id="payment-sheet-content" 
-       class="relative w-full max-w-lg translate-y-full transform rounded-t-3xl bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col max-h-[92vh]">
-    
+       class="relative w-full max-w-lg translate-y-full transform rounded-t-3xl bg-surface p-6 shadow-2xl transition-transform duration-300 flex flex-col max-h-[92vh]">
+
     <div class="mx-auto mb-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"></div>
 
     <div class="overflow-y-auto pr-1 custom-scrollbar">
       <div class="mb-6 text-center">
-        <h3 class="text-xl font-black text-gray-900">Paiement Sécurisé</h3>
+        <h3 class="text-xl font-black text-text">Paiement Sécurisé</h3>
         <p id="payment-amount-display" class="text-lg font-bold text-red-600">Total : 0.00 €</p>
       </div>
 
       <div id="payment-element" class="min-h-[250px]">
         </div>
 
-      <div id="payment-message" class="mt-4 hidden rounded-lg bg-red-50 p-3 text-center text-sm font-medium text-red-600"></div>
+      <div id="payment-message" class="mt-4 hidden rounded-lg bg-danger/10 p-3 text-center text-sm font-medium text-danger"></div>
     </div>
 
     <div class="mt-6 flex flex-col gap-3 flex-shrink-0 pb-4 md:pb-0">
       <button id="submit-payment-btn" onclick="submitStripePayment()" 
-              class="flex w-full items-center justify-center rounded-xl bg-green-600 py-4 text-lg font-black text-white shadow-lg transition active:scale-95 hover:bg-green-700">
+              class="flex w-full items-center justify-center rounded-xl bg-green-600 py-4 text-lg font-black text-on-dark shadow-lg transition active:scale-95 hover:bg-green-700">
         <i class="fas fa-lock mr-2"></i> Confirmer le paiement
       </button>
       
-      <button onclick="closePaymentSheet()" class="w-full py-2 text-sm font-bold text-gray-400 hover:text-gray-600">
+      <button onclick="closePaymentSheet()" class="w-full py-2 text-sm font-bold text-text-muted hover:text-text">
         Annuler la commande
       </button>
     </div>
 
-    <div class="mt-4 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest text-gray-400 pb-2">
+    <div class="mt-4 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest text-text-muted pb-2">
       <i class="fas fa-shield-alt"></i>
       <span>Paiement crypté SSL par Stripe</span>
     </div>
@@ -541,14 +541,14 @@
   <div class="absolute inset-0" data-upsell-action="cancel"></div>
 
   <div id="upsell-sheet-content"
-       class="relative w-full max-w-lg translate-y-full transform rounded-t-3xl bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col max-h-[92vh]">
+       class="relative w-full max-w-lg translate-y-full transform rounded-t-3xl bg-surface p-6 shadow-2xl transition-transform duration-300 flex flex-col max-h-[92vh]">
 
     <div class="mx-auto mb-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"></div>
 
     <div class="overflow-y-auto pr-1 custom-scrollbar">
       <div class="mb-5 text-center">
-        <h3 id="upsell-title" class="text-xl font-black text-gray-900">Ça vous tente d'ajouter ?</h3>
-        <p class="text-sm text-gray-500">Petit extra avant de passer à la caisse 😋</p>
+        <h3 id="upsell-title" class="text-xl font-black text-text">Ça vous tente d'ajouter ?</h3>
+        <p class="text-sm text-text-muted">Petit extra avant de passer à la caisse 😋</p>
       </div>
 
       <ul id="upsell-suggestions" role="list" class="space-y-3"></ul>
@@ -560,7 +560,7 @@
         <i class="fas fa-arrow-right mr-2"></i> Continuer vers le paiement
       </button>
 
-      <button data-upsell-action="cancel" class="w-full py-2 text-sm font-bold text-gray-400 hover:text-gray-600">
+      <button data-upsell-action="cancel" class="w-full py-2 text-sm font-bold text-text-muted hover:text-text">
         Non merci
       </button>
     </div>
@@ -572,12 +572,12 @@
   <li class="flex items-center gap-3 p-3 rounded-2xl border border-gray-100 bg-gray-50">
     <div class="upsell-item-image-wrapper relative h-14 w-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-200">
       <img class="upsell-item-image h-full w-full object-cover" alt="" loading="lazy">
-      <div class="upsell-item-fallback hidden absolute inset-0 items-center justify-center text-gray-400">
+      <div class="upsell-item-fallback hidden absolute inset-0 items-center justify-center text-text-muted">
         <i class="fas fa-utensils"></i>
       </div>
     </div>
     <div class="flex-1 min-w-0">
-      <p class="upsell-item-name font-bold text-gray-900 truncate"></p>
+      <p class="upsell-item-name font-bold text-text truncate"></p>
       <p class="upsell-item-price text-sm font-black text-primary"></p>
     </div>
     <button class="upsell-add-btn shrink-0 rounded-full bg-primary text-on-primary px-4 py-2 text-sm font-black shadow-md transition active:scale-95 hover:opacity-90"
@@ -594,7 +594,7 @@
 <!-- 🟡 LE BADGE DE SUIVI (FLOTTANT) -->
 <div id="order-tracking-badge" 
      onclick="openTrackingModal()"
-     class="hidden fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl font-black items-center gap-3 z-[60] cursor-pointer transition-all hover:scale-105 active:scale-95 group">
+     class="hidden fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-on-dark px-6 py-3 rounded-full shadow-2xl font-black items-center gap-3 z-[60] cursor-pointer transition-all hover:scale-105 active:scale-95 group">
     <div class="relative flex h-3 w-3">
         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
         <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
@@ -607,7 +607,7 @@
 <div id="order-tracking-modal" 
      class="fixed inset-0 z-[100] hidden items-end md:items-center justify-center p-0 md:p-6 bg-gray-900/90 backdrop-blur-sm opacity-0 transition-opacity duration-300">
     
-    <div class="bg-white w-full max-w-lg rounded-t-[40px] md:rounded-[40px] p-8 md:p-12 shadow-2xl transform scale-95 transition-transform duration-300 relative overflow-hidden">
+    <div class="bg-surface w-full max-w-lg rounded-t-[40px] md:rounded-[40px] p-8 md:p-12 shadow-2xl transform scale-95 transition-transform duration-300 relative overflow-hidden">
         
         <!-- Décoration de fond subtile -->
         <div class="absolute -top-24 -right-24 w-64 h-64 bg-gray-50 rounded-full opacity-50 blur-3xl"></div>
@@ -615,29 +615,29 @@
 
         <!-- Bouton Fermer (Mobile pull bar) -->
         <div class="md:hidden w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8 cursor-pointer" onclick="closeTrackingModal()"></div>
-        <button onclick="closeTrackingModal()" class="hidden md:block absolute top-6 right-6 text-gray-300 hover:text-gray-900 transition-colors p-2">
+        <button onclick="closeTrackingModal()" class="hidden md:block absolute top-6 right-6 text-text-muted hover:text-text transition-colors p-2">
             <i class="fas fa-times text-xl"></i>
         </button>
 
         <!-- Contenu Radar -->
         <div class="text-center relative z-10">
             <div id="tracking-icon-container" class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner transition-all duration-500">
-                <i id="tracking-icon" class="fas fa-car text-5xl text-gray-500 transition-all duration-500"></i>
+                <i id="tracking-icon" class="fas fa-car text-5xl text-text-muted transition-all duration-500"></i>
             </div>
 
-            <h2 id="tracking-title" class="text-4xl font-black text-gray-900 mb-4 tracking-tight leading-tight">Suivi de commande</h2>
+            <h2 id="tracking-title" class="text-4xl font-black text-text mb-4 tracking-tight leading-tight">Suivi de commande</h2>
             
-            <div id="tracking-subtitle" class="text-gray-500 text-lg font-medium leading-relaxed mb-10 px-4">
+            <div id="tracking-subtitle" class="text-text-muted text-lg font-medium leading-relaxed mb-10 px-4">
                 Initialisation du radar...
             </div>
 
             <div class="space-y-4 pt-4 border-t border-gray-100">
                 <button id="tracking-action-btn"
-                        class="w-full bg-gray-900 text-white font-black py-5 rounded-2xl text-xl shadow-lg hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3">
+                        class="w-full bg-gray-900 text-on-dark font-black py-5 rounded-2xl text-xl shadow-lg hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3">
                     <i class="fas fa-car"></i> Je suis là !
                 </button>
                 <div id="tracking-notif-prompt"></div>
-                <button onclick="closeTrackingModal()" class="w-full py-3 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors">
+                <button onclick="closeTrackingModal()" class="w-full py-3 text-sm font-bold text-text-muted hover:text-text transition-colors">
                     Masquer la fenêtre
                 </button>
             </div>
@@ -647,27 +647,27 @@
 
     <!-- TEMPLATES (Phase 4 anticipation) -->
     <template id="cart-item-template">
-      <div class="flex items-center gap-4 bg-white p-3 rounded-xl border" role="group">
+      <div class="flex items-center gap-4 bg-surface p-3 rounded-xl border" role="group">
         <div class="cart-item-image-container relative w-16 h-16 shrink-0">
           <img class="cart-item-image absolute inset-0 w-full h-full rounded-lg object-cover z-10" loading="lazy">
           <div class="cart-item-fallback absolute inset-0 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200 z-0">
-            <i class="fas fa-hamburger text-gray-300 text-xl" aria-hidden="true"></i>
+            <i class="fas fa-hamburger text-text-muted text-xl" aria-hidden="true"></i>
           </div>
         </div>
         <div class="flex-1 min-w-0">
-          <h2 class="cart-item-name font-bold text-gray-900 leading-tight truncate"></h2>
-          <div class="cart-item-details text-[11px] text-gray-500 mt-1 leading-snug flex flex-wrap gap-x-2 gap-y-1"></div>
+          <h2 class="cart-item-name font-bold text-text leading-tight truncate"></h2>
+          <div class="cart-item-details text-[11px] text-text-muted mt-1 leading-snug flex flex-wrap gap-x-2 gap-y-1"></div>
           <p class="cart-item-price text-red-600 font-bold mt-1"></p>
         </div>
-        <button type="button" class="cart-item-fav w-9 h-9 shrink-0 text-gray-300 hover:text-red-500 transition-colors flex items-center justify-center" aria-pressed="false" aria-label="Ajouter aux favoris">
+        <button type="button" class="cart-item-fav w-9 h-9 shrink-0 text-text-muted hover:text-red-500 transition-colors flex items-center justify-center" aria-pressed="false" aria-label="Ajouter aux favoris">
           <i class="far fa-heart text-lg" aria-hidden="true"></i>
         </button>
         <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
-          <button type="button" class="cart-item-minus w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition">
+          <button type="button" class="cart-item-minus w-8 h-8 text-text-muted hover:bg-gray-200 rounded-md transition">
             <i class="fas fa-minus text-xs"></i>
           </button>
           <span class="cart-item-quantity font-bold w-4 text-black text-center text-sm"></span>
-          <button type="button" class="cart-item-plus w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-md transition">
+          <button type="button" class="cart-item-plus w-8 h-8 text-text-muted hover:bg-gray-200 rounded-md transition">
             <i class="fas fa-plus text-xs"></i>
           </button>
         </div>
@@ -689,11 +689,11 @@
             <i class="fas fa-pizza-slice text-4xl mb-2 opacity-20"></i>
             <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Photo en préparation... 👨‍🍳</span>
           </div>
-          <div class="menu-item-badge absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter text-gray-900 shadow-sm hidden"></div>
+          <div class="menu-item-badge absolute top-3 right-3 bg-surface/90 backdrop-blur px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter text-text shadow-sm hidden"></div>
         </div>
         <div class="p-5 flex flex-col flex-1">
           <div class="flex justify-between items-start mb-2 gap-2">
-            <h3 class="menu-item-name text-lg font-black text-gray-900 leading-tight"></h3>
+            <h3 class="menu-item-name text-lg font-black text-text leading-tight"></h3>
             <span class="menu-item-price text-lg font-black text-on-primary whitespace-nowrap"></span>
           </div>
           <p class="menu-item-desc text-on-primary text-xs font-medium leading-relaxed mb-4 line-clamp-2 flex-1"></p>

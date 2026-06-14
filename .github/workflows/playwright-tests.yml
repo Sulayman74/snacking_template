@@ -8,6 +8,20 @@ on:
   workflow_dispatch:
 
 jobs:
+  theming-guard:
+    name: 🎛️ Garde-fou theming (anti-régression tokens)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Récupération du code
+        uses: actions/checkout@v4
+      - name: 🟢 Installation de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Le script n'utilise que des modules Node natifs : pas de npm ci nécessaire.
+      - name: 🎨 Vérification des couleurs en dur (surface client)
+        run: npm run lint:theming
+
   test:
     name: 🧪 E2E sur émulateurs (cart / commande / stock)
     timeout-minutes: 30
