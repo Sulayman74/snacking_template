@@ -4,9 +4,10 @@
 //   1. Commande COLLECT payée → +1 point sur pointsBySnack.{snackId}
 //   2. Commande LIVRAISON payée → +1 point (mode-agnostique)
 //   3. Retry réseau (même paymentIntentId) → PAS de double crédit (idempotent)
-//   4. Palier (current >= MAX) → reward:true, remise à 0 (helper partagé)
+//   4. Palier (current >= MAX) → reward:true, report du point (1) + 1 menu banqué (LOT F2)
 //   5. Scan QR (awardLoyaltyPoint) → +1 via le helper partagé (non-régression)
 //   6. Client SANS fcmToken au palier → crédit OK, pas de crash
+//   7. redeemLoyaltyReward → consomme 1 menu banqué + trace d'audit (LOT F2)
 // Lancé via `firebase emulators:exec --only firestore`. Clés lues depuis
 // functions/.env.local (gitignored). Aucun appel FCM réel : les scénarios à
 // récompense utilisent un client sans fcmToken (sendRewardPush = no-op).
@@ -64,6 +65,11 @@ async function getPoints(uid) {
   return (snap.exists ? (snap.data().pointsBySnack || {}) : {})[SNACK] || 0;
 }
 
+async function getAvailable(uid) {
+  const snap = await db.collection("users").doc(uid).get();
+  return (snap.exists ? (snap.data().rewardsAvailable || {}) : {})[SNACK] || 0;
+}
+
 async function seed() {
   // Produit légitime (anti-fraude prix) + snack minimal (collect & livraison OK).
   await db.collection("produits").doc(PRODUCT).set({ snackId: SNACK, nom: "Tacos test", prix: UNIT_EUR });
@@ -118,7 +124,7 @@ async function main() {
     ok("3. Retry même paymentIntentId → pas de double crédit (idempotent)", pts === 1, `pointsBySnack.${SNACK}=${pts} (attendu 1)`);
   } catch (e) { ok("3. Retry idempotent", false, e?.message || String(e)); }
 
-  // ===== 4. PALIER (current=10) → reward + reset à 0, sans crash (pas de fcmToken) =====
+  // ===== 4. PALIER (current=10) → report du point (1) + 1 menu banqué, sans crash =====
   try {
     const pi = await makeSucceededPI(UNIT_CENTS);
     await finalize({
@@ -126,8 +132,15 @@ async function main() {
       auth: { uid: "u_palier", token: { email: "p@test.dev" } },
     });
     const pts = await getPoints("u_palier");
-    ok("4. Palier (current>=MAX) → remise à 0 (reward) + client sans fcmToken sans crash", pts === 0, `pointsBySnack.${SNACK}=${pts} (attendu 0)`);
-  } catch (e) { ok("4. Palier reset", false, e?.message || String(e)); }
+    const avail = await getAvailable("u_palier");
+    // Modèle report+banque (LOT F2) : le point gagné n'est plus perdu (10→1) et la
+    // récompense est banquée durablement (rewardsAvailable=1) au lieu d'une remise à 0.
+    ok(
+      "4. Palier (current>=MAX) → report point (1) + 1 menu banqué, sans crash",
+      pts === 1 && avail === 1,
+      `points=${pts} (attendu 1) available=${avail} (attendu 1)`,
+    );
+  } catch (e) { ok("4. Palier report+banque", false, e?.message || String(e)); }
 
   // ===== 5. SCAN QR (awardLoyaltyPoint) → +1 via helper partagé (non-régression) =====
   try {
@@ -138,6 +151,24 @@ async function main() {
     const pts = await getPoints("c_scan");
     ok("5. Scan QR (awardLoyaltyPoint) → +1 via helper partagé", pts === 1 && out?.points === 1 && out?.reward === false, `points=${pts} out=${JSON.stringify(out)}`);
   } catch (e) { ok("5. Scan QR non-régression", false, e?.message || String(e)); }
+
+  // ===== 7. REDEEM (u_palier a 1 menu banqué depuis le test 4) → consommé + audit =====
+  try {
+    const redeem = test.wrap(myFunctions.redeemLoyaltyReward);
+    const before = await getAvailable("u_palier");
+    const out = await redeem({
+      data: { clientUid: "u_palier", snackId: SNACK },
+      auth: { uid: "a_admin", token: { email: "admin@test.dev" } },
+    });
+    const avail = await getAvailable("u_palier");
+    const auditSnap = await db.collection("loyaltyRewards")
+      .where("snackId", "==", SNACK).where("clientUid", "==", "u_palier").get();
+    ok(
+      "7. redeemLoyaltyReward → consomme 1 menu banqué + trace d'audit",
+      before === 1 && avail === 0 && out?.rewardsAvailable === 0 && auditSnap.size === 1,
+      `before=${before} after=${avail} audits=${auditSnap.size}`,
+    );
+  } catch (e) { ok("7. redeemLoyaltyReward", false, e?.message || String(e)); }
 
   const passed = results.filter(Boolean).length;
   console.log(`\n${passed}/${results.length} validations OK`);

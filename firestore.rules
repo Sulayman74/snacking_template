@@ -83,7 +83,8 @@ service cloud.firestore {
                     || (
                          isSnackAdmin(resource.data.snackId)
                          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-                              'role', 'snackId', 'points', 'pointsBySnack', 'loyaltyLastScan'
+                              'role', 'snackId', 'points', 'pointsBySnack', 'loyaltyLastScan',
+                              'rewardsAvailable', 'rewardsRedeemed'
                             ])
                        )
                     || (
@@ -106,7 +107,7 @@ service cloud.firestore {
       allow create: if isOwner(userId)
                     && request.resource.data.role == 'client'
                     && request.resource.data.pointsBySnack == {}
-                    && !request.resource.data.keys().hasAny(['points', 'snackId', 'loyaltyLastScan']);
+                    && !request.resource.data.keys().hasAny(['points', 'snackId', 'loyaltyLastScan', 'rewardsAvailable', 'rewardsRedeemed']);
     }
 
     match /produits/{produitId} {
@@ -194,6 +195,14 @@ service cloud.firestore {
 
       // Pour modifier/supprimer
       allow update, delete: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
+    }
+
+    // 🎟️ FIDÉLITÉ : journal d'audit des menus offerts consommés (LOT F2).
+    // Écriture EXCLUSIVEMENT côté serveur (redeemLoyaltyReward, Admin SDK → bypass).
+    // Lecture réservée à l'admin du snack (réconciliation compta) ou superadmin.
+    match /loyaltyRewards/{rewardId} {
+      allow read: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
+      allow write: if false;
     }
 
     // 🛑 LE VIDEUR : Rejette tout ce qui n'est pas explicitement autorisé au-dessus

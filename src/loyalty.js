@@ -63,34 +63,48 @@ function openClientCard() {
   const currentSnackId = window.snackConfig?.identity?.id;
   unsubscribeClientCard = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
     if (docSnap.exists()) {
-      const points = (docSnap.data().pointsBySnack || {})[currentSnackId] || 0;
-      animerCarteFidelite(points);
+      const data = docSnap.data();
+      const rawPoints = (data.pointsBySnack || {})[currentSnackId] || 0;
+      const rawAvailable = (data.rewardsAvailable || {})[currentSnackId] || 0;
+      animerCarteFidelite(rawPoints, rawAvailable);
     }
   });
 }
 
-function animerCarteFidelite(points) {
+/**
+ * Anime la carte de fidélité : progression du palier courant + menus offerts banqués.
+ * Modèle "report + banque" (LOT F2) : pointsBySnack reste théoriquement dans 0..MAX-1,
+ * mais on normalise toute carte "legacy" restée à >= MAX (ancien modèle) pour afficher
+ * la récompense implicite sans perte (progress = points % MAX, +floor(points/MAX) menus).
+ * @param {number} rawPoints - Valeur brute de pointsBySnack.{snackId}.
+ * @param {number} rawAvailable - Valeur brute de rewardsAvailable.{snackId} (menus banqués).
+ * @returns {void}
+ */
+function animerCarteFidelite(rawPoints, rawAvailable = 0) {
   const maxPoints = 10;
-  const ratio = Math.min((points / maxPoints) * 100, 100);
+  const progress = rawPoints % maxPoints;                          // 0..9
+  const available = rawAvailable + Math.floor(rawPoints / maxPoints); // banque + legacy
+  const ratio = Math.min((progress / maxPoints) * 100, 100);
 
   const pointsText = document.getElementById("card-points");
   const progressBar = document.getElementById("card-progress-bar");
   const progressLabel = document.getElementById("progress-text");
   const giftIcon = document.getElementById("gift-icon");
 
-  if (pointsText) pointsText.innerText = points;
+  if (pointsText) pointsText.innerText = progress;
   if (progressBar) progressBar.style.width = `${ratio}%`;
 
-  if (points >= maxPoints) {
+  if (available > 0) {
+    const suffix = available > 1 ? ` (x${available})` : "";
     if (progressLabel) {
-      progressLabel.innerText = "🎉 MENU OFFERT ! PRÉSENTEZ CE CODE";
+      progressLabel.innerText = `🎉 MENU OFFERT${suffix} ! PRÉSENTEZ CE CODE`;
       progressLabel.classList.add("text-green-300", "animate-pulse");
     }
     if (giftIcon) giftIcon.classList.add("animate-bounce", "text-green-300");
     if (typeof window.triggerVibration === "function")
       window.triggerVibration("jackpot");
   } else {
-    const restants = maxPoints - points;
+    const restants = maxPoints - progress;
     if (progressLabel) {
       progressLabel.innerText = `Encore ${restants} point${restants > 1 ? "s" : ""} avant ta récompense`;
       progressLabel.classList.remove("text-green-300", "animate-pulse");

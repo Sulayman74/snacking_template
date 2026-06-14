@@ -56,6 +56,11 @@ describe("users.update — tenant-scope strict (R3)", () => {
     const db = testEnv.authenticatedContext("admin_A").firestore();
     await assertFails(updateDoc(doc(db, "users", "client_C"), { nom: "Hacked" }));
   });
+
+  it("REFUSE l'admin de forger une récompense fidélité (rewardsAvailable, LOT F2)", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertFails(updateDoc(doc(db, "users", "driver_A"), { rewardsAvailable: { snackA: 99 } }));
+  });
 });
 
 describe("users.create — verrouillage (R3)", () => {
@@ -91,6 +96,13 @@ describe("users.create — verrouillage (R3)", () => {
     const db = testEnv.authenticatedContext("forge4").firestore();
     await assertFails(setDoc(doc(db, "users", "forge4"), {
       role: "client", nom: "Sans carte",
+    }));
+  });
+
+  it("REFUSE de forger des récompenses fidélité à la création (LOT F2)", async () => {
+    const db = testEnv.authenticatedContext("forge5").firestore();
+    await assertFails(setDoc(doc(db, "users", "forge5"), {
+      role: "client", pointsBySnack: {}, rewardsAvailable: { snackA: 5 },
     }));
   });
 });
