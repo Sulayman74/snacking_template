@@ -68,10 +68,18 @@ export default defineConfig(() => {
             :root,html,body{background:${lightHex} !important; color-scheme: light dark;}
             :root{--color-primary:${seoData.theme_color};--color-accent:${accentHex};--color-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
           </style>`;
-          
+          // 🌗 Anti-flash dark : pose la classe .dark sur <html> AVANT le 1er paint (et avant le
+          // <link styles.css> render-blocking), selon la préférence persistée (localStorage
+          // "theme-mode") ou l'OS en mode "système". styles.css (html.dark) prend ensuite le relais
+          // par spécificité. Sans ça : flash clair avant le boot du JS. Cf. src/theme-mode.js.
+          const antiFlashScript = `<script>try{var k="theme-mode",m=localStorage.getItem(k),`
+            + `d=m==="dark"||((!m||m==="system")&&matchMedia("(prefers-color-scheme:dark)").matches),`
+            + `e=document.documentElement;e.classList.toggle("dark",d);if(m==="light")e.classList.add("light");`
+            + `e.style.colorScheme=d?"dark":"light";}catch(_){}</script>`;
+
           return html
             .replace('<html', `<html data-theme="${palette}"`) // override mesh par thème actif au 1er paint
-            .replace('<head>', `<head>\n    ${splashStyle}`)
+            .replace('<head>', `<head>\n    ${splashStyle}\n    ${antiFlashScript}`)
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)
             .replace(/\{\{SEO_DESC\}\}/g, seoData.desc)
             .replace(/\{\{THEME_COLOR\}\}/g, seoData.theme_color)
