@@ -42,7 +42,7 @@ const PATTERNS = {
 };
 
 /** Plafond figé au commit du sweep. Ne doit que DÉCROÎTRE. */
-const BASELINE = 143;
+const BASELINE = 142;
 
 let total = 0;
 const breakdown = {};

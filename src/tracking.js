@@ -75,12 +75,12 @@ function renderNotifPrompt() {
   btn.className =
     "w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 border-2 border-blue-100 hover:border-blue-300 active:scale-95";
   btn.innerHTML =
-    '<i class="fas fa-bell"></i><span>M\'avertir quand c\'est prêt</span>';
+    '<i data-lucide="bell"></i><span>M\'avertir quand c\'est prêt</span>';
 
   btn.addEventListener("click", async () => {
     btn.disabled = true;
     btn.innerHTML =
-      '<i class="fas fa-spinner fa-spin"></i><span>Activation...</span>';
+      '<i data-lucide="loader-circle" class="animate-spin"></i><span>Activation...</span>';
     try {
       if (typeof window.requestNotif === "function") {
         await window.requestNotif();
@@ -102,7 +102,7 @@ async function notifyArrival(orderId) {
     const btn = document.getElementById("tracking-action-btn");
     if (!btn) return;
 
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Transmission au chef...`;
+    btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Transmission au chef...`;
     btn.disabled = true;
 
     await updateDoc(doc(db, "commandes", orderId), {
@@ -164,10 +164,7 @@ function startOrderTracking(orderId) {
             iconContainer.className =
               "w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           }
-          if (icon) {
-            icon.className =
-              "fas fa-car text-5xl text-text-muted transition-transform duration-500 animate-pulse";
-          }
+          window.swapIcon?.(icon, "car", "text-5xl text-text-muted transition-transform duration-500 animate-pulse");
           if (title) {
             title.textContent = "Commande reçue !";
             title.className = "text-3xl font-black text-text tracking-tight";
@@ -179,7 +176,7 @@ function startOrderTracking(orderId) {
 
           if (actionBtn) {
             actionBtn.innerHTML =
-              "<i class='fas fa-car mr-2' aria-hidden='true'></i> Je suis à 5 min / Sur place";
+              "<i data-lucide='car' aria-hidden='true' class='mr-2'></i> Je suis à 5 min / Sur place";
             actionBtn.className =
               "w-full bg-blue-600 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Signaler mon arrivée au restaurant pour lancer la cuisson");
@@ -201,10 +198,7 @@ function startOrderTracking(orderId) {
             iconContainer.className =
               "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           }
-          if (icon) {
-            icon.className =
-              "fas fa-fire text-5xl text-yellow-500 transition-transform duration-500 animate-pulse";
-          }
+          window.swapIcon?.(icon, "flame", "text-5xl text-yellow-500 transition-transform duration-500 animate-pulse");
           if (title) {
             title.textContent = "En cuisine !";
             title.className = "text-3xl font-black text-text tracking-tight";
@@ -213,7 +207,7 @@ function startOrderTracking(orderId) {
             const eta = etaText(commande);
             subtitle.innerHTML = `Le chef prépare votre commande.${
               eta
-                ? `<span class="flex items-center justify-center gap-2 mt-3 text-primary font-bold"><i class="fas fa-clock"></i> ${eta}</span>`
+                ? `<span class="flex items-center justify-center gap-2 mt-3 text-primary font-bold"><i data-lucide="clock"></i> ${eta}</span>`
                 : ""
             }`;
           }
@@ -242,10 +236,7 @@ function startOrderTracking(orderId) {
             iconContainer.className =
               "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
           }
-          if (icon) {
-            icon.className =
-              "fas fa-check text-5xl text-green-600 transition-transform duration-500";
-          }
+          window.swapIcon?.(icon, "check", "text-5xl text-green-600 transition-transform duration-500");
           
           if (title) {
             title.textContent = "C'est prêt !";
@@ -265,7 +256,7 @@ function startOrderTracking(orderId) {
                 <p class="text-xs text-text-muted uppercase font-black tracking-widest mb-1">Code de retrait</p>
                 <p class="text-5xl font-black text-text mb-2 font-mono tracking-tighter">${secretCode}</p>
                 <div class="h-px bg-gray-200 w-12 mx-auto my-3"></div>
-                <p class="text-sm font-bold text-text-muted"><i class="fas fa-user mr-1 text-text-muted"></i> ${clientDisplay}</p>
+                <p class="text-sm font-bold text-text-muted"><i data-lucide="user" class="mr-1 text-text-muted"></i> ${clientDisplay}</p>
               </div>
               <p class="mt-4 text-text-muted font-medium">${
                 commande.mode === "delivery"
@@ -277,8 +268,8 @@ function startOrderTracking(orderId) {
           if (actionBtn) {
             const deliv = commande.mode === "delivery";
             actionBtn.innerHTML = deliv
-              ? "<i class='fas fa-motorcycle mr-2' aria-hidden='true'></i> Super, j'attends le livreur"
-              : "<i class='fas fa-running mr-2' aria-hidden='true'></i> J'arrive au comptoir !";
+              ? "<i data-lucide='bike' aria-hidden='true' class='mr-2'></i> Super, j'attends le livreur"
+              : "<i data-lucide='footprints' aria-hidden='true' class='mr-2'></i> J'arrive au comptoir !";
             actionBtn.className =
               "w-full bg-green-600 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
             actionBtn.setAttribute("aria-label", deliv ? "Fermer la fenêtre. Un livreur va arriver." : "Fermer la fenêtre. Commande prête à être retirée.");
@@ -308,10 +299,7 @@ function startOrderTracking(orderId) {
             iconContainer.className =
               "w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           }
-          if (icon) {
-            icon.className =
-              "fas fa-motorcycle text-5xl text-blue-600 transition-transform duration-500 animate-pulse";
-          }
+          window.swapIcon?.(icon, "bike", "text-5xl text-blue-600 transition-transform duration-500 animate-pulse");
           if (title) {
             title.textContent = "En livraison !";
             title.className = "text-3xl font-black text-text tracking-tight";
@@ -324,10 +312,10 @@ function startOrderTracking(orderId) {
               distLine = `Votre livreur est à <b class="text-blue-600">${formatDistance(haversineKm(driverPos, dest))}</b> de chez vous.`;
             }
             const driverName = window.escapeHTML(commande.livreur?.nom || "Votre livreur");
-            subtitle.innerHTML = `<span class="block text-text-muted">${distLine}</span><span class="block mt-2 text-sm text-text-muted"><i class="fas fa-user mr-1"></i>${driverName}</span>`;
+            subtitle.innerHTML = `<span class="block text-text-muted">${distLine}</span><span class="block mt-2 text-sm text-text-muted"><i data-lucide="user" class="mr-1"></i>${driverName}</span>`;
           }
           if (actionBtn) {
-            actionBtn.innerHTML = "<i class='fas fa-check mr-2'></i> Suivre";
+            actionBtn.innerHTML = "<i data-lucide='check' class='mr-2'></i> Suivre";
             actionBtn.className =
               "w-full bg-gray-900 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Fermer le suivi de livraison.");
@@ -346,7 +334,7 @@ function startOrderTracking(orderId) {
             iconContainer.className =
               "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner scale-110";
           }
-          if (icon) icon.className = "fas fa-circle-check text-5xl text-green-600";
+          window.swapIcon?.(icon, "circle-check", "text-5xl text-green-600");
           if (title) {
             title.textContent = "Livré ! 🎉";
             title.className = "text-4xl font-black text-green-600 tracking-tight";
@@ -358,13 +346,13 @@ function startOrderTracking(orderId) {
               photo
                 ? `<a href="${safe}" target="_blank" rel="noopener" class="block">
                      <img src="${safe}" alt="Preuve de livraison" class="mx-auto rounded-2xl max-h-48 shadow-md border border-gray-200">
-                     <span class="block mt-2 text-xs text-text-muted"><i class="fas fa-magnifying-glass-plus mr-1"></i>Preuve de livraison · toucher pour agrandir</span>
+                     <span class="block mt-2 text-xs text-text-muted"><i data-lucide="zoom-in" class="mr-1"></i>Preuve de livraison · toucher pour agrandir</span>
                    </a>`
                 : ""
             }`;
           }
           if (actionBtn) {
-            actionBtn.innerHTML = "<i class='fas fa-thumbs-up mr-2'></i> Parfait, merci !";
+            actionBtn.innerHTML = "<i data-lucide='thumbs-up' class='mr-2'></i> Parfait, merci !";
             actionBtn.className =
               "w-full bg-green-600 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Fermer. Commande livrée.");

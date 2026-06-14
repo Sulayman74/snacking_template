@@ -5,7 +5,7 @@
  * livraison (ce snack n'en propose pas).
  *
  * Chaque entrée fournit :
- *   - icon       : classe FontAwesome
+ *   - icon       : nom d'icône Lucide
  *   - iconColor  : classe Tailwind (couleur du contexte météo)
  *   - bgGradient : gradient de fond Tailwind pour la card
  *   - title      : libellé court (UI)
@@ -18,7 +18,7 @@
 
 const INSIGHTS = {
     sunny: {
-        icon: "fa-sun",
+        icon: "sun",
         iconColor: "text-yellow-300",
         bgGradient: "from-amber-400 to-orange-500",
         title: "Beau temps, belle journée",
@@ -29,7 +29,7 @@ const INSIGHTS = {
         },
     },
     hot: {
-        icon: "fa-temperature-high",
+        icon: "thermometer-sun",
         iconColor: "text-red-300",
         bgGradient: "from-orange-500 to-red-500",
         title: "Forte chaleur",
@@ -40,7 +40,7 @@ const INSIGHTS = {
         },
     },
     cold: {
-        icon: "fa-snowflake",
+        icon: "snowflake",
         iconColor: "text-blue-200",
         bgGradient: "from-sky-500 to-blue-700",
         title: "Il fait froid dehors",
@@ -51,7 +51,7 @@ const INSIGHTS = {
         },
     },
     rainy: {
-        icon: "fa-cloud-rain",
+        icon: "cloud-rain",
         iconColor: "text-blue-200",
         bgGradient: "from-slate-500 to-slate-700",
         title: "Pluie sur la ville",
@@ -62,7 +62,7 @@ const INSIGHTS = {
         },
     },
     snowy: {
-        icon: "fa-snowflake",
+        icon: "snowflake",
         iconColor: "text-white",
         bgGradient: "from-slate-400 to-slate-600",
         title: "Temps de neige",
@@ -73,7 +73,7 @@ const INSIGHTS = {
         },
     },
     stormy: {
-        icon: "fa-bolt",
+        icon: "zap",
         iconColor: "text-yellow-300",
         bgGradient: "from-slate-700 to-slate-900",
         title: "Orage en cours",
@@ -84,7 +84,7 @@ const INSIGHTS = {
         },
     },
     foggy: {
-        icon: "fa-smog",
+        icon: "cloud-fog",
         iconColor: "text-gray-200",
         bgGradient: "from-gray-400 to-gray-600",
         title: "Brouillard",
@@ -95,7 +95,7 @@ const INSIGHTS = {
         },
     },
     cloudy: {
-        icon: "fa-cloud",
+        icon: "cloud",
         iconColor: "text-gray-200",
         bgGradient: "from-slate-400 to-slate-600",
         title: "Temps couvert",

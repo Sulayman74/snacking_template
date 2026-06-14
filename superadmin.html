@@ -15,15 +15,14 @@
     <!-- iOS : icône d'écran d'accueil (Safari ignore les icons du manifest). -->
     <link rel="apple-touch-icon" href="/superadmin-icon-192.png" />
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/src/styles.css" />
+<link rel="stylesheet" href="/src/styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
     <div class="app-bg" aria-hidden="true"></div>
 
     <div id="saas-loader" class="fixed inset-0 bg-gray-900 z-[100] flex flex-col items-center justify-center text-white">
-        <i class="fas fa-shield-alt text-6xl mb-4 animate-pulse text-indigo-500"></i>
+        <i data-lucide="shield-check" class="text-6xl mb-4 animate-pulse text-indigo-500"></i>
         <h2 class="text-2xl font-bold tracking-widest uppercase">Vérification Sécurité...</h2>
     </div>
 
@@ -31,7 +30,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-3">
-                    <i class="fas fa-rocket text-indigo-500 text-2xl"></i>
+                    <i data-lucide="rocket" class="text-indigo-500 text-2xl"></i>
                     <span class="font-black text-xl tracking-widest uppercase">Votre Agence Web</span>
                 </div>
                 <div class="flex items-center gap-4">
@@ -77,7 +76,7 @@
             <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                 <h2 class="text-xl font-black text-gray-800">Restaurants Clients (Tenants)</h2>
                 <button id="btn-open-new-snack" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 transition flex items-center gap-2 transform hover:scale-105">
-                    <i class="fas fa-plus"></i> Nouveau Client
+                    <i data-lucide="plus"></i> Nouveau Client
                 </button>
             </div>
             
@@ -94,7 +93,7 @@
                     <tbody id="snacks-table-body" class="divide-y divide-gray-100">
                         <tr>
                             <td colspan="4" class="p-8 text-center text-gray-500">
-                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>Chargement des données chiffrées...
+                                <i data-lucide="loader-circle" class="animate-spin text-2xl mb-2"></i><br>Chargement des données chiffrées...
                             </td>
                         </tr>
                     </tbody>
@@ -105,9 +104,9 @@
         <!-- VUE LOGS / MONITORING -->
         <div id="view-logs" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mt-8">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h2 class="text-xl font-black text-gray-800"><i class="fas fa-bug text-red-500 mr-2"></i> System Logs & Erreurs</h2>
+                <h2 class="text-xl font-black text-gray-800"><i data-lucide="bug" class="text-red-500 mr-2"></i> System Logs & Erreurs</h2>
                 <button id="btn-refresh-logs" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition flex items-center gap-2">
-                    <i class="fas fa-sync-alt"></i> Actualiser
+                    <i data-lucide="refresh-cw"></i> Actualiser
                 </button>
             </div>
             
@@ -162,7 +161,7 @@
                         <p class="text-xs text-gray-400 mt-1">Abonnement SaaS + commission transactionnelle (8 % après 6 mois de gratuité). CA estimé depuis les commandes.</p>
                     </div>
                     <button id="btn-export-billing" class="bg-gray-900 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-black transition flex items-center gap-2">
-                        <i class="fas fa-file-csv"></i> Export facturation
+                        <i data-lucide="file-spreadsheet"></i> Export facturation
                     </button>
                 </div>
                 <div class="overflow-x-auto">
@@ -178,7 +177,7 @@
                             </tr>
                         </thead>
                         <tbody id="billing-table-body" class="divide-y divide-gray-100">
-                            <tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-2xl"></i></td></tr>
+                            <tr><td colspan="6" class="p-8 text-center text-gray-500"><i data-lucide="loader-circle" class="animate-spin text-2xl"></i></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -189,7 +188,7 @@
     <div id="modal-new-snack" class="fixed inset-0 bg-gray-900/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-lg rounded-3xl p-8 relative shadow-2xl">
             <button id="btn-close-modal" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 w-8 h-8 rounded-full transition flex items-center justify-center">
-                <i class="fas fa-times"></i>
+                <i data-lucide="x"></i>
             </button>
             
             <h3 class="text-2xl font-black text-gray-900 mb-6 border-b pb-4">Créer un nouveau client</h3>
@@ -248,7 +247,7 @@
                 <div class="space-y-3">
                     <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center justify-between gap-2">
                         <div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wider text-gray-400">Snack ID</p><p id="success-snack-id" class="font-mono text-sm text-gray-900 break-all"></p></div>
-                        <button type="button" data-copy="success-snack-id" class="copy-btn shrink-0 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg text-sm font-bold"><i class="fas fa-copy"></i></button>
+                        <button type="button" data-copy="success-snack-id" class="copy-btn shrink-0 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg text-sm font-bold"><i data-lucide="copy"></i></button>
                     </div>
 
                     <div id="success-admin-block" class="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
@@ -256,13 +255,13 @@
                         <p class="text-sm"><span class="text-gray-500">Email :</span> <span id="success-admin-email" class="font-bold text-gray-900"></span></p>
                         <div class="flex items-center justify-between gap-2 mt-1">
                             <p class="text-sm"><span class="text-gray-500">Mot de passe temp :</span> <span id="success-admin-pwd" class="font-mono font-bold text-gray-900"></span></p>
-                            <button type="button" data-copy="success-admin-pwd" class="copy-btn shrink-0 text-indigo-600 bg-white hover:bg-indigo-100 px-3 py-2 rounded-lg text-sm font-bold"><i class="fas fa-copy"></i></button>
+                            <button type="button" data-copy="success-admin-pwd" class="copy-btn shrink-0 text-indigo-600 bg-white hover:bg-indigo-100 px-3 py-2 rounded-lg text-sm font-bold"><i data-lucide="copy"></i></button>
                         </div>
                         <p class="text-[11px] text-indigo-400 mt-1">Le restaurateur le changera à la première connexion.</p>
                     </div>
 
                     <a id="success-preview-link" href="#" target="_blank" rel="noopener noreferrer" class="block text-center bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition">
-                        <i class="fas fa-external-link-alt mr-1"></i> Prévisualiser le site
+                        <i data-lucide="external-link" class="mr-1"></i> Prévisualiser le site
                     </a>
                 </div>
 
@@ -287,7 +286,7 @@
     <div id="modal-config-snack" class="fixed inset-0 bg-gray-900/80 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-lg rounded-3xl p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button id="btn-close-config-modal" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 w-8 h-8 rounded-full transition flex items-center justify-center">
-                <i class="fas fa-times"></i>
+                <i data-lucide="x"></i>
             </button>
 
             <h3 class="text-2xl font-black text-gray-900 mb-0.5" id="config-modal-title">Configurer</h3>
@@ -301,7 +300,7 @@
                 <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 mb-3">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-black text-sm text-yellow-800"><i class="fas fa-tools mr-2"></i>Mode Maintenance</p>
+                            <p class="font-black text-sm text-yellow-800"><i data-lucide="wrench" class="mr-2"></i>Mode Maintenance</p>
                             <p class="text-xs text-yellow-600 mt-0.5">Le site est inaccessible aux clients</p>
                         </div>
                         <button id="cfg-maintenanceMode" onclick="window.toggleConfigFlag(this)" data-state="off"
@@ -315,7 +314,7 @@
                 <div class="space-y-0 bg-gray-50 rounded-2xl border border-gray-100 divide-y divide-gray-200 overflow-hidden">
                     <div class="flex items-center justify-between px-4 py-3">
                         <div>
-                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-shopping-bag text-indigo-500 mr-2 w-4"></i>Click & Collect</p>
+                            <p class="font-bold text-sm text-gray-800"><i data-lucide="shopping-bag" class="text-indigo-500 mr-2 w-4"></i>Click & Collect</p>
                             <p class="text-xs text-gray-400 ml-6">Commandes en ligne à emporter</p>
                         </div>
                         <button id="cfg-enableClickAndCollect" onclick="window.toggleConfigFlag(this)" data-state="off"
@@ -325,7 +324,7 @@
                     </div>
                     <div class="flex items-center justify-between px-4 py-3">
                         <div>
-                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-motorcycle text-orange-500 mr-2 w-4"></i>Livraison</p>
+                            <p class="font-bold text-sm text-gray-800"><i data-lucide="bike" class="text-orange-500 mr-2 w-4"></i>Livraison</p>
                             <p class="text-xs text-gray-400 ml-6">Redirige vers Uber Eats / lien perso</p>
                         </div>
                         <button id="cfg-enableDelivery" onclick="window.toggleConfigFlag(this)" data-state="off"
@@ -335,7 +334,7 @@
                     </div>
                     <div class="flex items-center justify-between px-4 py-3">
                         <div>
-                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-gift text-pink-500 mr-2 w-4"></i>Carte de Fidélité</p>
+                            <p class="font-bold text-sm text-gray-800"><i data-lucide="gift" class="text-pink-500 mr-2 w-4"></i>Carte de Fidélité</p>
                             <p class="text-xs text-gray-400 ml-6">Programme de tampons / points</p>
                         </div>
                         <button id="cfg-enableLoyaltyCard" onclick="window.toggleConfigFlag(this)" data-state="off"
@@ -345,7 +344,7 @@
                     </div>
                     <div class="flex items-center justify-between px-4 py-3">
                         <div>
-                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-bell text-blue-500 mr-2 w-4"></i>Notifications Push</p>
+                            <p class="font-bold text-sm text-gray-800"><i data-lucide="bell" class="text-blue-500 mr-2 w-4"></i>Notifications Push</p>
                             <p class="text-xs text-gray-400 ml-6">Campagnes marketing, promotions</p>
                         </div>
                         <button id="cfg-enablePushNotifs" onclick="window.toggleConfigFlag(this)" data-state="off"
@@ -355,7 +354,7 @@
                     </div>
                     <div class="flex items-center justify-between px-4 py-3">
                         <div>
-                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-star text-yellow-500 mr-2 w-4"></i>Smart Review</p>
+                            <p class="font-bold text-sm text-gray-800"><i data-lucide="star" class="text-yellow-500 mr-2 w-4"></i>Smart Review</p>
                             <p class="text-xs text-gray-400 ml-6">Redirection automatique vers Google Avis</p>
                         </div>
                         <button id="cfg-enableSmartReview" onclick="window.toggleConfigFlag(this)" data-state="off"
@@ -365,7 +364,7 @@
                     </div>
                     <div class="flex items-center justify-between px-4 py-3">
                         <div>
-                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-share-nodes text-teal-500 mr-2 w-4"></i>Partage Viral</p>
+                            <p class="font-bold text-sm text-gray-800"><i data-lucide="share-2" class="text-teal-500 mr-2 w-4"></i>Partage Viral</p>
                             <p class="text-xs text-gray-400 ml-6">Bouton "Partager" sur les fiches produit</p>
                         </div>
                         <button id="cfg-enableViralShare" onclick="window.toggleConfigFlag(this)" data-state="off"
@@ -375,7 +374,7 @@
                     </div>
                     <div class="flex items-center justify-between px-4 py-3">
                         <div>
-                            <p class="font-bold text-sm text-gray-800"><i class="fas fa-cart-plus text-emerald-500 mr-2 w-4"></i>Upsell Pré-paiement</p>
+                            <p class="font-bold text-sm text-gray-800"><i data-lucide="shopping-cart" class="text-emerald-500 mr-2 w-4"></i>Upsell Pré-paiement</p>
                             <p class="text-xs text-gray-400 ml-6">Suggestion desserts/boissons avant Stripe</p>
                         </div>
                         <button id="cfg-enableUpsell" onclick="window.toggleConfigFlag(this)" data-state="off"
@@ -419,13 +418,13 @@
                     </div>
                 <div class="grid grid-cols-2 gap-3 mt-3">
                     <div class="col-span-2">
-                        <label class="block text-xs font-bold text-gray-600 mb-1"><i class="fab fa-stripe text-indigo-500 mr-1"></i> Stripe Connect Account ID</label>
+                        <label class="block text-xs font-bold text-gray-600 mb-1"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-indigo-500 mr-1 w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/></svg> Stripe Connect Account ID</label>
                         <input type="text" id="cfg-stripeAccountId" placeholder="ex: acct_1Hxyz..."
                             class="w-full px-3 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 focus:border-indigo-400 outline-none text-sm font-mono text-gray-700">
                         <p class="text-[10px] text-gray-400 mt-1">Laissez vide pour utiliser le compte de démonstration global sans commission.</p>
                     </div>
                     <div class="col-span-2">
-                        <label class="block text-xs font-bold text-gray-600 mb-1"><i class="fas fa-sync-alt text-green-500 mr-1"></i> Stripe Subscription ID (SaaS Billing)</label>
+                        <label class="block text-xs font-bold text-gray-600 mb-1"><i data-lucide="refresh-cw" class="text-green-500 mr-1"></i> Stripe Subscription ID (SaaS Billing)</label>
                         <input type="text" id="cfg-stripeSubscriptionId" placeholder="ex: sub_1Jabc..."
                             class="w-full px-3 py-2.5 rounded-xl bg-green-50 border border-green-100 focus:border-green-400 outline-none text-sm font-mono text-gray-700">
                         <p class="text-[10px] text-gray-400 mt-1">Laissez vide pour un accès gratuit/démo. Si renseigné, le site sera coupé si la facture échoue.</p>
@@ -435,7 +434,7 @@
 
             <button id="btn-save-config"
                 class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2">
-                <i class="fas fa-save"></i> Enregistrer les modifications
+                <i data-lucide="save"></i> Enregistrer les modifications
             </button>
         </div>
     </div>
@@ -443,14 +442,14 @@
 
     <!-- TOAST -->
     <div id="sa-toast" class="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl font-bold text-sm transition-all duration-300 translate-y-20 opacity-0 z-[200] flex items-center gap-3 pointer-events-none">
-        <i id="sa-toast-icon" class="fas fa-check-circle text-green-400"></i>
+        <i id="sa-toast-icon" data-lucide="circle-check" class="text-green-400"></i>
         <span id="sa-toast-msg">Message</span>
     </div>
 
     <!-- Modal : lien d'abonnement SaaS (montant choisi) -->
     <div id="modal-sub-link" class="fixed inset-0 bg-gray-900/80 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-md rounded-3xl p-8 relative shadow-2xl">
-            <button id="btn-close-sub" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 w-8 h-8 rounded-full transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+            <button id="btn-close-sub" class="absolute top-4 right-4 text-gray-400 hover:text-black bg-gray-100 w-8 h-8 rounded-full transition flex items-center justify-center"><i data-lucide="x"></i></button>
             <h3 class="text-2xl font-black text-gray-900 mb-1">Lien d'abonnement</h3>
             <p class="text-sm text-gray-500 mb-5"><span id="sub-snack-name" class="font-bold text-gray-900"></span> — choisis le montant mensuel à proposer.</p>
 
@@ -464,7 +463,7 @@
                 <label class="block text-xs font-black uppercase tracking-wider text-gray-400 mb-1">Lien à envoyer au resto</label>
                 <div class="flex gap-2">
                     <input id="sub-link-input" readonly class="flex-1 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm font-mono text-gray-700 truncate">
-                    <button id="btn-copy-sub-link" type="button" class="shrink-0 bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition"><i class="fas fa-copy"></i></button>
+                    <button id="btn-copy-sub-link" type="button" class="shrink-0 bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition"><i data-lucide="copy"></i></button>
                 </div>
                 <p class="text-[11px] text-gray-400 mt-2">Envoie-le par email/WhatsApp. Au paiement, le snack passe automatiquement en ligne.</p>
             </div>
@@ -482,11 +481,11 @@
     <!-- 🔄 Bandeau de mise à jour PWA — câblé par src/sw-update.js (pattern "prompt") -->
     <div id="pwa-update-banner" class="fixed pointer-events-none bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/90 backdrop-blur-lg text-white p-4 rounded-2xl shadow-2xl z-[200] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-white/10">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0"><i class="fas fa-arrows-rotate text-indigo-400 text-lg"></i></div>
+        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0"><i data-lucide="refresh-cw" class="text-indigo-400 text-lg"></i></div>
         <div><p class="font-bold text-sm">Nouvelle version dispo ✨</p><p class="text-xs text-gray-300">Rechargez pour la dernière version.</p></div>
       </div>
       <button id="pwa-refresh-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
-      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer la notification de mise à jour"><i class="fas fa-times"></i></button>
+      <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer la notification de mise à jour"><i data-lucide="x"></i></button>
     </div>
 
     <script type="module" src="src/superadmin.js"></script>

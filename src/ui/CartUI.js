@@ -121,17 +121,17 @@ class CartUI {
     /** Reflète l'état favori (cœur plein/vide) du bouton d'une ligne panier. */
     applyFavState(favBtn, item) {
         const isFav = window.favoritesService?.isFavorite(item);
-        const icon = favBtn.querySelector("i");
+        const icon = favBtn.querySelector("svg, [data-lucide]");
         favBtn.setAttribute("aria-pressed", isFav ? "true" : "false");
         favBtn.setAttribute("aria-label", isFav ? "Retirer des favoris" : "Ajouter aux favoris");
         if (isFav) {
             favBtn.classList.add("text-red-500");
             favBtn.classList.remove("text-gray-300");
-            if (icon) icon.className = "fas fa-heart text-lg";
+            icon?.classList.add("fill-current"); // cœur plein (Lucide = contour, rempli via fill-current)
         } else {
             favBtn.classList.add("text-gray-300");
             favBtn.classList.remove("text-red-500");
-            if (icon) icon.className = "far fa-heart text-lg";
+            icon?.classList.remove("fill-current");
         }
     }
 
@@ -148,12 +148,12 @@ class CartUI {
             }
 
             if (this.desktopCtaBtn && this.desktopCtaBtn.getAttribute("data-action") === "open-cart") {
-                this.desktopCtaBtn.innerHTML = `<i class="fas fa-shopping-bag mr-2"></i> ${totalAmount} €`;
+                this.desktopCtaBtn.innerHTML = `<i data-lucide="shopping-bag" class="mr-2"></i> ${totalAmount} €`;
             }
         } else {
             if (this.mobileBadge) this.mobileBadge.classList.add("hidden");
             if (this.desktopCtaBtn && this.desktopCtaBtn.getAttribute("data-action") === "open-cart") {
-                this.desktopCtaBtn.innerHTML = `<i class="fas fa-shopping-bag mr-2"></i> Commander`;
+                this.desktopCtaBtn.innerHTML = `<i data-lucide="shopping-bag" class="mr-2"></i> Commander`;
             }
         }
     }

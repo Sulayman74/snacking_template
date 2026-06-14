@@ -19,11 +19,11 @@ const STORAGE_KEY = "theme-mode";
 const MODES = ["light", "dark", "system"];
 const mql = window.matchMedia("(prefers-color-scheme: dark)");
 
-/** Libellés + icônes FontAwesome par mode (Lucide en PR3). */
+/** Libellés + noms d'icône Lucide par mode. */
 const META = {
-  light: { icon: "fa-sun", label: "Thème clair" },
-  dark: { icon: "fa-moon", label: "Thème sombre" },
-  system: { icon: "fa-circle-half-stroke", label: "Thème système" },
+  light: { icon: "sun", label: "Thème clair" },
+  dark: { icon: "moon", label: "Thème sombre" },
+  system: { icon: "contrast", label: "Thème système" },
 };
 
 /**
@@ -68,8 +68,10 @@ function apply(mode) {
 function syncToggleUI(mode) {
   const { icon, label } = META[mode];
   document.querySelectorAll('[data-action="cycle-theme"]').forEach((btn) => {
-    const i = btn.querySelector("i");
-    if (i) i.className = `fas ${icon}`;
+    const current = btn.querySelector("svg, [data-lucide]");
+    // swapIcon vient d'icons.js (importé après theme-mode) ; au 1er apply il peut être absent,
+    // l'icône par défaut (data-lucide="contrast" du markup) couvre alors l'état système.
+    if (current) window.swapIcon?.(current, icon);
     btn.setAttribute("aria-label", `${label} — changer de thème`);
     btn.setAttribute("title", label);
   });

@@ -204,9 +204,9 @@ class MenuUI {
       badge.className = "menu-item-badge absolute top-3 right-3 bg-danger/90 backdrop-blur px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter text-on-dark shadow-sm";
       img.classList.add("grayscale", "opacity-50");
       
-      const btn = clone.querySelector(".fa-plus").parentElement;
+      const btn = clone.querySelector("[data-lucide='plus']").parentElement;
       btn.className = "w-8 h-8 rounded-full bg-gray-300 text-text-muted flex items-center justify-center";
-      btn.innerHTML = `<i class="fas fa-ban text-xs"></i>`;
+      btn.innerHTML = `<i data-lucide="ban" class="text-xs"></i>`;
     } 
     // 2. Sinon, on affiche le badge (string) ou le premier tag de l'array
     else {

@@ -5,6 +5,7 @@
 import "./utils.js";
 import { store } from "./core/Store.js";
 import "./theme-mode.js";
+import "./icons.js";
 import "./ui.js";
 import "./menu.js";
 import "./cart.js";

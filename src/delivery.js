@@ -90,12 +90,12 @@ class DeliveryUI {
       return `<button type="button" data-delivery-action="set-mode" data-mode="${m}"
         aria-pressed="${active}"
         class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-all ${cls}">
-        <i class="fas ${icon}"></i> ${label}</button>`;
+        <i data-lucide="${icon}"></i> ${label}</button>`;
     };
     return `
       <div class="flex gap-1 p-1 bg-gray-200/70 rounded-xl mb-4" role="group" aria-label="Mode de retrait">
-        ${seg("collect", "fa-bag-shopping", "Emporter")}
-        ${seg("delivery", "fa-motorcycle", "Livraison")}
+        ${seg("collect", "shopping-bag", "Emporter")}
+        ${seg("delivery", "bike", "Livraison")}
       </div>`;
   }
 
@@ -104,7 +104,7 @@ class DeliveryUI {
     const prep = etaPrepMin(d.prepBaseMin, 0, 0);
     return `
       <div class="flex items-center gap-2 mb-4 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl p-3">
-        <i class="fas fa-clock text-primary"></i>
+        <i data-lucide="clock" class="text-primary"></i>
         <span>Prêt en magasin dans <b class="text-gray-900">${formatEta(prep)}</b> environ.</span>
       </div>`;
   }
@@ -122,7 +122,7 @@ class DeliveryUI {
         <div class="bg-white border border-gray-200 rounded-xl p-3 mb-4 space-y-3">
           <button type="button" data-delivery-action="locate"
             class="w-full bg-primary text-on-primary font-bold py-3 rounded-lg flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-50">
-            <i class="fas fa-location-crosshairs"></i> Me localiser
+            <i data-lucide="locate-fixed"></i> Me localiser
           </button>
           <div class="flex items-center gap-2 text-[11px] text-gray-400">
             <span class="flex-1 h-px bg-gray-200"></span>ou<span class="flex-1 h-px bg-gray-200"></span>
@@ -148,7 +148,7 @@ class DeliveryUI {
     const addrLine = `
       <div class="flex items-start justify-between gap-2 mb-3">
         <div class="flex items-start gap-2 min-w-0">
-          <i class="fas fa-location-dot text-primary mt-1"></i>
+          <i data-lucide="map-pin" class="text-primary mt-1"></i>
           <p class="text-sm text-gray-800 font-medium truncate">${escapeText(addr.adresse || "Position GPS")}</p>
         </div>
         <button type="button" data-delivery-action="reset-address" class="shrink-0 text-xs text-primary font-bold underline">Changer</button>
@@ -159,7 +159,7 @@ class DeliveryUI {
         <div class="bg-white border border-gray-200 rounded-xl p-3 mb-4">
           ${addrLine}
           <div class="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-2.5">
-            <i class="fas fa-triangle-exclamation"></i>
+            <i data-lucide="triangle-alert"></i>
             <span>Hors zone de livraison (${formatDistance(quote.distanceKm)} > ${d.radiusKm} km).</span>
           </div>
         </div>`;
@@ -167,7 +167,7 @@ class DeliveryUI {
 
     const etaRow = `
       <div class="flex items-center justify-between text-sm py-1.5">
-        <span class="text-gray-500"><i class="fas fa-clock mr-1.5 text-primary"></i>Livraison estimée</span>
+        <span class="text-gray-500"><i data-lucide="clock" class="mr-1.5 text-primary"></i>Livraison estimée</span>
         <span class="font-bold text-gray-900">${formatEta(quote.totalMin)}${restoKnown ? ` · ${formatDistance(quote.distanceKm)}` : ""}</span>
       </div>`;
 
@@ -176,13 +176,13 @@ class DeliveryUI {
         <span class="text-gray-500">Sous-total</span><span class="text-gray-700">${subtotal.toFixed(2)} €</span>
       </div>
       <div class="flex items-center justify-between text-sm py-1.5">
-        <span class="text-gray-500"><i class="fas fa-motorcycle mr-1.5 text-primary"></i>Frais de livraison</span>
+        <span class="text-gray-500"><i data-lucide="bike" class="mr-1.5 text-primary"></i>Frais de livraison</span>
         <span class="text-gray-700">${Number(quote.frais).toFixed(2)} €</span>
       </div>`;
 
     const minWarn = belowMin
       ? `<div class="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 mt-2">
-           <i class="fas fa-circle-info"></i><span>Minimum de commande : ${d.minOrder.toFixed(2)} € (il manque ${(d.minOrder - subtotal).toFixed(2)} €).</span>
+           <i data-lucide="info"></i><span>Minimum de commande : ${d.minOrder.toFixed(2)} € (il manque ${(d.minOrder - subtotal).toFixed(2)} €).</span>
          </div>`
       : "";
 
@@ -248,7 +248,7 @@ class DeliveryUI {
     this.busy = true;
     const original = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Localisation…`;
+    btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i> Localisation…`;
     try {
       const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 12000 });
       store.setDeliveryAddress({ adresse: "Ma position GPS", lat: pos.lat, lng: pos.lng });

@@ -141,16 +141,16 @@ class ProductModalUI {
     if (!btn || btn.classList.contains("hidden")) return;
 
     const isFav = window.favoritesService?.isFavorite(this.#buildCartItem());
-    const icon = btn.querySelector("i");
+    const icon = btn.querySelector("svg, [data-lucide]");
     btn.setAttribute("aria-pressed", isFav ? "true" : "false");
     btn.setAttribute("aria-label", isFav ? "Retirer des favoris" : "Ajouter aux favoris");
 
     if (isFav) {
-      if (icon) icon.className = "fas fa-heart";
+      icon?.classList.add("fill-current"); // cœur plein (Lucide = contour, rempli via fill-current)
       btn.classList.add("text-red-500", "border-red-200");
       btn.classList.remove("text-text-muted", "border-gray-200");
     } else {
-      if (icon) icon.className = "far fa-heart";
+      icon?.classList.remove("fill-current");
       btn.classList.add("text-text-muted", "border-gray-200");
       btn.classList.remove("text-red-500", "border-red-200");
     }
@@ -230,7 +230,7 @@ class ProductModalUI {
                 <label class="relative cursor-pointer">
                     <input type="radio" name="boisson" value="${safeNom}" ${i === 0 ? "checked" : ""} class="sr-only peer">
                     <div class="p-3 border-2 border-gray-100 rounded-xl peer-checked:border-accent peer-checked:bg-primary-light transition-all flex items-center gap-2">
-                        <i class="fas fa-glass-water text-accent"></i>
+                        <i data-lucide="glass-water" class="text-accent"></i>
                         <span class="font-bold text-text text-sm">${safeNom}</span>
                     </div>
                 </label>

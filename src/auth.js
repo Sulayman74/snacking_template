@@ -50,7 +50,7 @@ if (authForm) {
     const original = submitBtn?.innerHTML;
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      submitBtn.innerHTML = '<i data-lucide="loader-circle" class="animate-spin"></i>';
     }
 
     try {
@@ -111,13 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const isPassword = passwordInput.getAttribute("type") === "password";
       passwordInput.setAttribute("type", isPassword ? "text" : "password");
 
-      if (isPassword) {
-        eyeIcon.classList.remove("fa-eye");
-        eyeIcon.classList.add("fa-eye-slash");
-      } else {
-        eyeIcon.classList.remove("fa-eye-slash");
-        eyeIcon.classList.add("fa-eye");
-      }
+      // Lucide : on remplace l'icône (re-query par id car swapIcon recrée l'élément).
+      window.swapIcon?.(document.getElementById("eye-icon"), isPassword ? "eye-off" : "eye");
     });
   }
 });

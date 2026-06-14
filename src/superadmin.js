@@ -4,6 +4,7 @@
 // import './bridge.js';
 import './snack-config.js';
 import './firebase-init.js';
+import './icons.js';
 
 import { escapeHTML } from './utils.js';
 import { setupSWUpdatePrompt } from './sw-update.js';
@@ -138,17 +139,17 @@ function renderSnacksTable() {
         const safeNom = escapeHTML(snack.nom || "Sans Nom");
 
         const statusBadge = snack.maintenanceMode
-            ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i class="fas fa-tools mr-1"></i> Maintenance</span>`
-            : `<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i class="fas fa-globe mr-1"></i> En Ligne</span>`;
+            ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i data-lucide="wrench" class="mr-1"></i> Maintenance</span>`
+            : `<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i data-lucide="globe" class="mr-1"></i> En Ligne</span>`;
 
         let featuresHtml = '';
-        if (snack.enableClickAndCollect) featuresHtml += `<i class="fas fa-shopping-bag text-indigo-500 mx-1" title="Click & Collect"></i>`;
-        if (snack.enableDelivery)        featuresHtml += `<i class="fas fa-motorcycle text-orange-500 mx-1" title="Livraison"></i>`;
-        if (snack.enableLoyaltyCard)     featuresHtml += `<i class="fas fa-gift text-pink-500 mx-1" title="Fidélité"></i>`;
-        if (snack.enablePushNotifs)      featuresHtml += `<i class="fas fa-bell text-blue-500 mx-1" title="Push Notifs"></i>`;
-        if (snack.enableSmartReview)     featuresHtml += `<i class="fas fa-star text-yellow-500 mx-1" title="Smart Review"></i>`;
-        if (snack.enableViralShare)      featuresHtml += `<i class="fas fa-share-nodes text-teal-500 mx-1" title="Partage Viral"></i>`;
-        if (snack.enableUpsell)          featuresHtml += `<i class="fas fa-cart-plus text-emerald-500 mx-1" title="Upsell"></i>`;
+        if (snack.enableClickAndCollect) featuresHtml += `<i data-lucide="shopping-bag" title="Click & Collect" class="text-indigo-500 mx-1"></i>`;
+        if (snack.enableDelivery)        featuresHtml += `<i data-lucide="bike" title="Livraison" class="text-orange-500 mx-1"></i>`;
+        if (snack.enableLoyaltyCard)     featuresHtml += `<i data-lucide="gift" title="Fidélité" class="text-pink-500 mx-1"></i>`;
+        if (snack.enablePushNotifs)      featuresHtml += `<i data-lucide="bell" title="Push Notifs" class="text-blue-500 mx-1"></i>`;
+        if (snack.enableSmartReview)     featuresHtml += `<i data-lucide="star" title="Smart Review" class="text-yellow-500 mx-1"></i>`;
+        if (snack.enableViralShare)      featuresHtml += `<i data-lucide="share-2" title="Partage Viral" class="text-teal-500 mx-1"></i>`;
+        if (snack.enableUpsell)          featuresHtml += `<i data-lucide="shopping-cart" title="Upsell" class="text-emerald-500 mx-1"></i>`;
 
         const mrrClient = (parseFloat(snack.prixAbonnement) || PRIX_ABONNEMENT_MENSUEL).toFixed(0);
         const powerBtnClass = snack.maintenanceMode
@@ -156,7 +157,7 @@ function renderSnacksTable() {
             : "text-gray-500 bg-gray-100 hover:bg-gray-200";
 
         const stripeBadge = snack.stripeAccountId
-            ? `<span class="bg-indigo-50 text-indigo-700 font-black px-2 py-0.5 rounded-md text-[10px]"><i class="fab fa-stripe"></i> Connecté</span>`
+            ? `<span class="bg-indigo-50 text-indigo-700 font-black px-2 py-0.5 rounded-md text-[10px]"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/></svg> Connecté</span>`
             : `<span class="bg-gray-100 text-gray-500 font-bold px-2 py-0.5 rounded-md text-[10px]">Démo / Platform</span>`;
 
         return `
@@ -173,22 +174,22 @@ function renderSnacksTable() {
                 <td class="p-4 text-center text-lg">${featuresHtml || '<span class="text-gray-300 text-xs">—</span>'}</td>
                 <td class="p-4 text-right space-x-1 whitespace-nowrap">
                     <a href="index.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-indigo-600 hover:text-white font-bold text-sm bg-indigo-50 hover:bg-indigo-600 px-3 py-2 rounded-lg transition">
-                        <i class="fas fa-external-link-alt text-xs"></i> Voir
+                        <i data-lucide="external-link" class="text-xs"></i> Voir
                     </a>
                     <a href="admin.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-purple-600 hover:text-white font-bold text-sm bg-purple-50 hover:bg-purple-600 px-3 py-2 rounded-lg transition" title="Ouvrir le back-office (mode superadmin)">
-                        <i class="fas fa-user-shield text-xs"></i> Admin
+                        <i data-lucide="shield-check" class="text-xs"></i> Admin
                     </a>
                     <a href="livreur.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-teal-600 hover:text-white font-bold text-sm bg-teal-50 hover:bg-teal-600 px-3 py-2 rounded-lg transition" title="Ouvrir l'app livreur (mode superadmin)">
-                        <i class="fas fa-motorcycle text-xs"></i> Livreur
+                        <i data-lucide="bike" class="text-xs"></i> Livreur
                     </a>
                     <button data-action="sub-link" data-snack-id="${safeId}" class="text-emerald-700 hover:text-white font-bold text-sm bg-emerald-50 hover:bg-emerald-600 px-3 py-2 rounded-lg transition" title="Générer un lien d'abonnement">
-                        <i class="fas fa-credit-card"></i>
+                        <i data-lucide="credit-card"></i>
                     </button>
                     <button data-action="open-config" data-snack-id="${safeId}" class="text-gray-700 hover:text-white font-bold text-sm bg-gray-100 hover:bg-indigo-600 px-3 py-2 rounded-lg transition" title="Configurer les modules">
-                        <i class="fas fa-cog"></i>
+                        <i data-lucide="settings"></i>
                     </button>
                     <button data-action="toggle-maintenance" data-snack-id="${safeId}" data-maintenance="${snack.maintenanceMode ? '1' : '0'}" class="font-bold text-sm px-3 py-2 rounded-lg transition ${powerBtnClass}" title="${snack.maintenanceMode ? 'Mettre en ligne' : 'Mettre en maintenance'}">
-                        <i class="fas fa-power-off"></i>
+                        <i data-lucide="power"></i>
                     </button>
                 </td>
             </tr>
@@ -207,7 +208,7 @@ async function loadLogs() {
     if (!tbody || !btn) return;
     
     const originalBtn = btn.innerHTML;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+    btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i>`;
     btn.disabled = true;
 
     try {
@@ -354,7 +355,7 @@ document.getElementById("btn-save-config").addEventListener("click", async () =>
 
     const btn = document.getElementById("btn-save-config");
     const originalHtml = btn.innerHTML;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Sauvegarde...`;
+    btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Sauvegarde...`;
     btn.disabled = true;
 
     const updates = {};
@@ -400,9 +401,9 @@ document.getElementById("btn-save-config").addEventListener("click", async () =>
 function showSAToast(message, type = "success") {
     const toast = document.getElementById("sa-toast");
     document.getElementById("sa-toast-msg").textContent = message;
-    document.getElementById("sa-toast-icon").className = type === "error"
-        ? "fas fa-exclamation-circle text-red-400"
-        : "fas fa-check-circle text-green-400";
+    const saIcon = document.getElementById("sa-toast-icon");
+    if (type === "error") window.swapIcon?.(saIcon, "circle-alert", "text-red-400");
+    else window.swapIcon?.(saIcon, "circle-check", "text-green-400");
     toast.classList.remove("translate-y-20", "opacity-0");
     setTimeout(() => toast.classList.add("translate-y-20", "opacity-0"), 3000);
 }
@@ -434,7 +435,7 @@ if (btnOpenModal && modalNewSnack) {
         
         const btnSubmit = document.getElementById("btn-submit-snack");
         const originalText = btnSubmit.innerHTML;
-        btnSubmit.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Création du locataire...`;
+        btnSubmit.innerHTML = `<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Création du locataire...`;
         btnSubmit.disabled = true;
 
         const nom = document.getElementById("input-snack-name").value;
@@ -608,7 +609,7 @@ async function loadBillingData() {
         tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">Aucun client.</td></tr>`;
         return;
     }
-    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-2xl"></i> Calcul de la facturation…</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i data-lucide="loader-circle" class="animate-spin text-2xl"></i> Calcul de la facturation…</td></tr>`;
 
     // CA du mois par snack via AGRÉGATION serveur (le superadmin lit toutes les
     // commandes : firestore.rules autorise isSuperAdmin). ~1 lecture / 1000 docs.
@@ -706,7 +707,7 @@ document.querySelectorAll(".sub-amount").forEach((btn) => {
         const amountEur = parseInt(btn.getAttribute("data-amount"), 10);
         const original = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.innerHTML = '<i data-lucide="loader-circle" class="animate-spin"></i>';
         try {
             const res = await httpsCallable(functions, "createSubscriptionCheckout")({
                 snackId, amountEur, origin: window.location.origin,

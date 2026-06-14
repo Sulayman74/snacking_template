@@ -109,14 +109,14 @@ export function createTicketElement(id, commande) {
     .map((item) => {
       let optionsHTML = "";
       if (item.tailleChoisie) {
-        optionsHTML += `<div class="text-gray-800 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i class="fas fa-ruler-horizontal text-gray-500"></i> Taille : ${escapeHTML(item.tailleChoisie)}</div>`;
+        optionsHTML += `<div class="text-gray-800 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="ruler" class="text-gray-500"></i> Taille : ${escapeHTML(item.tailleChoisie)}</div>`;
       }
       if (item.boissonNom) {
-        optionsHTML += `<div class="text-blue-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i class="fas fa-glass-water"></i> ${escapeHTML(item.boissonNom)}</div>`;
+        optionsHTML += `<div class="text-blue-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="glass-water"></i> ${escapeHTML(item.boissonNom)}</div>`;
       }
       if (item.sauces && Array.isArray(item.sauces) && item.sauces.length > 0) {
         const safeSauces = item.sauces.map((s) => escapeHTML(s)).join(" + ");
-        optionsHTML += `<div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i class="fas fa-blender"></i> Sauces : ${safeSauces}</div>`;
+        optionsHTML += `<div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="cooking-pot"></i> Sauces : ${safeSauces}</div>`;
       }
       if (
         item.sansCrudites &&
@@ -147,7 +147,7 @@ export function createTicketElement(id, commande) {
   const isDelivery = commande.mode === "delivery";
   const deliveryHtml = isDelivery
     ? `<div class="mb-3 flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
-         <i class="fas fa-motorcycle text-blue-600 mt-0.5"></i>
+         <i data-lucide="bike" class="text-blue-600 mt-0.5"></i>
          <div class="text-sm min-w-0">
            <p class="font-black text-blue-700 uppercase text-xs tracking-wide">Livraison</p>
            <p class="text-gray-800 font-bold">${escapeHTML(commande.livraison?.adresse || "Adresse non renseignée")}</p>
@@ -158,16 +158,16 @@ export function createTicketElement(id, commande) {
 
   let ticketColor = "bg-white border-l-8 border-green-500";
   let textColor = "text-green-700";
-  let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-hand-holding-box mr-2"></i> DONNÉE AU CLIENT</button>`;
+  let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="package" class="mr-2"></i> DONNÉE AU CLIENT</button>`;
 
   if (isWaiting) {
     ticketColor = "bg-white border-l-8 border-gray-400 opacity-80";
     textColor = "text-gray-600";
-    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i class="fas fa-fire mr-2"></i> Forcer Cuisson</button>`;
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i data-lucide="flame" class="mr-2"></i> Forcer Cuisson</button>`;
   } else if (isNew) {
     ticketColor = "bg-white border-l-8 border-red-500";
     textColor = "text-red-700";
-    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i class="fas fa-check mr-2"></i> MARQUER PRÊTE</button>`;
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="check" class="mr-2"></i> MARQUER PRÊTE</button>`;
   }
 
   const paymentStatus = commande.paiement?.statut || "en_attente";
@@ -178,8 +178,8 @@ export function createTicketElement(id, commande) {
     : `<p class="font-black text-2xl ${textColor}">${(Number(commande.total) || 0).toFixed(2)} €</p>`;
 
   const paymentBadgeHtml = isPaid
-    ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition flex items-center gap-1 hover:bg-green-200"><i class="fas fa-check-circle"></i> PAYÉ</button>`
-    : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition flex items-center gap-1 animate-pulse hover:bg-orange-200"><i class="fas fa-cash-register"></i> ENCAISSER</button>`;
+    ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition flex items-center gap-1 hover:bg-green-200"><i data-lucide="circle-check"></i> PAYÉ</button>`
+    : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition flex items-center gap-1 animate-pulse hover:bg-orange-200"><i data-lucide="receipt"></i> ENCAISSER</button>`;
 
   const ticketDiv = document.createElement("div");
   ticketDiv.id = `ticket-${id}`;
@@ -193,7 +193,7 @@ export function createTicketElement(id, commande) {
                   <h3 class="font-black text-2xl text-gray-900">${safeClientName}</h3>
                   <span class="bg-gray-900 text-white px-2 py-0.5 rounded text-sm font-mono font-bold">${secretCode}</span>
                 </div>
-                <p class="text-sm text-gray-500 font-bold mt-1"><i class="far fa-clock"></i> ${timeString}</p>
+                <p class="text-sm text-gray-500 font-bold mt-1"><i data-lucide="clock"></i> ${timeString}</p>
             </div>
             <div class="flex flex-col items-end">
                 ${priceDisplay}

@@ -69,7 +69,7 @@ class AdminMarketingUI {
         }
 
         const originalHtml = this.flashBtn.innerHTML;
-        this.flashBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Envoi flash...`;
+        this.flashBtn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Envoi flash...`;
         this.flashBtn.disabled = true;
         try {
             // ttlMin par défaut : 60 min (offre courte). Le serveur revérifie le rushMode.
@@ -112,7 +112,7 @@ class AdminMarketingUI {
             <div class="bg-linear-to-br ${insight.bgGradient} rounded-3xl p-6 text-white shadow-lg overflow-hidden relative">
                 <div class="flex items-start gap-5">
                     <div class="shrink-0 w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                        <i class="fas ${insight.icon} ${insight.iconColor} text-3xl"></i>
+                        <i data-lucide="${insight.icon}" class="${insight.iconColor} text-3xl"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-baseline gap-3 flex-wrap">
@@ -125,7 +125,7 @@ class AdminMarketingUI {
                 </div>
                 <button type="button" id="btn-weather-template"
                         class="mt-5 w-full bg-white/95 hover:bg-white text-gray-900 font-black py-3 rounded-2xl shadow transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fas fa-magic-wand-sparkles"></i> Utiliser ce modèle
+                    <i data-lucide="wand-sparkles"></i> Utiliser ce modèle
                 </button>
             </div>
         `;
@@ -191,11 +191,11 @@ class AdminMarketingUI {
         }
 
         const ICON_BY_TYPE = {
-            "creux": "fa-clock",
-            "event": "fa-calendar",
-            "weekend": "fa-calendar-week",
-            "sales-trend": "fa-chart-line",
-            "football": "fa-futbol",
+            "creux": "clock",
+            "event": "calendar",
+            "weekend": "calendar-days",
+            "sales-trend": "chart-line",
+            "football": "volleyball",
         };
 
         this.tipsContainer.innerHTML = tips.map(tip => {
@@ -204,12 +204,12 @@ class AdminMarketingUI {
             const dotClass = isAlert ? "bg-red-500" : "bg-blue-500";
             const titleClass = isAlert ? "text-red-900" : "text-blue-900";
             const msgClass = isAlert ? "text-red-700" : "text-blue-700";
-            const icon = ICON_BY_TYPE[tip.type] || "fa-star";
+            const icon = ICON_BY_TYPE[tip.type] || "star";
 
             return `
                 <div class="flex items-start gap-3 p-3 ${bgClass} rounded-xl border animate-fade-in">
                     <div class="w-8 h-8 rounded-full ${dotClass} text-white flex items-center justify-center shrink-0">
-                        <i class="fas ${icon} text-xs"></i>
+                        <i data-lucide="${icon}" class="text-xs"></i>
                     </div>
                     <div>
                         <h5 class="text-xs font-black ${titleClass} mb-0.5">${escapeHTML(tip.title || "")}</h5>
@@ -259,7 +259,7 @@ class AdminMarketingUI {
         e.preventDefault();
         const btn = document.getElementById("btn-send-push");
         const originalHtml = btn.innerHTML;
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Programmation...`;
+        btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Programmation...`;
         btn.disabled = true;
 
         try {

@@ -134,7 +134,7 @@ class UpsellUI {
         // Feedback visuel inline : pas de re-render complet (l'item disparaîtra
         // si on rouvre la modale, c'est suffisant pour ce flow court).
         btnElement.disabled = true;
-        btnElement.innerHTML = `<i class="fas fa-check mr-1"></i> Ajouté`;
+        btnElement.innerHTML = `<i data-lucide="check" class="mr-1"></i> Ajouté`;
         btnElement.classList.add("bg-green-600");
         btnElement.classList.remove("bg-primary");
         liElement.classList.add("opacity-60");

@@ -111,7 +111,7 @@ class LivreurUI {
     const btn = document.getElementById("driver-login-btn");
     const original = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connexion…`;
+    btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i> Connexion…`;
     this.els.loginError.classList.add("hidden");
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -239,7 +239,7 @@ class LivreurUI {
     if (this.activeOrderId) { el.innerHTML = ""; return; } // on masque la liste pendant une livraison
     if (list.length === 0) {
       el.innerHTML = `<div class="bg-white border border-dashed border-gray-300 rounded-2xl p-8 text-center text-gray-500">
-        <i class="fas fa-mug-hot text-3xl text-gray-300 mb-3"></i>
+        <i data-lucide="coffee" class="text-3xl text-gray-300 mb-3"></i>
         <p class="font-bold">Aucune course à récupérer.</p>
         <p class="text-sm">Les commandes prêtes apparaîtront ici.</p>
       </div>`;
@@ -258,18 +258,18 @@ class LivreurUI {
         <div class="flex justify-between items-start gap-2 mb-2">
           <div class="min-w-0">
             <p class="font-black text-gray-900 truncate">${escapeHTML(o.clientNom || "Client")}</p>
-            <p class="text-sm text-gray-600 truncate"><i class="fas fa-location-dot text-blue-500 mr-1"></i>${escapeHTML(o.livraison?.adresse || "Adresse")}</p>
+            <p class="text-sm text-gray-600 truncate"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(o.livraison?.adresse || "Adresse")}</p>
           </div>
           <span class="shrink-0 bg-gray-900 text-white text-xs font-mono font-bold px-2 py-1 rounded">${escapeHTML(o.secretCode || "")}</span>
         </div>
         <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
-          <span><i class="fas fa-box mr-1"></i>${items} article${items > 1 ? "s" : ""}</span>
-          <span><i class="fas fa-route mr-1"></i>${dist}</span>
-          <span><i class="fas fa-euro-sign mr-1"></i>${Number(o.total || 0).toFixed(2)}</span>
+          <span><i data-lucide="box" class="mr-1"></i>${items} article${items > 1 ? "s" : ""}</span>
+          <span><i data-lucide="route" class="mr-1"></i>${dist}</span>
+          <span><i data-lucide="euro" class="mr-1"></i>${Number(o.total || 0).toFixed(2)}</span>
         </div>
         <button type="button" data-livreur-action="take" data-id="${escapeHTML(o.id)}"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition active:scale-95">
-          <i class="fas fa-hand-holding-box mr-2"></i> Prendre la course
+          <i data-lucide="package" class="mr-2"></i> Prendre la course
         </button>
       </div>`;
   }
@@ -295,23 +295,23 @@ class LivreurUI {
     this.els.active.innerHTML = `
       <div class="bg-white rounded-2xl shadow-md border-2 border-blue-500 p-4 mb-4">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-black text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full uppercase tracking-wide"><i class="fas fa-motorcycle mr-1"></i>En livraison</span>
+          <span class="text-xs font-black text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full uppercase tracking-wide"><i data-lucide="bike" class="mr-1"></i>En livraison</span>
           <span class="bg-gray-900 text-white text-xs font-mono font-bold px-2 py-1 rounded">${escapeHTML(o.secretCode || "")}</span>
         </div>
         <p class="font-black text-xl text-gray-900">${escapeHTML(o.clientNom || "Client")}</p>
-        <p class="text-gray-600 mb-1"><i class="fas fa-location-dot text-blue-500 mr-1"></i>${escapeHTML(client?.adresse || "Adresse")}</p>
+        <p class="text-gray-600 mb-1"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(client?.adresse || "Adresse")}</p>
         <p class="text-sm text-gray-500 mb-3">À <b id="active-distance" class="text-gray-900">…</b> de vous</p>
 
-        ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl mb-2 transition"><i class="fas fa-diamond-turn-right mr-2"></i>Itinéraire</a>` : ""}
+        ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl mb-2 transition"><i data-lucide="navigation" class="mr-2"></i>Itinéraire</a>` : ""}
 
         <button type="button" data-livreur-action="pickup" ${pickupDone ? "disabled" : ""}
           class="w-full ${pickupDone ? "bg-green-100 text-green-700 cursor-default" : "bg-gray-900 text-white hover:bg-black"} font-bold py-3 rounded-xl mb-2 transition active:scale-95">
-          <i class="fas ${pickupDone ? "fa-check" : "fa-camera"} mr-2"></i>${pickupDone ? "Prise en charge confirmée" : "1. Photo de prise en charge"}
+          <i data-lucide="${pickupDone ? "check" : "camera"}" class="mr-2"></i>${pickupDone ? "Prise en charge confirmée" : "1. Photo de prise en charge"}
         </button>
 
         <button type="button" data-livreur-action="deliver" id="deliver-btn"
           class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition active:scale-95">
-          <i class="fas fa-camera mr-2"></i> 2. J'ai livré (photo)
+          <i data-lucide="camera" class="mr-2"></i> 2. J'ai livré (photo)
         </button>
         <p id="deliver-hint" class="text-center text-xs mt-2 min-h-4"></p>
       </div>`;
@@ -434,7 +434,7 @@ class LivreurUI {
     const { kind, blob, orderId } = this.pending;
     const btn = document.getElementById("pod-confirm-btn");
     const original = btn?.innerHTML;
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Envoi…'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="animate-spin mr-2"></i>Envoi…'; }
     try {
       const url = await uploadPod(this.snackId, orderId, kind, blob);
       const ref = doc(db, "commandes", orderId);
@@ -562,21 +562,21 @@ class LivreurUI {
     }
     el.innerHTML = `
       <div class="bg-white rounded-2xl border border-blue-200 p-4 mb-2 shadow-sm">
-        <p class="font-black text-gray-900 mb-1"><i class="fas fa-bolt text-blue-500 mr-1"></i>Activer mon espace</p>
+        <p class="font-black text-gray-900 mb-1"><i data-lucide="zap" class="text-blue-500 mr-1"></i>Activer mon espace</p>
         <p class="text-xs text-gray-500 mb-2">Pour recevoir les courses et être suivi pendant les livraisons.</p>
-        ${this.permRow("notifs", "Notifications", "fa-bell", notif === "granted", notif === "denied")}
-        ${this.permRow("geo", "Localisation", "fa-location-dot", geo === "granted", geo === "denied")}
+        ${this.permRow("notifs", "Notifications", "bell", notif === "granted", notif === "denied")}
+        ${this.permRow("geo", "Localisation", "map-pin", geo === "granted", geo === "denied")}
       </div>`;
   }
 
   permRow(kind, label, icon, ok, denied) {
     const right = ok
-      ? `<span class="text-green-600 font-bold text-sm shrink-0"><i class="fas fa-check-circle mr-1"></i>Activé</span>`
+      ? `<span class="text-green-600 font-bold text-sm shrink-0"><i data-lucide="circle-check" class="mr-1"></i>Activé</span>`
       : denied
         ? `<span class="text-[11px] text-amber-600 font-bold shrink-0 text-right">Bloqué — à réactiver<br>dans les réglages</span>`
         : `<button type="button" data-livreur-action="enable-${kind}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition shrink-0">Activer</button>`;
     return `<div class="flex items-center justify-between gap-3 py-2 border-t border-gray-100 first:border-0">
-      <span class="font-bold text-gray-800 text-sm"><i class="fas ${icon} text-gray-400 mr-2"></i>${label}</span>
+      <span class="font-bold text-gray-800 text-sm"><i data-lucide="${icon}" class="text-gray-400 mr-2"></i>${label}</span>
       ${right}
     </div>`;
   }

@@ -179,7 +179,7 @@ async function processCheckout() {
   }
 
   const originalText = btn.innerHTML;
-  btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connexion banque...`;
+  btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i> Connexion banque...`;
   btn.disabled = true;
 
   try {
@@ -202,7 +202,7 @@ async function processCheckout() {
 
     const paymentContainer = document.getElementById("payment-element");
     paymentContainer.innerHTML =
-      '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i></div>';
+      '<div class="text-center py-8"><i data-lucide="loader-circle" class="animate-spin text-3xl text-gray-400"></i></div>';
 
     openPaymentSheet();
 
@@ -304,7 +304,7 @@ async function submitStripePayment() {
   }
 
   const btnOriginalText = submitPaymentBtn.innerHTML;
-  submitPaymentBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Vérification banque...`;
+  submitPaymentBtn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Vérification banque...`;
   submitPaymentBtn.disabled = true;
 
   try {
