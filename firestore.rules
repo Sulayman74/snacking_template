@@ -84,7 +84,7 @@ service cloud.firestore {
                          isSnackAdmin(resource.data.snackId)
                          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
                               'role', 'snackId', 'points', 'pointsBySnack', 'loyaltyLastScan',
-                              'loyaltyLastCredit', 'rewardsAvailable', 'rewardsRedeemed'
+                              'loyaltyLastCredit', 'rewardsAvailable', 'rewardsRedeemed', 'pendingWheelReward'
                             ])
                        )
                     || (
@@ -107,7 +107,7 @@ service cloud.firestore {
       allow create: if isOwner(userId)
                     && request.resource.data.role == 'client'
                     && request.resource.data.pointsBySnack == {}
-                    && !request.resource.data.keys().hasAny(['points', 'snackId', 'loyaltyLastScan', 'loyaltyLastCredit', 'rewardsAvailable', 'rewardsRedeemed']);
+                    && !request.resource.data.keys().hasAny(['points', 'snackId', 'loyaltyLastScan', 'loyaltyLastCredit', 'rewardsAvailable', 'rewardsRedeemed', 'pendingWheelReward']);
     }
 
     match /produits/{produitId} {
