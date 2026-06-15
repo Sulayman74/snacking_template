@@ -17,6 +17,7 @@ import "./tracking.js";
 import "./pwa.js";
 import "./auth.js";
 import "./loyalty.js";
+import "./loyalty-wheel.js";
 import "./smart-review.js";
 import "./router.js";
 import "./snack-config.js";

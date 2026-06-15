@@ -221,6 +221,7 @@ class AdminProductsUI {
             this.populateCategorySelect(product.categorieId);
             document.getElementById("edit-tags").value = product.tags?.[0] || "";
             document.getElementById("edit-allow-menu").checked = product.allowMenu !== false;
+            document.getElementById("edit-eligible-wheel").checked = product.eligibleForWheel === true;
             this.setAllergens(product.allergenes);
             
             // Image Preview
@@ -409,6 +410,7 @@ class AdminProductsUI {
             tags: document.getElementById("edit-tags").value ? [document.getElementById("edit-tags").value] : [],
             allergenes: Array.from(document.querySelectorAll(".edit-allergen:checked")).map(cb => cb.value),
             allowMenu: hasTailles ? false : document.getElementById("edit-allow-menu").checked,
+            eligibleForWheel: document.getElementById("edit-eligible-wheel").checked,
             hasCrudites: !!hasCrudites,
             crudites,
             choixSauces: (sauces && sauces.liste.length > 0) ? sauces : null,
