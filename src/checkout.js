@@ -249,6 +249,22 @@ async function processCheckout() {
     // Compte connecté (charge directe) renvoyé par la CF, ou null (charge plateforme).
     const connectedAccountId = response?.data?.stripeAccountId || null;
 
+    // 🔎 Observabilité paiement (AUCUN secret loggé : seulement le MODE de la clé publishable
+    // + des booléens/ids publics). Révèle d'un coup d'œil le mismatch clé↔compte : un pkMode
+    // "LIVE" avec un compte connecté de test (ou inversement) → le Payment Element échouera
+    // (account_invalid). C'est exactement le symptôme du formulaire vide.
+    const pkMode = stripePublicKey.startsWith("pk_live_")
+      ? "LIVE"
+      : stripePublicKey.startsWith("pk_test_")
+        ? "TEST"
+        : "INCONNU";
+    console.info("[checkout] init Stripe →", {
+      pkMode,
+      hasClientSecret: !!clientSecret,
+      connectedAccountId, // acct_… (public) ; null = charge plateforme
+      chargeType: connectedAccountId ? "directe (Connect)" : "plateforme",
+    });
+
     // (Ré)initialise Stripe.js EN CIBLANT le compte connecté si charge directe :
     // sans `{ stripeAccount }`, Elements ne peut pas charger un PI du compte connecté
     // (400 sur elements/sessions) et confirmPayment échoue (Element non monté).
@@ -262,6 +278,23 @@ async function processCheckout() {
     stripeElements = stripeInstance.elements({ appearance, clientSecret });
 
     const paymentElement = stripeElements.create("payment");
+
+    // 🔎 OBSERVABILITÉ CLÉ : sans ces écouteurs, un échec de chargement de l'Element
+    // (ex. clé publishable sans accès au compte connecté → account_invalid, clé du
+    // mauvais mode/plateforme…) laisse la zone du formulaire VIDE en SILENCE. On loggue
+    // le motif ET on le remonte à l'écran (#payment-message + toast) au lieu d'un blanc.
+    paymentElement.on("ready", () => console.info("[checkout] Payment Element prêt ✅ (formulaire rendu)"));
+    paymentElement.on("loaderror", (event) => {
+      const reason = event?.error?.message || "Le formulaire de paiement n'a pas pu se charger.";
+      console.error("[checkout] Payment Element loaderror ❌ :", event?.error || event);
+      const box = document.getElementById("payment-message");
+      if (box) {
+        box.textContent = reason;
+        box.classList.remove("hidden");
+      }
+      window.showToast?.(reason, "error");
+    });
+
     paymentContainer.innerHTML = "";
     paymentElement.mount("#payment-element");
   } catch (error) {
