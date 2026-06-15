@@ -18,6 +18,28 @@ import {
   serverTimestamp,
 } from "./core/firebase.js";
 
+/**
+ * Garantit l'existence du doc users/{uid} (idempotent). Crée un profil "client" par
+ * défaut s'il MANQUE — couvre l'inscription email/password (qui ne le créait pas) ET
+ * backfille les comptes existants sans doc. Sans ce doc : fidélité KO (creditLoyaltyPoints
+ * lève not-found → 0 point), carte vide. Ne touche JAMAIS un doc existant (rôle/points préservés).
+ * @param {object} user - L'objet User Firebase Auth.
+ * @returns {Promise<void>}
+ */
+async function ensureUserDoc(user) {
+  if (!user?.uid) return;
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+  if (snap.exists()) return;
+  await setDoc(userRef, {
+    email: user.email,
+    nom: user.displayName || user.email?.split("@")[0] || "Gourmand",
+    pointsBySnack: {},
+    dateCreation: serverTimestamp(),
+    role: "client",
+  });
+}
+
 // ============================================================================
 // 🔐 LOGIQUE DU FORMULAIRE D'AUTH
 // ============================================================================
@@ -54,13 +76,16 @@ if (authForm) {
     }
 
     try {
-      if (isSignUpMode) {
-        await createUserWithEmailAndPassword(auth, email, password);
-        window.showToast("Compte créé ! 🎉", "success");
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        window.showToast("Ravi de vous revoir ! 👋", "success");
-      }
+      const cred = isSignUpMode
+        ? await createUserWithEmailAndPassword(auth, email, password)
+        : await signInWithEmailAndPassword(auth, email, password);
+      window.showToast(
+        isSignUpMode ? "Compte créé ! 🎉" : "Ravi de vous revoir ! 👋",
+        "success",
+      );
+      // 🛡️ Crée le doc users/{uid} s'il manque (signup email/password ET backfill d'un
+      // compte existant sans doc) → sinon fidélité KO. Idempotent, ne casse pas le login.
+      await ensureUserDoc(cred.user);
       toggleAuthModal();
     } catch (error) {
       window.showToast("Erreur : " + error.message, "error");
@@ -163,20 +188,7 @@ if (btnGoogleLogin) {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          email: user.email,
-          nom: user.displayName || "Gourmand",
-          pointsBySnack: {},
-          dateCreation: serverTimestamp(),
-          role: "client",
-        });
-      }
+      await ensureUserDoc(result.user);
 
       if (typeof window.showToast === "function") {
         window.showToast("Connexion Google réussie ! 🍔", "success");
