@@ -167,6 +167,13 @@ async function processCheckout() {
     return;
   }
 
+  // ⚡ Feedback IMMÉDIAT : loader dans le bouton dès le clic. Couvre l'appel réseau
+  // getKitchenLoad (upsell) PUIS l'init Stripe — sinon latence sans retour visuel avant
+  // l'ouverture de la sheet. Restauré sur annulation upsell + dans le finally du try.
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i> Préparation…`;
+  btn.disabled = true;
+
   // 🪜 ÉTAPE UPSELL — gate facultatif avant init Stripe.
   // - Skippé si le snack n'a pas activé la feature (cfg.features.enableUpsell)
   //   via le toggle superadmin → flow inchangé pour les snacks legacy.
@@ -186,12 +193,16 @@ async function processCheckout() {
       rushMode = false;
     }
     const upsellChoice = await upsellUI.show({ rushMode });
-    if (upsellChoice === "cancel") return;
+    if (upsellChoice === "cancel") {
+      // Annulation propre : on restaure le bouton (le loader était déjà actif).
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      return;
+    }
   }
 
-  const originalText = btn.innerHTML;
+  // Loader déjà actif depuis le clic ; on précise l'étape "banque".
   btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i> Connexion banque...`;
-  btn.disabled = true;
 
   try {
     // Chargement paresseux du SDK Stripe (retiré du <head> de la home pour le LCP).
