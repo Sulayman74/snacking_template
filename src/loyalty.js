@@ -87,6 +87,10 @@ function openClientCard() {
       const rawPoints = (data.pointsBySnack || {})[currentSnackId] || 0;
       const rawAvailable = (data.rewardsAvailable || {})[currentSnackId] || 0;
       animerCarteFidelite(rawPoints, rawAvailable);
+      // 🎡 CTA roue de la fortune : récompenses jouables (banque + paliers legacy) +
+      // lot déjà gagné en attente. Rendu par le module autonome loyalty-wheel.js.
+      const effectiveRewards = rawAvailable + Math.floor(rawPoints / 10);
+      window.renderWheelCta?.(effectiveRewards, (data.pendingWheelReward || {})[currentSnackId] || null);
     }
   });
 }

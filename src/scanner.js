@@ -9,6 +9,7 @@
 // est déjà initialisée par firebase-init au moment où ces handlers s'exécutent.
 import { getApp } from "firebase/app";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 let html5Qrcode = null;
 let Html5QrcodeCls = null;
@@ -92,6 +93,40 @@ async function onScanSuccess(decodedText) {
     console.error("❌ Erreur scan fidélité :", error);
     // Les HttpsError du serveur exposent un message lisible (QR inconnu, cooldown…).
     window.showToast(error?.message || "Erreur de communication avec le serveur.", "error");
+  }
+
+  // 🎡 Lot de roue gagné en attente ? INDÉPENDANT du crédit de point (qui peut être
+  // skippé par le cooldown) → on lit le doc client et on propose de valider le lot.
+  await proposeWheelRedemption(decodedText, adminSnackId);
+}
+
+/**
+ * Si le client a un lot de roue en attente (pendingWheelReward.{snackId}), propose à
+ * l'admin de le valider → CF redeemWheelReward (efface le lot + audit). No-op sinon.
+ * @param {string} clientUid - uid du client (issu du QR).
+ * @param {string} snackId - Snack courant de l'admin.
+ * @returns {Promise<void>}
+ */
+async function proposeWheelRedemption(clientUid, snackId) {
+  try {
+    const dbRef = getFirestore(getApp());
+    const snap = await getDoc(doc(dbRef, "users", clientUid));
+    const pending = snap.exists() ? (snap.data().pendingWheelReward || {})[snackId] : null;
+    if (!pending?.nom) return;
+
+    const ok = window.confirm(
+      `🎡 Ce client a gagné à la roue : ${pending.nom}\nValider le lot (le lui donner) ?`,
+    );
+    if (!ok) return;
+
+    const functions = getFunctions(getApp(), "europe-west1");
+    const redeem = httpsCallable(functions, "redeemWheelReward");
+    const res = await redeem({ clientUid, snackId });
+    window.showToast(`✅ Lot "${res?.data?.product || pending.nom}" validé !`, "success");
+    if (typeof window.triggerVibration === "function") window.triggerVibration("jackpot");
+  } catch (error) {
+    console.error("❌ Erreur validation lot roue :", error);
+    window.showToast(error?.message || "Erreur lors de la validation du lot.", "error");
   }
 }
 

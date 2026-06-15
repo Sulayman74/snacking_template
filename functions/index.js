@@ -2060,6 +2060,125 @@ exports.redeemLoyaltyReward = onCall({ region: "europe-west1" }, async (request)
 });
 
 // ============================================================================
+// 🎡 FIDÉLITÉ : ROUE DE LA FORTUNE — tirage SERVEUR du lot (anti-triche)
+// ============================================================================
+// Le CLIENT déclenche le spin, mais le lot est tiré CÔTÉ SERVEUR parmi les produits
+// `eligibleForWheel` du snack (liste curated par l'admin). Consomme UNE récompense
+// (rewardsAvailable, banquée à 10 pts) et pose `pendingWheelReward.{snackId}` = lot
+// gagné, à valider au comptoir (redeemWheelReward). 1 récompense = 1 spin ; un seul
+// lot en attente à la fois. Transaction → jamais de double-consommation.
+exports.spinLoyaltyWheel = onCall({ region: "europe-west1" }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Authentification requise.");
+  const uid = request.auth.uid;
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+  const { snackId } = data;
+  require_(V.isDocId(snackId), "snackId invalide.");
+
+  await enforceRateLimit({ key: callerKey(request, "spinLoyaltyWheel"), max: 20, windowMs: 60_000 });
+
+  // Pool de lots éligibles (curated) : produits du snack flaggés + disponibles. Lu HORS
+  // transaction (Firestore n'autorise pas les queries dans une transaction).
+  const prizesSnap = await db
+    .collection("produits")
+    .where("snackId", "==", snackId)
+    .where("eligibleForWheel", "==", true)
+    .get();
+  const pool = prizesSnap.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() }))
+    .filter((p) => p.isAvailable !== false)
+    .map((p) => ({ id: p.id, nom: p.nom || "Lot", image: p.image || null }));
+  if (pool.length === 0) {
+    throw new HttpsError("failed-precondition", "Aucun lot configuré pour la roue. Contactez le restaurant.");
+  }
+
+  // 🎲 Tirage SERVEUR (le client ne choisit JAMAIS son lot).
+  const won = pool[Math.floor(Math.random() * pool.length)];
+
+  const clientRef = db.collection("users").doc(uid);
+  const auditRef = db.collection("loyaltyRewards").doc();
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(clientRef);
+    if (!snap.exists) throw new HttpsError("not-found", "Profil introuvable.");
+    const d = snap.data();
+    const points = (d.pointsBySnack || {})[snackId] || 0;
+    const available = (d.rewardsAvailable || {})[snackId] || 0;
+    const effective = available + Math.floor(points / MAX_LOYALTY_POINTS); // banque + legacy
+    if (effective < 1) throw new HttpsError("failed-precondition", "Aucune récompense à jouer.");
+    if ((d.pendingWheelReward || {})[snackId]) {
+      throw new HttpsError("failed-precondition", "Tu as déjà un lot en attente de retrait.");
+    }
+
+    tx.update(clientRef, {
+      [`pointsBySnack.${snackId}`]: points % MAX_LOYALTY_POINTS, // normalise les cartes legacy
+      [`rewardsAvailable.${snackId}`]: effective - 1,            // consomme la récompense jouée
+      [`pendingWheelReward.${snackId}`]: {
+        productId: won.id,
+        nom: won.nom,
+        wonAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+    });
+    tx.set(auditRef, {
+      type: "wheel-spin",
+      snackId,
+      clientUid: uid,
+      productId: won.id,
+      productNom: won.nom,
+      spunAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+
+  // pool = tous les segments à dessiner ; won = celui sur lequel la roue s'arrête.
+  return { won, pool };
+});
+
+// ============================================================================
+// 🎟️ FIDÉLITÉ : VALIDATION D'UN LOT DE ROUE AU COMPTOIR (admin) — TRACÉE
+// ============================================================================
+// Le staff scanne le QR du client gagnant → efface pendingWheelReward.{snackId} +
+// incrémente rewardsRedeemed + trace d'audit. Réservé à l'admin du snack.
+exports.redeemWheelReward = onCall({ region: "europe-west1" }, async (request) => {
+  const data = request.data;
+  require_(V.isPlainObject(data), "Payload invalide.");
+  const { clientUid, snackId } = data;
+  require_(V.isDocId(clientUid), "clientUid invalide.");
+  require_(V.isDocId(snackId), "snackId invalide.");
+
+  await assertCallerIsSnackAdmin(request, snackId);
+  await enforceRateLimit({ key: callerKey(request, "redeemWheelReward"), max: 60, windowMs: 60_000 });
+
+  const clientRef = db.collection("users").doc(clientUid);
+  const auditRef = db.collection("loyaltyRewards").doc();
+
+  const result = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(clientRef);
+    if (!snap.exists) throw new HttpsError("not-found", "Ce QR code n'est pas dans la base.");
+    const d = snap.data();
+    const pending = (d.pendingWheelReward || {})[snackId];
+    if (!pending) throw new HttpsError("failed-precondition", "Aucun lot de roue en attente pour ce client.");
+
+    tx.update(clientRef, {
+      [`pendingWheelReward.${snackId}`]: admin.firestore.FieldValue.delete(),
+      [`rewardsRedeemed.${snackId}`]: ((d.rewardsRedeemed || {})[snackId] || 0) + 1,
+    });
+    tx.set(auditRef, {
+      type: "wheel-redeem",
+      snackId,
+      clientUid,
+      productId: pending.productId,
+      productNom: pending.nom,
+      redeemedBy: request.auth.uid,
+      redeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { product: pending.nom };
+  });
+
+  return result;
+});
+
+// ============================================================================
 // 🛎️ FONCTION : ALERTE ADMINS À CHAQUE NOUVELLE COMMANDE (push cuisine)
 // ============================================================================
 // Notifie les admins du snack même tablette en veille / arrière-plan (le bip
