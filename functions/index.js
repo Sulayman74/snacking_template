@@ -1397,6 +1397,37 @@ exports.finalizeOrder = onCall(
       console.error("finalizeOrder crédit fidélité échoué :", loyErr);
     }
 
+    // 🎡 FIDÉLITÉ : lot de roue en attente → OFFERT sur CETTE commande (redemption EN
+    // COMMANDE, jamais par scan → pas de double point). Ancré dans le bloc post-création
+    // idempotent (les retries retournent §4/§5 avant ce point) → jamais de double-offre.
+    // Best-effort : un échec ne casse jamais une commande déjà payée. Le lot est attaché
+    // à la commande (la cuisine le prépare) et pendingWheelReward est effacé (consommé).
+    try {
+      const wheelUserRef = db.collection("users").doc(uid);
+      const wheelSnap = await wheelUserRef.get();
+      const pendingWheel = wheelSnap.exists ? (wheelSnap.data().pendingWheelReward || {})[snackId] : null;
+      if (pendingWheel?.productId) {
+        await docRef.update({
+          wheelPrize: { productId: pendingWheel.productId, nom: pendingWheel.nom || "Lot" },
+        });
+        await wheelUserRef.update({
+          [`pendingWheelReward.${snackId}`]: admin.firestore.FieldValue.delete(),
+          [`rewardsRedeemed.${snackId}`]: admin.firestore.FieldValue.increment(1),
+        });
+        await db.collection("loyaltyRewards").add({
+          type: "wheel-redeem-order",
+          snackId,
+          clientUid: uid,
+          productId: pendingWheel.productId,
+          productNom: pendingWheel.nom || "Lot",
+          orderId,
+          redeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (wheelErr) {
+      console.error("finalizeOrder lot de roue (offert sur commande) échoué :", wheelErr);
+    }
+
     // 📊 UPSELL ANALYTICS (best-effort) — agrège accepted/revenue depuis la
     // commande PAYÉE (source de vérité, zéro confiance client). Ne s'exécute
     // qu'à la première création (les retries retournent tôt §4/§5) → pas de
