@@ -156,6 +156,17 @@ export function createTicketElement(id, commande) {
        </div>`
     : "";
 
+  // 🎡 Lot de roue OFFERT sur cette commande (fidélité) : le staff doit l'ajouter gratuitement.
+  const wheelPrizeHtml = commande.wheelPrize?.nom
+    ? `<div class="mb-3 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
+         <span class="text-xl">🎁</span>
+         <div class="text-sm min-w-0">
+           <p class="font-black text-amber-700 uppercase text-xs tracking-wide">Lot fidélité — OFFERT</p>
+           <p class="text-gray-800 font-bold">${escapeHTML(commande.wheelPrize.nom)}</p>
+         </div>
+       </div>`
+    : "";
+
   let ticketColor = "bg-white border-l-8 border-green-500";
   let textColor = "text-green-700";
   let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="package" class="mr-2"></i> DONNÉE AU CLIENT</button>`;
@@ -212,6 +223,7 @@ export function createTicketElement(id, commande) {
         </div>
         ${deliveryHtml}
         <ul class="mb-5 text-gray-800 space-y-1">${itemsHtml}</ul>
+        ${wheelPrizeHtml}
         ${btnHtml}
         ${refundBtnHtml}
     `;
