@@ -4,6 +4,7 @@ import fs from 'fs'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import { resolveFont } from './src/theme-fonts.js'
+import { SAAS_THEMES } from './src/theme-palettes.js'
 
 const seoPath = resolve(__dirname, 'snacks-seo.json');
   let snacksSeo = {};
@@ -25,13 +26,16 @@ export default defineConfig(() => {
   const currentSnackId = process.env.SNACK_ID || 'Ym1YiO4Ue5Fb5UXlxr06'
   const seoData = snacksSeo[currentSnackId] || snacksSeo["Ym1YiO4Ue5Fb5UXlxr06"];
   const iconUrl = seoData.iconUrl || seoData.logoUrl;
-  // Fond de page = base claire de la palette (overscroll / pré-paint). Fallback theme_color
-  // si un tenant n'a pas encore de lightHex dans snacks-seo.json.
-  const lightHex = seoData.lightHex || seoData.theme_color;
-  // Accent du thème : nappe secondaire du fond mesh (.app-bg). Fallback theme_color
-  // (palettes monochromes type forest où accent == primary).
-  const accentHex = seoData.accentHex || seoData.theme_color;
+  // 🎨 Couleur dérivée de colorPalette (SOURCE UNIQUE, partagée avec le runtime via
+  // src/theme-palettes.js) → splash/meta/manifest cohérents avec l'UI, plus de désync.
+  // Fallbacks rétro-compatibles : hex explicites de snacks-seo.json, puis défaut neutre.
   const palette = seoData.colorPalette || '';
+  const themeHex = SAAS_THEMES[palette] || {};
+  const themeColor = themeHex.primaryHex || seoData.theme_color || '#1E2938';
+  // Fond de page = base claire de la palette (overscroll / pré-paint).
+  const lightHex = themeHex.lightHex || seoData.lightHex || themeColor;
+  // Accent du thème : nappe secondaire du fond mesh (.app-bg).
+  const accentHex = themeHex.accentHex || seoData.accentHex || themeColor;
 
   return {
     plugins: [
@@ -66,7 +70,7 @@ export default defineConfig(() => {
           // (sinon les nappes accent restent transparentes jusqu'au boot JS).
           const splashStyle = `<style>
             :root,html,body{background:${lightHex} !important; color-scheme: light dark;}
-            :root{--color-primary:${seoData.theme_color};--color-accent:${accentHex};--color-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
+            :root{--color-primary:${themeColor};--color-accent:${accentHex};--color-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
           </style>`;
           // 🌗 Anti-flash dark : pose la classe .dark sur <html> AVANT le 1er paint (et avant le
           // <link styles.css> render-blocking), selon la préférence persistée (localStorage
@@ -82,7 +86,7 @@ export default defineConfig(() => {
             .replace('<head>', `<head>\n    ${splashStyle}\n    ${antiFlashScript}`)
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)
             .replace(/\{\{SEO_DESC\}\}/g, seoData.desc)
-            .replace(/\{\{THEME_COLOR\}\}/g, seoData.theme_color)
+            .replace(/\{\{THEME_COLOR\}\}/g, themeColor)
             .replace(/\{\{SNACK_ID\}\}/g, currentSnackId)
             .replace(/\{\{LOGO_URL\}\}/g, seoData.logoUrl)
             .replace(/\{\{SHADOW_CLASS\}\}/g, seoData.shadowClass)
@@ -141,8 +145,8 @@ export default defineConfig(() => {
           name: seoData.title,
           short_name: seoData.title.split('|')[0].trim(),
           description: seoData.desc,
-          theme_color: seoData.theme_color,
-          background_color: seoData.theme_color, // 👈 FIX : Élimine le flash blanc au démarrage PWA
+          theme_color: themeColor,
+          background_color: themeColor, // 👈 Dérivé de colorPalette : splash sans flash ni désync
           orientation: 'portrait-primary',
           display: 'standalone',
           icons: [

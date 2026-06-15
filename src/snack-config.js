@@ -7,25 +7,9 @@
 import { store } from "./core/Store.js";
 import { doc, getDoc } from "./core/firebase.js";
 import { resolveFont } from "./theme-fonts.js";
-
-const SAAS_THEMES = {
-  "ruby":      { primaryHex: "#dc2626", accentHex: "#dc2626", lightHex: "#fee2e2", onPrimaryHex: "#ffffff" },
-  "ocean": { 
-    primaryHex: "#0077b6",   // Bleu lagon profond
-    accentHex: "#00b4d8",    // Bleu cristal de surface
-    lightHex: "#caf0f8",     // Écume / Eau peu profonde
-    onPrimaryHex: "#ffffff"  // Texte blanc pur pour le contraste
-},
-  "forest":    { primaryHex: "#16a34a", accentHex: "#16a34a", lightHex: "#dcfce7", onPrimaryHex: "#ffffff" },
-  "midnight":  { primaryHex: "#4c1d95", accentHex: "#c084fc", lightHex: "#f3e9ff", onPrimaryHex: "#ffffff" },
-  "sunflower": { primaryHex: "#eab308", accentHex: "#ca8a04", lightHex: "#fef9c3", onPrimaryHex: "#111827" },
-  "belly": {
-    primaryHex:   "#0A1B3F",  // Belly Blue — navy profond du logo
-    accentHex:    "#B88A44",  // Golden Bun — or gourmand (chaud, appétence)
-    lightHex:     "#C8D8E9",  // Logo Light — teinte bleu clair du primary
-    onPrimaryHex: "#FFFFFF",  // Texte blanc sur navy (contraste WCAG AAA ~16:1)
-  },
-};
+// Palettes = source UNIQUE partagée avec le build (vite.config.js) → le splash/manifest
+// dérivent la même couleur que l'UI runtime, plus de désync. Cf. src/theme-palettes.js.
+import { SAAS_THEMES } from "./theme-palettes.js";
 
 // Coerce une valeur Firestore en nombre fini, sinon renvoie le fallback (ex: null).
 const numberOr = (v, fallback) => {
