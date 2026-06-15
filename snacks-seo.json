@@ -6,12 +6,12 @@
     "logoUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
     "iconUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
     "heroUrl": "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/heroImg.webp?alt=media&token=a3de102d-b619-4a43-9601-cad75f7f82d2",
-    "theme_color": "#16a34a",
-    "colorPalette": "forest",
-    "lightHex": "#dcfce7",
-    "accentHex": "#16a34a",
+    "theme_color": "#0077b6",
+    "colorPalette": "ocean",
+    "lightHex": "#caf0f8",
+    "accentHex": "#00b4d8",
     "fontKey": "poppins",
-    "shadowClass": "shadow-green-600/40"
+    "shadowClass": "shadow-blue-600/40"
   },
   "PsobiuoeUzNmHnwGtaRu": {
     "title": "O'Bois Pizza Bonneville | Click & Collect",
