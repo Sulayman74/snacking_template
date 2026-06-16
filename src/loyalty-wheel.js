@@ -10,7 +10,7 @@
 // est révélé en GRAND avec sa photo à la fin. Récupération : OFFERT sur la prochaine commande.
 // ============================================================================
 
-import { functions, httpsCallable } from "./core/firebase.js";
+import { functions, httpsCallable, auth, db, doc, onSnapshot, onAuthStateChanged } from "./core/firebase.js";
 
 const PALETTE = ["#fbbf24", "#34d399", "#60a5fa", "#f472b6", "#a78bfa", "#fb923c", "#22d3ee", "#f87171"];
 
@@ -158,6 +158,42 @@ function closeWheel() {
     overlayEl.classList.remove("flex");
   }, 300);
 }
+
+// ── Bandeau PANIER « lot gratuit sur cette commande » ────────────────────────
+// Listener persistant du doc user (indépendant de l'ouverture de la carte fidélité) →
+// maintient window.currentWheelPrize + remplit #cart-wheel-prize. Le bandeau vit dans le
+// pied (statique) du panier → non écrasé par le re-render des lignes. Effacé dès que le
+// lot est consommé (finalizeOrder efface pendingWheelReward → snapshot → null).
+let unsubWheelPrize = null;
+
+/** Met à jour le bandeau panier selon window.currentWheelPrize (no-op si absent). */
+function updateCartWheelBanner() {
+  const host = document.getElementById("cart-wheel-prize");
+  if (!host) return;
+  const prize = window.currentWheelPrize;
+  host.innerHTML = prize?.nom
+    ? `<div class="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3">
+         <span class="text-2xl">🎁</span>
+         <div class="text-sm min-w-0">
+           <p class="font-black text-amber-700 uppercase text-[11px] tracking-wide">Lot gagné — offert</p>
+           <p class="font-bold text-gray-900 truncate">${esc(prize.nom)} <span class="text-green-600">· gratuit sur cette commande</span></p>
+         </div>
+       </div>`
+    : "";
+}
+window.updateCartWheelBanner = updateCartWheelBanner;
+
+onAuthStateChanged(auth, (user) => {
+  if (unsubWheelPrize) { unsubWheelPrize(); unsubWheelPrize = null; }
+  window.currentWheelPrize = null;
+  updateCartWheelBanner();
+  if (!user) return;
+  unsubWheelPrize = onSnapshot(doc(db, "users", user.uid), (snap) => {
+    const sid = window.snackConfig?.identity?.id;
+    window.currentWheelPrize = snap.exists() ? (snap.data().pendingWheelReward || {})[sid] || null : null;
+    updateCartWheelBanner();
+  });
+});
 
 window.renderWheelCta = renderWheelCta;
 window.openLoyaltyWheel = openWheel;
