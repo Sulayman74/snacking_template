@@ -4,7 +4,7 @@
 // Partagé par refundOrder (refund initié par l'app) ET le webhook charge.refunded
 // (refund depuis le dashboard Stripe) → un même refundId n'est jamais compté 2×.
 
-const { admin, db } = require("./admin");
+const { db, Timestamp } = require("./admin");
 
 /**
  * Applique un remboursement Stripe au bloc `refund` d'une commande, de façon
@@ -48,7 +48,7 @@ async function applyRefundToOrder(orderRef, { refundId, amount, commissionRefund
           commissionRefunded: Number(commissionRefunded) || 0,
           reason: reason || null,
           source: source || "app",
-          at: admin.firestore.Timestamp.now(),
+          at: Timestamp.now(),
         }]),
       },
       // Statut DÉDIÉ paiement (sans toucher order.statut : machine cuisine/livreur intacte).

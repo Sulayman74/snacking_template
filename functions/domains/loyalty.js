@@ -3,7 +3,7 @@
 // ============================================================================
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { admin, db } = require("../lib/admin");
+const { db, FieldValue } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
 const { sendRewardPush } = require("../lib/fcm");
@@ -103,7 +103,7 @@ exports.redeemLoyaltyReward = onCall({ region: "europe-west1" }, async (request)
       snackId,
       clientUid,
       redeemedBy: request.auth.uid,
-      redeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+      redeemedAt: FieldValue.serverTimestamp(),
       pointsBefore: points,
       rewardsAvailableAfter: newAvailable,
     });
@@ -171,7 +171,7 @@ exports.spinLoyaltyWheel = onCall({ region: "europe-west1" }, async (request) =>
       [`pendingWheelReward.${snackId}`]: {
         productId: won.id,
         nom: won.nom,
-        wonAt: admin.firestore.FieldValue.serverTimestamp(),
+        wonAt: FieldValue.serverTimestamp(),
       },
     });
     tx.set(auditRef, {
@@ -180,7 +180,7 @@ exports.spinLoyaltyWheel = onCall({ region: "europe-west1" }, async (request) =>
       clientUid: uid,
       productId: won.id,
       productNom: won.nom,
-      spunAt: admin.firestore.FieldValue.serverTimestamp(),
+      spunAt: FieldValue.serverTimestamp(),
     });
   });
 
@@ -214,7 +214,7 @@ exports.redeemWheelReward = onCall({ region: "europe-west1" }, async (request) =
     if (!pending) throw new HttpsError("failed-precondition", "Aucun lot de roue en attente pour ce client.");
 
     tx.update(clientRef, {
-      [`pendingWheelReward.${snackId}`]: admin.firestore.FieldValue.delete(),
+      [`pendingWheelReward.${snackId}`]: FieldValue.delete(),
       [`rewardsRedeemed.${snackId}`]: ((d.rewardsRedeemed || {})[snackId] || 0) + 1,
     });
     tx.set(auditRef, {
@@ -224,7 +224,7 @@ exports.redeemWheelReward = onCall({ region: "europe-west1" }, async (request) =
       productId: pending.productId,
       productNom: pending.nom,
       redeemedBy: request.auth.uid,
-      redeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+      redeemedAt: FieldValue.serverTimestamp(),
     });
 
     return { product: pending.nom };

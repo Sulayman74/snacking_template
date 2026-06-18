@@ -3,7 +3,7 @@
 // ============================================================================
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { admin, db } = require("../lib/admin");
+const { db, FieldValue } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
 const { readCapacityConfig, computeKitchenLoad } = require("../lib/kitchen");
@@ -55,7 +55,7 @@ exports.getKitchenLoad = onCall({ region: "europe-west1" }, async (request) => {
   const load = await computeKitchenLoad(snackData, snackId);
   await cacheRef.set({
     ...load,
-    fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+    fetchedAt: FieldValue.serverTimestamp(),
   });
   return { ...load, cached: false };
 });

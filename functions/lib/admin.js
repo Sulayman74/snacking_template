@@ -9,6 +9,10 @@
 // une autre région la précisent au cas par cas via onCall({ region: "europe-west1" }, …).
 
 const admin = require("firebase-admin");
+// API MODULAIRE pour FieldValue/Timestamp : les accesseurs statiques namespaced
+// (admin.firestore.FieldValue / .Timestamp) sont `undefined` dans l'émulateur de
+// fonctions. On réexporte ici les versions modulaires (point unique, DRY).
+const { FieldValue, Timestamp } = require("firebase-admin/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 
 admin.initializeApp();
@@ -16,4 +20,4 @@ setGlobalOptions({ region: "europe-west9" });
 
 const db = admin.firestore();
 
-module.exports = { admin, db };
+module.exports = { admin, db, FieldValue, Timestamp };
