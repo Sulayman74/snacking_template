@@ -463,9 +463,19 @@ exports.finalizeOrder = onCall(
         }
       }
 
-      await userRef.update({
+      // 📊 Dénormalisation RFM (LOT 6) — forward-fill, SANS backfill. increment()
+      // traite un champ absent comme 0 → fonctionne dès la 1ʳᵉ commande. Alimente
+      // le calcul RFM (récence via lastOrderDate, fréquence via orderCount, montant
+      // via totalSpentCents) et les cohortes (firstOrderDate, posé une seule fois).
+      const userUpdate = {
         lastOrderDate: FieldValue.serverTimestamp(),
-      });
+        orderCount: FieldValue.increment(1),
+        totalSpentCents: FieldValue.increment(expectedTotalCents),
+      };
+      if (!userDoc.exists || !userDoc.data().firstOrderDate) {
+        userUpdate.firstOrderDate = FieldValue.serverTimestamp();
+      }
+      await userRef.update(userUpdate);
     } catch (postErr) {
       // Commande déjà créée + payée → on renvoie quand même un succès.
       console.error("finalizeOrder post-création (parrainage/lastOrderDate) échouée :", postErr);
