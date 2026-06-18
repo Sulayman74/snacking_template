@@ -1,6 +1,4 @@
 const { onDocumentUpdated, onDocumentCreated } = require("firebase-functions/v2/firestore");
-const { setGlobalOptions } = require("firebase-functions/v2");
-const { initializeApp } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
 const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const { getStorage } = require("firebase-admin/storage");
@@ -11,44 +9,14 @@ const path = require("path");
 const os = require("os");
 const fs = require("fs");
 const sharp = require("sharp");
-const admin = require("firebase-admin");
 const { getStripe, resolveSubscriptionId } = require("./lib/stripe");
 const { normalizeTvaRate, ventilateTva } = require("./lib/tva");
-
-// Initialisation de Firebase Admin
-admin.initializeApp();
-
-// 🚨 CORRECTION 1 : On branche la base de données !
-const db = admin.firestore();
-
-// Force toutes les fonctions à être hébergées à Paris (europe-west9)
-setGlobalOptions({ region: "europe-west9" });
+const { admin, db } = require("./lib/admin");
+const { V, require_ } = require("./lib/validation");
 
 // ============================================================================
-// 🛡️ HELPERS — VALIDATION & RATE LIMITING
+// 🛡️ HELPERS — RATE LIMITING & MÉTADONNÉES
 // ============================================================================
-
-// --- Validation primitives ---
-const V = {
-  isString: (v) => typeof v === "string",
-  isNonEmptyString: (v, max = 1000) =>
-    typeof v === "string" && v.length > 0 && v.length <= max,
-  isInt: (v) => Number.isInteger(v),
-  isPositiveInt: (v, max = Number.MAX_SAFE_INTEGER) =>
-    Number.isInteger(v) && v > 0 && v <= max,
-  isPlainObject: (v) =>
-    v !== null && typeof v === "object" && !Array.isArray(v),
-  isArray: (v) => Array.isArray(v),
-  isEmail: (v) =>
-    typeof v === "string" && v.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-  // Firestore doc IDs : pas de "/", longueur 1..1500
-  isDocId: (v) =>
-    typeof v === "string" && v.length > 0 && v.length <= 1500 && !v.includes("/"),
-};
-
-function require_(cond, msg) {
-  if (!cond) throw new HttpsError("invalid-argument", msg);
-}
 
 // Limite la profondeur des metadata acceptés par Stripe (clés/valeurs <=500 chars)
 function sanitizeStripeMetadata(metadata) {
