@@ -99,6 +99,9 @@ try {
         enableSmartReview: data.enableSmartReview,
         enableViralShare: data.enableViralShare,
         enableUpsell: data.enableUpsell,
+        // 📊 Instrumentation funnel client (LOT 1). Défaut OFF : seul un tenant
+        // ayant data.enableAnalyticsEvents === true émet les events UI.
+        enableAnalyticsEvents: data.enableAnalyticsEvents,
       },
       // 🔗 Lien plateforme tierce (UberEats/Deliveroo) — FALLBACK quand le snack
       // n'a pas de flotte. La livraison native (ci-dessous) prime si activée.

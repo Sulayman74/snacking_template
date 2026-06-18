@@ -10,6 +10,7 @@ const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
 const { assertCallerIsSnackAdmin } = require("../lib/auth");
 const { computeKitchenLoad } = require("../lib/kitchen");
 const { chunkArray } = require("../lib/util");
+const { emitEvent } = require("../lib/events");
 
 // ============================================================================
 // 🚀 FONCTION 3 : LE ROBOT MARKETING PUSH (CRON JOB)
@@ -119,6 +120,10 @@ exports.processPushCampaigns = onSchedule(
         const userChunks = chunkArray(targetUsers, 500);
         let totalSuccess = 0;
         let totalErrors = 0;
+        // Proxy du taux de désabonnement : nb de jetons FCM invalidés (supprimés)
+        // sur cette campagne. Persisté dans stats → alimente le circuit breaker
+        // anti-fatigue (LOT 5) et le calcul "LTV perdue" du ROI (LOT 8).
+        let totalTokensInvalidated = 0;
 
         const baseUrl = "https://snacking-template.web.app/";
 
@@ -173,6 +178,7 @@ exports.processPushCampaigns = onSchedule(
                   fcmToken: FieldValue.delete(),
                 });
                 needsCleanup = true;
+                totalTokensInvalidated += 1;
               }
             }
           });
@@ -180,7 +186,7 @@ exports.processPushCampaigns = onSchedule(
           if (needsCleanup) {
             await batch.commit();
             console.log(
-              `🧹 Nettoyage effectué pour un lot de jetons invalides.`,
+              `🧹 Nettoyage : ${totalTokensInvalidated} jeton(s) invalide(s) supprimé(s) (cumul campagne).`,
             );
           }
         }
@@ -193,6 +199,19 @@ exports.processPushCampaigns = onSchedule(
           dateEnvoiReelle: FieldValue.serverTimestamp(),
           "stats.envoye": totalSuccess,
           "stats.erreurs": totalErrors,
+          "stats.tokensInvalidated": totalTokensInvalidated,
+        });
+
+        // 📊 Event `push_sent` (1 par campagne, write-time) → attribution/ROI.
+        await emitEvent({
+          snackId: campagne.snackId,
+          type: "push_sent",
+          props: {
+            campaignId: doc.id,
+            cible: campagne.cible || "all",
+            count: totalSuccess,
+            tokensInvalidated: totalTokensInvalidated,
+          },
         });
 
         console.log(
@@ -345,6 +364,12 @@ exports.trackPushClick = onRequest({ region: "europe-west9", cors: true }, async
       const snap = await ref.get();
       if (snap.exists) {
         await ref.update({ "stats.clics": FieldValue.increment(1) });
+        // 📊 Event `push_clicked` → attribution push→commande (LOT 8).
+        await emitEvent({
+          snackId: snap.data().snackId,
+          type: "push_clicked",
+          props: { campaignId },
+        });
       }
     }
   } catch (e) {
