@@ -11,6 +11,12 @@ const { assertCallerIsSnackAdmin } = require("../lib/auth");
 const { computeKitchenLoad } = require("../lib/kitchen");
 const { chunkArray } = require("../lib/util");
 const { emitEvent } = require("../lib/events");
+const {
+  isQuietHours,
+  isOptedOut,
+  breakerTripped,
+  isGovernanceEnabled,
+} = require("../lib/pushGovernance");
 
 // ============================================================================
 // 🚀 FONCTION 3 : LE ROBOT MARKETING PUSH (CRON JOB)
@@ -51,6 +57,17 @@ exports.processPushCampaigns = onSchedule(
       if (snapshot.empty) return null;
 
       for (const doc of snapshot.docs) {
+        // 🛡️ Gouvernance (LOT 5) : config tenant lue AVANT le claim, pour pouvoir
+        // DIFFÉRER une campagne en silence sans la réserver (elle reste en file et
+        // repart au prochain cron une fois la fenêtre de silence passée).
+        const snackDoc = await db.collection("snacks").doc(doc.data().snackId).get();
+        const snackData = snackDoc.exists ? snackDoc.data() : {};
+        const govOn = isGovernanceEnabled(snackData);
+        if (govOn && isQuietHours(snackData)) {
+          console.log(`🌙 Campagne ${doc.id} différée (quiet hours) — laissée en file.`);
+          continue;
+        }
+
         // 🔒 Claim atomique : on réserve la campagne (en_attente → en_cours) AVANT
         // tout envoi. Si un autre run l'a déjà prise (le CAS échoue) → on l'ignore.
         // Anti double-envoi si deux exécutions du cron se chevauchent (run > 5 min).
@@ -84,6 +101,9 @@ exports.processPushCampaigns = onSchedule(
 
         usersSnapshot.forEach((userDoc) => {
           const user = userDoc.data();
+          // 🛡️ Opt-out marketing : TOUJOURS respecté (droit utilisateur), même flag
+          // de gouvernance OFF. Le transactionnel n'est pas concerné (autre chemin).
+          if (isOptedOut(user)) return;
           const lastOrder = user.lastOrderDate;
 
           let isMatch = false;
@@ -124,6 +144,7 @@ exports.processPushCampaigns = onSchedule(
         // sur cette campagne. Persisté dans stats → alimente le circuit breaker
         // anti-fatigue (LOT 5) et le calcul "LTV perdue" du ROI (LOT 8).
         let totalTokensInvalidated = 0;
+        let breakerHit = false; // circuit breaker (LOT 5) : trop de jetons invalides
 
         const baseUrl = "https://snacking-template.web.app/";
 
@@ -189,6 +210,17 @@ exports.processPushCampaigns = onSchedule(
               `🧹 Nettoyage : ${totalTokensInvalidated} jeton(s) invalide(s) supprimé(s) (cumul campagne).`,
             );
           }
+
+          // 🛡️ Circuit breaker (LOT 5) : sur un échantillon significatif, si le taux
+          // de jetons invalides dépasse le seuil, on COUPE les envois restants (inutile
+          // de cramer le reste de la base avec un canal manifestement pourri).
+          if (govOn && breakerTripped(totalTokensInvalidated, totalSuccess + totalErrors, snackData)) {
+            breakerHit = true;
+            console.warn(
+              `🛑 Circuit breaker campagne ${doc.id} : ${totalTokensInvalidated}/${totalSuccess + totalErrors} jetons invalides → arrêt des envois restants.`,
+            );
+            break;
+          }
         }
 
         // Finalisation de la campagne en base. ⚠️ Chemins POINTÉS pour ne PAS
@@ -200,6 +232,7 @@ exports.processPushCampaigns = onSchedule(
           "stats.envoye": totalSuccess,
           "stats.erreurs": totalErrors,
           "stats.tokensInvalidated": totalTokensInvalidated,
+          "stats.breakerTripped": breakerHit,
         });
 
         // 📊 Event `push_sent` (1 par campagne, write-time) → attribution/ROI.
