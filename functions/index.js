@@ -13,6 +13,10 @@ const { getStripe, resolveSubscriptionId } = require("./lib/stripe");
 const { normalizeTvaRate, ventilateTva } = require("./lib/tva");
 const { admin, db } = require("./lib/admin");
 const { V, require_ } = require("./lib/validation");
+const { enforceRateLimit, callerKey } = require("./lib/rateLimit");
+const { isInvalidFcmTokenError, cleanupInvalidFcmToken, sendRewardPush } = require("./lib/fcm");
+const { MAX_LOYALTY_POINTS, DEFAULT_LOYALTY_COOLDOWN_MS, resolveLoyaltyCooldownMs, creditLoyaltyPoints } = require("./lib/loyalty");
+const { assertCallerIsSnackAdmin } = require("./lib/auth");
 
 // ============================================================================
 // 🛡️ HELPERS — RATE LIMITING & MÉTADONNÉES
@@ -31,192 +35,6 @@ function sanitizeStripeMetadata(metadata) {
     out[k] = value;
   }
   return out;
-}
-
-// --- Rate limiting (sliding window via Firestore transaction) ---
-// Stocke un compteur + un début de fenêtre. Atomique — pas de race condition.
-async function enforceRateLimit({ key, max, windowMs }) {
-  const ref = db.collection("rateLimits").doc(key);
-  const now = Date.now();
-
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const data = snap.exists ? snap.data() : null;
-    const windowStart = data?.windowStart?.toMillis?.() ?? 0;
-    const count = data?.count ?? 0;
-
-    if (!data || now - windowStart > windowMs) {
-      tx.set(ref, {
-        count: 1,
-        windowStart: admin.firestore.Timestamp.fromMillis(now),
-      });
-      return;
-    }
-
-    if (count >= max) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Trop de tentatives. Réessayez dans quelques instants."
-      );
-    }
-
-    tx.update(ref, { count: count + 1 });
-  });
-}
-
-// Détecte un token FCM devenu invalide (PWA réinstallée, désinstallation, etc.)
-function isInvalidFcmTokenError(error) {
-  const code = error?.code || error?.errorInfo?.code;
-  return (
-    code === "messaging/registration-token-not-registered" ||
-    code === "messaging/invalid-registration-token"
-  );
-}
-
-// Nettoie le fcmToken Firestore si l'erreur indique un token mort.
-// Retourne true si nettoyage effectué.
-async function cleanupInvalidFcmToken(userId, error) {
-  if (!isInvalidFcmTokenError(error)) return false;
-  try {
-    await db.collection("users").doc(userId).update({
-      fcmToken: admin.firestore.FieldValue.delete(),
-    });
-    console.log(`🧹 Token FCM invalide nettoyé pour user ${userId}`);
-    return true;
-  } catch (e) {
-    console.error(`❌ Échec cleanup token user ${userId}:`, e);
-    return false;
-  }
-}
-
-// Palier fidélité partagé (scan boutique ET commande payée). À MAX → menu offert.
-const MAX_LOYALTY_POINTS = 10;
-
-// 🛡️ ANTI-DOUBLON (F3) — fenêtre pendant laquelle un client ne peut gagner qu'UN
-// point par snack, TOUS CANAUX confondus (scan boutique + commande en ligne). Évite
-// le double crédit pour un même achat (ex. commande en ligne puis scan du QR au
-// comptoir). Configurable par snack via loyalty.creditCooldownMin (0 = désactivé).
-const DEFAULT_LOYALTY_COOLDOWN_MS = 10 * 60_000; // 10 min
-
-/**
- * Résout la fenêtre anti-doublon (ms) d'un snack : loyalty.creditCooldownMin (minutes,
- * 0 désactive) sinon le défaut. Lue UNE fois par l'appelant et passée au helper, pour
- * que scan et commande partagent EXACTEMENT le même cooldown (unification F3).
- * @param {Object} snackData - Document snacks/{snackId}.
- * @returns {number} Durée du cooldown en millisecondes (>= 0).
- */
-function resolveLoyaltyCooldownMs(snackData) {
-  const min = Number(snackData?.loyalty?.creditCooldownMin);
-  if (Number.isFinite(min) && min >= 0) return Math.round(min * 60_000);
-  return DEFAULT_LOYALTY_COOLDOWN_MS;
-}
-
-/**
- * Crédite n point(s) de fidélité (EARNING) sur pointsBySnack.{snackId}, dans une transaction.
- *
- * Modèle "report + banque" (LOT F2 — traçabilité fidélité) :
- *   - Le compteur pointsBySnack.{snackId} ne représente QUE la progression 0..MAX-1.
- *   - Au franchissement du palier, on N'écrase PAS le point gagné : le total est
- *     reporté (`total % MAX`) et chaque palier complété banque une récompense durable
- *     dans rewardsAvailable.{snackId} (`floor(total / MAX)`). Plus aucun point perdu.
- *   - La récompense est PERSISTÉE (banque) puis consommée par redeemLoyaltyReward.
- *
- * Anti-doublon (LOT F3) : si un crédit a déjà eu lieu sur la fenêtre `cooldownMs`
- * (loyaltyLastCredit.{snackId}, écrit ICI à chaque crédit → unifié scan + commande),
- * on NE crédite PAS et on renvoie `{skipped:true}` (l'appelant décide : le scan lève
- * une erreur lisible, la commande payée ignore silencieusement). N'émet PAS le push
- * (effet de bord après commit). Read-Old/Write-New : champs absents traités comme 0.
- *
- * @param {FirebaseFirestore.Transaction} tx - Transaction Firestore en cours.
- * @param {FirebaseFirestore.DocumentReference} clientRef - Réf. du doc users/{uid}.
- * @param {string} snackId - Clé de partitionnement multi-tenant.
- * @param {number} [n=1] - Nombre de points à créditer (1 en pratique : scan & commande).
- * @param {number} [cooldownMs=DEFAULT_LOYALTY_COOLDOWN_MS] - Fenêtre anti-doublon (0 = off).
- * @returns {Promise<{skipped:boolean, points:number, max:number, reward:boolean, earned:number, rewardsAvailable:number, fcmToken:(string|null)}>}
- * @throws {HttpsError} not-found si le doc client n'existe pas.
- */
-async function creditLoyaltyPoints(tx, clientRef, snackId, n = 1, cooldownMs = DEFAULT_LOYALTY_COOLDOWN_MS) {
-  const snap = await tx.get(clientRef);
-  if (!snap.exists) throw new HttpsError("not-found", "Client introuvable.");
-  const d = snap.data();
-  const current = (d.pointsBySnack || {})[snackId] || 0;
-  const availableBefore = (d.rewardsAvailable || {})[snackId] || 0;
-
-  // 🛡️ Cooldown anti-doublon (F3) — tous canaux confondus via loyaltyLastCredit.
-  const lastCredit = (d.loyaltyLastCredit || {})[snackId];
-  const lastMs = lastCredit && lastCredit.toMillis ? lastCredit.toMillis() : 0;
-  if (cooldownMs > 0 && lastMs && Date.now() - lastMs < cooldownMs) {
-    return {
-      skipped: true,
-      points: current,
-      max: MAX_LOYALTY_POINTS,
-      reward: false,
-      earned: 0,
-      rewardsAvailable: availableBefore,
-      fcmToken: d.fcmToken || null,
-    };
-  }
-
-  // Report : le point gagné compte toujours, même au franchissement du palier.
-  const total = current + n;
-  const earned = Math.floor(total / MAX_LOYALTY_POINTS); // récompenses banquées (0 ou 1 en pratique)
-  const newPoints = total % MAX_LOYALTY_POINTS;          // progression reportée 0..MAX-1
-  const newAvailable = availableBefore + earned;
-
-  const update = {
-    [`pointsBySnack.${snackId}`]: newPoints,
-    // Horodatage unifié du dernier crédit (anti-doublon F3, scan + commande).
-    [`loyaltyLastCredit.${snackId}`]: admin.firestore.FieldValue.serverTimestamp(),
-  };
-  if (earned > 0) update[`rewardsAvailable.${snackId}`] = newAvailable;
-  tx.update(clientRef, update);
-
-  return {
-    skipped: false,
-    points: newPoints,
-    max: MAX_LOYALTY_POINTS,
-    reward: earned > 0,
-    earned,
-    rewardsAvailable: newAvailable,
-    fcmToken: d.fcmToken || null,
-  };
-}
-
-/**
- * Émet le push de palier « menu offert ». À appeler APRÈS le commit de la transaction
- * (jamais dans une transaction). No-op si le client n'a pas de token. Nettoie un token mort.
- * @param {string} userId - uid du client (pour le cleanup du token).
- * @param {string|null} fcmToken - Token FCM du client.
- * @param {string} snackId - Snack à l'origine de la récompense (transmis au front).
- * @returns {Promise<void>}
- */
-async function sendRewardPush(userId, fcmToken, snackId) {
-  if (!fcmToken) return; // crédit OK sans token → pas de crash
-  try {
-    await getMessaging().send({
-      notification: {
-        title: "🎁 Menu offert !",
-        body: "Bravo ! Tu as atteint le palier fidélité. Ton prochain menu est offert 🍟",
-      },
-      data: { type: "REWARD_UNLOCKED", snackId: String(snackId) },
-      token: fcmToken,
-    });
-  } catch (error) {
-    await cleanupInvalidFcmToken(userId, error);
-  }
-}
-
-// Identifie un appelant : uid si auth, sinon hash IP (X-Forwarded-For)
-function callerKey(request, action) {
-  if (request.auth?.uid) return `${action}_uid_${request.auth.uid}`;
-  const xff = request.rawRequest?.headers?.["x-forwarded-for"];
-  const ip =
-    (typeof xff === "string" ? xff.split(",")[0].trim() : null) ||
-    request.rawRequest?.ip ||
-    "unknown";
-  // On normalise l'IP en clé Firestore safe
-  const safeIp = ip.replace(/[^a-zA-Z0-9.:_-]/g, "_").slice(0, 60);
-  return `${action}_ip_${safeIp}`;
 }
 
 // --- Géo & ETA livraison (Haversine, sans dépendance) -----------------------
@@ -240,16 +58,6 @@ function haversineKm(a, b) {
     Math.sin(dLat / 2) ** 2 +
     Math.sin(dLng / 2) ** 2 * Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat));
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
-}
-
-// Vérifie que l'appelant est admin du snack (ou superadmin). Rôles en Firestore
-// (cohérent avec firestore.rules : getAuthUser()), PAS en custom claims.
-async function assertCallerIsSnackAdmin(request, snackId) {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Authentification requise.");
-  const callerDoc = await db.collection("users").doc(request.auth.uid).get();
-  const c = callerDoc.exists ? callerDoc.data() : null;
-  const ok = c && (c.role === "superadmin" || (c.role === "admin" && c.snackId === snackId));
-  if (!ok) throw new HttpsError("permission-denied", "Réservé à l'administrateur du snack.");
 }
 
 // Palier de géofence franchi (mètres) parmi des seuils décroissants.
