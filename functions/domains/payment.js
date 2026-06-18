@@ -355,12 +355,20 @@ exports.finalizeOrder = onCall(
     // Ventilation TVA (module pur) : lignes articles + frais livraison (10 %).
     const tvaBreakdown = ventilateTva(lines, fraisCents);
 
+    // 🛒 Guest checkout (LOT 2) : `isGuest` dérivé du TOKEN auth (non falsifiable
+    // par le client) ; `contactKey` = email normalisé → clé de réconciliation
+    // d'une commande invité vers un compte a posteriori (RFM/fidélité, LOT 7).
+    const isGuest = request.auth?.token?.firebase?.sign_in_provider === "anonymous";
+    const contactKey = clientEmail.trim().toLowerCase();
+
     // 5. Créer la commande dans Firestore (uniquement si tout est vérifié)
     const newOrder = {
       snackId,
       userId: uid,
       clientNom: clientNom || clientEmail.split("@")[0],
       clientEmail,
+      contactKey,
+      isGuest,
       secretCode: generateSecretCode(6),
       date: FieldValue.serverTimestamp(),
       // Collect : on attend l'arrivée du client avant de cuisiner.
