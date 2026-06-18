@@ -4,8 +4,9 @@
 
 const { onRequest } = require("firebase-functions/v2/https");
 const { getStripe, resolveSubscriptionId } = require("../lib/stripe");
-const { db, FieldValue } = require("../lib/admin");
+const { admin, db } = require("../lib/admin");
 const { applyRefundToOrder } = require("../lib/refund");
+const { registerApplePayDomains } = require("../lib/wallets");
 
 // ============================================================================
 // 🤖 FONCTION 7 : STRIPE WEBHOOK (SAAS BILLING B2B)
@@ -53,7 +54,7 @@ exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, re
     try {
         await eventRef.create({
             type: event.type,
-            receivedAt: FieldValue.serverTimestamp(),
+            receivedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
     } catch (e) {
         if (e.code === 6 || e.code === "already-exists") {
@@ -104,12 +105,26 @@ exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, re
             const account = event.data.object;
             const snap = await db.collection("snacks").where("stripeAccountId", "==", account.id).limit(1).get();
             if (!snap.empty) {
-                await snap.docs[0].ref.update({
+                const doc = snap.docs[0];
+                // Transition false→true des charges : on enregistre le domaine Apple Pay
+                // SUR CE COMPTE CONNECTÉ au tout premier passage à charges_enabled.
+                // On lit l'ancienne valeur AVANT update pour ne déclencher l'enregistrement
+                // qu'une fois (l'API paymentMethodDomains.create est de toute façon
+                // idempotente — cf. lib/wallets — ce garde-fou évite juste des appels inutiles
+                // à chaque account.updated d'un compte déjà actif).
+                const wasChargesEnabled = !!(doc.data() || {}).stripeChargesEnabled;
+                await doc.ref.update({
                     stripeChargesEnabled: !!account.charges_enabled,
                     stripeDetailsSubmitted: !!account.details_submitted,
                     stripePayoutsEnabled: !!account.payouts_enabled,
                 });
-                console.log(`🔄 account.updated: snack ${snap.docs[0].id} charges_enabled=${account.charges_enabled}`);
+                console.log(`🔄 account.updated: snack ${doc.id} charges_enabled=${account.charges_enabled}`);
+
+                if (account.charges_enabled && !wasChargesEnabled) {
+                    // Best-effort : registerApplePayDomains ne lève jamais (try/catch interne),
+                    // donc cet appel ne peut pas faire échouer le webhook.
+                    await registerApplePayDomains(stripe, account.id);
+                }
             }
         }
         else if (event.type === 'charge.refunded') {
