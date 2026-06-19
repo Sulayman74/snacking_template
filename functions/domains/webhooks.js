@@ -4,7 +4,7 @@
 
 const { onRequest } = require("firebase-functions/v2/https");
 const { getStripe, resolveSubscriptionId } = require("../lib/stripe");
-const { admin, db } = require("../lib/admin");
+const { db, FieldValue } = require("../lib/admin");
 const { applyRefundToOrder } = require("../lib/refund");
 const { registerApplePayDomains } = require("../lib/wallets");
 
@@ -54,7 +54,7 @@ exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, re
     try {
         await eventRef.create({
             type: event.type,
-            receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+            receivedAt: FieldValue.serverTimestamp(),
         });
     } catch (e) {
         if (e.code === 6 || e.code === "already-exists") {
