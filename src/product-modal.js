@@ -231,7 +231,7 @@ class ProductModalUI {
                 const safeNom = escapeHTML(d.nom || "");
                 return `
                 <label class="relative cursor-pointer">
-                    <input type="radio" name="boisson" value="${safeNom}" ${i === 0 ? "checked" : ""} class="sr-only peer">
+                    <input type="radio" name="boisson" value="${safeNom}" ${i === 0 ? "checked" : ""} class="sr-only peer" onchange="window.refreshAddState?.()">
                     <div class="p-3 border-2 border-line rounded-xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex items-center gap-2">
                         <i data-lucide="glass-water" class="text-accent"></i>
                         <span class="font-bold text-text text-sm">${safeNom}</span>
@@ -239,6 +239,7 @@ class ProductModalUI {
                 </label>
             `;}).join("")}
         </div>
+        <p id="drink-hint" class="hidden mt-2 text-sm font-medium text-danger">Aucune boisson disponible pour ce menu — choisissez « Seul ».</p>
       </fieldset>`;
     }
 
@@ -412,8 +413,27 @@ class ProductModalUI {
     };
   }
 
+  /**
+   * Validation préventive : désactive le bouton « Ajouter » + affiche un hint
+   * tant qu'un menu est choisi SANS boisson sélectionnable (cas snack avec menu
+   * activé mais aucune boisson configurée). Évite le toast d'erreur au clic.
+   * Quand des boissons existent, la 1ʳᵉ est pré-cochée → jamais bloquant.
+   */
+  refreshAddState() {
+    const btn = document.getElementById("modal-cta");
+    if (!btn) return;
+    const isMenu = document.querySelector('input[name="formule"]:checked')?.value === "menu";
+    const hasDrink = !!document.querySelector('input[name="boisson"]:checked');
+    const blocked = isMenu && !hasDrink;
+    btn.disabled = blocked;
+    btn.classList.toggle("opacity-50", blocked);
+    btn.classList.toggle("cursor-not-allowed", blocked);
+    document.getElementById("drink-hint")?.classList.toggle("hidden", !blocked);
+  }
+
   confirmAddToCart() {
     const item = this.#buildCartItem();
+    // Backstop défensif (le bouton est déjà désactivé en amont via refreshAddState).
     if (item.formule === "menu" && !item.boisson) return showToast("Choisissez une boisson", "error");
 
     store.addToCart(item);
@@ -452,7 +472,9 @@ window.toggleDrinkSection = () => {
     const prix = productModalUI.currentProduct.prixBase + (isMenu ? productModalUI.currentProduct.prixMenu : 0);
     if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
     productModalUI.refreshFavButton();
+    productModalUI.refreshAddState();
 };
+window.refreshAddState = () => productModalUI.refreshAddState();
 window.checkSauceLimit = (e, max) => {
     const checked = document.querySelectorAll(".sauce-checkbox:checked");
     const counter = document.getElementById("sauce-counter-ui");
