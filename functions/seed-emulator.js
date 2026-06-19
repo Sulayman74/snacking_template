@@ -10,6 +10,7 @@
  * les docs sont écrits en merge / id déterministe).
  */
 const admin = require("firebase-admin");
+const { Timestamp } = require("firebase-admin/firestore");
 
 const SNACK_ID = process.env.SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06"; // = snack par défaut du dev server
 const TEST_EMAIL = "robot@test.com";
@@ -86,7 +87,7 @@ async function seed() {
     clientNom: "Robot Test",
     clientEmail: TEST_EMAIL,
     secretCode: "E2E001",
-    date: admin.firestore.Timestamp.fromDate(new Date("2026-01-01T12:00:00Z")),
+    date: Timestamp.fromDate(new Date("2026-01-01T12:00:00Z")),
     statut: "livree",
     items: [
       { id: "e2e_1-menu--", productId: "e2e_1", nom: "Menu Frites Test", prix: 6, image: "", formule: "menu", boisson: "Coca", taille: null, sauces: [], quantity: 2 },

@@ -5,7 +5,7 @@
 // action) → atomique, pas de race. callerKey() construit la clé d'identification.
 
 const { HttpsError } = require("firebase-functions/v2/https");
-const { admin, db } = require("./admin");
+const { db, Timestamp } = require("./admin");
 
 // --- Rate limiting (sliding window via Firestore transaction) ---
 // Stocke un compteur + un début de fenêtre. Atomique — pas de race condition.
@@ -22,7 +22,7 @@ async function enforceRateLimit({ key, max, windowMs }) {
     if (!data || now - windowStart > windowMs) {
       tx.set(ref, {
         count: 1,
-        windowStart: admin.firestore.Timestamp.fromMillis(now),
+        windowStart: Timestamp.fromMillis(now),
       });
       return;
     }

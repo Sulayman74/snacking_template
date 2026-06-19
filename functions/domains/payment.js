@@ -6,7 +6,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getMessaging } = require("firebase-admin/messaging");
 const { getStripe } = require("../lib/stripe");
 const { ventilateTva } = require("../lib/tva");
-const { admin, db } = require("../lib/admin");
+const { db, FieldValue, Timestamp } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
 const { sendRewardPush } = require("../lib/fcm");
@@ -334,8 +334,8 @@ exports.finalizeOrder = onCall(
       prepMin,
       deliveryMin,
       totalMin,
-      computedAt: admin.firestore.Timestamp.now(),
-      readyAt: admin.firestore.Timestamp.fromMillis(Date.now() + totalMin * 60000),
+      computedAt: Timestamp.now(),
+      readyAt: Timestamp.fromMillis(Date.now() + totalMin * 60000),
     };
 
     // 💶 SOCLE COMPTA (LOT A) — montants financiers persistés depuis des sources
@@ -361,7 +361,7 @@ exports.finalizeOrder = onCall(
       clientNom: clientNom || clientEmail.split("@")[0],
       clientEmail,
       secretCode: generateSecretCode(6),
-      date: admin.firestore.FieldValue.serverTimestamp(),
+      date: FieldValue.serverTimestamp(),
       // Collect : on attend l'arrivée du client avant de cuisiner.
       // Livraison : la cuisine démarre immédiatement (pas d'arrivée client).
       statut: orderMode === "delivery" ? "nouvelle" : "en_attente_client",
@@ -418,7 +418,7 @@ exports.finalizeOrder = onCall(
         if (referrerDoc.exists) {
           const fieldPath = `pointsBySnack.${snackId}`;
           await referrerRef.update({
-            [fieldPath]: admin.firestore.FieldValue.increment(2)
+            [fieldPath]: FieldValue.increment(2)
           });
 
           // Notification au parrain
@@ -440,7 +440,7 @@ exports.finalizeOrder = onCall(
       }
 
       await userRef.update({
-        lastOrderDate: admin.firestore.FieldValue.serverTimestamp(),
+        lastOrderDate: FieldValue.serverTimestamp(),
       });
     } catch (postErr) {
       // Commande déjà créée + payée → on renvoie quand même un succès.
@@ -481,8 +481,8 @@ exports.finalizeOrder = onCall(
           wheelPrize: { productId: pendingWheel.productId, nom: pendingWheel.nom || "Lot" },
         });
         await wheelUserRef.update({
-          [`pendingWheelReward.${snackId}`]: admin.firestore.FieldValue.delete(),
-          [`rewardsRedeemed.${snackId}`]: admin.firestore.FieldValue.increment(1),
+          [`pendingWheelReward.${snackId}`]: FieldValue.delete(),
+          [`rewardsRedeemed.${snackId}`]: FieldValue.increment(1),
         });
         await db.collection("loyaltyRewards").add({
           type: "wheel-redeem-order",
@@ -491,7 +491,7 @@ exports.finalizeOrder = onCall(
           productId: pendingWheel.productId,
           productNom: pendingWheel.nom || "Lot",
           orderId,
-          redeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+          redeemedAt: FieldValue.serverTimestamp(),
         });
       }
     } catch (wheelErr) {
@@ -517,9 +517,9 @@ exports.finalizeOrder = onCall(
         upsellBatch.set(
           statRef,
           {
-            accepted: admin.firestore.FieldValue.increment(qty),
-            revenue: admin.firestore.FieldValue.increment(prix * qty),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            accepted: FieldValue.increment(qty),
+            revenue: FieldValue.increment(prix * qty),
+            updatedAt: FieldValue.serverTimestamp(),
           },
           { merge: true }
         );

@@ -3,7 +3,7 @@
 // ============================================================================
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { admin, db } = require("../lib/admin");
+const { admin, db, FieldValue } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
 const { assertCallerIsSnackAdmin } = require("../lib/auth");
@@ -58,7 +58,7 @@ exports.createDriver = onCall({ region: "europe-west1" }, async (request) => {
     actif: true,
     points: 0,
     createdBy: request.auth.uid,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   return { uid: userRecord.uid };
@@ -113,7 +113,7 @@ exports.createSnackAdmin = onCall({ region: "europe-west1" }, async (request) =>
     email,
     pointsBySnack: {},
     createdBy: request.auth.uid,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   return { uid: userRecord.uid, email, tempPassword };

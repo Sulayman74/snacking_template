@@ -7,7 +7,7 @@
 // commit par l'appelant (cf. lib/fcm sendRewardPush).
 
 const { HttpsError } = require("firebase-functions/v2/https");
-const { admin } = require("./admin");
+const { FieldValue } = require("./admin");
 
 // Palier fidélité partagé (scan boutique ET commande payée). À MAX → menu offert.
 const MAX_LOYALTY_POINTS = 10;
@@ -86,7 +86,7 @@ async function creditLoyaltyPoints(tx, clientRef, snackId, n = 1, cooldownMs = D
   const update = {
     [`pointsBySnack.${snackId}`]: newPoints,
     // Horodatage unifié du dernier crédit (anti-doublon F3, scan + commande).
-    [`loyaltyLastCredit.${snackId}`]: admin.firestore.FieldValue.serverTimestamp(),
+    [`loyaltyLastCredit.${snackId}`]: FieldValue.serverTimestamp(),
   };
   if (earned > 0) update[`rewardsAvailable.${snackId}`] = newAvailable;
   tx.update(clientRef, update);

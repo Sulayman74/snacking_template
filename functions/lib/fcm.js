@@ -5,7 +5,7 @@
 // (cleanupInvalidFcmToken). No-op silencieux si pas de token (le crédit reste OK).
 
 const { getMessaging } = require("firebase-admin/messaging");
-const { admin, db } = require("./admin");
+const { db, FieldValue } = require("./admin");
 
 // Détecte un token FCM devenu invalide (PWA réinstallée, désinstallation, etc.)
 function isInvalidFcmTokenError(error) {
@@ -22,7 +22,7 @@ async function cleanupInvalidFcmToken(userId, error) {
   if (!isInvalidFcmTokenError(error)) return false;
   try {
     await db.collection("users").doc(userId).update({
-      fcmToken: admin.firestore.FieldValue.delete(),
+      fcmToken: FieldValue.delete(),
     });
     console.log(`🧹 Token FCM invalide nettoyé pour user ${userId}`);
     return true;

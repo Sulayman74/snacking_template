@@ -4,7 +4,7 @@
 
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { admin, db } = require("../lib/admin");
+const { db, FieldValue, Timestamp } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
 const { assertCallerIsSnackAdmin } = require("../lib/auth");
@@ -17,11 +17,11 @@ const { chunkArray } = require("../lib/util");
 exports.processPushCampaigns = onSchedule(
   { schedule: "every 5 minutes", region: "europe-west1" },
   async (_event) => {
-    const now = admin.firestore.Timestamp.now();
+    const now = Timestamp.now();
 
     const thirtyDaysAgoDate = new Date();
     thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
-    const thirtyDaysAgo = admin.firestore.Timestamp.fromDate(thirtyDaysAgoDate);
+    const thirtyDaysAgo = Timestamp.fromDate(thirtyDaysAgoDate);
 
     try {
       // 🩹 Récupération des campagnes ORPHELINES : si un run a claim une campagne
@@ -62,7 +62,7 @@ exports.processPushCampaigns = onSchedule(
             // claimedAt horodate le claim → permet la récupération des orphelines.
             tx.update(doc.ref, {
               statut: "en_cours",
-              claimedAt: admin.firestore.FieldValue.serverTimestamp(),
+              claimedAt: FieldValue.serverTimestamp(),
             });
           });
         } catch (claimErr) {
@@ -106,7 +106,7 @@ exports.processPushCampaigns = onSchedule(
         if (targetUsers.length === 0) {
           await doc.ref.update({
             statut: "annulee_sans_cible",
-            dateEnvoiReelle: admin.firestore.FieldValue.serverTimestamp(),
+            dateEnvoiReelle: FieldValue.serverTimestamp(),
             notes: "Ciblage n'a retourné aucun client",
           });
           console.log(
@@ -170,7 +170,7 @@ exports.processPushCampaigns = onSchedule(
               ) {
                 const userId = chunk[idx].uid; // Grâce à l'index, on retrouve le bon UID
                 batch.update(db.collection("users").doc(userId), {
-                  fcmToken: admin.firestore.FieldValue.delete(),
+                  fcmToken: FieldValue.delete(),
                 });
                 needsCleanup = true;
               }
@@ -190,7 +190,7 @@ exports.processPushCampaigns = onSchedule(
         // quand les clients cliquent sur la notification).
         await doc.ref.update({
           statut: "envoyee",
-          dateEnvoiReelle: admin.firestore.FieldValue.serverTimestamp(),
+          dateEnvoiReelle: FieldValue.serverTimestamp(),
           "stats.envoye": totalSuccess,
           "stats.erreurs": totalErrors,
         });
@@ -251,8 +251,8 @@ exports.pushFlashOffer = onCall({ region: "europe-west1" }, async (request) => {
     actionUrl: null,
     imageUrl: null,
     statut: "en_attente",
-    dateEnvoiPrevue: admin.firestore.Timestamp.now(),
-    dateCreation: admin.firestore.FieldValue.serverTimestamp(),
+    dateEnvoiPrevue: Timestamp.now(),
+    dateCreation: FieldValue.serverTimestamp(),
     source: "flash_offer",
     flashTtlMin: ttlMin,
     stats: { envoye: 0, clics: 0 },
@@ -299,7 +299,7 @@ exports.schedulePushCampaign = onCall({ region: "europe-west1" }, async (request
   // 🛡️ QUOTA SERVEUR — 2 campagnes / mois calendaire / snack (autorité serveur,
   // miroir de getPushEligibility côté client mais NON contournable).
   const now = new Date();
-  const monthStart = admin.firestore.Timestamp.fromDate(
+  const monthStart = Timestamp.fromDate(
     new Date(now.getFullYear(), now.getMonth(), 1)
   );
   const monthlyAgg = await db
@@ -321,8 +321,8 @@ exports.schedulePushCampaign = onCall({ region: "europe-west1" }, async (request
     actionUrl: actionUrl || null,
     imageUrl: imageUrl || null,
     statut: "en_attente",
-    dateEnvoiPrevue: admin.firestore.Timestamp.fromDate(envoiDate),
-    dateCreation: admin.firestore.FieldValue.serverTimestamp(),
+    dateEnvoiPrevue: Timestamp.fromDate(envoiDate),
+    dateCreation: FieldValue.serverTimestamp(),
     source: "scheduled",
     stats: { envoye: 0, clics: 0 },
   });
@@ -344,7 +344,7 @@ exports.trackPushClick = onRequest({ region: "europe-west9", cors: true }, async
       const ref = db.collection("campagnes_push").doc(campaignId);
       const snap = await ref.get();
       if (snap.exists) {
-        await ref.update({ "stats.clics": admin.firestore.FieldValue.increment(1) });
+        await ref.update({ "stats.clics": FieldValue.increment(1) });
       }
     }
   } catch (e) {
@@ -393,8 +393,8 @@ exports.trackUpsellShown = onCall({ region: "europe-west1" }, async (request) =>
     batch.set(
       statRef,
       {
-        shown: admin.firestore.FieldValue.increment(1),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        shown: FieldValue.increment(1),
+        updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );

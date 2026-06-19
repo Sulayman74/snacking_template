@@ -26,7 +26,7 @@
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
-const { admin, db } = require("../lib/admin");
+const { db, FieldValue } = require("../lib/admin");
 
 const FOOTBALL_API_BASE = "https://api.football-data.org/v4";
 const FOOTBALL_CACHE_DOC = "football_matches";
@@ -138,7 +138,7 @@ exports.getUpcomingFootballEvents = onCall(
 
       await cacheRef.set({
         matches: filtered,
-        fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+        fetchedAt: FieldValue.serverTimestamp(),
         upstreamRemainingMinute: remaining,
       });
 
