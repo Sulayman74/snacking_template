@@ -121,6 +121,14 @@ async function processCheckout() {
   if (window.cart.length === 0)
     return window.showToast("Votre panier est vide", "error");
 
+  // 📊 Funnel : début de checkout (no-op si flag analytics tenant OFF). Émis ici,
+  // après le garde-fou panier non vide, AVANT l'upsell/Stripe → mesure le drop-off
+  // checkout→purchase (et alimente la détection de panier abandonné, LOT 7).
+  window.logEvent?.("begin_checkout", {
+    itemCount: window.cart.length,
+    amountCents: Math.round((window.getCartTotal?.() || 0) * 100),
+  });
+
   // 🚚 Mode courant (collect par défaut → comportement legacy strictement inchangé).
   const delivery = window.store?.state?.delivery || { mode: "collect" };
   const isDelivery = delivery.mode === "delivery";

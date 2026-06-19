@@ -50,6 +50,9 @@ class ProductModalUI {
     this.#renderContent(item, cfg);
     this.#show();
     this.#setupFocusTrap();
+
+    // 📊 Funnel : vue produit (no-op si flag analytics tenant OFF).
+    window.logEvent?.("view_product", { productId: item.id });
   }
 
   #renderContent(item, cfg) {
@@ -414,6 +417,12 @@ class ProductModalUI {
     if (item.formule === "menu" && !item.boisson) return showToast("Choisissez une boisson", "error");
 
     store.addToCart(item);
+
+    // 📊 Funnel : ajout panier (no-op si flag analytics tenant OFF).
+    window.logEvent?.("add_to_cart", {
+      productId: item.productId || item.id,
+      formule: item.formule || null,
+    });
 
     showToast("Ajouté au panier ! 🍔", "success");
     triggerVibration("success");

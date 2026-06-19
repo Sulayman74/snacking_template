@@ -17,6 +17,7 @@ const { getKitchenQueueCount, computePrepMin } = require("../lib/kitchen");
 const { computeAuthoritativeOrder, refundOrphanChargeBestEffort } = require("../lib/pricing");
 const { generateSecretCode } = require("../lib/util");
 const { applyRefundToOrder } = require("../lib/refund");
+const { emitEvent } = require("../lib/events");
 
 // Limite la profondeur des metadata acceptés par Stripe (clés/valeurs <=500 chars)
 function sanitizeStripeMetadata(metadata) {
@@ -401,6 +402,21 @@ exports.finalizeOrder = onCall(
       }
       throw e;
     }
+
+    // 📊 Event analytique `purchase` (write-time, fire-and-forget, sans PII).
+    // Émis APRÈS create() réussi → 1 seul event par commande (le retry idempotent
+    // ci-dessus retourne avant d'arriver ici). Alimente funnel + attribution.
+    await emitEvent({
+      snackId,
+      type: "purchase",
+      uid,
+      props: {
+        orderId,
+        amountCents: expectedTotalCents,
+        mode: orderMode,
+        itemCount: Array.isArray(cartItems) ? cartItems.length : 0,
+      },
+    });
 
     // 🍟 POST-CRÉATION (best-effort) — parrainage + lastOrderDate. Un échec ici
     // ne doit JAMAIS faire échouer la réponse : la commande est créée et le
