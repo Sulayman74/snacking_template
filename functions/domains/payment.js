@@ -17,6 +17,7 @@ const { getKitchenQueueCount, computePrepMin } = require("../lib/kitchen");
 const { computeAuthoritativeOrder, refundOrphanChargeBestEffort } = require("../lib/pricing");
 const { generateSecretCode } = require("../lib/util");
 const { applyRefundToOrder } = require("../lib/refund");
+const { emitEvent } = require("../lib/events");
 
 // Limite la profondeur des metadata acceptés par Stripe (clés/valeurs <=500 chars)
 function sanitizeStripeMetadata(metadata) {
@@ -354,12 +355,20 @@ exports.finalizeOrder = onCall(
     // Ventilation TVA (module pur) : lignes articles + frais livraison (10 %).
     const tvaBreakdown = ventilateTva(lines, fraisCents);
 
+    // 🛒 Guest checkout (LOT 2) : `isGuest` dérivé du TOKEN auth (non falsifiable
+    // par le client) ; `contactKey` = email normalisé → clé de réconciliation
+    // d'une commande invité vers un compte a posteriori (RFM/fidélité, LOT 7).
+    const isGuest = request.auth?.token?.firebase?.sign_in_provider === "anonymous";
+    const contactKey = clientEmail.trim().toLowerCase();
+
     // 5. Créer la commande dans Firestore (uniquement si tout est vérifié)
     const newOrder = {
       snackId,
       userId: uid,
       clientNom: clientNom || clientEmail.split("@")[0],
       clientEmail,
+      contactKey,
+      isGuest,
       secretCode: generateSecretCode(6),
       date: FieldValue.serverTimestamp(),
       // Collect : on attend l'arrivée du client avant de cuisiner.
@@ -402,6 +411,21 @@ exports.finalizeOrder = onCall(
       throw e;
     }
 
+    // 📊 Event analytique `purchase` (write-time, fire-and-forget, sans PII).
+    // Émis APRÈS create() réussi → 1 seul event par commande (le retry idempotent
+    // ci-dessus retourne avant d'arriver ici). Alimente funnel + attribution.
+    await emitEvent({
+      snackId,
+      type: "purchase",
+      uid,
+      props: {
+        orderId,
+        amountCents: expectedTotalCents,
+        mode: orderMode,
+        itemCount: Array.isArray(cartItems) ? cartItems.length : 0,
+      },
+    });
+
     // 🍟 POST-CRÉATION (best-effort) — parrainage + lastOrderDate. Un échec ici
     // ne doit JAMAIS faire échouer la réponse : la commande est créée et le
     // paiement confirmé (create() déterministe = pas de double-charge au retry).
@@ -439,9 +463,19 @@ exports.finalizeOrder = onCall(
         }
       }
 
-      await userRef.update({
+      // 📊 Dénormalisation RFM (LOT 6) — forward-fill, SANS backfill. increment()
+      // traite un champ absent comme 0 → fonctionne dès la 1ʳᵉ commande. Alimente
+      // le calcul RFM (récence via lastOrderDate, fréquence via orderCount, montant
+      // via totalSpentCents) et les cohortes (firstOrderDate, posé une seule fois).
+      const userUpdate = {
         lastOrderDate: FieldValue.serverTimestamp(),
-      });
+        orderCount: FieldValue.increment(1),
+        totalSpentCents: FieldValue.increment(expectedTotalCents),
+      };
+      if (!userDoc.exists || !userDoc.data().firstOrderDate) {
+        userUpdate.firstOrderDate = FieldValue.serverTimestamp();
+      }
+      await userRef.update(userUpdate);
     } catch (postErr) {
       // Commande déjà créée + payée → on renvoie quand même un succès.
       console.error("finalizeOrder post-création (parrainage/lastOrderDate) échouée :", postErr);

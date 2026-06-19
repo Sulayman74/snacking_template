@@ -14,6 +14,7 @@ class CartUI {
         this.cartBackdrop = document.getElementById("cart-backdrop");
         this.checkoutBtn = document.getElementById("checkout-btn");
         this.template = document.getElementById("cart-item-template");
+        this.progressBar = document.getElementById("cart-progress-bar");
         this.lastFocused = null;
 
         this.init();
@@ -22,8 +23,11 @@ class CartUI {
     init() {
         // Écoute les changements du Store
         store.addEventListener("cart-updated", () => this.render());
-        // Le mode/adresse de livraison change les frais → re-render du total.
-        store.addEventListener("delivery-updated", () => this.updateTotal(store.state.cart));
+        // Le mode/adresse de livraison change les frais → re-render du total + barre.
+        store.addEventListener("delivery-updated", () => {
+            this.updateTotal(store.state.cart);
+            this.updateProgressBar(store.state.cart);
+        });
         // L'état favori (cœur) des lignes dépend de la liste des favoris.
         store.addEventListener("favorites-updated", () => this.render());
         
@@ -39,6 +43,41 @@ class CartUI {
         this.renderItems(cart);
         this.updateBadges(cart);
         this.updateTotal(cart);
+        this.updateProgressBar(cart);
+    }
+
+    /**
+     * Nudge panier moyen : barre de progression vers le minimum de commande en
+     * LIVRAISON. N'affiche rien hors livraison, sans minimum, panier vide, ou une
+     * fois le seuil atteint (le conteneur `empty:hidden` se masque seul).
+     * @param {Array<Object>} cart - Lignes du panier.
+     */
+    updateProgressBar(cart) {
+        if (!this.progressBar) return;
+        const cfg = store.state.config || window.snackConfig;
+        const delivery = store.state.delivery || { mode: "collect" };
+        const minOrder = Number(cfg?.delivery?.minOrder) || 0;
+
+        const subtotal = typeof window.getCartSubtotal === "function"
+            ? window.getCartSubtotal()
+            : cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
+
+        // Conditions d'affichage : mode livraison, minimum défini, panier non vide,
+        // et seuil pas encore atteint (sinon on masque → pas de bruit visuel).
+        const remaining = minOrder - subtotal;
+        if (delivery.mode !== "delivery" || minOrder <= 0 || cart.length === 0 || remaining <= 0) {
+            this.progressBar.innerHTML = "";
+            return;
+        }
+
+        const pct = Math.min(100, Math.round((subtotal / minOrder) * 100));
+        this.progressBar.innerHTML = `
+            <div class="rounded-xl bg-surface-3 p-3">
+              <p class="text-sm font-medium text-text mb-2">Plus que <span class="font-bold text-primary">${remaining.toFixed(2)} €</span> pour commander en livraison 🛵</p>
+              <div class="h-2 w-full rounded-full bg-line overflow-hidden">
+                <div class="h-full rounded-full bg-primary transition-all duration-300" style="width:${pct}%"></div>
+              </div>
+            </div>`;
     }
 
     renderItems(cart) {

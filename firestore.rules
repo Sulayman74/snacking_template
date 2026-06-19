@@ -205,6 +205,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 📊 EVENTS analytiques (funnel + attribution). Append-only.
+    //   • read   : admin du snack (sa console funnel) ou superadmin (cross-tenant).
+    //   • create : client AUTHENTIFIÉ, limité aux 3 types UI, portant SON propre uid
+    //              et son snackId, avec ts == request.time (anti-antidatage). Les
+    //              events transactionnels (purchase/push_*) sont écrits par l'Admin
+    //              SDK (bypass) → un client ne peut PAS forger un 'purchase'.
+    //   • update/delete : jamais (journal immuable).
+    match /events/{eventId} {
+      allow read: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
+      allow create: if isAuthenticated()
+                    && request.resource.data.snackId is string
+                    && request.resource.data.type in ['view_product', 'add_to_cart', 'begin_checkout']
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.ts == request.time;
+      allow update, delete: if false;
+    }
+
     // 🛑 LE VIDEUR : Rejette tout ce qui n'est pas explicitement autorisé au-dessus
     match /{document=**} {
       allow read, write: if false;
