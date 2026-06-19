@@ -169,20 +169,64 @@ function updateNotifUIState() {
     return;
   }
 
+  const optOutRow = document.getElementById("promo-optout-row");
   switch (Notification.permission) {
     case "default":
       btn.classList.remove("hidden");
       deniedInfo.classList.add("hidden");
+      optOutRow?.classList.add("hidden");
       break;
     case "denied":
       btn.classList.add("hidden");
       deniedInfo.classList.remove("hidden");
+      optOutRow?.classList.add("hidden");
       break;
     case "granted":
     default:
       btn.classList.add("hidden");
       deniedInfo.classList.add("hidden");
+      // Notifs actives → on propose le réglage opt-out des offres marketing.
+      syncOptOutToggle();
       break;
+  }
+}
+
+// Reflète la préférence pushOptOut sur le toggle (coché = reçoit les offres).
+// Visible uniquement si l'utilisateur est connecté ET les notifs sont accordées.
+async function syncOptOutToggle() {
+  const row = document.getElementById("promo-optout-row");
+  const toggle = document.getElementById("promo-optout-toggle");
+  if (!row || !toggle) return;
+  const user = auth.currentUser;
+  if (!user) {
+    row.classList.add("hidden");
+    return;
+  }
+  row.classList.remove("hidden");
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    const optOut = snap.exists() && snap.data().pushOptOut === true;
+    toggle.checked = !optOut; // coché = opt-IN (reçoit les offres)
+  } catch (_e) {
+    /* lecture best-effort : on laisse l'état par défaut du toggle */
+  }
+}
+
+// Écrit la préférence d'opt-out marketing. Décoché = opt-out (le transactionnel
+// "commande prête" reste actif, géré hors gouvernance). Revert visuel si échec.
+async function toggleMarketingOptOut(checkbox) {
+  const user = auth.currentUser;
+  if (!user) return;
+  const optOut = !checkbox.checked;
+  try {
+    await updateDoc(doc(db, "users", user.uid), { pushOptOut: optOut });
+    window.showToast(
+      optOut ? "🔕 Offres désactivées." : "🔔 Vous recevrez nos offres.",
+      "success",
+    );
+  } catch (_e) {
+    window.showToast("Impossible de mettre à jour la préférence.", "error");
+    checkbox.checked = !checkbox.checked; // revert
   }
 }
 
@@ -294,5 +338,6 @@ async function shareReferralLink() {
 window.openClientCard = openClientCard;
 window.closeClientCard = closeClientCard;
 window.requestNotif = requestNotif;
+window.toggleMarketingOptOut = toggleMarketingOptOut;
 window.syncFcmToken = syncFcmToken;
 window.shareReferralLink = shareReferralLink;

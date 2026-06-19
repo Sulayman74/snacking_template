@@ -89,10 +89,11 @@ service cloud.firestore {
                        )
                     || (
                          // Le client ne touche que ses champs non sensibles : token push,
-                         // date de dernière commande, et sa liste de favoris (raccourci
-                         // d'UI non financier — le prix réel est recalculé par finalizeOrder).
+                         // date de dernière commande, sa liste de favoris (raccourci d'UI
+                         // non financier — le prix réel est recalculé par finalizeOrder), et
+                         // sa préférence d'opt-out push marketing (LOT 5, anti-fatigue).
                          isOwner(userId)
-                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate', 'favorites'])
+                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate', 'favorites', 'pushOptOut'])
                          // Plafond anti-bloat : la liste de favoris reste raisonnable.
                          && (
                               !request.resource.data.diff(resource.data).affectedKeys().hasAny(['favorites'])
