@@ -421,6 +421,13 @@
             <span>Notifications bloquées dans votre navigateur</span>
           </div>
 
+          <!-- TOGGLE OPT-OUT OFFRES MARKETING (visible si notifs accordées — LOT 5).
+               Décoché = opt-out marketing (le transactionnel "commande prête" reste actif). -->
+          <label id="promo-optout-row" class="hidden mt-3 w-full bg-white/15 backdrop-blur-md text-on-dark py-3 px-4 rounded-2xl flex items-center justify-between gap-3 border border-white/20 cursor-pointer">
+            <span class="text-xs font-bold tracking-wide flex items-center gap-2"><i data-lucide="megaphone" class="text-yellow-300"></i> Recevoir les offres &amp; promos</span>
+            <input type="checkbox" id="promo-optout-toggle" class="h-5 w-5 accent-yellow-400 cursor-pointer" onchange="window.toggleMarketingOptOut?.(this)" aria-label="Recevoir les offres et promotions par notification" />
+          </label>
+
           <!-- BOUTON PARRAINAGE -->
           <button onclick="shareReferralLink()" class="mt-3 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-on-dark font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
             <i data-lucide="gift" class="text-yellow-300 group-hover:animate-bounce"></i>
