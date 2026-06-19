@@ -6,7 +6,12 @@
 //               window.triggerVibration, window.startOrderTracking, window.upsellUI
 
 import { upsellUI } from "./ui/UpsellUI.js";
-import { auth, functions, httpsCallable } from "./core/firebase.js";
+import { auth, functions, httpsCallable, signInAnonymously } from "./core/firebase.js";
+
+// 🛒 Guest checkout (LOT 2) : email saisi dans le Link Authentication Element
+// (invité anonyme). Sert de clientEmail/contactKey à finalizeOrder. Réinitialisé
+// à chaque ouverture du tunnel de paiement.
+let guestEmail = "";
 
 let stripeElements = null;
 let stripeInstance = null;
@@ -166,13 +171,26 @@ async function processCheckout() {
     }
   }
 
-  const currentUser = auth?.currentUser;
+  let currentUser = auth?.currentUser;
   const btn = document.getElementById("checkout-btn");
 
   if (!currentUser) {
-    window.showToast("Veuillez vous connecter pour commander", "error");
-    window.toggleAuthModal();
-    return;
+    // 🛒 Guest checkout (LOT 2) : si le tenant l'active, on crée un utilisateur
+    // ANONYME (uid réel, règles Firestore inchangées, fidélité créditée sur ce
+    // uid) au lieu de barrer l'accès. Flag OFF → barrage auth historique intact.
+    if (cfg?.features?.enableGuestCheckout) {
+      try {
+        const cred = await signInAnonymously(auth);
+        currentUser = cred.user;
+      } catch (e) {
+        window.showToast("Connexion impossible, réessayez.", "error");
+        return;
+      }
+    } else {
+      window.showToast("Veuillez vous connecter pour commander", "error");
+      window.toggleAuthModal();
+      return;
+    }
   }
 
   // 🪜 ÉTAPE UPSELL — gate facultatif avant init Stripe.
@@ -246,7 +264,9 @@ async function processCheckout() {
       livraison,
       metadata: {
         ticket: ticketSummary.substring(0, 500),
-        clientEmail: currentUser.email,
+        // Invité anonyme : email encore inconnu ici (capté au Link Element ci-dessous,
+        // avant confirmation). Métadonnée best-effort, pas l'autorité.
+        clientEmail: currentUser.email || "",
       },
     });
 
@@ -272,6 +292,23 @@ async function processCheckout() {
     const paymentElement = stripeElements.create("payment");
     paymentContainer.innerHTML = "";
     paymentElement.mount("#payment-element");
+
+    // 🛒 Guest checkout (LOT 2) : pour un invité ANONYME, on monte le Link
+    // Authentication Element (natif Stripe) qui capte l'email (→ reçu + contactKey)
+    // et débloque Link 1-clic. Le flux CONNECTÉ ne le monte pas → inchangé.
+    guestEmail = "";
+    const linkContainer = document.getElementById("link-authentication-element");
+    if (currentUser?.isAnonymous && linkContainer) {
+      linkContainer.classList.remove("hidden");
+      const linkEl = stripeElements.create("linkAuthentication");
+      linkEl.mount("#link-authentication-element");
+      linkEl.on("change", (e) => {
+        guestEmail = (e?.value?.email || "").trim();
+      });
+    } else if (linkContainer) {
+      linkContainer.classList.add("hidden");
+      linkContainer.innerHTML = "";
+    }
   } catch (error) {
     console.error("❌ Erreur préparation paiement :", error);
     // Rejet métier AVANT débit (panier/zone/minimum recalculés serveur) → on affiche
@@ -332,6 +369,16 @@ async function submitStripePayment() {
     return;
   }
 
+  // 🛒 Garde-fou invité : on exige l'email AVANT le débit. Sans lui, finalizeOrder
+  // rejetterait (clientEmail invalide) APRÈS la charge → risque de charge orpheline.
+  if (auth?.currentUser?.isAnonymous && !guestEmail) {
+    const messageContainer = document.getElementById("payment-message");
+    messageContainer.textContent = "Renseignez votre email pour recevoir le reçu.";
+    messageContainer.classList.remove("hidden");
+    window.triggerVibration?.("error");
+    return;
+  }
+
   const btnOriginalText = submitPaymentBtn.innerHTML;
   submitPaymentBtn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Vérification banque...`;
   submitPaymentBtn.disabled = true;
@@ -381,14 +428,19 @@ async function finalizeOrderInFirestore(stripePaymentId) {
     const totalCents = Math.round(window.getCartTotal() * 100);
     const { mode, livraison } = getDeliveryPayload();
 
+    // 🛒 Invité anonyme : email/nom non portés par le compte → on prend l'email
+    // saisi au Link Element. `email.split` ne s'exécute JAMAIS sur null (fallback).
+    const email = currentUser.email || guestEmail;
+    const clientNom = currentUser.displayName || (email ? email.split("@")[0] : "Client");
+
     const finalizeOrder = httpsCallable(functions, "finalizeOrder");
     const result = await finalizeOrder({
       paymentIntentId: stripePaymentId,
       snackId: currentSnackId,
       cartItems,
       totalCents,
-      clientEmail: currentUser.email,
-      clientNom: currentUser.displayName || currentUser.email.split("@")[0],
+      clientEmail: email,
+      clientNom,
       referrerId: localStorage.getItem("referralBy") || null,
       mode,
       livraison,

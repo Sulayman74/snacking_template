@@ -102,6 +102,9 @@ try {
         // 📊 Instrumentation funnel client (LOT 1). Défaut OFF : seul un tenant
         // ayant data.enableAnalyticsEvents === true émet les events UI.
         enableAnalyticsEvents: data.enableAnalyticsEvents,
+        // 🛒 Guest checkout (LOT 2). Défaut OFF : si false/absent, le barrage
+        // auth historique reste en place (comportement strictement inchangé).
+        enableGuestCheckout: data.enableGuestCheckout,
       },
       // 🔗 Lien plateforme tierce (UberEats/Deliveroo) — FALLBACK quand le snack
       // n'a pas de flotte. La livraison native (ci-dessous) prime si activée.
