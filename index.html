@@ -103,31 +103,33 @@
             </button>
           </div>
           <div class="hidden md:flex items-center gap-4">
-            <a href="#" data-action="switch-menu" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">La Carte</a>
-            <a href="#" data-action="switch-favorites" id="nav-favorites-link" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md"><i data-lucide="heart" aria-hidden="true" class="text-accent mr-1"></i>Mes Favoris</a>
-            <a href="#loyalty" id="nav-loyalty-link" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md">Fidélité</a>
-            <button type="button" id="nav-loyalty-card-btn" data-action="open-client-card" aria-label="Ma carte de fidélité" title="Ma carte de fidélité" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md"><i data-lucide="qr-code" aria-hidden="true" class="text-accent mr-1"></i>Ma carte</button>
-            <a href="#infos" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">Infos</a>
-            <button type="button" data-action="cycle-theme" aria-label="Thème système — changer de thème" title="Thème système" class="text-on-dark/80 hover:text-on-dark hover:bg-on-dark/10 w-9 h-9 flex items-center justify-center rounded-full text-lg transition drop-shadow-md"><i data-lucide="contrast" aria-hidden="true"></i></button>
-            <a href="/admin.html" id="nav-admin-btn" class="hidden text-danger hover:text-danger/80 font-bold transition drop-shadow-md"><i data-lucide="settings"></i> Admin</a>
-            <a href="#" id="cta-nav" class="ml-4 bg-primary px-6 py-2 rounded-full font-bold text-on-primary shadow-lg transform hover:scale-105 transition">Commander</a>
+            <a href="#" data-action="switch-menu" data-i18n="navbar.menu" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">La Carte</a>
+            <a href="#" data-action="switch-favorites" id="nav-favorites-link" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md"><i data-lucide="heart" aria-hidden="true" class="text-accent mr-1"></i><span data-i18n="navbar.favorites">Mes Favoris</span></a>
+            <a href="#loyalty" id="nav-loyalty-link" data-i18n="navbar.loyalty" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md">Fidélité</a>
+            <button type="button" id="nav-loyalty-card-btn" data-action="open-client-card" aria-label="Ma carte de fidélité" title="Ma carte de fidélité" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md"><i data-lucide="qr-code" aria-hidden="true" class="text-accent mr-1"></i><span data-i18n="navbar.myCard">Ma carte</span></button>
+            <a href="#infos" data-i18n="navbar.infos" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">Infos</a>
+            <button type="button" data-action="cycle-theme" data-i18n-title="navbar.theme" aria-label="Thème système — changer de thème" title="Thème système" class="text-on-dark/80 hover:text-on-dark hover:bg-on-dark/10 w-9 h-9 flex items-center justify-center rounded-full text-lg transition drop-shadow-md"><i data-lucide="contrast" aria-hidden="true"></i></button>
+            <button type="button" data-action="toggle-lang" id="lang-btn" class="text-on-dark/80 hover:text-on-dark hover:bg-on-dark/10 w-9 h-9 flex items-center justify-center rounded-full text-sm font-bold transition drop-shadow-md">EN</button>
+            <a href="/admin.html" id="nav-admin-btn" class="hidden text-danger hover:text-danger/80 font-bold transition drop-shadow-md"><i data-lucide="settings"></i> <span data-i18n="navbar.admin">Admin</span></a>
+            <a href="#" id="cta-nav" data-i18n="navbar.order" class="ml-4 bg-primary px-6 py-2 rounded-full font-bold text-on-primary shadow-lg transform hover:scale-105 transition">Commander</a>
             <button aria-label="Déconnexion" type="button" data-action="logout-user" id="nav-logout-btn" class="hidden bg-accent/10 backdrop-blur-sm text-gray-200 hover:bg-accent px-4 py-2 rounded-full font-bold transition flex items-center gap-2">
-              <i data-lucide="log-out"></i> Quitter
+              <i data-lucide="log-out"></i> <span data-i18n="navbar.quit">Quitter</span>
             </button>
           </div>
         </div>
-        <div id="mobile-menu-overlay" class="fixed h-screen inset-0 z-40 bg-gray-900 hidden flex-col items-center justify-center space-y-10 opacity-0 transition-opacity duration-300">
-          <a href="#" data-action="switch-menu" class="mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110">La Carte</a>
-          <a href="#" data-action="switch-favorites" id="mobile-favorites-link" class="hidden mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110">Mes Favoris ❤️</a>
-          <a href="#loyalty" class="mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110" id="mobile-link-loyalty">Fidélité</a>
-          <a href="#infos" class="mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110">Infos</a>
-          <a href="/admin.html" id="mobile-admin-btn" class="hidden mobile-link text-4xl font-bold text-danger hover:text-danger/80 transition transform hover:scale-110">Admin</a>
-          <a href="#contact" class="mobile-link text-4xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110">Contact</a>
-          <button type="button" data-action="cycle-theme" aria-label="Thème système — changer de thème" title="Thème système" class="mobile-link text-2xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110 flex items-center gap-3"><i data-lucide="contrast" aria-hidden="true"></i> Thème</button>
-          <a href="#" id="mobile-burger-call-btn" class="hidden mobile-link text-2xl font-black bg-green-600 text-on-dark px-8 py-4 rounded-full hover:bg-green-700 transition transform hover:scale-105 mt-6 shadow-lg shadow-green-600/30">
-            <i data-lucide="phone" class="mr-2 animate-pulse"></i> Appeler
+        <div id="mobile-menu-overlay" class="fixed h-screen inset-0 z-40 bg-gray-900/95 backdrop-blur-md hidden flex-col items-center justify-center space-y-5 opacity-0 transition-opacity duration-300">
+          <a href="#" data-action="switch-menu" data-i18n="navbar.menu" class="mobile-link text-2xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110">La Carte</a>
+          <a href="#" data-action="switch-favorites" id="mobile-favorites-link" class="hidden mobile-link text-2xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110"><span data-i18n="navbar.favorites">Mes Favoris</span> ❤️</a>
+          <a href="#loyalty" class="mobile-link text-2xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110" id="mobile-link-loyalty" data-i18n="navbar.loyalty">Fidélité</a>
+          <a href="#infos" class="mobile-link text-2xl font-bold text-on-dark hover:text-accent transition transform hover:scale-110" data-i18n="navbar.infos">Infos</a>
+          <a href="/admin.html" id="mobile-admin-btn" class="hidden mobile-link text-2xl font-bold text-danger hover:text-danger/80 transition transform hover:scale-110" data-i18n="navbar.admin">Admin</a>
+          <div class="h-[1px] w-24 bg-white/10 my-2"></div>
+          <button type="button" data-action="cycle-theme" aria-label="Thème système — changer de thème" title="Thème système" class="mobile-link text-lg font-medium text-on-dark/80 hover:text-accent transition transform hover:scale-110 flex items-center gap-2"><i data-lucide="contrast" class="w-5 h-5"></i> <span data-i18n="navbar.theme">Thème</span></button>
+          <button type="button" data-action="toggle-lang" id="mobile-lang-btn" class="mobile-link text-lg font-medium text-on-dark/80 hover:text-accent transition transform hover:scale-110 flex items-center gap-2"><i data-lucide="languages" class="w-5 h-5"></i> <span id="mobile-lang-text">EN</span></button>
+          <a href="#" id="mobile-burger-call-btn" class="hidden mobile-link text-lg font-black bg-green-600 text-on-dark px-6 py-3 rounded-full hover:bg-green-700 transition transform hover:scale-105 mt-4 shadow-lg shadow-green-600/30">
+            <i data-lucide="phone" class="mr-2 animate-pulse"></i> <span data-i18n="navbar.call">Appeler</span>
           </a>
-          <a href="#" data-action="logout-user" id="mobile-logout-btn" class="mobile-link text-xl font-bold text-danger hover:text-danger/80 transition transform hover:scale-110 mt-8">Déconnexion</a>
+          <a href="#" data-action="logout-user" id="mobile-logout-btn" class="mobile-link text-base font-bold text-danger hover:text-danger/80 transition transform hover:scale-110 mt-6" data-i18n="navbar.logout">Déconnexion</a>
         </div>
       </nav>
 
@@ -149,15 +151,15 @@
       <section id="bestsellers" class="py-16 bg-surface-2">
         <div class="container mx-auto px-4">
           <div class="text-center mb-10">
-            <h2 class="text-4xl text-text uppercase font-bold mb-3 tracking-tight">Nos Stars</h2>
-            <p class="text-text-muted text-lg">Les favoris du moment, validés par la team.</p>
+            <h2 class="text-4xl text-text uppercase font-bold mb-3 tracking-tight" data-i18n="home.stars">Nos Stars</h2>
+            <p class="text-text-muted text-lg" data-i18n="home.starsDesc">Les favoris du moment, validés par la team.</p>
           </div>
           <div id="bestsellers-container" class="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-auto md:px-0">
             <!-- SKELETONS INJECTÉS PAR JS -->
           </div>
           <div class="text-center">
             <button data-action="switch-menu" class="bg-gray-800 text-on-dark px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300">
-              Voir toute la carte <i data-lucide="arrow-right" class="ml-2 text-accent"></i>
+              <span data-i18n="home.viewMenu">Voir toute la carte</span> <i data-lucide="arrow-right" class="ml-2 text-accent"></i>
             </button>
           </div>
         </div>
@@ -211,7 +213,7 @@
                 <h3 class="text-4xl font-bold mb-4 tracking-tight" id="loyalty-title">Club Fidélité</h3>
                 <p class="mb-8 text-lg opacity-90 font-light" id="loyalty-desc">Gagnez des points à chaque commande !</p>
                 <div class="flex gap-4 justify-center md:justify-start">
-                  <button type="button" id="loyalty-main-btn" data-action="toggle-auth-modal" class="bg-surface px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 active:scale-95" style="color: var(--color-primary);">Connexion</button>
+                  <button type="button" id="loyalty-main-btn" data-action="toggle-auth-modal" data-i18n="auth.login" class="bg-surface px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 active:scale-95" style="color: var(--color-primary);">Connexion</button>
                 </div>
               </div>
               <div class="relative text-8xl md:text-9xl">
@@ -249,12 +251,12 @@
           <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-4 bg-surface p-6 md:p-10 rounded-3xl shadow-xl">
             <input type="hidden" name="source_avis" id="source-avis" value="contact_direct" />
             <div>
-              <input type="text" name="contact" id="contact-field" required placeholder="Email ou Téléphone" class="w-full text-text px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-red-500 outline-none transition" />
+              <input type="text" name="contact" id="contact-field" required data-i18n-placeholder="contact.fieldPlaceholder" placeholder="Email ou Téléphone" class="w-full text-text px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-red-500 outline-none transition" />
             </div>
             <div>
-              <textarea name="message" id="message-field" rows="4" required placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-red-500 outline-none transition text-text"></textarea>
+              <textarea name="message" id="message-field" rows="4" required data-i18n-placeholder="contact.messagePlaceholder" placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-red-500 outline-none transition text-text"></textarea>
             </div>
-            <button type="submit" id="btn-submit-form" class="w-full py-4 rounded-xl font-bold text-on-primary shadow-lg bg-primary hover:bg-accent transition transform hover:-translate-y-1">Envoyer le message</button>
+            <button type="submit" id="btn-submit-form" data-i18n="contact.submit" class="w-full py-4 rounded-xl font-bold text-on-primary shadow-lg bg-primary hover:bg-accent transition transform hover:-translate-y-1">Envoyer le message</button>
           </form>
         </div>
       </section>
@@ -352,25 +354,25 @@
           <i data-lucide="x"></i>
         </button>
         <div class="text-center mb-6">
-          <h3 id="auth-title" class="text-3xl font-black text-text tracking-tight">Bienvenue !</h3>
-          <p id="auth-subtitle" class="text-text-muted mt-2">Connectez-vous pour votre fidélité.</p>
+          <h3 id="auth-title" data-i18n="auth.titleWelcome" class="text-3xl font-black text-text tracking-tight">Bienvenue !</h3>
+          <p id="auth-subtitle" data-i18n="auth.subtitle" class="text-text-muted mt-2">Connectez-vous pour votre fidélité.</p>
         </div>
         <button type="button" id="btn-google-login" class="w-full flex items-center justify-center gap-3 px-4 py-4 bg-surface border border-line rounded-xl text-text font-bold hover:bg-surface-2 transition shadow-sm mb-6">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google" /> Continuer avec Google
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google" /> <span data-i18n="auth.googleLogin">Continuer avec Google</span>
         </button>
-        <div class="flex items-center mb-6"><div class="grow border-t"></div><span class="mx-4 text-text-muted text-sm font-medium">OU</span><div class="grow border-t"></div></div>
+        <div class="flex items-center mb-6"><div class="grow border-t"></div><span class="mx-4 text-text-muted text-sm font-medium" data-i18n="auth.or">OU</span><div class="grow border-t"></div></div>
         <form id="auth-form" class="space-y-5">
-          <input type="email" id="auth-email" required class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text" placeholder="Email" />
+          <input type="email" id="auth-email" required data-i18n-placeholder="auth.email" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text" placeholder="Email" />
           <div class="relative">
-            <input type="password" id="auth-password" required class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text pr-12" placeholder="Mot de passe" />
+            <input type="password" id="auth-password" required data-i18n-placeholder="auth.password" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text pr-12" placeholder="Mot de passe" />
             <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"><i data-lucide="eye" id="eye-icon"></i></button>
           </div>
-          <div class="text-right"><button type="button" data-action="reset-password" class="text-sm text-text-muted hover:text-red-600 transition">Oublié ?</button></div>
-          <button type="submit" id="auth-submit-btn" class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2">Se connecter</button>
+          <div class="text-right"><button type="button" data-action="reset-password" data-i18n="auth.forgotShort" class="text-sm text-text-muted hover:text-red-600 transition">Oublié ?</button></div>
+          <button type="submit" id="auth-submit-btn" data-i18n="auth.login" class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2">Se connecter</button>
         </form>
         <div class="mt-8 text-center text-sm bg-surface-2 p-4 rounded-xl">
-          <span id="auth-switch-text" class="text-text-muted">Pas encore de compte ?</span>
-          <button data-action="switch-auth-mode" type="button" id="auth-switch-btn" class="text-red-600 font-bold ml-1">S'inscrire</button>
+          <span id="auth-switch-text" data-i18n="auth.switchTextLogin" class="text-text-muted">Pas encore de compte ?</span>
+          <button data-action="switch-auth-mode" type="button" id="auth-switch-btn" data-i18n="auth.register" class="text-red-600 font-bold ml-1">S'inscrire</button>
         </div>
       </div>
     </div>
@@ -412,33 +414,33 @@
           <!-- BOUTON ACTIVER LES NOTIFICATIONS (visible uniquement si permission "default") -->
           <button id="promo-notif-btn" data-action="request-notif" class="hidden mt-6 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-on-dark font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
             <i data-lucide="bell" class="text-yellow-300 group-hover:animate-pulse"></i>
-            <span class="text-xs tracking-widest">ACTIVER LES NOTIFICATIONS 🔔</span>
+            <span class="text-xs tracking-widest" data-i18n="loyalty.enableNotifications">ACTIVER LES NOTIFICATIONS 🔔</span>
           </button>
 
           <!-- INFO NOTIF BLOQUÉE (visible si permission "denied") -->
           <div id="promo-notif-denied" class="hidden mt-6 w-full bg-red-500/20 backdrop-blur-md text-on-dark py-3 px-4 rounded-2xl flex items-center justify-center gap-2 border border-red-300/30 text-[11px] font-bold text-center">
             <i data-lucide="bell-off" class="text-red-300"></i>
-            <span>Notifications bloquées dans votre navigateur</span>
+            <span data-i18n="loyalty.notificationsBlocked">Notifications bloquées dans votre navigateur</span>
           </div>
 
           <!-- TOGGLE OPT-OUT OFFRES MARKETING (visible si notifs accordées — LOT 5).
                Décoché = opt-out marketing (le transactionnel "commande prête" reste actif). -->
           <label id="promo-optout-row" class="hidden mt-3 w-full bg-black/10 backdrop-blur-md text-on-dark py-3 px-4 rounded-2xl flex items-center justify-between gap-3 border border-white/20 cursor-pointer">
-            <span class="text-xs font-bold tracking-wide flex items-center gap-2"><i data-lucide="megaphone" class="text-yellow-300"></i> Recevoir les offres &amp; promos</span>
+            <span class="text-xs font-bold tracking-wide flex items-center gap-2"><i data-lucide="megaphone" class="text-yellow-300"></i> <span data-i18n="loyalty.receivePromos">Recevoir les offres &amp; promos</span></span>
             <input type="checkbox" id="promo-optout-toggle" class="h-5 w-5 accent-yellow-400 cursor-pointer" onchange="window.toggleMarketingOptOut?.(this)" aria-label="Recevoir les offres et promotions par notification" />
           </label>
 
           <!-- BOUTON PARRAINAGE -->
           <button onclick="shareReferralLink()" class="mt-3 w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-on-dark font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-white/30 active:scale-95 shadow-lg group">
             <i data-lucide="gift" class="text-yellow-300 group-hover:animate-bounce"></i>
-            <span class="text-xs tracking-widest">OFFRE UNE FRITE À UN AMI 🍟</span>
+            <span class="text-xs tracking-widest" data-i18n="loyalty.referralButton">OFFRE UNE FRITE À UN AMI 🍟</span>
           </button>
 
           <p id="card-user-email" class="text-[10px] opacity-60 mt-4 text-center font-mono w-full truncate"></p>
         </div>
         </div>
         <button data-action="close-client-card" class="mt-6 text-on-dark/70 hover:text-on-dark flex items-center gap-2 transition-transform hover:scale-105">
-          <i data-lucide="circle-x" class="text-2xl"></i><span class="uppercase tracking-widest text-xs font-bold">Fermer</span>
+          <i data-lucide="circle-x" class="text-2xl"></i><span class="uppercase tracking-widest text-xs font-bold" data-i18n="common.close">Fermer</span>
         </button>
       </div>
     </div>
@@ -466,7 +468,7 @@
 
     <div id="pwa-install-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-on-dark p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700">
       <div class="flex items-center gap-3"><img id="pwa-banner-icon" src="{{ICON_URL}}" class="w-12 h-12 rounded-xl" alt="Icon" /><div><p class="font-bold text-sm">Garde-nous dans ta poche !</p><p id="pwa-install-hint" class="text-xs text-gray-300">Installe l'app pour tes points 🎁</p></div></div>
-      <button id="pwa-install-btn" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg">Installer</button>
+      <button id="pwa-install-btn" data-i18n="pwa.install" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg">Installer</button>
       <button id="pwa-close-btn" class="absolute -top-2 -right-2 bg-gray-700 text-on-dark w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md"><i data-lucide="x"></i></button>
     </div>
 
@@ -476,7 +478,7 @@
         <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0"><i data-lucide="refresh-cw" class="text-primary text-lg"></i></div>
         <div><p class="font-bold text-sm">Nouvelle version dispo ✨</p><p class="text-xs text-gray-300">Rafraîchis pour les dernières améliorations.</p></div>
       </div>
-      <button id="pwa-refresh-btn" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
+      <button id="pwa-refresh-btn" data-i18n="pwa.refresh" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
       <button id="pwa-close-update-btn" class="absolute -top-2 -right-2 bg-gray-700 text-on-dark w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" aria-label="Fermer"><i data-lucide="x"></i></button>
     </div>
 
@@ -488,7 +490,7 @@
         <div class="p-3 md:p-8 pb-24 md:pb-8 flex-1 flex flex-col">
           <h3 id="modal-title" class="text-3xl font-black text-text tracking-tight mb-4"></h3>
           <p id="modal-desc" class="text-text-muted text-lg mb-6 flex-grow"></p>
-          <button id="modal-share-btn" class="hidden w-full py-3 my-2 text-text rounded-full bg-accent/20 font-bold hover:bg-surface-3 transition-all justify-center items-center"><i data-lucide="share-2" class="mr-1"></i> Partager à un pote</button>
+          <button id="modal-share-btn" class="hidden w-full py-3 my-2 text-text rounded-full bg-accent/20 font-bold hover:bg-surface-3 transition-all justify-center items-center"><i data-lucide="share-2" class="mr-1"></i> <span data-i18n="product.share">Partager à un pote</span></button>
           <div id="modal-allergens-container" class="mb-3 p-4 bg-surface-2 border border-dashed border-blue-200 rounded-xl hidden"><h4 class="font-bold text-xs text-text-muted uppercase tracking-widest mb-2"><i data-lucide="info" class="mr-1"></i> Infos & Allergènes</h4><p id="modal-allergens" class="text-text text-sm font-medium"></p></div>
           <div id="modal-options-container" class="mb-1 hidden"></div>
           <div class="mt-auto flex items-center gap-3">
@@ -501,9 +503,9 @@
 
     <div id="cart-backdrop" data-action="close-cart" class="fixed inset-0 bg-gray-900/60 z-90 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm"></div>
     <div id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" inert class="fixed bottom-0 left-0 w-full bg-surface rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[85vh]">
-      <div class="flex justify-between items-center p-6 border-b"><h2 id="cart-title" class="text-xl font-bold text-text">Mon Panier 🛒</h2><button data-action="close-cart" class="w-8 h-8 bg-surface-2 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-3 transition"><i data-lucide="x"></i></button></div>
+      <div class="flex justify-between items-center p-6 border-b"><h2 id="cart-title" data-i18n="cart.title" class="text-xl font-bold text-text">Mon Panier 🛒</h2><button data-action="close-cart" class="w-8 h-8 bg-surface-2 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-3 transition"><i data-lucide="x"></i></button></div>
       <div id="cart-items-container" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
-      <div class="p-6 bg-surface-2 rounded-t-3xl border-t border-line pb-safe"><div id="cart-wheel-prize"></div><div id="delivery-section" class="empty:hidden"></div><div id="cart-progress-bar" class="mb-4 empty:hidden"></div><div class="flex justify-between items-center mb-4"><span class="text-text-muted font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-text">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center">Valider ma commande</button></div>
+      <div class="p-6 bg-surface-2 rounded-t-3xl border-t border-line pb-safe"><div id="cart-wheel-prize"></div><div id="delivery-section" class="empty:hidden"></div><div id="cart-progress-bar" class="mb-4 empty:hidden"></div><div class="flex justify-between items-center mb-4"><span class="text-text-muted font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-text">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" data-i18n="cart.checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center">Valider ma commande</button></div>
     </div>
 
 <div id="payment-bottom-sheet" class="fixed inset-0 z-[100] hidden items-end justify-center bg-black/60 opacity-0 transition-opacity duration-300 backdrop-blur-sm">

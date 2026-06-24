@@ -16,6 +16,13 @@ document.addEventListener("click", async (event) => {
       window.cycleThemeMode?.();
       break;
 
+    case "toggle-lang": {
+      const current = window.store?.state?.locale || "fr";
+      const next = current === "fr" ? "en" : "fr";
+      window.changeLanguage?.(next);
+      break;
+    }
+
     case "switch-home":
       window.triggerVibration?.("light");
       window.closeFavoritesView?.();

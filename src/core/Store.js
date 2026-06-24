@@ -27,6 +27,8 @@ export class Store extends EventTarget {
         // firebase-init.js pour relancer le tunnel après connexion. Jamais persisté
         // en localStorage (l'intention ne survit pas à un reload, c'est voulu).
         pendingCheckout: false,
+        // 🌍 LOCALISATION — Langue active de l'application (fr | en).
+        locale: localStorage.getItem("snack_locale") || "fr",
     };
 
     constructor() {
@@ -41,6 +43,11 @@ export class Store extends EventTarget {
     }
 
     // --- MÉTHODES DE MUTATION (Sert d'Actions/Reducers) ---
+
+    setLocale(locale) {
+        this.#state.locale = locale;
+        this.emit("locale-updated");
+    }
 
     setConfig(config) {
         this.#state.config = config;

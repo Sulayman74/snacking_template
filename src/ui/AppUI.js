@@ -30,15 +30,21 @@ class AppUI {
         store.addEventListener("config-updated", () => this.handleConfigUpdate());
         store.addEventListener("auth-updated", () => this.updateUI());
 
-        // Initialisation statique
-        document.addEventListener("DOMContentLoaded", () => {
-            this.setupMobileMenu();
-            this.setupContactForm();
-            if (!navigator.onLine) document.body.classList.add("is-offline");
+        // Initialisation statique robuste
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", () => this.onDOMReady());
+        } else {
+            this.onDOMReady();
+        }
+    }
 
-            // Si la config est déjà chargée (ex: rechargement à chaud), on met à jour
-            if (store.state.config) this.handleConfigUpdate();
-        });
+    onDOMReady() {
+        this.setupMobileMenu();
+        this.setupContactForm();
+        if (!navigator.onLine) document.body.classList.add("is-offline");
+
+        // Si la config est déjà chargée (ex: rechargement à chaud), on met à jour
+        if (store.state.config) this.handleConfigUpdate();
     }
 
     /**

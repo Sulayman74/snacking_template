@@ -3,6 +3,7 @@
 // ============================================================================
 // Dépendances : window.showToast, window.triggerVibration, window.switchView,
 //               window.snackConfig (catégories B/C — Lot 4 PR-2/PR-3)
+import { t } from "./i18n/index.js";
 
 // ============================================================================
 // 🌐 TRADUCTION DES ERREURS FIREBASE AUTH
@@ -103,20 +104,34 @@ export async function ensureUserDoc(user) {
 // ============================================================================
 let isSignUpMode = false;
 
+function updateAuthModalUI() {
+  const titleEl = document.getElementById("auth-title");
+  if (titleEl) {
+    titleEl.innerText = isSignUpMode ? t("auth.titleRegister") : t("auth.titleWelcome");
+  }
+  const submitBtn = document.getElementById("auth-submit-btn");
+  if (submitBtn) {
+    submitBtn.innerText = isSignUpMode ? t("auth.register") : t("auth.login");
+  }
+  const switchBtn = document.getElementById("auth-switch-btn");
+  if (switchBtn) {
+    switchBtn.innerText = isSignUpMode ? t("auth.login") : t("auth.register");
+  }
+  const switchText = document.getElementById("auth-switch-text");
+  if (switchText) {
+    switchText.innerText = isSignUpMode ? t("auth.switchTextRegister") : t("auth.switchTextLogin");
+  }
+}
+
 function switchAuthMode() {
   isSignUpMode = !isSignUpMode;
-  document.getElementById("auth-title").innerText = isSignUpMode
-    ? "Créer un compte"
-    : "Bienvenue !";
-  document.getElementById("auth-submit-btn").innerText = isSignUpMode
-    ? "S'inscrire"
-    : "Se connecter";
-  document.getElementById("auth-switch-btn").innerText = isSignUpMode
-    ? "Se connecter"
-    : "S'inscrire";
+  updateAuthModalUI();
 }
 
 window.switchAuthMode = switchAuthMode;
+
+// Écouter le changement de langue pour retraduire dynamiquement la modale d'authentification
+window.addEventListener("snack:locale:changed", updateAuthModalUI);
 
 // On attache l'événement au formulaire
 const authForm = document.getElementById("auth-form");

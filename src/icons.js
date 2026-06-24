@@ -24,7 +24,7 @@ import {
   Moon, Minus, Map, ZoomIn, WandSparkles, LocateFixed, Image, House, Sandwich, Globe, Volleyball,
   FileSpreadsheet, ExternalLink, CircleAlert, Euro, Download, Navigation, CreditCard, CloudRain, Cloud,
   ChartLine, Receipt, CalendarDays, Calendar, Box, BookOpen, CookingPot, BellOff, RefreshCw, Upload,
-  TrendingUp,
+  TrendingUp, Languages,
   // Pages back-office (admin/superadmin/livreur/legal/404)
   Contact, ArrowLeft, Bug, Megaphone, ChevronDown, CircleArrowDown, CircleHelp, Copy, DoorOpen, Mail,
   FileText, FileUp, Filter, Headset, IdCard, LifeBuoy, Lightbulb, List, Send, Play, CirclePlus, LogIn,
@@ -41,7 +41,7 @@ const ICONS = {
   Moon, Minus, Map, ZoomIn, WandSparkles, LocateFixed, Image, House, Sandwich, Globe, Volleyball,
   FileSpreadsheet, ExternalLink, CircleAlert, Euro, Download, Navigation, CreditCard, CloudRain, Cloud,
   ChartLine, Receipt, CalendarDays, Calendar, Box, BookOpen, CookingPot, BellOff, RefreshCw, Upload,
-  TrendingUp,
+  TrendingUp, Languages,
   Contact, ArrowLeft, Bug, Megaphone, ChevronDown, CircleArrowDown, CircleHelp, Copy, DoorOpen, Mail,
   FileText, FileUp, Filter, Headset, IdCard, LifeBuoy, Lightbulb, List, Send, Play, CirclePlus, LogIn,
   Rocket, Tag, ToggleRight, Landmark, UserPlus,

@@ -23,6 +23,12 @@ import "./router.js";
 import "./snack-config.js";
 import "./firebase-init.js";
 import "./logger.js";
+import { initI18n } from "./i18n/index.js";
+
+// ============================================================================
+// 🌍 INITIALISATION DE L'INTERNATIONALISATION
+// ============================================================================
+initI18n().catch((err) => console.error("🔥 Erreur initialisation i18n :", err));
 
 // ============================================================================
 // 🔄 ORCHESTRATEUR DE CYCLE DE VIE (Client)
