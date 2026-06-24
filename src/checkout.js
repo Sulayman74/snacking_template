@@ -376,6 +376,22 @@ async function submitStripePayment() {
     messageContainer.textContent = "Renseignez votre email pour recevoir le reçu.";
     messageContainer.classList.remove("hidden");
     window.triggerVibration?.("error");
+
+    // UX : guide l'utilisateur vers le champ email (Link Authentication Element).
+    // Le champ est un iframe Stripe — focus direct impossible depuis l'extérieur,
+    // mais scroll + highlight visuel suffisent à orienter l'attention.
+    const linkEl = document.getElementById("link-authentication-element");
+    if (linkEl) {
+      linkEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      linkEl.style.outline = "2px solid var(--color-error, #ef4444)";
+      linkEl.style.borderRadius = "6px";
+      linkEl.style.transition = "outline 0.2s";
+      // Efface le highlight après 2 s (non-bloquant)
+      setTimeout(() => {
+        linkEl.style.outline = "";
+        linkEl.style.borderRadius = "";
+      }, 2000);
+    }
     return;
   }
 
