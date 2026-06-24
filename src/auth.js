@@ -3,6 +3,33 @@
 // ============================================================================
 // Dépendances : window.showToast, window.triggerVibration, window.switchView,
 //               window.snackConfig (catégories B/C — Lot 4 PR-2/PR-3)
+
+// ============================================================================
+// 🌐 TRADUCTION DES ERREURS FIREBASE AUTH
+// ============================================================================
+/**
+ * Traduit un code d'erreur Firebase Auth en message utilisateur en français.
+ * Pure function — testable sans Firebase, sans DOM.
+ * Couvre le formulaire email/password, la connexion Google et le reset.
+ * @param {string|undefined} code - error.code Firebase (ex: "auth/weak-password")
+ * @returns {string} Message lisible en français.
+ */
+export function mapAuthError(code) {
+  const map = {
+    "auth/weak-password":          "Mot de passe trop court (6 caractères minimum).",
+    "auth/email-already-in-use":   "Un compte existe déjà avec cet email.",
+    "auth/user-not-found":         "Aucun compte lié à cet email.",
+    "auth/wrong-password":         "Email ou mot de passe incorrect.",
+    "auth/invalid-email":          "L'adresse email n'est pas valide.",
+    "auth/invalid-credential":     "Email ou mot de passe incorrect.",
+    "auth/too-many-requests":      "Trop de tentatives. Réessayez dans quelques minutes.",
+    "auth/network-request-failed": "Pas de connexion. Vérifiez votre réseau.",
+    "auth/popup-closed-by-user":   "Connexion annulée.",
+    "auth/popup-blocked":          "La fenêtre de connexion a été bloquée. Autorisez les pop-ups.",
+    "auth/requires-recent-login":  "Session expirée. Reconnectez-vous.",
+  };
+  return map[code] ?? "Une erreur est survenue. Réessayez.";
+}
 import {
   auth,
   db,
@@ -106,7 +133,7 @@ if (authForm) {
       await ensureUserDoc(cred.user);
       toggleAuthModal();
     } catch (error) {
-      window.showToast("Erreur : " + error.message, "error");
+      window.showToast(mapAuthError(error.code), "error");
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -184,13 +211,7 @@ async function resetPassword() {
       window.triggerVibration("success");
   } catch (error) {
     console.error("Erreur reset password :", error);
-    if (error.code === "auth/user-not-found") {
-      window.showToast("Aucun compte n'est lié à cette adresse email.", "error");
-    } else if (error.code === "auth/invalid-email") {
-      window.showToast("L'adresse email n'est pas valide.", "error");
-    } else {
-      window.showToast("Une erreur est survenue.", "error");
-    }
+    window.showToast(mapAuthError(error.code), "error");
   }
 }
 
@@ -216,7 +237,7 @@ if (btnGoogleLogin) {
     } catch (error) {
       console.error("❌ Erreur Google Auth:", error);
       if (typeof window.showToast === "function") {
-        window.showToast("Erreur lors de la connexion Google.", "error");
+        window.showToast(mapAuthError(error.code), "error");
       }
     }
   });
