@@ -7,6 +7,7 @@
 
 import { upsellUI } from "./ui/UpsellUI.js";
 import { auth, functions, httpsCallable, signInAnonymously } from "./core/firebase.js";
+import { ensureUserDoc } from "./auth.js";
 
 // 🛒 Guest checkout (LOT 2) : email saisi dans le Link Authentication Element
 // (invité anonyme). Sert de clientEmail/contactKey à finalizeOrder. Réinitialisé
@@ -182,6 +183,13 @@ async function processCheckout() {
       try {
         const cred = await signInAnonymously(auth);
         currentUser = cred.user;
+        // Crée le doc users/{uid} dès maintenant : finalizeOrder fait un update()
+        // qui throw si le doc n'existe pas. Best-effort : un échec ici n'empêche
+        // pas la commande (le try/catch de post-création dans finalizeOrder absorbe
+        // l'éventuel 'not-found' — mais le créer maintenant est plus propre).
+        try { await ensureUserDoc(currentUser); } catch (e) {
+          console.warn("ensureUserDoc (invité anonyme) échouée :", e);
+        }
       } catch (e) {
         window.showToast("Connexion impossible, réessayez.", "error");
         return;

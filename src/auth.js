@@ -19,10 +19,34 @@ import {
 } from "./core/firebase.js";
 
 /**
+ * Construit le document initial users/{uid} pour un nouvel utilisateur.
+ * Pure function — testable sans Firebase, sans DOM (SRP).
+ * Doit rester cohérente avec les champs attendus par finalizeOrder et creditLoyaltyPoints.
+ * @param {object} user - L'objet User Firebase Auth (email, displayName, isAnonymous).
+ * @returns {object} Données du doc Firestore à créer.
+ */
+export function buildUserInitDoc(user) {
+  const isAnonymous = user?.isAnonymous === true;
+  return {
+    // Les invités anonymes n'ont pas d'email — null est explicite (à distinguer de l'absent).
+    email: user?.email || null,
+    // Priorité : displayName (Google) > partie locale de l'email > 'Invité' (anonyme).
+    nom: user?.displayName
+      || (user?.email ? user.email.split("@")[0] : null)
+      || (isAnonymous ? "Invité" : "Gourmand"),
+    pointsBySnack: {},
+    dateCreation: serverTimestamp(),
+    role: "client",
+    isAnonymous,
+  };
+}
+
+/**
  * Garantit l'existence du doc users/{uid} (idempotent). Crée un profil "client" par
- * défaut s'il MANQUE — couvre l'inscription email/password (qui ne le créait pas) ET
- * backfille les comptes existants sans doc. Sans ce doc : fidélité KO (creditLoyaltyPoints
- * lève not-found → 0 point), carte vide. Ne touche JAMAIS un doc existant (rôle/points préservés).
+ * défaut s'il MANQUE — couvre l'inscription email/password, la connexion Google ET
+ * les invités anonymes (signInAnonymously). Sans ce doc : fidélité KO (creditLoyaltyPoints
+ * lève not-found → 0 point), RFM aveugle, parrainage KO. Ne touche JAMAIS un doc
+ * existant (rôle/points préservés). Utilisable côté client ET appelable dans les tests.
  * @param {object} user - L'objet User Firebase Auth.
  * @returns {Promise<void>}
  */
@@ -31,13 +55,7 @@ async function ensureUserDoc(user) {
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
   if (snap.exists()) return;
-  await setDoc(userRef, {
-    email: user.email,
-    nom: user.displayName || user.email?.split("@")[0] || "Gourmand",
-    pointsBySnack: {},
-    dateCreation: serverTimestamp(),
-    role: "client",
-  });
+  await setDoc(userRef, buildUserInitDoc(user));
 }
 
 // ============================================================================

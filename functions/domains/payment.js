@@ -467,6 +467,9 @@ exports.finalizeOrder = onCall(
       // traite un champ absent comme 0 → fonctionne dès la 1ʳᵉ commande. Alimente
       // le calcul RFM (récence via lastOrderDate, fréquence via orderCount, montant
       // via totalSpentCents) et les cohortes (firstOrderDate, posé une seule fois).
+      // ⚡ set+merge (upsert) au lieu de update() : tolère un doc inexistant (cas
+      // invité anonyme dont ensureUserDoc aurait échoué côté client). FieldValue.increment()
+      // dans un set({merge:true}) est strictement équivalent à update() sur un doc existant.
       const userUpdate = {
         lastOrderDate: FieldValue.serverTimestamp(),
         orderCount: FieldValue.increment(1),
@@ -475,7 +478,7 @@ exports.finalizeOrder = onCall(
       if (!userDoc.exists || !userDoc.data().firstOrderDate) {
         userUpdate.firstOrderDate = FieldValue.serverTimestamp();
       }
-      await userRef.update(userUpdate);
+      await userRef.set(userUpdate, { merge: true });
     } catch (postErr) {
       // Commande déjà créée + payée → on renvoie quand même un succès.
       console.error("finalizeOrder post-création (parrainage/lastOrderDate) échouée :", postErr);
