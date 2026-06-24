@@ -12,8 +12,11 @@ const fs = require("node:fs");
 
 const FUNC_DIR = path.join(__dirname, "..", "..", "functions");
 
-// 1) Charger les clés test (functions/.env.local) AVANT de requérir index.js
-for (const line of fs.readFileSync(path.join(FUNC_DIR, ".env.local"), "utf8").split("\n")) {
+// 1) Charger les clés test AVANT de requérir index.js (.env.local prioritaire).
+const envFile = fs.existsSync(path.join(FUNC_DIR, ".env.local"))
+  ? path.join(FUNC_DIR, ".env.local")
+  : path.join(FUNC_DIR, ".env");
+for (const line of fs.readFileSync(envFile, "utf8").split("\n")) {
   const m = line.match(/^([A-Z_]+)=(.*)$/);
   if (m) process.env[m[1]] = m[2];
 }
@@ -30,7 +33,8 @@ const test = fftRequire("firebase-functions-test")(); // mode offline
 const myFunctions = funcRequire("./index.js"); // déclenche admin.initializeApp()
 const db = admin.firestore();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-03-25.dahlia" });
-const WHSEC = process.env.STRIPE_WEBHOOK_SECRET;
+const WHSEC = process.env.STRIPE_WEBHOOK_SECRET || "whsec_test_secret";
+process.env.STRIPE_WEBHOOK_SECRET = WHSEC;
 const SUB = "sub_TEST_HARNESS";
 
 const results = [];

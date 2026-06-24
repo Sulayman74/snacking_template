@@ -3,6 +3,33 @@
 // ============================================================================
 // Dépendances : window.showToast, window.triggerVibration, window.switchView,
 //               window.snackConfig (catégories B/C — Lot 4 PR-2/PR-3)
+
+// ============================================================================
+// 🌐 TRADUCTION DES ERREURS FIREBASE AUTH
+// ============================================================================
+/**
+ * Traduit un code d'erreur Firebase Auth en message utilisateur en français.
+ * Pure function — testable sans Firebase, sans DOM.
+ * Couvre le formulaire email/password, la connexion Google et le reset.
+ * @param {string|undefined} code - error.code Firebase (ex: "auth/weak-password")
+ * @returns {string} Message lisible en français.
+ */
+export function mapAuthError(code) {
+  const map = {
+    "auth/weak-password":          "Mot de passe trop court (6 caractères minimum).",
+    "auth/email-already-in-use":   "Un compte existe déjà avec cet email.",
+    "auth/user-not-found":         "Aucun compte lié à cet email.",
+    "auth/wrong-password":         "Email ou mot de passe incorrect.",
+    "auth/invalid-email":          "L'adresse email n'est pas valide.",
+    "auth/invalid-credential":     "Email ou mot de passe incorrect.",
+    "auth/too-many-requests":      "Trop de tentatives. Réessayez dans quelques minutes.",
+    "auth/network-request-failed": "Pas de connexion. Vérifiez votre réseau.",
+    "auth/popup-closed-by-user":   "Connexion annulée.",
+    "auth/popup-blocked":          "La fenêtre de connexion a été bloquée. Autorisez les pop-ups.",
+    "auth/requires-recent-login":  "Session expirée. Reconnectez-vous.",
+  };
+  return map[code] ?? "Une erreur est survenue. Réessayez.";
+}
 import {
   auth,
   db,
@@ -10,34 +37,65 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   GoogleAuthProvider,
+  EmailAuthProvider,
+  linkWithCredential,
   signInWithPopup,
   signOut,
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   serverTimestamp,
 } from "./core/firebase.js";
 
 /**
- * Garantit l'existence du doc users/{uid} (idempotent). Crée un profil "client" par
- * défaut s'il MANQUE — couvre l'inscription email/password (qui ne le créait pas) ET
- * backfille les comptes existants sans doc. Sans ce doc : fidélité KO (creditLoyaltyPoints
- * lève not-found → 0 point), carte vide. Ne touche JAMAIS un doc existant (rôle/points préservés).
- * @param {object} user - L'objet User Firebase Auth.
- * @returns {Promise<void>}
+ * Construit le document initial users/{uid} pour un nouvel utilisateur.
+ * Pure function — testable sans Firebase, sans DOM (SRP).
+ * Doit rester cohérente avec les champs attendus par finalizeOrder et creditLoyaltyPoints.
+ * @param {object} user - L'objet User Firebase Auth (email, displayName, isAnonymous).
+ * @returns {object} Données du doc Firestore à créer.
  */
-async function ensureUserDoc(user) {
-  if (!user?.uid) return;
-  const userRef = doc(db, "users", user.uid);
-  const snap = await getDoc(userRef);
-  if (snap.exists()) return;
-  await setDoc(userRef, {
-    email: user.email,
-    nom: user.displayName || user.email?.split("@")[0] || "Gourmand",
+export function buildUserInitDoc(user) {
+  const isAnonymous = user?.isAnonymous === true;
+  return {
+    // Les invités anonymes n'ont pas d'email — null est explicite (à distinguer de l'absent).
+    email: user?.email || null,
+    // Priorité : displayName (Google) > partie locale de l'email > 'Invité' (anonyme).
+    nom: user?.displayName
+      || (user?.email ? user.email.split("@")[0] : null)
+      || (isAnonymous ? "Invité" : "Gourmand"),
     pointsBySnack: {},
     dateCreation: serverTimestamp(),
     role: "client",
-  });
+    isAnonymous,
+  };
+}
+
+/**
+ * Garantit l'existence du doc users/{uid} (idempotent). Crée un profil "client" par
+ * défaut s'il MANQUE — couvre l'inscription email/password, la connexion Google ET
+ * les invités anonymes (signInAnonymously). Sans ce doc : fidélité KO (creditLoyaltyPoints
+ * lève not-found → 0 point), RFM aveugle, parrainage KO. Ne touche JAMAIS un doc
+ * existant (rôle/points préservés). Utilisable côté client ET appelable dans les tests.
+ * @param {object} user - L'objet User Firebase Auth.
+ * @returns {Promise<void>}
+ */
+export async function ensureUserDoc(user) {
+  if (!user?.uid) return;
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+  if (snap.exists()) {
+    const data = snap.data();
+    if (data.isAnonymous && !user.isAnonymous) {
+      await updateDoc(userRef, {
+        email: user.email,
+        nom: user.displayName || user.email?.split("@")[0] || data.nom || "Gourmand",
+        isAnonymous: false,
+      });
+    }
+    return;
+  }
+  await setDoc(userRef, buildUserInitDoc(user));
 }
 
 // ============================================================================
@@ -76,9 +134,17 @@ if (authForm) {
     }
 
     try {
-      const cred = isSignUpMode
-        ? await createUserWithEmailAndPassword(auth, email, password)
-        : await signInWithEmailAndPassword(auth, email, password);
+      let cred;
+      if (isSignUpMode) {
+        if (auth.currentUser?.isAnonymous) {
+          const credential = EmailAuthProvider.credential(email, password);
+          cred = await linkWithCredential(auth.currentUser, credential);
+        } else {
+          cred = await createUserWithEmailAndPassword(auth, email, password);
+        }
+      } else {
+        cred = await signInWithEmailAndPassword(auth, email, password);
+      }
       window.showToast(
         isSignUpMode ? "Compte créé ! 🎉" : "Ravi de vous revoir ! 👋",
         "success",
@@ -88,7 +154,8 @@ if (authForm) {
       await ensureUserDoc(cred.user);
       toggleAuthModal();
     } catch (error) {
-      window.showToast("Erreur : " + error.message, "error");
+      console.error("❌ Sign up error:", error);
+      window.showToast(mapAuthError(error.code), "error");
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -121,7 +188,15 @@ function toggleAuthModal() {
   }
 }
 
+function openGuestRegistration() {
+  if (!isSignUpMode) {
+    switchAuthMode();
+  }
+  toggleAuthModal();
+}
+
 window.toggleAuthModal = toggleAuthModal;
+window.openGuestRegistration = openGuestRegistration;
 
 // ============================================================================
 // 👀 GESTION DE L'ŒIL DU MOT DE PASSE
@@ -166,13 +241,7 @@ async function resetPassword() {
       window.triggerVibration("success");
   } catch (error) {
     console.error("Erreur reset password :", error);
-    if (error.code === "auth/user-not-found") {
-      window.showToast("Aucun compte n'est lié à cette adresse email.", "error");
-    } else if (error.code === "auth/invalid-email") {
-      window.showToast("L'adresse email n'est pas valide.", "error");
-    } else {
-      window.showToast("Une erreur est survenue.", "error");
-    }
+    window.showToast(mapAuthError(error.code), "error");
   }
 }
 
@@ -198,7 +267,7 @@ if (btnGoogleLogin) {
     } catch (error) {
       console.error("❌ Erreur Google Auth:", error);
       if (typeof window.showToast === "function") {
-        window.showToast("Erreur lors de la connexion Google.", "error");
+        window.showToast(mapAuthError(error.code), "error");
       }
     }
   });

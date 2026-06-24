@@ -24,7 +24,7 @@
     "migrate:product-tva:apply": "node functions/scripts/migrate-product-tva.js --apply",
     "emulators": "firebase emulators:start --only auth,firestore,functions,storage --project snacking-template",
     "seed": "node functions/seed-emulator.js",
-    "test:e2e": "VITE_E2E_TESTING=true SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 firebase emulators:exec --only auth,firestore,storage --project snacking-template \"node functions/seed-emulator.js && playwright test cart.spec.js commande.spec.js stock.spec.js reorder.spec.js\"",
+    "test:e2e": "VITE_E2E_TESTING=true SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 firebase emulators:exec --only auth,firestore,functions,storage --project snacking-template \"node functions/seed-emulator.js && playwright test cart.spec.js commande.spec.js stock.spec.js reorder.spec.js radar.spec.js guest-checkout.spec.js\"",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:loyalty": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/loyalty-harness.cjs\"",

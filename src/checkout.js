@@ -7,6 +7,8 @@
 
 import { upsellUI } from "./ui/UpsellUI.js";
 import { auth, functions, httpsCallable, signInAnonymously } from "./core/firebase.js";
+import { ensureUserDoc } from "./auth.js";
+import { store } from "./core/Store.js";
 
 // 🛒 Guest checkout (LOT 2) : email saisi dans le Link Authentication Element
 // (invité anonyme). Sert de clientEmail/contactKey à finalizeOrder. Réinitialisé
@@ -182,11 +184,22 @@ async function processCheckout() {
       try {
         const cred = await signInAnonymously(auth);
         currentUser = cred.user;
+        // Crée le doc users/{uid} dès maintenant : finalizeOrder fait un update()
+        // qui throw si le doc n'existe pas. Best-effort : un échec ici n'empêche
+        // pas la commande (le try/catch de post-création dans finalizeOrder absorbe
+        // l'éventuel 'not-found' — mais le créer maintenant est plus propre).
+        try { await ensureUserDoc(currentUser); } catch (e) {
+          console.warn("ensureUserDoc (invité anonyme) échouée :", e);
+        }
       } catch (e) {
         window.showToast("Connexion impossible, réessayez.", "error");
         return;
       }
     } else {
+      // 🎯 Mémorise l'intention AVANT d'ouvrir la modale : onAuthStateChanged
+      // dans firebase-init.js consommera ce flag et relancera processCheckout()
+      // automatiquement après connexion (évite le reclic manuel).
+      store.setPendingCheckout(true);
       window.showToast("Veuillez vous connecter pour commander", "error");
       window.toggleAuthModal();
       return;
@@ -376,6 +389,22 @@ async function submitStripePayment() {
     messageContainer.textContent = "Renseignez votre email pour recevoir le reçu.";
     messageContainer.classList.remove("hidden");
     window.triggerVibration?.("error");
+
+    // UX : guide l'utilisateur vers le champ email (Link Authentication Element).
+    // Le champ est un iframe Stripe — focus direct impossible depuis l'extérieur,
+    // mais scroll + highlight visuel suffisent à orienter l'attention.
+    const linkEl = document.getElementById("link-authentication-element");
+    if (linkEl) {
+      linkEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      linkEl.style.outline = "2px solid var(--color-error, #ef4444)";
+      linkEl.style.borderRadius = "6px";
+      linkEl.style.transition = "outline 0.2s";
+      // Efface le highlight après 2 s (non-bloquant)
+      setTimeout(() => {
+        linkEl.style.outline = "";
+        linkEl.style.borderRadius = "";
+      }, 2000);
+    }
     return;
   }
 
@@ -488,3 +517,10 @@ window.processCheckout = processCheckout;
 window.openPaymentSheet = openPaymentSheet;
 window.closePaymentSheet = closePaymentSheet;
 window.submitStripePayment = submitStripePayment;
+window.finalizeOrderInFirestore = finalizeOrderInFirestore;
+
+if (import.meta.env.VITE_E2E_TESTING) {
+  window.setGuestEmailForTest = (email) => {
+    guestEmail = email;
+  };
+}
