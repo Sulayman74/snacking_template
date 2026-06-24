@@ -251,6 +251,23 @@ onAuthStateChanged(auth, async (user) => {
     // Le store émettra "auth-updated" -> AppUI mettra à jour les boutons nav/fidélité
     store.setUser(user, role);
 
+    // 🎯 RELANCE CHECKOUT POST-LOGIN (mode auth classique — LOT 4 PR-4)
+    // Si un utilisateur non-connecté a cliqué "Commander" et ouvert la modale auth,
+    // checkout.js a posé store.setPendingCheckout(true). On consomme ce flag ici,
+    // APRÈS que l'auth soit stabilisée et le Store mis à jour.
+    // Guards : user non-null, non-anonyme (le guest checkout LOT-2 n'utilise PAS
+    // ce path), panier contrôlé par processCheckout lui-même.
+    if (user && !user.isAnonymous && store.hasPendingCheckout) {
+      store.setPendingCheckout(false); // consommé → une seule relance
+      // Délai 300ms : laisse l'animation de fermeture de la modale auth se terminer
+      // avant d'ouvrir le tunnel Stripe (évite les conflits overflow:hidden/z-index).
+      setTimeout(() => {
+        if (typeof window.processCheckout === "function") {
+          window.processCheckout();
+        }
+      }, 300);
+    }
+
     // 4. Re-sync silencieux du FCM token (cas token stale après réinstall PWA)
     if (user && typeof window.syncFcmToken === "function") {
       window.syncFcmToken();

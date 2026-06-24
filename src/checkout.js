@@ -7,6 +7,7 @@
 
 import { upsellUI } from "./ui/UpsellUI.js";
 import { auth, functions, httpsCallable, signInAnonymously } from "./core/firebase.js";
+import { store } from "./core/Store.js";
 
 // 🛒 Guest checkout (LOT 2) : email saisi dans le Link Authentication Element
 // (invité anonyme). Sert de clientEmail/contactKey à finalizeOrder. Réinitialisé
@@ -187,6 +188,10 @@ async function processCheckout() {
         return;
       }
     } else {
+      // 🎯 Mémorise l'intention AVANT d'ouvrir la modale : onAuthStateChanged
+      // dans firebase-init.js consommera ce flag et relancera processCheckout()
+      // automatiquement après connexion (évite le reclic manuel).
+      store.setPendingCheckout(true);
       window.showToast("Veuillez vous connecter pour commander", "error");
       window.toggleAuthModal();
       return;
