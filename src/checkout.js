@@ -475,6 +475,15 @@ async function finalizeOrderInFirestore(stripePaymentId) {
     setTimeout(() => {
       window.openTrackingModal();
     }, 500);
+
+    // 🛒 Invité (LOT 2) : invite à créer un compte pour conserver les points. La
+    // création depuis le modal auth LIE le compte anonyme (uid préservé, cf.
+    // auth.js) → fidélité/RFM rattachés. Non bloquant, après la confirmation.
+    if (auth?.currentUser?.isAnonymous) {
+      setTimeout(() => {
+        window.showToast("🎁 Créez un compte pour garder vos points de fidélité !", "success");
+      }, 2600);
+    }
   } catch (err) {
     console.error("Erreur finalisation commande :", err);
     window.showToast(

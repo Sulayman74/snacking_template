@@ -2,7 +2,7 @@ import { adminStore } from "../core/AdminStore.js";
 import { escapeHTML, showToast } from "../utils.js";
 import { db, fs } from "../core/firebase.js";
 
-class AdminConfigUI {
+export class AdminConfigUI {
     constructor() {
         this.hoursGrid = document.getElementById("config-hours-grid");
         this.identityForm = document.getElementById("config-identity-form");

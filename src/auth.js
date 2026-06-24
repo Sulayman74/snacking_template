@@ -12,11 +12,19 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
+  EmailAuthProvider,
+  linkWithCredential,
+  linkWithPopup,
   doc,
   getDoc,
   setDoc,
   serverTimestamp,
 } from "./core/firebase.js";
+import {
+  authErrorMessage,
+  isExistingAccountError,
+  isKnownAuthError,
+} from "./utils/authErrors.js";
 
 /**
  * Garantit l'existence du doc users/{uid} (idempotent). Crée un profil "client" par
@@ -76,9 +84,23 @@ if (authForm) {
     }
 
     try {
-      const cred = isSignUpMode
-        ? await createUserWithEmailAndPassword(auth, email, password)
-        : await signInWithEmailAndPassword(auth, email, password);
+      let cred;
+      if (isSignUpMode) {
+        const current = auth.currentUser;
+        // 🛒 Guest checkout (LOT 2) : un invité ANONYME qui crée son compte est
+        // LIÉ (linkWithCredential) au lieu d'en créer un nouveau → le uid est
+        // conservé, donc points/RFM/historique de commande restent rattachés.
+        if (current?.isAnonymous) {
+          cred = await linkWithCredential(
+            current,
+            EmailAuthProvider.credential(email, password),
+          );
+        } else {
+          cred = await createUserWithEmailAndPassword(auth, email, password);
+        }
+      } else {
+        cred = await signInWithEmailAndPassword(auth, email, password);
+      }
       window.showToast(
         isSignUpMode ? "Compte créé ! 🎉" : "Ravi de vous revoir ! 👋",
         "success",
@@ -88,7 +110,17 @@ if (authForm) {
       await ensureUserDoc(cred.user);
       toggleAuthModal();
     } catch (error) {
-      window.showToast("Erreur : " + error.message, "error");
+      // Mapping pur (codes → messages clairs, sans fuite du message brut — §6.1).
+      const code = error?.code || "";
+      if (isExistingAccountError(code)) {
+        // L'email a déjà un compte (ex: invité anonyme qui tente de s'inscrire
+        // avec un email existant) → on bascule en mode connexion, email conservé.
+        if (isSignUpMode) switchAuthMode();
+        document.getElementById("auth-password")?.focus();
+      } else if (!isKnownAuthError(code)) {
+        console.error("Auth error:", error); // erreur inattendue → log (pas en UI)
+      }
+      window.showToast(authErrorMessage(code), "error");
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -187,7 +219,12 @@ if (btnGoogleLogin) {
   btnGoogleLogin.addEventListener("click", async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
+      // 🛒 Invité anonyme → on LIE le compte Google (uid conservé) au lieu d'en
+      // ouvrir un nouveau ; sinon connexion Google classique.
+      const current = auth.currentUser;
+      const result = current?.isAnonymous
+        ? await linkWithPopup(current, provider)
+        : await signInWithPopup(auth, provider);
       await ensureUserDoc(result.user);
 
       if (typeof window.showToast === "function") {
