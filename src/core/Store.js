@@ -21,7 +21,12 @@ export class Store extends EventTarget {
             mode: "collect",     // 'collect' | 'delivery'
             address: null,       // { adresse, lat, lng }
             quote: null          // { distanceKm, inRange, frais, prepMin, travelMin, totalMin }
-        }
+        },
+        // 🎯 INTENT CHECKOUT — flag éphémère posé quand un invité non connecté clique
+        // "Commander" (mode auth classique). Consommé par onAuthStateChanged dans
+        // firebase-init.js pour relancer le tunnel après connexion. Jamais persisté
+        // en localStorage (l'intention ne survit pas à un reload, c'est voulu).
+        pendingCheckout: false,
     };
 
     constructor() {
@@ -46,6 +51,22 @@ export class Store extends EventTarget {
         this.#state.user = user;
         this.#state.role = role;
         this.emit("auth-updated");
+    }
+
+    /**
+     * Pose ou consomme l'intention de relancer le checkout après connexion.
+     * Appelé par checkout.js (poser, mode auth classique) et firebase-init.js
+     * (consommer, dans onAuthStateChanged). Flag éphèmère : jamais persisté.
+     * @param {boolean} value
+     */
+    setPendingCheckout(value) {
+        this.#state.pendingCheckout = Boolean(value);
+        // Pas d'emit : cet état est consommé par firebase-init, pas par l'UI.
+    }
+
+    /** Vrai si une intention de checkout est en attente de relance post-login. */
+    get hasPendingCheckout() {
+        return this.#state.pendingCheckout;
     }
 
     setMenu(menu) {
