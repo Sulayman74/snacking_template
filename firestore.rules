@@ -93,7 +93,13 @@ service cloud.firestore {
                          // non financier — le prix réel est recalculé par finalizeOrder), et
                          // sa préférence d'opt-out push marketing (LOT 5, anti-fatigue).
                          isOwner(userId)
-                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate', 'favorites', 'pushOptOut'])
+                         && (
+                              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate', 'favorites', 'pushOptOut'])
+                              || (
+                                   resource.data.isAnonymous == true
+                                   && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken', 'lastOrderDate', 'favorites', 'pushOptOut', 'email', 'nom', 'isAnonymous'])
+                                 )
+                            )
                          // Plafond anti-bloat : la liste de favoris reste raisonnable.
                          && (
                               !request.resource.data.diff(resource.data).affectedKeys().hasAny(['favorites'])

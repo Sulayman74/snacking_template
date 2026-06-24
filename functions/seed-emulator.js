@@ -51,6 +51,7 @@ async function seed() {
       enableDelivery: false,
       enableLoyaltyCard: true,
       maintenanceMode: false,
+      enableGuestCheckout: true,
       hours: [],
     },
     { merge: true }
@@ -88,7 +89,7 @@ async function seed() {
     clientEmail: TEST_EMAIL,
     secretCode: "E2E001",
     date: Timestamp.fromDate(new Date("2026-01-01T12:00:00Z")),
-    statut: "livree",
+    statut: "en_attente_client",
     items: [
       { id: "e2e_1-menu--", productId: "e2e_1", nom: "Menu Frites Test", prix: 6, image: "", formule: "menu", boisson: "Coca", taille: null, sauces: [], quantity: 2 },
       { id: "e2e_ghost-seul--", productId: "e2e_ghost", nom: "Produit Disparu", prix: 4, image: "", formule: "seul", boisson: null, taille: null, sauces: [], quantity: 1 },

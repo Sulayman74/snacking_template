@@ -27,13 +27,12 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
     await clientPage.locator('#auth-submit-btn').click();
     await expect(clientPage.locator('#auth-modal')).toBeHidden({ timeout: 10000 });
 
-    // Ajout au panier et Validation
-    await clientPage.locator('.group.cursor-pointer').first().click();
-    await clientPage.locator('#modal-cta').click();
-    await clientPage.locator('#floating-cart-container button').click();
-    
-    // 🛑 TRÈS IMPORTANT : Le robot valide la commande !
-    await clientPage.locator('#checkout-btn').click(); 
+    // 🛒 E2E : Pour bypasser Stripe Elements, on injecte l'activeOrderId de la commande
+    // seedée ("e2e_order_1") dans le localStorage et on démarre directement le tracking.
+    await clientPage.evaluate(() => {
+      localStorage.setItem("activeOrderId", "e2e_order_1");
+      window.startOrderTracking("e2e_order_1");
+    });
 
 
     // ==========================================
@@ -55,7 +54,7 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
     await expect(adminPage.locator('#startup-overlay')).toBeHidden({ timeout: 10000 });
 
     // 🛑 TRÈS IMPORTANT : Le chef s'assure d'être sur l'onglet Commandes !
-    await adminPage.locator('#tab-cuisine').click();
+    await adminPage.locator('#tab-cuisine-desktop').click();
 
    
     // ==========================================

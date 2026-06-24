@@ -37,11 +37,14 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   GoogleAuthProvider,
+  EmailAuthProvider,
+  linkWithCredential,
   signInWithPopup,
   signOut,
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   serverTimestamp,
 } from "./core/firebase.js";
 
@@ -77,11 +80,21 @@ export function buildUserInitDoc(user) {
  * @param {object} user - L'objet User Firebase Auth.
  * @returns {Promise<void>}
  */
-async function ensureUserDoc(user) {
+export async function ensureUserDoc(user) {
   if (!user?.uid) return;
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
-  if (snap.exists()) return;
+  if (snap.exists()) {
+    const data = snap.data();
+    if (data.isAnonymous && !user.isAnonymous) {
+      await updateDoc(userRef, {
+        email: user.email,
+        nom: user.displayName || user.email?.split("@")[0] || data.nom || "Gourmand",
+        isAnonymous: false,
+      });
+    }
+    return;
+  }
   await setDoc(userRef, buildUserInitDoc(user));
 }
 
@@ -121,9 +134,17 @@ if (authForm) {
     }
 
     try {
-      const cred = isSignUpMode
-        ? await createUserWithEmailAndPassword(auth, email, password)
-        : await signInWithEmailAndPassword(auth, email, password);
+      let cred;
+      if (isSignUpMode) {
+        if (auth.currentUser?.isAnonymous) {
+          const credential = EmailAuthProvider.credential(email, password);
+          cred = await linkWithCredential(auth.currentUser, credential);
+        } else {
+          cred = await createUserWithEmailAndPassword(auth, email, password);
+        }
+      } else {
+        cred = await signInWithEmailAndPassword(auth, email, password);
+      }
       window.showToast(
         isSignUpMode ? "Compte créé ! 🎉" : "Ravi de vous revoir ! 👋",
         "success",
@@ -133,6 +154,7 @@ if (authForm) {
       await ensureUserDoc(cred.user);
       toggleAuthModal();
     } catch (error) {
+      console.error("❌ Sign up error:", error);
       window.showToast(mapAuthError(error.code), "error");
     } finally {
       if (submitBtn) {
@@ -166,7 +188,15 @@ function toggleAuthModal() {
   }
 }
 
+function openGuestRegistration() {
+  if (!isSignUpMode) {
+    switchAuthMode();
+  }
+  toggleAuthModal();
+}
+
 window.toggleAuthModal = toggleAuthModal;
+window.openGuestRegistration = openGuestRegistration;
 
 // ============================================================================
 // 👀 GESTION DE L'ŒIL DU MOT DE PASSE

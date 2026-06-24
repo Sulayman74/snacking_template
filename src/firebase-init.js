@@ -273,6 +273,12 @@ onAuthStateChanged(auth, async (user) => {
       window.syncFcmToken();
     }
 
+    // Cacher la bannière d'inscription d'invité si l'utilisateur est maintenant connecté et non-anonyme
+    const guestBanner = document.getElementById("guest-registration-banner");
+    if (guestBanner && (!user || !user.isAnonymous)) {
+      guestBanner.classList.add("hidden");
+    }
+
   } catch (error) {
     console.error("❌ Erreur Initialisation :", error);
   }

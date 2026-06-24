@@ -517,3 +517,10 @@ window.processCheckout = processCheckout;
 window.openPaymentSheet = openPaymentSheet;
 window.closePaymentSheet = closePaymentSheet;
 window.submitStripePayment = submitStripePayment;
+window.finalizeOrderInFirestore = finalizeOrderInFirestore;
+
+if (import.meta.env.VITE_E2E_TESTING) {
+  window.setGuestEmailForTest = (email) => {
+    guestEmail = email;
+  };
+}

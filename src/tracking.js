@@ -152,6 +152,16 @@ function startOrderTracking(orderId) {
       if (docSnap.exists()) {
         const commande = docSnap.data();
 
+        // 🛒 Guest registration banner display
+        const guestBanner = document.getElementById("guest-registration-banner");
+        if (guestBanner) {
+          if (auth.currentUser?.isAnonymous) {
+            guestBanner.classList.remove("hidden");
+          } else {
+            guestBanner.classList.add("hidden");
+          }
+        }
+
         // ⚪ STATUT 1 : EN ATTENTE DU CLIENT
         if (commande.statut === "en_attente_client") {
           if (trackingBadge) {

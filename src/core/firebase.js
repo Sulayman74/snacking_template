@@ -61,6 +61,8 @@ export { httpsCallable, getFunctions } from "firebase/functions";
 // --- Fonctions SDK Auth ---
 export {
   GoogleAuthProvider,
+  EmailAuthProvider,
+  linkWithCredential,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   sendPasswordResetEmail,
