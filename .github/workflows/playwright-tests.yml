@@ -63,6 +63,8 @@ jobs:
       # L'app se branche sur les émulateurs grâce à VITE_E2E_TESTING=true.
       - name: 🧪 Tests E2E
         run: npm run test:e2e
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
       - name: 📁 Rapport Playwright
         uses: actions/upload-artifact@v4

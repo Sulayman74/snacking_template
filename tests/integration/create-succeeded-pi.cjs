@@ -2,14 +2,20 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const envFile = fs.existsSync(path.join(__dirname, '../../functions/.env.local'))
-  ? path.join(__dirname, '../../functions/.env.local')
-  : path.join(__dirname, '../../functions/.env');
-const lines = fs.readFileSync(envFile, 'utf8').split('\n');
-let stripeSecretKey = '';
-for (const line of lines) {
-  const m = line.match(/^STRIPE_SECRET_KEY=(.*)$/);
-  if (m) stripeSecretKey = m[1].trim();
+let stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
+
+if (!stripeSecretKey) {
+  const envFile = fs.existsSync(path.join(__dirname, '../../functions/.env.local'))
+    ? path.join(__dirname, '../../functions/.env.local')
+    : path.join(__dirname, '../../functions/.env');
+  
+  if (fs.existsSync(envFile)) {
+    const lines = fs.readFileSync(envFile, 'utf8').split('\n');
+    for (const line of lines) {
+      const m = line.match(/^STRIPE_SECRET_KEY=(.*)$/);
+      if (m) stripeSecretKey = m[1].trim();
+    }
+  }
 }
 
 const Stripe = require(path.join(__dirname, '../../functions/node_modules/stripe'));
