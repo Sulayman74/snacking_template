@@ -6,7 +6,7 @@ import { expect, test } from '@playwright/test';
 test.describe('Re-commande express (« Commander à nouveau »)', () => {
 
   test('Un client connecté recommande sa dernière commande en un tap', async ({ page }) => {
-    await page.goto('http://localhost:5173');
+    await page.goto('http://localhost:5173?lang=fr');
 
     // 1. Connexion via la modale d'authentification
     await page.evaluate(() => window.toggleAuthModal());
@@ -33,7 +33,7 @@ test.describe('Re-commande express (« Commander à nouveau »)', () => {
   });
 
   test('Le bloc est masqué pour un visiteur non connecté', async ({ page }) => {
-    await page.goto('http://localhost:5173');
+    await page.goto('http://localhost:5173?lang=fr');
     await expect(page.locator('#bestsellers')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('#reorder-section')).toBeHidden();
   });

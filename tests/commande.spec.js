@@ -4,7 +4,7 @@ test.describe('Flux de Commande Click & Collect', () => {
   
   test('Le client peut ajouter un Menu au panier et valider', async ({ page }) => {
 // 1. Ouvre le site
-    await page.goto('http://localhost:5173');
+    await page.goto('http://localhost:5173?lang=fr');
 
     // 🛑 LE HACK CTO : On force l'ouverture du menu complet !
     await page.evaluate(() => window.switchView('menu'));

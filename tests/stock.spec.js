@@ -56,7 +56,7 @@ test.describe('Gestion des Stocks & Sécurité', () => {
     // ==========================================
     // 📱 2. LE CLIENT NAVIGUE SUR LA CARTE
     // ==========================================
-    await clientPage.goto('http://localhost:5173');
+    await clientPage.goto('http://localhost:5173?lang=fr');
     
     // Masquer le splash screen
     await expect(clientPage.locator('#splash-screen')).toBeHidden({ timeout: 10000 });

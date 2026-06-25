@@ -4,7 +4,7 @@ test.describe('Caisse Enregistreuse (Calcul du Panier)', () => {
 
   test('Doit calculer le total exact et empêcher les NaN', async ({ page }) => {
 // 1. Ouvre le site
-    await page.goto('http://localhost:5173');
+    await page.goto('http://localhost:5173?lang=fr');
 
     // 🛑 LE HACK CTO : On force l'ouverture du menu complet !
     await page.evaluate(() => window.switchView('menu'));

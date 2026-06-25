@@ -14,7 +14,7 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
      // ==========================================
     // 📱 1. LE CLIENT SE CONNECTE ET COMMANDE
     // ==========================================
-    await clientPage.goto('http://localhost:5173');
+    await clientPage.goto('http://localhost:5173?lang=fr');
     
     // Masquer le splash screen
     await expect(clientPage.locator('#splash-screen')).toBeHidden({ timeout: 10000 });

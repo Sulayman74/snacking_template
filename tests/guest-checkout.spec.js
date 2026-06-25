@@ -8,7 +8,7 @@ test.describe('Flux Guest Checkout et Conversion', () => {
     page.on('pageerror', err => console.log('BROWSER ERROR:', err.message));
 
     // 1. Ouvre le site
-    await page.goto('http://localhost:5173');
+    await page.goto('http://localhost:5173?lang=fr');
 
     // Attendre que le splash screen disparaisse
     await expect(page.locator('#splash-screen')).toBeHidden({ timeout: 10000 });
