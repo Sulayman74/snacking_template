@@ -11,6 +11,7 @@ import { store } from "./core/Store.js";
 import "./ui/FavoritesUI.js";
 import { favoriteKey, showToast, triggerVibration } from "./utils.js";
 import { db, doc, onSnapshot, updateDoc } from "./core/firebase.js";
+import { t } from "./i18n/index.js";
 
 /** Plafond anti-bloat du document utilisateur (favoris tous snacks confondus). */
 const MAX_FAVORITES = 50;
@@ -114,7 +115,7 @@ class FavoritesService {
    */
   async toggle(item) {
     if (!store.state.user) {
-      showToast("Connectez-vous pour enregistrer vos favoris", "error");
+      showToast(t("toasts.favorites.loginRequired"), "error");
       window.toggleAuthModal?.();
       return;
     }
@@ -130,7 +131,7 @@ class FavoritesService {
   async add(item) {
     const user = store.state.user;
     if (!user) {
-      showToast("Connectez-vous pour enregistrer vos favoris", "error");
+      showToast(t("toasts.favorites.loginRequired"), "error");
       window.toggleAuthModal?.();
       return;
     }
@@ -139,11 +140,11 @@ class FavoritesService {
     const all = store.state.favorites || [];
 
     if (all.some((f) => f.favId === fav.favId && f.snackId === fav.snackId)) {
-      showToast("Déjà dans vos favoris ❤️", "success");
+      showToast(t("toasts.favorites.alreadyFavorite"), "success");
       return;
     }
     if (this.getForCurrentSnack().length >= MAX_FAVORITES) {
-      showToast(`Maximum ${MAX_FAVORITES} favoris atteint`, "error");
+      showToast(t("toasts.favorites.maxFavorites", { max: MAX_FAVORITES }), "error");
       return;
     }
 
@@ -152,10 +153,10 @@ class FavoritesService {
       await updateDoc(doc(db, "users", user.uid), { favorites: next });
       store.setFavorites(next); // optimiste (le snapshot confirmera)
       triggerVibration?.("success");
-      showToast("Ajouté à vos favoris ❤️", "success");
+      showToast(t("toasts.favorites.added"), "success");
     } catch (err) {
       console.error("Favoris : ajout impossible", err);
-      showToast("Impossible d'enregistrer ce favori", "error");
+      showToast(t("toasts.favorites.saveError"), "error");
     }
   }
 
@@ -172,10 +173,10 @@ class FavoritesService {
       await updateDoc(doc(db, "users", user.uid), { favorites: next });
       store.setFavorites(next); // optimiste
       triggerVibration?.("light");
-      showToast("Retiré de vos favoris", "success");
+      showToast(t("toasts.favorites.removed"), "success");
     } catch (err) {
       console.error("Favoris : retrait impossible", err);
-      showToast("Impossible de retirer ce favori", "error");
+      showToast(t("toasts.favorites.removeError"), "error");
     }
   }
 
@@ -187,15 +188,15 @@ class FavoritesService {
    */
   reorder(favId) {
     const fav = (store.state.favorites || []).find((f) => f.favId === favId);
-    if (!fav?.item) return showToast("Favori introuvable", "error");
+    if (!fav?.item) return showToast(t("toasts.favorites.notFound"), "error");
 
     const check = store.validateAgainstMenu(fav.item);
     if (!check.ok) {
       triggerVibration?.("error");
       return showToast(
         check.reason === "unavailable"
-          ? "Ce produit est épuisé pour le moment"
-          : "Ce produit n'est plus à la carte",
+          ? t("toasts.favorites.productUnavailable")
+          : t("toasts.favorites.productMenuRemoved"),
         "error"
       );
     }
@@ -204,8 +205,8 @@ class FavoritesService {
     triggerVibration?.("success");
     showToast(
       check.reason === "reprice"
-        ? "Ajouté au panier — le prix a été mis à jour 🛒"
-        : "Ajouté au panier ! 🛒",
+        ? t("toasts.favorites.addedToCartReprice")
+        : t("toasts.favorites.addedToCart"),
       "success"
     );
     window.openCartModal?.();

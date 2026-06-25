@@ -9,6 +9,7 @@ import { store } from "./core/Store.js";
 import { setupSWUpdatePrompt } from "./sw-update.js";
 import { setupA2HS } from "./a2hs.js";
 import { auth } from "./core/firebase.js";
+import { t } from "./i18n/index.js";
 
 // ============================================================================
 // ⚙️ SERVICE WORKER — STRATÉGIE "PROMPT" (mise à jour non-intrusive)
@@ -22,12 +23,12 @@ setupSWUpdatePrompt({ context: "Client" });
 // ============================================================================
 window.addEventListener("online", () => {
   document.body.classList.remove("is-offline");
-  window.showToast("Vous êtes de nouveau en ligne ! 🟢", "success");
+  window.showToast(t("toasts.pwa.online"), "success");
 });
 
 window.addEventListener("offline", () => {
   document.body.classList.add("is-offline");
-  window.showToast("Mode hors-ligne activé. 🟠", "error");
+  window.showToast(t("toasts.pwa.offline"), "error");
 });
 
 // ============================================================================
@@ -142,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 🍟 PARRAINAGE : Capture du parrain
     if (pwaAction === "referral" && targetId) {
       localStorage.setItem("referralBy", targetId);
-      window.showToast("Cadeau activé ! Votre première commande offrira une frite à votre parrain. 🍟", "success");
+      window.showToast(t("toasts.pwa.referralSuccess"), "success");
     }
 
     setTimeout(() => {

@@ -9,6 +9,7 @@ import { upsellUI } from "./ui/UpsellUI.js";
 import { auth, functions, httpsCallable, signInAnonymously } from "./core/firebase.js";
 import { ensureUserDoc } from "./auth.js";
 import { store } from "./core/Store.js";
+import { t } from "./i18n/index.js";
 
 // 🛒 Guest checkout (LOT 2) : email saisi dans le Link Authentication Element
 // (invité anonyme). Sert de clientEmail/contactKey à finalizeOrder. Réinitialisé
@@ -126,7 +127,7 @@ function loadStripeSdk() {
 async function processCheckout() {
   const cfg = window.snackConfig;
   if (window.cart.length === 0)
-    return window.showToast("Votre panier est vide", "error");
+    return window.showToast(t("toasts.checkout.emptyCart"), "error");
 
   // 📊 Funnel : début de checkout (no-op si flag analytics tenant OFF). Émis ici,
   // après le garde-fou panier non vide, AVANT l'upsell/Stripe → mesure le drop-off
@@ -147,29 +148,29 @@ async function processCheckout() {
     : cfg?.features?.enableClickAndCollect;
   if (!featureOk) {
     return window.showToast(
-      isDelivery ? "La livraison est désactivée." : "La commande en ligne est désactivée.",
+      isDelivery ? t("toasts.checkout.deliveryDisabled") : t("toasts.checkout.clickCollectDisabled"),
       "error",
     );
   }
 
   if (cfg?.features?.maintenanceMode) {
-    return window.showToast("Service momentanément en maintenance.", "error");
+    return window.showToast(t("toasts.checkout.maintenance"), "error");
   }
 
   // 🚚 Validation livraison : adresse présente, dans la zone, panier minimum.
   if (isDelivery) {
     if (!delivery.address) {
       window.openCartModal?.();
-      return window.showToast("Indiquez votre adresse de livraison.", "error");
+      return window.showToast(t("toasts.checkout.addressRequired"), "error");
     }
     if (delivery.quote && delivery.quote.inRange === false) {
-      return window.showToast("Votre adresse est hors zone de livraison.", "error");
+      return window.showToast(t("toasts.checkout.outOfZone"), "error");
     }
     const minOrder = cfg?.delivery?.minOrder || 0;
     const subtotal = window.getCartSubtotal ? window.getCartSubtotal() : window.getCartTotal();
     if (minOrder > 0 && subtotal < minOrder) {
       window.openCartModal?.();
-      return window.showToast(`Minimum ${minOrder.toFixed(2)} € pour la livraison.`, "error");
+      return window.showToast(t("toasts.checkout.minOrderRequired", { min: minOrder.toFixed(2) }), "error");
     }
   }
 
@@ -192,7 +193,7 @@ async function processCheckout() {
           console.warn("ensureUserDoc (invité anonyme) échouée :", e);
         }
       } catch (e) {
-        window.showToast("Connexion impossible, réessayez.", "error");
+        window.showToast(t("toasts.checkout.connectionError"), "error");
         return;
       }
     } else {
@@ -200,7 +201,7 @@ async function processCheckout() {
       // dans firebase-init.js consommera ce flag et relancera processCheckout()
       // automatiquement après connexion (évite le reclic manuel).
       store.setPendingCheckout(true);
-      window.showToast("Veuillez vous connecter pour commander", "error");
+      window.showToast(t("toasts.checkout.loginRequired"), "error");
       window.toggleAuthModal();
       return;
     }
@@ -329,7 +330,7 @@ async function processCheckout() {
     const code = error?.code || "";
     const isBusiness = /failed-precondition|out-of-range|invalid-argument|resource-exhausted/.test(code);
     window.showToast(
-      isBusiness && error?.message ? error.message : "Erreur de connexion sécurisée au paiement.",
+      isBusiness && error?.message ? error.message : t("toasts.checkout.secureConnectionError"),
       "error",
     );
     if (typeof closePaymentSheet === "function") closePaymentSheet();
@@ -376,7 +377,7 @@ async function submitStripePayment() {
 
   if (!stripeInstance || !stripeElements) {
     window.showToast(
-      "Veuillez patienter, connexion sécurisée en cours...",
+      t("toasts.checkout.secureConnectionWait"),
       "error",
     );
     return;
@@ -428,7 +429,7 @@ async function submitStripePayment() {
       messageContainer.classList.remove("hidden");
       window.triggerVibration?.("error");
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      window.showToast("Paiement validé ! 🎉", "success");
+      window.showToast(t("toasts.checkout.paymentSuccess"), "success");
 
       closePaymentSheet();
       await finalizeOrderInFirestore(paymentIntent.id);
@@ -436,7 +437,7 @@ async function submitStripePayment() {
   } catch (err) {
     console.error("Erreur critique au moment du paiement :", err);
     window.showToast(
-      "Une erreur est survenue avec le terminal de paiement.",
+      t("toasts.checkout.paymentTerminalError"),
       "error",
     );
   } finally {
@@ -507,7 +508,7 @@ async function finalizeOrderInFirestore(stripePaymentId) {
   } catch (err) {
     console.error("Erreur finalisation commande :", err);
     window.showToast(
-      "Paiement réussi, mais erreur d'envoi du ticket. Contactez le restaurant.",
+      t("toasts.checkout.orderFinalizeError"),
       "error",
     );
   }

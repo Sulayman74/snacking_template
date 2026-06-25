@@ -17,19 +17,20 @@ import { t } from "./i18n/index.js";
  */
 export function mapAuthError(code) {
   const map = {
-    "auth/weak-password":          "Mot de passe trop court (6 caractères minimum).",
-    "auth/email-already-in-use":   "Un compte existe déjà avec cet email.",
-    "auth/user-not-found":         "Aucun compte lié à cet email.",
-    "auth/wrong-password":         "Email ou mot de passe incorrect.",
-    "auth/invalid-email":          "L'adresse email n'est pas valide.",
-    "auth/invalid-credential":     "Email ou mot de passe incorrect.",
-    "auth/too-many-requests":      "Trop de tentatives. Réessayez dans quelques minutes.",
-    "auth/network-request-failed": "Pas de connexion. Vérifiez votre réseau.",
-    "auth/popup-closed-by-user":   "Connexion annulée.",
-    "auth/popup-blocked":          "La fenêtre de connexion a été bloquée. Autorisez les pop-ups.",
-    "auth/requires-recent-login":  "Session expirée. Reconnectez-vous.",
+    "auth/weak-password":          "weakPassword",
+    "auth/email-already-in-use":   "emailAlreadyInUse",
+    "auth/user-not-found":         "userNotFound",
+    "auth/wrong-password":         "wrongPassword",
+    "auth/invalid-email":          "invalidEmail",
+    "auth/invalid-credential":     "invalidCredential",
+    "auth/too-many-requests":      "tooManyRequests",
+    "auth/network-request-failed": "networkRequestFailed",
+    "auth/popup-closed-by-user":   "popupClosedByUser",
+    "auth/popup-blocked":          "popupBlocked",
+    "auth/requires-recent-login":  "requiresRecentLogin",
   };
-  return map[code] ?? "Une erreur est survenue. Réessayez.";
+  const key = map[code] ?? "generic";
+  return t(`toasts.auth.errors.${key}`);
 }
 import {
   auth,
@@ -161,7 +162,7 @@ if (authForm) {
         cred = await signInWithEmailAndPassword(auth, email, password);
       }
       window.showToast(
-        isSignUpMode ? "Compte créé ! 🎉" : "Ravi de vous revoir ! 👋",
+        isSignUpMode ? t("toasts.auth.signUpSuccess") : t("toasts.auth.signInSuccess"),
         "success",
       );
       // 🛡️ Crée le doc users/{uid} s'il manque (signup email/password ET backfill d'un
@@ -240,7 +241,7 @@ async function resetPassword() {
 
   if (!emailInput) {
     window.showToast(
-      "Veuillez d'abord taper votre adresse email dans le champ.",
+      t("toasts.auth.emailRequired"),
       "error",
     );
     document.getElementById("auth-email").focus();
@@ -251,7 +252,7 @@ async function resetPassword() {
 
   try {
     await sendPasswordResetEmail(auth, emailInput);
-    window.showToast("Un email de réinitialisation vous a été envoyé ! 📧", "success");
+    window.showToast(t("toasts.auth.resetEmailSent"), "success");
     if (typeof window.triggerVibration === "function")
       window.triggerVibration("success");
   } catch (error) {
@@ -275,7 +276,7 @@ if (btnGoogleLogin) {
       await ensureUserDoc(result.user);
 
       if (typeof window.showToast === "function") {
-        window.showToast("Connexion Google réussie ! 🍔", "success");
+        window.showToast(t("toasts.auth.googleSuccess"), "success");
       }
 
       toggleAuthModal();
@@ -294,7 +295,7 @@ if (btnGoogleLogin) {
 async function logoutUser() {
   try {
     await signOut(auth);
-    window.showToast("Vous êtes déconnecté. À bientôt !", "success");
+    window.showToast(t("toasts.auth.signOutSuccess"), "success");
 
     window.switchView("home");
   } catch (error) {

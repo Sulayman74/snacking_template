@@ -7,6 +7,7 @@
 // Theming : couleurs via classes Tailwind du thème (bg-primary/text-on-primary).
 
 import { store } from "./core/Store.js";
+import { t } from "./i18n/index.js";
 import {
   quoteDelivery,
   getCurrentPosition,
@@ -257,8 +258,8 @@ class DeliveryUI {
     } catch (err) {
       const msg =
         err.code === "denied"
-          ? "Localisation refusée. Saisissez votre adresse ci-dessous."
-          : "Localisation impossible. Saisissez votre adresse.";
+          ? t("toasts.delivery.locationDenied")
+          : t("toasts.delivery.locationFailed");
       window.showToast?.(msg, "error");
       btn.disabled = false;
       btn.innerHTML = original;
@@ -268,14 +269,14 @@ class DeliveryUI {
   }
 
   async geocodeAndSet(text) {
-    window.showToast?.("Recherche de l'adresse…", "success");
+    window.showToast?.(t("toasts.delivery.searchingAddress"), "success");
     try {
       const url = `${GEOCODING_URL}?name=${encodeURIComponent(text)}&count=1&language=fr&format=json`;
       const resp = await fetch(url);
       const data = resp.ok ? await resp.json() : null;
       const match = data?.results?.[0];
       if (!match?.latitude || !match?.longitude) {
-        window.showToast?.("Adresse introuvable. Précisez la ville.", "error");
+        window.showToast?.(t("toasts.delivery.addressNotFound"), "error");
         return;
       }
       store.setDeliveryAddress({
@@ -285,7 +286,7 @@ class DeliveryUI {
       });
       this.syncQuote();
     } catch {
-      window.showToast?.("Erreur de recherche d'adresse.", "error");
+      window.showToast?.(t("toasts.delivery.searchError"), "error");
     }
   }
 }

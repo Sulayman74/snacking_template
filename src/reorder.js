@@ -12,6 +12,7 @@
 import { store } from "./core/Store.js";
 import "./ui/ReorderUI.js";
 import { showToast, triggerVibration } from "./utils.js";
+import { t } from "./i18n/index.js";
 import {
   db,
   collection,
@@ -91,7 +92,7 @@ class ReorderService {
   reorderLastOrder() {
     const order = store.state.lastOrder;
     if (!Array.isArray(order?.items) || order.items.length === 0) {
-      return showToast("Aucune commande récente trouvée", "error");
+      return showToast(t("toasts.reorder.notFound"), "error");
     }
 
     let added = 0;
@@ -115,17 +116,17 @@ class ReorderService {
 
     if (added === 0) {
       triggerVibration?.("error");
-      return showToast("Ces produits ne sont plus à la carte", "error");
+      return showToast(t("toasts.reorder.unavailable"), "error");
     }
 
     triggerVibration?.("success");
     if (skipped > 0) {
-      showToast(`${skipped} article${skipped > 1 ? "s" : ""} indisponible${skipped > 1 ? "s" : ""} non ajouté${skipped > 1 ? "s" : ""}`, "error");
+      showToast(t("toasts.reorder.itemsSkipped", { skipped, plural: skipped > 1 ? "s" : "" }), "error");
     }
     showToast(
       repriced > 0
-        ? "Panier rempli — certains prix ont été mis à jour 🛒"
-        : "Votre dernière commande est dans le panier ! 🛒",
+        ? t("toasts.reorder.successReprice")
+        : t("toasts.reorder.success"),
       "success"
     );
     window.openCartModal?.();
