@@ -18,6 +18,11 @@ if (!stripeSecretKey) {
   }
 }
 
+// Fallback sémantique de test pour la CI/CD
+if (!stripeSecretKey) {
+  stripeSecretKey = 'sk_test_51TG1RfIfiBxoqwsyO2yoMirsEnrFhIph722SR3E8LrHakSZCkj3ol6riBD19A7d4JSfSBHkRVSOcR9lUZL5yCN8s00dMYYurX9';
+}
+
 const Stripe = require(path.join(__dirname, '../../functions/node_modules/stripe'));
 const stripe = new Stripe(stripeSecretKey, { apiVersion: '2026-03-25.dahlia' });
 
