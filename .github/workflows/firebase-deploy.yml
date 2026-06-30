@@ -83,7 +83,7 @@ jobs:
 
       # Déploie uniquement le site correspondant au target de la matrice
       - name: 🚀 Firebase deploy — ${{ matrix.target }}
-        run: npx firebase-tools@latest deploy --only hosting:${{ matrix.target }} --project snacking-template
+        run: npx firebase-tools@latest deploy --only hosting:${{ matrix.target }} --project snacking-template --non-interactive
 
   # ─────────────────────────────────────────────────────────────────────────
   # 🔒 Backend GLOBAL (un seul projet Firebase pour tous les tenants) :
@@ -96,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v4
+         uses: actions/checkout@v4
 
       - name: 🔑 Google auth
         uses: google-github-actions/auth@v2
@@ -106,7 +106,7 @@ jobs:
       # Étapes séparées : les rules Firestore (les plus critiques) sont déployées
       # d'abord et indépendamment — un éventuel échec IAM sur Storage ne les bloque pas.
       - name: 🔒 Firebase deploy — Firestore rules
-        run: npx firebase-tools@latest deploy --only firestore:rules --project snacking-template
+        run: npx firebase-tools@latest deploy --only firestore:rules --project snacking-template --non-interactive
 
       - name: 🔒 Firebase deploy — Storage rules
-        run: npx firebase-tools@latest deploy --only storage --project snacking-template
+        run: npx firebase-tools@latest deploy --only storage --project snacking-template --non-interactive
