@@ -70,19 +70,18 @@ class FavoritesService {
     }
   }
 
-  /** Favoris du snack courant uniquement (pour l'affichage). */
+  /** Favoris du snack courant uniquement (pour l'affichage) en O(1) pour la sélection. */
   getForCurrentSnack() {
     const snackId = this.#snackId();
-    return (store.state.favorites || []).filter((f) => f.snackId === snackId);
+    const snackGroup = store.favoritesIndex[snackId];
+    return snackGroup ? Object.values(snackGroup) : [];
   }
 
-  /** L'article personnalisé est-il déjà en favori (snack courant) ? */
+  /** L'article personnalisé est-il déjà en favori (snack courant) ? Lecture en O(1). */
   isFavorite(item) {
     const key = favoriteKey(item);
     const snackId = this.#snackId();
-    return (store.state.favorites || []).some(
-      (f) => f.favId === key && f.snackId === snackId
-    );
+    return !!store.favoritesIndex[snackId]?.[key];
   }
 
   /** Construit le snapshot favori à partir d'un article au format panier. */
@@ -136,10 +135,7 @@ class FavoritesService {
       return;
     }
 
-    const fav = this.#buildFavorite(item);
-    const all = store.state.favorites || [];
-
-    if (all.some((f) => f.favId === fav.favId && f.snackId === fav.snackId)) {
+    if (this.isFavorite(item)) {
       showToast(t("toasts.favorites.alreadyFavorite"), "success");
       return;
     }
@@ -148,14 +144,21 @@ class FavoritesService {
       return;
     }
 
+    const fav = this.#buildFavorite(item);
+    const all = store.state.favorites || [];
     const next = [...all, fav];
+
+    // --- 🚀 OPTIMISTIC UI ---
+    store.setFavorites(next);
+    triggerVibration?.("success");
+    showToast(t("toasts.favorites.added"), "success");
+
     try {
       await updateDoc(doc(db, "users", user.uid), { favorites: next });
-      store.setFavorites(next); // optimiste (le snapshot confirmera)
-      triggerVibration?.("success");
-      showToast(t("toasts.favorites.added"), "success");
     } catch (err) {
       console.error("Favoris : ajout impossible", err);
+      // Rollback de l'état local
+      store.setFavorites(all);
       showToast(t("toasts.favorites.saveError"), "error");
     }
   }
@@ -166,16 +169,22 @@ class FavoritesService {
     if (!user) return;
 
     const snackId = this.#snackId();
-    const next = (store.state.favorites || []).filter(
+    const all = store.state.favorites || [];
+    const next = all.filter(
       (f) => !(f.favId === favId && f.snackId === snackId)
     );
+
+    // --- 🚀 OPTIMISTIC UI ---
+    store.setFavorites(next);
+    triggerVibration?.("light");
+    showToast(t("toasts.favorites.removed"), "success");
+
     try {
       await updateDoc(doc(db, "users", user.uid), { favorites: next });
-      store.setFavorites(next); // optimiste
-      triggerVibration?.("light");
-      showToast(t("toasts.favorites.removed"), "success");
     } catch (err) {
       console.error("Favoris : retrait impossible", err);
+      // Rollback de l'état local
+      store.setFavorites(all);
       showToast(t("toasts.favorites.removeError"), "error");
     }
   }

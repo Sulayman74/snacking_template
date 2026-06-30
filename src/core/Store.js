@@ -31,6 +31,8 @@ export class Store extends EventTarget {
         locale: localStorage.getItem("snack_locale") || "fr",
     };
 
+    #favoritesIndex = {};
+
     constructor() {
         super();
     }
@@ -40,6 +42,13 @@ export class Store extends EventTarget {
      */
     get state() {
         return Object.freeze({ ...this.#state });
+    }
+
+    /**
+     * Retourne l'index des favoris structuré par snackId et favId pour des lectures en O(1).
+     */
+    get favoritesIndex() {
+        return this.#favoritesIndex;
     }
 
     // --- MÉTHODES DE MUTATION (Sert d'Actions/Reducers) ---
@@ -84,6 +93,19 @@ export class Store extends EventTarget {
     /** Remplace la liste des favoris (source : snapshot temps réel de users/{uid}). */
     setFavorites(favorites) {
         this.#state.favorites = Array.isArray(favorites) ? favorites : [];
+        
+        // Reconstruction de l'index map en O(N)
+        const newIndex = {};
+        for (const fav of this.#state.favorites) {
+            if (fav && fav.snackId && fav.favId) {
+                if (!newIndex[fav.snackId]) {
+                    newIndex[fav.snackId] = {};
+                }
+                newIndex[fav.snackId][fav.favId] = fav;
+            }
+        }
+        this.#favoritesIndex = newIndex;
+
         this.emit("favorites-updated");
     }
 

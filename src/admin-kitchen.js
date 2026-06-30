@@ -217,15 +217,15 @@ export function createTicketElement(id, commande) {
                 <p class="text-sm text-gray-500 font-bold mt-1"><i data-lucide="clock"></i> ${timeString}</p>
             </div>
             <div class="flex flex-col items-end">
-                ${priceDisplay}
-                ${paymentBadgeHtml}
+                <div class="price-display-container">${priceDisplay}</div>
+                <div class="payment-badge-container">${paymentBadgeHtml}</div>
             </div>
         </div>
         ${deliveryHtml}
         <ul class="mb-5 text-gray-800 space-y-1">${itemsHtml}</ul>
         ${wheelPrizeHtml}
-        ${btnHtml}
-        ${refundBtnHtml}
+        <div class="action-button-container">${btnHtml}</div>
+        <div class="refund-button-container">${refundBtnHtml}</div>
     `;
 
   return ticketDiv;
@@ -236,6 +236,65 @@ export function createTicketElement(id, commande) {
 // ============================================================================
 let unsubscribeKitchenRadar = null;
 let isFirstLoad = true;
+
+function updateTicketDOM(ticketDiv, commande, id) {
+  const paymentStatus = commande.paiement?.statut || "en_attente";
+  const isPaid = paymentStatus === "paye";
+  const isWaiting = commande.statut === "en_attente_client";
+  const isNew = commande.statut === "nouvelle";
+
+  let ticketColor = "bg-white border-l-8 border-green-500";
+  let textColor = "text-green-700";
+  let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="package" class="mr-2"></i> DONNÉE AU CLIENT</button>`;
+
+  if (isWaiting) {
+    ticketColor = "bg-white border-l-8 border-gray-400 opacity-80";
+    textColor = "text-gray-600";
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i data-lucide="flame" class="mr-2"></i> Forcer Cuisson</button>`;
+  } else if (isNew) {
+    ticketColor = "bg-white border-l-8 border-red-500";
+    textColor = "text-red-700";
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="check" class="mr-2"></i> MARQUER PRÊTE</button>`;
+  }
+
+  ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up`;
+  ticketDiv.setAttribute("data-status", commande.statut);
+
+  const priceContainer = ticketDiv.querySelector(".price-display-container");
+  if (priceContainer) {
+    priceContainer.innerHTML = isPaid
+      ? `<p class="font-black text-2xl text-green-600 opacity-50 line-through">${(Number(commande.total) || 0).toFixed(2)} €</p>`
+      : `<p class="font-black text-2xl ${textColor}">${(Number(commande.total) || 0).toFixed(2)} €</p>`;
+  }
+
+  const paymentBadgeContainer = ticketDiv.querySelector(".payment-badge-container");
+  if (paymentBadgeContainer) {
+    paymentBadgeContainer.innerHTML = isPaid
+      ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition flex items-center gap-1 hover:bg-green-200"><i data-lucide="circle-check"></i> PAYÉ</button>`
+      : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition flex items-center gap-1 animate-pulse hover:bg-orange-200"><i data-lucide="receipt"></i> ENCAISSER</button>`;
+  }
+
+  const actionBtnContainer = ticketDiv.querySelector(".action-button-container");
+  if (actionBtnContainer) {
+    actionBtnContainer.innerHTML = btnHtml;
+  }
+
+  const onlineCard = (commande.paiement?.methode || "carte_bancaire") === "carte_bancaire";
+  const refundBtnContainer = ticketDiv.querySelector(".refund-button-container");
+  if (refundBtnContainer) {
+    refundBtnContainer.innerHTML = onlineCard && (paymentStatus === "paye" || paymentStatus === "partiellement_rembourse")
+      ? `<button type="button" data-action="refund-order" data-id="${id}" aria-label="Rembourser cette commande" class="w-full mt-2 bg-white text-red-600 border border-red-200 hover:bg-red-50 font-bold py-2 rounded-xl text-sm transition active:scale-95 flex items-center justify-center gap-2"><i class="fas fa-rotate-left"></i> Rembourser${paymentStatus === "partiellement_rembourse" ? " (partiel)" : ""}</button>`
+      : paymentStatus === "rembourse"
+        ? `<p class="w-full mt-2 text-center text-xs font-bold text-gray-400"><i class="fas fa-circle-check mr-1"></i>Remboursé</p>`
+        : "";
+  }
+
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+    window.lucide.createIcons();
+  }
+}
+
+const kitchenOrdersMap = new Map();
 
 function startKitchenRadar() {
   if (unsubscribeKitchenRadar) {
@@ -249,7 +308,6 @@ function startKitchenRadar() {
   const newOrdersContainer = document.getElementById("orders-new");
   const readyOrdersContainer = document.getElementById("orders-ready");
   
-  // 🧹 NETTOYAGE : On vide les colonnes avant de relancer l'écoute pour éviter les doublons
   if (waitingOrdersContainer) waitingOrdersContainer.innerHTML = "";
   if (newOrdersContainer) newOrdersContainer.innerHTML = "";
   if (readyOrdersContainer) readyOrdersContainer.innerHTML = "";
@@ -272,6 +330,7 @@ function startKitchenRadar() {
       const existingTicket = document.getElementById(`ticket-${id}`);
 
       if (change.type === "added") {
+        kitchenOrdersMap.set(id, commande);
         if (existingTicket) existingTicket.remove();
         const newTicket = createTicketElement(id, commande);
         if (commande.statut === "en_attente_client" && waitingOrdersContainer)
@@ -280,18 +339,35 @@ function startKitchenRadar() {
           newOrdersContainer.appendChild(newTicket);
         if (commande.statut === "prete" && readyOrdersContainer)
           readyOrdersContainer.appendChild(newTicket);
-        // Sonner à l'arrivée du ticket (paiement confirmé), pas au forçage cuisson
         if (commande.statut === "en_attente_client" && !isFirstLoad) ringTheBell = true;
       } else if (change.type === "modified") {
-        if (existingTicket) existingTicket.remove();
-        const updatedTicket = createTicketElement(id, commande);
-        if (commande.statut === "en_attente_client" && waitingOrdersContainer)
-          waitingOrdersContainer.appendChild(updatedTicket);
-        if (commande.statut === "nouvelle" && newOrdersContainer)
-          newOrdersContainer.appendChild(updatedTicket);
-        if (commande.statut === "prete" && readyOrdersContainer)
-          readyOrdersContainer.appendChild(updatedTicket);
+        kitchenOrdersMap.set(id, commande);
+        if (existingTicket) {
+          // Mise à jour ciblée O(1)
+          updateTicketDOM(existingTicket, commande, id);
+          
+          // Si le statut a changé, on déplace le ticket vers la colonne correspondante
+          const currentContainer = existingTicket.parentElement;
+          let targetContainer = null;
+          if (commande.statut === "en_attente_client") targetContainer = waitingOrdersContainer;
+          else if (commande.statut === "nouvelle") targetContainer = newOrdersContainer;
+          else if (commande.statut === "prete") targetContainer = readyOrdersContainer;
+
+          if (targetContainer && currentContainer !== targetContainer) {
+            targetContainer.appendChild(existingTicket);
+          }
+        } else {
+          // Fallback si le ticket n'existe pas encore (cas rare d'un patch simultané)
+          const newTicket = createTicketElement(id, commande);
+          if (commande.statut === "en_attente_client" && waitingOrdersContainer)
+            waitingOrdersContainer.appendChild(newTicket);
+          if (commande.statut === "nouvelle" && newOrdersContainer)
+            newOrdersContainer.appendChild(newTicket);
+          if (commande.statut === "prete" && readyOrdersContainer)
+            readyOrdersContainer.appendChild(newTicket);
+        }
       } else if (change.type === "removed") {
+        kitchenOrdersMap.delete(id);
         if (existingTicket) existingTicket.remove();
       }
     });
@@ -308,11 +384,7 @@ function startKitchenRadar() {
 
     if (ringTheBell && bell) bell.play().catch((e) => console.log("Son bloqué"));
 
-    // 🔥 Met à jour le signal de capacité (throttlé serveur) à chaque évolution
-    // du radar. Force le 1er calcul au tout premier chargement pour afficher le
-    // badge immédiatement.
     refreshKitchenLoad(isFirstLoad);
-
     isFirstLoad = false;
   }, (err) => {
     console.error("Radar cuisine (onSnapshot) erreur :", err);
@@ -326,6 +398,7 @@ function stopKitchenRadar() {
   if (unsubscribeKitchenRadar) {
     unsubscribeKitchenRadar();
     unsubscribeKitchenRadar = null;
+    kitchenOrdersMap.clear();
     console.log("🔴 Radar Cuisine DÉSACTIVÉ.");
   }
 }
@@ -344,7 +417,7 @@ async function updateOrderStatus(orderId, newStatus) {
   }
 }
 
-async function updatePaymentStatus(orderId, currentStatus) {
+async function updatePaymentStatus(orderId, currentStatus, commandeData = null) {
   try {
     const newStatus = currentStatus === "paye" ? "en_attente" : "paye";
 
@@ -353,16 +426,26 @@ async function updatePaymentStatus(orderId, currentStatus) {
     batch.update(orderRef, { "paiement.statut": newStatus });
 
     if (newStatus === "paye") {
-      const orderDoc = await getDoc(orderRef);
-      if (orderDoc.exists()) {
-        const items = orderDoc.data().items || [];
-        for (const item of items) {
-          const realProductId =
-            item.productId || (typeof item.id === "string" ? item.id.split("-")[0] : null);
-          if (!realProductId) continue; // item dégradé : on n'incrémente pas les ventes
-          const productRef = doc(db, "produits", realProductId);
-          batch.update(productRef, { ventes: increment(item.quantity) });
+      // Optimisation O(1) : Récupération des données locales pour économiser un getDoc réseau
+      const localData = commandeData || kitchenOrdersMap.get(orderId);
+      
+      let items = [];
+      if (localData) {
+        items = localData.items || [];
+      } else {
+        // Fallback rétrocompatible (ex: lors de tests unitaires ou d'un appel externe)
+        const orderDoc = await getDoc(orderRef);
+        if (orderDoc.exists()) {
+          items = orderDoc.data().items || [];
         }
+      }
+
+      for (const item of items) {
+        const realProductId =
+          item.productId || (typeof item.id === "string" ? item.id.split("-")[0] : null);
+        if (!realProductId) continue; // item dégradé : on n'incrémente pas les ventes
+        const productRef = doc(db, "produits", realProductId);
+        batch.update(productRef, { ventes: increment(item.quantity) });
       }
     }
 
