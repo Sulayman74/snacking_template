@@ -169,24 +169,7 @@
         <div id="ptr-indicator" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full transition-transform duration-300 flex items-center justify-center w-10 h-10 bg-surface rounded-full shadow-md z-[70]">
           <i data-lucide="arrow-down" id="ptr-icon" class="text-text-muted text-xl transition-transform"></i>
         </div>
-        <div class="sticky top-0 z-50 bg-accent/40 backdrop-blur-xl border-b border-gray-400 shadow-sm pt-[env(safe-area-inset-top)]">
-          <div class="container mx-auto px-4 py-3 flex items-center gap-3">
-            <div class="relative flex-1">
-              <input type="text" id="menu-search-input" placeholder="Un p'tit creux ?" class="w-full pl-10 pr-10 py-3 bg-surface-2 border-none rounded-2xl focus:ring-2 focus:ring-primary focus:bg-surface outline-none transition-all text-text font-medium text-sm" />
-              <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-sm"></i>
-              <button id="clear-search-btn" aria-label="Effacer la recherche" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text">
-                <i data-lucide="circle-x" class="text-lg"></i>
-              </button>
-            </div>
-            <button data-action="switch-home" class="w-11 h-11 shrink-0 bg-surface border border-accent rounded-2xl shadow-sm flex items-center justify-center text-text-muted hover:text-red-500 transition-colors">
-              <i data-lucide="x" class="text-red-500 text-lg"></i>
-            </button>
-          </div>
-          <div id="menu-categories-nav" class="container mx-auto px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar -webkit-overflow-scrolling-touch"></div>
-        </div>
-        <div class="container mx-auto px-4 pt-6">
-          <div id="full-menu-container" class="pb-32 md:pb-12"></div>
-        </div>
+        <snack-menu-list></snack-menu-list>
       </section>
 
       <section id="favorites-view" role="dialog" aria-modal="true" aria-labelledby="favorites-title" class="hidden opacity-0 h-full w-full bg-surface-2 fixed inset-0 z-60 overflow-y-auto transition-opacity duration-300">
@@ -508,48 +491,7 @@
       <div class="p-6 bg-surface-2 rounded-t-3xl border-t border-line pb-safe"><div id="cart-wheel-prize"></div><div id="delivery-section" class="empty:hidden"></div><div id="cart-progress-bar" class="mb-4 empty:hidden"></div><div class="flex justify-between items-center mb-4"><span class="text-text-muted font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-text">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" data-i18n="cart.checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center">Valider ma commande</button></div>
     </div>
 
-<div id="payment-bottom-sheet" class="fixed inset-0 z-[100] hidden items-end justify-center bg-black/60 opacity-0 transition-opacity duration-300 backdrop-blur-sm">
-  
-  <div class="absolute inset-0" onclick="closePaymentSheet()"></div>
-  
-  <div id="payment-sheet-content" 
-       class="relative w-full max-w-lg translate-y-full transform rounded-t-3xl bg-surface p-6 shadow-2xl transition-transform duration-300 flex flex-col max-h-[92vh]">
-
-    <div class="mx-auto mb-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-surface-3"></div>
-
-    <div class="overflow-y-auto pr-1 custom-scrollbar">
-      <div class="mb-6 text-center">
-        <h3 class="text-xl font-black text-text">Paiement Sécurisé</h3>
-        <p id="payment-amount-display" class="text-lg font-bold text-red-600">Total : 0.00 €</p>
-      </div>
-
-      <!-- Guest checkout (LOT 2) : email invité via Link Authentication Element.
-           Caché par défaut, monté/affiché par checkout.js uniquement pour un invité anonyme. -->
-      <div id="link-authentication-element" class="mb-3 hidden"></div>
-
-      <div id="payment-element" class="min-h-[250px]">
-        </div>
-
-      <div id="payment-message" class="mt-4 hidden rounded-lg bg-danger/10 p-3 text-center text-sm font-medium text-danger"></div>
-    </div>
-
-    <div class="mt-6 flex flex-col gap-3 flex-shrink-0 pb-4 md:pb-0">
-      <button id="submit-payment-btn" onclick="submitStripePayment()" 
-              class="flex w-full items-center justify-center rounded-xl bg-green-600 py-4 text-lg font-black text-on-dark shadow-lg transition active:scale-95 hover:bg-green-700">
-        <i data-lucide="lock" class="mr-2"></i> Confirmer le paiement
-      </button>
-      
-      <button onclick="closePaymentSheet()" class="w-full py-2 text-sm font-bold text-text-muted hover:text-text">
-        Annuler la commande
-      </button>
-    </div>
-
-    <div class="mt-4 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest text-text-muted pb-2">
-      <i data-lucide="shield-check"></i>
-      <span>Paiement crypté SSL par Stripe</span>
-    </div>
-  </div>
-</div>
+<snack-checkout id="snack-checkout"></snack-checkout>
 
 <!-- ============================================================================ -->
 <!-- ➕ UPSELL — Bottom-sheet de suggestions avant paiement -->
