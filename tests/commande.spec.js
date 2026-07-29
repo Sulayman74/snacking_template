@@ -24,8 +24,10 @@ test.describe('Flux de Commande Click & Collect', () => {
     // déterministe (coche + event change → window.toggleDrinkSection).
     await page.evaluate(() => {
       const radio = document.querySelector('#product-modal input[value="menu"]');
-      radio.checked = true;
-      radio.dispatchEvent(new Event('change', { bubbles: true }));
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     });
     await page.locator('#modal-cta').click();
 
