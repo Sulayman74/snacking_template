@@ -23,6 +23,8 @@ import "./router.js";
 import "./snack-config.js";
 import "./firebase-init.js";
 import "./logger.js";
+import "./components/SnackMenuList.js";
+import "./components/SnackCheckout.js";
 import { initI18n } from "./i18n/index.js";
 
 // ============================================================================

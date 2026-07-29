@@ -1,6 +1,6 @@
 import { html } from 'lit';
 import { SnackElement } from './SnackElement.js';
-import { store } from '../store/Store.js';
+import { store } from '../core/Store.js';
 import { StoreController } from '../store/StoreController.js';
 import './SnackMenuItem.js';
 
@@ -10,7 +10,7 @@ export class SnackMenuList extends SnackElement {
     activeCatId: { type: String }
   };
 
-  menuController = new StoreController(this, 'menu-changed');
+  menuController = new StoreController(this, 'menu-updated');
 
   constructor() {
     super();
@@ -149,7 +149,7 @@ export class SnackMenuList extends SnackElement {
               </button>
             ` : ''}
           </div>
-          <button data-action="switch-home" class="w-11 h-11 shrink-0 bg-surface border border-accent rounded-2xl shadow-sm flex items-center justify-center text-text-muted hover:text-danger transition-colors">
+          <button data-action="switch-home" @click="${() => window.switchView?.('home')}" class="w-11 h-11 shrink-0 bg-surface border border-accent rounded-2xl shadow-sm flex items-center justify-center text-text-muted hover:text-danger transition-colors">
             <i data-lucide="x" class="text-lg"></i>
           </button>
         </div>

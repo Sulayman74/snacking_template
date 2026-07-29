@@ -1,13 +1,13 @@
 import { html } from 'lit';
 import { SnackElement } from './SnackElement.js';
-import { store } from '../store/Store.js';
+import { store } from '../core/Store.js';
 import { StoreController } from '../store/StoreController.js';
 import './SnackMenuItem.js';
 
 export class SnackBestsellers extends SnackElement {
   
   // Abonnement automatique aux changements du menu
-  menuController = new StoreController(this, 'menu-changed');
+  menuController = new StoreController(this, 'menu-updated');
 
   render() {
     const menu = store.state.menu;

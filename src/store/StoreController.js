@@ -1,4 +1,4 @@
-import { store } from './Store.js';
+import { store } from '../core/Store.js';
 
 export class StoreController {
   constructor(host, eventName) {

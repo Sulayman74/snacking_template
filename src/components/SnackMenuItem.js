@@ -40,7 +40,8 @@ export class SnackMenuItem extends SnackElement {
       <div class="bg-accent rounded-3xl overflow-hidden shadow-sm border border-line flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] cursor-pointer" 
            role="listitem"
            data-action="open-product-modal"
-           data-id="${p.id}">
+           data-id="${p.id}"
+           @click="${this._openModal}">
         
         <div class="relative h-48 overflow-hidden bg-surface-2">
           ${p.image ? html`
@@ -85,6 +86,12 @@ export class SnackMenuItem extends SnackElement {
         </div>
       </div>
     `;
+  }
+
+  _openModal() {
+    if (window.openProductModal && this.product) {
+      window.openProductModal(this.product.id);
+    }
   }
 
   _handleImageError(e) {

@@ -88,7 +88,7 @@ export async function ensureUserDoc(user) {
   const snap = await getDoc(userRef);
   if (snap.exists()) {
     const data = snap.data();
-    if (data.isAnonymous && !user.isAnonymous) {
+    if (data.isAnonymous !== false && !user.isAnonymous) {
       await updateDoc(userRef, {
         email: user.email,
         nom: user.displayName || user.email?.split("@")[0] || data.nom || "Gourmand",

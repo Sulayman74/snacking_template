@@ -30,3 +30,12 @@ window.finalizeOrderInFirestore = async function(paymentId) {
   const checkoutElement = document.getElementById("snack-checkout");
   if (checkoutElement) await checkoutElement.finalizeOrderInFirestore(paymentId);
 };
+
+if (import.meta.env.VITE_E2E_TESTING) {
+  window.setGuestEmailForTest = (email) => {
+    const checkoutElement = document.getElementById("snack-checkout");
+    if (checkoutElement) {
+      checkoutElement.guestEmail = email;
+    }
+  };
+}

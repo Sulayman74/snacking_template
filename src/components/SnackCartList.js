@@ -1,6 +1,6 @@
 import { html, nothing } from 'lit';
 import { SnackElement } from './SnackElement.js';
-import { store } from '../store/Store.js';
+import { store } from '../core/Store.js';
 import { StoreController } from '../store/StoreController.js';
 import './SnackCartItem.js'; 
 
@@ -16,7 +16,7 @@ export class SnackCartList extends SnackElement {
     const delivery = store.state.delivery || { mode: "collect" };
     const minOrder = Number(cfg?.delivery?.minOrder) || 0;
 
-    const subtotal = typeof window.getCartSubtotal === "function" ? window.getCartSubtotal() : store.getCartTotal();
+    const subtotal = cart.reduce((acc, item) => acc + (Number(item.prix) || 0) * (Number(item.quantity) || 1), 0);
     const remaining = minOrder - subtotal;
 
     if (delivery.mode !== "delivery" || minOrder <= 0 || cart.length === 0 || remaining <= 0) {

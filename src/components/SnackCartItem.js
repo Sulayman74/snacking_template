@@ -1,6 +1,6 @@
 import { html, nothing } from 'lit';
 import { SnackElement } from './SnackElement.js';
-import { store } from '../store/Store.js';
+import { store } from '../core/Store.js';
 
 export class SnackCartItem extends SnackElement {
   static properties = {
@@ -90,13 +90,13 @@ export class SnackCartItem extends SnackElement {
 
         <div class="flex items-center gap-3 bg-surface-2 rounded-lg p-1">
           <button type="button" 
-                  class="w-8 h-8 text-text-muted hover:bg-surface-3 rounded-md transition flex items-center justify-center"
+                  class="cart-item-minus w-8 h-8 text-text-muted hover:bg-surface-3 rounded-md transition flex items-center justify-center"
                   @click="${this._decrement}">
             <i data-lucide="minus" class="text-xs"></i>
           </button>
           <span class="font-bold w-4 text-text text-center text-sm">${item.quantity}</span>
           <button type="button" 
-                  class="w-8 h-8 text-text-muted hover:bg-surface-3 rounded-md transition flex items-center justify-center"
+                  class="cart-item-plus w-8 h-8 text-text-muted hover:bg-surface-3 rounded-md transition flex items-center justify-center"
                   @click="${this._increment}">
             <i data-lucide="plus" class="text-xs"></i>
           </button>
@@ -113,11 +113,11 @@ export class SnackCartItem extends SnackElement {
   }
 
   _increment() {
-    store.updateQuantity(this.item.id, this.item.quantity + 1);
+    store.updateQuantity(this.item.id, 1);
   }
 
   _decrement() {
-    store.updateQuantity(this.item.id, this.item.quantity - 1);
+    store.updateQuantity(this.item.id, -1);
   }
 
   _handleImageError(e) {

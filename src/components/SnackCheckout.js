@@ -1,8 +1,10 @@
 import { html } from 'lit';
 import { SnackElement } from './SnackElement.js';
-import { store } from '../store/Store.js';
+import { store } from '../core/Store.js';
 import { upsellUI } from '../ui/UpsellUI.js';
 import { t } from "../i18n/index.js";
+import { auth, functions, httpsCallable, signInAnonymously } from '../core/firebase.js';
+import { ensureUserDoc } from '../auth.js';
 
 export class SnackCheckout extends SnackElement {
   static properties = {
@@ -26,13 +28,22 @@ export class SnackCheckout extends SnackElement {
     this.stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J";
   }
 
+  getCartTotal() {
+    if (typeof window.getCartTotal === 'function') {
+      return window.getCartTotal();
+    }
+    const subtotal = (store.state.cart || []).reduce((acc, item) => acc + (Number(item.prix) || 0) * (Number(item.quantity) || 1), 0);
+    const fee = typeof store.getDeliveryFee === 'function' ? store.getDeliveryFee() : 0;
+    return subtotal + fee;
+  }
+
   async processCheckout() {
     const cfg = window.snackConfig;
     if (store.state.cart.length === 0) return window.showToast(t("toasts.checkout.emptyCart") || "Votre panier est vide", "error");
 
     window.logEvent?.("begin_checkout", {
       itemCount: store.state.cart.length,
-      amountCents: Math.round(store.getCartTotal() * 100),
+      amountCents: Math.round(this.getCartTotal() * 100),
     });
 
     const delivery = store.state.delivery || { mode: "collect" };
@@ -53,20 +64,22 @@ export class SnackCheckout extends SnackElement {
       if (delivery.quote && delivery.quote.inRange === false) return window.showToast(t("toasts.checkout.outOfZone"), "error");
       
       const minOrder = cfg?.delivery?.minOrder || 0;
-      const subtotal = typeof window.getCartSubtotal === "function" ? window.getCartSubtotal() : store.getCartTotal();
+      const subtotal = (store.state.cart || []).reduce((acc, item) => acc + (Number(item.prix) || 0) * (Number(item.quantity) || 1), 0);
       if (minOrder > 0 && subtotal < minOrder) {
         window.openCartModal?.();
         return window.showToast(t("toasts.checkout.minOrderRequired", { min: minOrder.toFixed(2) }), "error");
       }
     }
 
-    const currentUser = window.auth?.currentUser;
+    const currentUser = auth?.currentUser;
     if (!currentUser) {
       if (cfg?.features?.enableGuestCheckout) {
         try {
-          const { signInAnonymously } = await import('../core/firebase.js');
-          const cred = await signInAnonymously(window.auth);
-          // ensureUserDoc done by finalizeOrder / best effort
+          const cred = await signInAnonymously(auth);
+          store.setUser(cred.user, "client");
+          try { await ensureUserDoc(cred.user); } catch (e) {
+            console.warn("ensureUserDoc (invité anonyme) échouée :", e);
+          }
         } catch (e) {
           window.showToast(t("toasts.checkout.connectionError"), "error");
           return;
@@ -83,7 +96,6 @@ export class SnackCheckout extends SnackElement {
     if (cfg?.features?.enableUpsell) {
       let rushMode = false;
       try {
-        const { httpsCallable, functions } = window.fs;
         const getKitchenLoad = httpsCallable(functions, "getKitchenLoad");
         const res = await getKitchenLoad({ snackId: cfg.identity?.id });
         rushMode = res?.data?.rushMode === true;
@@ -93,10 +105,10 @@ export class SnackCheckout extends SnackElement {
     }
 
     window.closeCartModal?.();
-    this.totalAmount = store.getCartTotal();
+    this.totalAmount = this.getCartTotal();
     this.openPaymentSheet();
     this.errorMessage = '';
-    this._mountStripeElement(window.auth?.currentUser, cfg);
+    this._mountStripeElement(auth?.currentUser, cfg);
   }
 
   async _mountStripeElement(currentUser, cfg) {
@@ -108,7 +120,6 @@ export class SnackCheckout extends SnackElement {
       paymentContainer.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-circle" class="animate-spin text-3xl text-gray-400"></i></div>';
       window.lucide?.createIcons({ root: this.shadowRoot });
 
-      const { httpsCallable, functions } = window.fs;
       const createPaymentIntent = httpsCallable(functions, "createPaymentIntent");
 
       const ticketSummary = store.state.cart.map((item) => `${item.quantity}x ${item.nom}`).join(", ");
@@ -171,7 +182,7 @@ export class SnackCheckout extends SnackElement {
       return;
     }
 
-    const currentUser = window.auth?.currentUser;
+    const currentUser = auth?.currentUser;
     if (currentUser?.isAnonymous && !this.guestEmail) {
       this.errorMessage = "Renseignez votre email pour recevoir le reçu.";
       window.triggerVibration?.("error");
@@ -216,12 +227,11 @@ export class SnackCheckout extends SnackElement {
 
   async finalizeOrderInFirestore(stripePaymentId) {
     const currentSnackId = window.snackConfig?.identity?.id || "Ym1YiO4Ue5Fb5UXlxr06";
-    const currentUser = window.auth?.currentUser;
-    const { httpsCallable, functions } = window.fs;
+    const currentUser = auth?.currentUser;
 
     try {
       const cartItems = this._buildOrderItemsPayload();
-      const totalCents = Math.round(store.getCartTotal() * 100);
+      const totalCents = Math.round(this.getCartTotal() * 100);
       const { mode, livraison } = this._getDeliveryPayload();
       
       const email = currentUser?.email || this.guestEmail;
@@ -332,7 +342,7 @@ export class SnackCheckout extends SnackElement {
 
   render() {
     return html`
-      <div class="fixed inset-0 z-[100] items-end justify-center bg-black/60 backdrop-blur-sm transition-all duration-300 ${this.isOpen ? 'flex opacity-100' : 'hidden opacity-0'}">
+      <div id="payment-bottom-sheet" class="fixed inset-0 z-[100] items-end justify-center bg-black/60 backdrop-blur-sm transition-all duration-300 ${this.isOpen ? 'flex opacity-100' : 'hidden opacity-0'}">
         
         <!-- Backdrop -->
         <div class="absolute inset-0" @click="${this.closePaymentSheet}"></div>
