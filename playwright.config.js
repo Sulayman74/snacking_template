@@ -63,9 +63,9 @@ export default defineConfig({
 
 /* Exécuter ton serveur de dev local avant de lancer les tests */
   webServer: {
-    command: 'npm run dev', // La commande pour lancer Vite
+    command: 'VITE_E2E_TESTING=true npm run dev', // La commande pour lancer Vite en mode E2E
     url: 'http://localhost:5173', // L'URL que le robot doit attendre
-    reuseExistingServer: !process.env.CI, // Réutilise ton serveur si tu es sur ton PC
+    reuseExistingServer: false,
     timeout: 120 * 1000, // Laisse 2 minutes maximum au serveur pour démarrer
   },
 });

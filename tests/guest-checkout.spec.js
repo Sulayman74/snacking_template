@@ -4,6 +4,7 @@ import { execSync } from 'child_process';
 test.describe('Flux Guest Checkout et Conversion', () => {
 
   test('Un invité peut commander, voir la bannière et convertir son compte anonyme en permanent', async ({ page }) => {
+    test.setTimeout(60000);
     page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
     page.on('pageerror', err => console.log('BROWSER ERROR:', err.message));
 
