@@ -77,7 +77,7 @@ export class SnackCartItem extends SnackElement {
         <div class="flex-1 min-w-0">
           <h2 class="font-bold text-text leading-tight truncate">${item.nom}</h2>
           ${this.getDetailsTemplate()}
-          <p class="text-danger font-bold mt-1">${(item.prix * item.quantity).toFixed(2)} €</p>
+          <p class="text-primary font-bold mt-1">${(item.prix * item.quantity).toFixed(2)} €</p>
         </div>
         
         <button type="button" 

@@ -37,7 +37,7 @@ export class SnackMenuItem extends SnackElement {
     }
 
     return html`
-      <div class="bg-accent rounded-3xl overflow-hidden shadow-sm border border-line flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] cursor-pointer" 
+      <div class="bg-surface rounded-3xl overflow-hidden shadow-sm border border-line flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] cursor-pointer" 
            role="listitem"
            data-action="open-product-modal"
            data-id="${p.id}"
@@ -63,9 +63,9 @@ export class SnackMenuItem extends SnackElement {
         <div class="p-5 flex flex-col flex-1">
           <div class="flex justify-between items-start mb-2 gap-2">
             <h3 class="text-lg font-black text-text leading-tight">${p.nom}</h3>
-            <span class="text-lg font-black text-on-primary whitespace-nowrap">${Number(p.prix).toFixed(2)} €</span>
+            <span class="text-lg font-black text-primary whitespace-nowrap">${Number(p.prix).toFixed(2)} €</span>
           </div>
-          <p class="text-on-primary text-xs font-medium leading-relaxed mb-4 line-clamp-2 flex-1">${p.description || ''}</p>
+          <p class="text-text-muted text-xs font-medium leading-relaxed mb-4 line-clamp-2 flex-1">${p.description || ''}</p>
           
           <div class="flex items-center justify-between pt-4 border-t border-line">
             <div class="flex gap-2">

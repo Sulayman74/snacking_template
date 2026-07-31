@@ -234,10 +234,10 @@
           <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-4 bg-surface p-6 md:p-10 rounded-3xl shadow-xl">
             <input type="hidden" name="source_avis" id="source-avis" value="contact_direct" />
             <div>
-              <input type="text" name="contact" id="contact-field" required data-i18n-placeholder="contact.fieldPlaceholder" placeholder="Email ou Téléphone" class="w-full text-text px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-red-500 outline-none transition" />
+              <input type="text" name="contact" id="contact-field" required data-i18n-placeholder="contact.fieldPlaceholder" placeholder="Email ou Téléphone" class="w-full text-text px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-primary outline-none transition" />
             </div>
             <div>
-              <textarea name="message" id="message-field" rows="4" required data-i18n-placeholder="contact.messagePlaceholder" placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-red-500 outline-none transition text-text"></textarea>
+              <textarea name="message" id="message-field" rows="4" required data-i18n-placeholder="contact.messagePlaceholder" placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-primary outline-none transition text-text"></textarea>
             </div>
             <button type="submit" id="btn-submit-form" data-i18n="contact.submit" class="w-full py-4 rounded-xl font-bold text-on-primary shadow-lg bg-primary hover:bg-accent transition transform hover:-translate-y-1">Envoyer le message</button>
           </form>
@@ -350,12 +350,12 @@
             <input type="password" id="auth-password" required data-i18n-placeholder="auth.password" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text pr-12" placeholder="Mot de passe" />
             <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"><i data-lucide="eye" id="eye-icon"></i></button>
           </div>
-          <div class="text-right"><button type="button" data-action="reset-password" data-i18n="auth.forgotShort" class="text-sm text-text-muted hover:text-red-600 transition">Oublié ?</button></div>
+          <div class="text-right"><button type="button" data-action="reset-password" data-i18n="auth.forgotShort" class="text-sm text-text-muted hover:text-primary transition">Oublié ?</button></div>
           <button type="submit" id="auth-submit-btn" data-i18n="auth.login" class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2">Se connecter</button>
         </form>
         <div class="mt-8 text-center text-sm bg-surface-2 p-4 rounded-xl">
           <span id="auth-switch-text" data-i18n="auth.switchTextLogin" class="text-text-muted">Pas encore de compte ?</span>
-          <button data-action="switch-auth-mode" type="button" id="auth-switch-btn" data-i18n="auth.register" class="text-red-600 font-bold ml-1">S'inscrire</button>
+          <button data-action="switch-auth-mode" type="button" id="auth-switch-btn" data-i18n="auth.register" class="text-primary font-bold ml-1">S'inscrire</button>
         </div>
       </div>
     </div>
@@ -373,7 +373,7 @@
       <div id="client-card-sheet" class="fixed bottom-0 inset-x-0 z-[101] flex flex-col items-center px-4 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[94vh] overflow-y-auto transform translate-y-full transition-transform duration-300 ease-out">
         <div class="w-12 h-1.5 rounded-full bg-on-dark/30 mb-4 shrink-0" aria-hidden="true"></div>
         <div id="virtual-card" class="w-full max-w-sm rounded-3xl relative shadow-2xl overflow-hidden border border-white/20">
-        <div id="card-bg-gradient" class="absolute inset-0 bg-linear-to-br from-red-500 to-orange-600 z-0"></div>
+        <div id="card-bg-gradient" class="absolute inset-0 bg-linear-to-br from-primary to-gray-900 z-0"></div>
         <div class="relative z-10 p-6 text-on-dark flex flex-col h-full">
           <div class="flex justify-between items-start mb-6">
             <h3 id="card-program-name" class="text-xl font-black uppercase tracking-widest opacity-90">Team Fusion</h3>

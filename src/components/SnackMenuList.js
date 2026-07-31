@@ -133,7 +133,7 @@ export class SnackMenuList extends SnackElement {
     const categories = [...new Set(menu.map(p => p.categorieId))].filter(Boolean);
 
     return html`
-      <div class="sticky top-0 z-50 bg-accent/40 backdrop-blur-xl border-b border-line shadow-sm">
+      <div class="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-line shadow-sm">
         <div class="container mx-auto px-4 py-3 flex items-center gap-3">
           <div class="relative flex-1">
             <input type="text" 
@@ -149,7 +149,7 @@ export class SnackMenuList extends SnackElement {
               </button>
             ` : ''}
           </div>
-          <button data-action="switch-home" @click="${() => window.switchView?.('home')}" class="w-11 h-11 shrink-0 bg-surface border border-accent rounded-2xl shadow-sm flex items-center justify-center text-text-muted hover:text-danger transition-colors">
+          <button data-action="switch-home" @click="${() => window.switchView?.('home')}" class="w-11 h-11 shrink-0 bg-surface border border-line rounded-2xl shadow-sm flex items-center justify-center text-text-muted hover:text-text transition-colors">
             <i data-lucide="x" class="text-lg"></i>
           </button>
         </div>
@@ -158,7 +158,7 @@ export class SnackMenuList extends SnackElement {
           ${categories.map(catId => {
             const isActive = this.activeCatId === catId;
             return html`
-              <button class="cat-pill whitespace-nowrap px-4 py-2 rounded-xl font-bold text-sm transition-all active:scale-95 border-2 border-transparent ${isActive ? 'bg-gray-900 text-on-dark' : 'bg-surface-2 text-text-muted'}"
+              <button class="cat-pill whitespace-nowrap px-4 py-2 rounded-xl font-bold text-sm transition-all active:scale-95 border-2 border-transparent ${isActive ? 'bg-primary text-on-primary' : 'bg-surface-2 text-text-muted'}"
                       data-cat-id="${catId}"
                       @click="${() => this._scrollToCategory(catId)}">
                 ${this.getCategoryName(catId)}
@@ -181,7 +181,7 @@ export class SnackMenuList extends SnackElement {
             <section class="menu-section mb-10 pt-4 scroll-mt-32" id="cat-${catId}" data-cat-id="${catId}">
               <div class="flex items-center gap-3 mb-6">
                 <h2 class="text-2xl font-black text-text uppercase tracking-tight">${this.getCategoryName(catId)}</h2>
-                <div class="flex-1 h-px bg-accent"></div>
+                <div class="flex-1 h-px bg-primary/30"></div>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" role="list">
                 ${catProduits.map(p => html`<snack-menu-item .product="${p}" class="block"></snack-menu-item>`)}
