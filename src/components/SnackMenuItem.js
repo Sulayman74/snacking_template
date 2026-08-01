@@ -78,7 +78,7 @@ export class SnackMenuItem extends SnackElement {
                 <i data-lucide="ban" class="text-xs"></i>
               </div>
             ` : html`
-              <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center transition-transform group-hover:scale-110 group-hover:bg-accent">
+              <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center transition-transform group-hover:scale-110 group-hover:opacity-90">
                 <i data-lucide="plus" class="text-xs"></i>
               </div>
             `}
