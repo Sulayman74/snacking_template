@@ -154,9 +154,8 @@
             <h2 class="text-4xl text-text uppercase font-bold mb-3 tracking-tight" data-i18n="home.stars">Nos Stars</h2>
             <p class="text-text-muted text-lg" data-i18n="home.starsDesc">Les favoris du moment, validés par la team.</p>
           </div>
-          <div id="bestsellers-container" class="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-auto md:px-0">
-            <!-- SKELETONS INJECTÉS PAR JS -->
-          </div>
+          <snack-bestsellers id="bestsellers-container" class="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-auto md:px-0">
+          </snack-bestsellers>
           <div class="text-center">
             <button data-action="switch-menu" class="bg-gray-800 text-on-dark px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300">
               <span data-i18n="home.viewMenu">Voir toute la carte</span> <i data-lucide="arrow-right" class="ml-2 text-accent"></i>
