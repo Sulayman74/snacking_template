@@ -75,17 +75,27 @@ export function swapIcon(el, name, extraClasses = "") {
 }
 window.swapIcon = swapIcon;
 
+/**
+ * Expose createIcons globally so Web Components (Lit) can render icons
+ * inside their Shadow DOMs using the tree-shaken ICONS dictionary.
+ */
+window.lucide = {
+  createIcons: (options = {}) => {
+    try {
+      createIcons({ icons: ICONS, ...options });
+    } catch (err) {
+      console.warn("[icons] createIcons a échoué :", err);
+    }
+  }
+};
+
 let scheduled = false;
 
 /** Rend tous les <i data-lucide> non encore convertis en SVG. Idempotent (les SVG produits
  *  n'ont plus l'attribut data-lucide -> ignorés aux passes suivantes). */
 function renderIcons() {
   scheduled = false;
-  try {
-    createIcons({ icons: ICONS });
-  } catch (err) {
-    console.warn("[icons] createIcons a échoué :", err);
-  }
+  window.lucide.createIcons();
 }
 
 /** Coalesce les rafales de mutations en un seul rendu par frame (perf). */
