@@ -70,7 +70,7 @@ export default defineConfig(() => {
           // (sinon les nappes accent restent transparentes jusqu'au boot JS).
           const splashStyle = `<style>
             :root,html,body{background:${lightHex} !important; color-scheme: light dark;}
-            :root{--color-primary:${themeColor};--color-accent:${accentHex};--color-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
+            :root{--color-primary:${themeColor};--color-accent:${accentHex};--color-primary-light:${lightHex};--theme-primary:${themeColor};--theme-accent:${accentHex};--theme-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
           </style>`;
           // 🌗 Anti-flash dark : pose la classe .dark sur <html> AVANT le 1er paint (et avant le
           // <link styles.css> render-blocking), selon la préférence persistée (localStorage

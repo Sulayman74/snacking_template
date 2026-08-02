@@ -23,11 +23,11 @@
    L'override JS : document.documentElement.style.setProperty('--color-primary', '#a855f7')
    ============================================================================ */
 @theme {
-  --color-primary: #dc2626; /* ruby par défaut — écrasé par applySaaSThemeToHTML */
-  --color-accent: #dc2626;
-  --color-primary-light: #f5f7f4; /* NEUTRE par défaut : si le flash survient avant l'injection
+  --color-primary: var(--theme-primary, #dc2626); /* ruby par défaut — écrasé par applySaaSThemeToHTML */
+  --color-accent: var(--theme-accent, #dc2626);
+  --color-primary-light: var(--theme-primary-light, #f5f7f4); /* NEUTRE par défaut : si le flash survient avant l'injection
                                      vite/runtime, il est gris neutre, pas rose ruby */
-  --color-on-primary: #ffffff;
+  --color-on-primary: var(--theme-on-primary, #ffffff);
   /* 🎨 Neutres SÉMANTIQUES (CLAUDE.md theming). Couleurs NON liées à la palette : fixes
      et intentionnelles, mais centralisées (plus de gris ni de rouges dispersés). Tailwind v4
      génère bg-surface, text-text, text-text-muted, text-danger, text-on-dark, etc.

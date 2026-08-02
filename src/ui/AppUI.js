@@ -76,6 +76,12 @@ class AppUI {
         root.style.setProperty("--color-primary-light", lightHex);
         root.style.setProperty("--color-on-primary", onPrimaryHex);
 
+        // Fallbacks pour le Shadow DOM (Contournement du :host généré par Tailwind v4 @theme)
+        root.style.setProperty("--theme-primary", primaryHex);
+        root.style.setProperty("--theme-accent", accentHex);
+        root.style.setProperty("--theme-primary-light", lightHex);
+        root.style.setProperty("--theme-on-primary", onPrimaryHex);
+
         // 🌈 Active les overrides CSS par thème ([data-theme="belly"] .app-bg, futurs réglages).
         if (cfg.theme.colorPalette) root.dataset.theme = cfg.theme.colorPalette;
 
