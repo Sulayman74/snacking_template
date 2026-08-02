@@ -81,7 +81,7 @@ export class SnackCartItem extends SnackElement {
         </div>
         
         <button type="button" 
-                class="w-9 h-9 shrink-0 transition-colors flex items-center justify-center ${isFav ? 'text-red-500' : 'text-text-muted hover:text-red-500'}"
+                class="w-9 h-9 shrink-0 transition-colors flex items-center justify-center cursor-pointer ${isFav ? 'text-red-500' : 'text-text-muted hover:text-red-500'}"
                 aria-pressed="${isFav ? 'true' : 'false'}"
                 aria-label="${isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'}"
                 @click="${this._toggleFavorite}">
@@ -90,13 +90,13 @@ export class SnackCartItem extends SnackElement {
 
         <div class="flex items-center gap-3 bg-surface-2 rounded-lg p-1">
           <button type="button" 
-                  class="cart-item-minus w-8 h-8 text-text-muted hover:bg-surface-3 rounded-md transition flex items-center justify-center"
+                  class="cart-item-minus w-8 h-8 text-text-muted hover:bg-surface-3 rounded-md transition flex items-center justify-center cursor-pointer"
                   @click="${this._decrement}">
             <i data-lucide="minus" class="text-xs"></i>
           </button>
           <span class="font-bold w-4 text-text text-center text-sm">${item.quantity}</span>
           <button type="button" 
-                  class="cart-item-plus w-8 h-8 text-text-muted hover:bg-surface-3 rounded-md transition flex items-center justify-center"
+                  class="cart-item-plus w-8 h-8 text-text-muted hover:bg-surface-3 rounded-md transition flex items-center justify-center cursor-pointer"
                   @click="${this._increment}">
             <i data-lucide="plus" class="text-xs"></i>
           </button>

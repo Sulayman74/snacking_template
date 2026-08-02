@@ -113,6 +113,7 @@ html.dark body {
   display: inline-block;
   vertical-align: -0.125em;
   flex-shrink: 0;
+  pointer-events: none;
 }
 
 #boot-splash {
