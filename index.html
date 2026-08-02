@@ -332,8 +332,8 @@
     <!-- MODALES (Auth, Snack, Card, Scanner, etc.) -->
     <div id="auth-modal" class="fixed inset-0 bg-gray-900/80 z-[130] hidden items-center justify-center p-4 backdrop-blur-md opacity-0 transition-opacity duration-300">
       <div class="bg-surface w-full max-w-md rounded-3xl p-8 relative shadow-2xl transform transition-transform scale-95">
-        <button data-action="toggle-auth-modal" class="absolute top-4 right-4 text-text-muted hover:text-text bg-surface-2 w-10 h-10 flex items-center justify-center rounded-full transition active:scale-95">
-          <i data-lucide="x"></i>
+        <button data-action="toggle-auth-modal" class="absolute top-4 right-4 text-text-muted hover:text-text bg-surface-2 w-10 h-10 flex items-center justify-center rounded-full transition active:scale-95 cursor-pointer">
+          <i data-lucide="x" class="pointer-events-none"></i>
         </button>
         <div class="text-center mb-6">
           <h3 id="auth-title" data-i18n="auth.titleWelcome" class="text-3xl font-black text-text tracking-tight">Bienvenue !</h3>
@@ -431,7 +431,7 @@
       <div class="w-full max-w-lg h-[85vh] md:h-auto bg-surface rounded-3xl overflow-hidden shadow-2xl relative flex flex-col">
         <div class="p-5 bg-gray-900 text-on-dark flex justify-between items-center z-10 shadow-md shrink-0">
           <h3 class="font-bold text-lg"><i data-lucide="qr-code" class="text-red-500 mr-2 animate-pulse"></i>Scanner Client</h3>
-          <button data-action="close-admin-scanner" class="text-gray-300 hover:text-on-dark bg-gray-800 w-10 h-10 flex items-center justify-center rounded-full transition hover:bg-red-600 active:scale-95"><i data-lucide="x"></i></button>
+          <button data-action="close-admin-scanner" class="text-gray-300 hover:text-on-dark bg-gray-800 w-10 h-10 flex items-center justify-center rounded-full transition hover:bg-red-600 active:scale-95 cursor-pointer"><i data-lucide="x" class="pointer-events-none"></i></button>
         </div>
         <div class="relative w-full flex-1 bg-black flex items-center justify-center overflow-hidden min-h-[50vh]">
           <div id="reader" class="w-full h-full absolute inset-0 [&>video]:object-cover"></div>
@@ -466,7 +466,7 @@
 
     <div id="product-modal-backdrop" data-action="close-product-modal" class="fixed inset-0 bg-gray-900/70 z-70 hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
     <div id="product-modal" class="fixed bottom-0 left-0 md:left-1/2 w-full md:max-w-2xl bg-surface rounded-t-3xl md:rounded-3xl shadow-2xl z-[80] transform md:-translate-x-1/2 translate-y-full md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:pointer-events-none md:scale-95 md:h-auto transition-all duration-300 max-h-[90vh] overflow-y-auto">
-      <button data-action="close-product-modal" class="absolute top-4 right-4 bg-surface/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-lg z-[90] text-text hover:bg-surface-2 transition active:scale-95"><i data-lucide="x" class="text-xl"></i></button>
+      <button data-action="close-product-modal" class="absolute top-4 right-4 bg-surface/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-lg z-[90] text-text hover:bg-surface-2 transition active:scale-95 cursor-pointer"><i data-lucide="x" class="text-xl pointer-events-none"></i></button>
       <div class="relative flex flex-col md:flex-row">
         <div class="h-54 md:h-auto md:w-2/5 relative"><img id="modal-img" alt="item" src="" class="w-full h-full object-cover rounded-t-3xl md:rounded-t-none md:rounded-l-3xl" /></div>
         <div class="p-3 md:p-8 pb-24 md:pb-8 flex-1 flex flex-col">
