@@ -70,6 +70,8 @@ export {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updatePassword,
+  reauthenticateWithCredential,
 } from "firebase/auth";
 
 // --- Fonctions SDK Messaging ---

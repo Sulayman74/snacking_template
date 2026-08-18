@@ -43,6 +43,8 @@ import {
   linkWithCredential,
   signInWithPopup,
   signOut,
+  updatePassword,
+  reauthenticateWithCredential,
   doc,
   getDoc,
   setDoc,
@@ -122,6 +124,10 @@ function updateAuthModalUI() {
   if (switchText) {
     switchText.innerText = isSignUpMode ? t("auth.switchTextRegister") : t("auth.switchTextLogin");
   }
+  const passwordInput = document.getElementById("auth-password");
+  if (passwordInput) {
+    passwordInput.setAttribute("autocomplete", isSignUpMode ? "new-password" : "current-password");
+  }
 }
 
 function switchAuthMode() {
@@ -141,8 +147,9 @@ if (authForm) {
     e.preventDefault();
     const submitBtn = authForm.querySelector('button[type="submit"]');
     if (submitBtn?.disabled) return; // anti-double-clic
-    const email = document.getElementById("auth-email").value;
-    const password = document.getElementById("auth-password").value;
+    const rawEmail = document.getElementById("auth-email")?.value || "";
+    const email = rawEmail.trim();
+    const password = document.getElementById("auth-password")?.value || "";
     const original = submitBtn?.innerHTML;
     if (submitBtn) {
       submitBtn.disabled = true;
@@ -237,14 +244,14 @@ document.addEventListener("DOMContentLoaded", () => {
 // 🆘 RÉINITIALISATION DU MOT DE PASSE
 // ============================================================================
 async function resetPassword() {
-  const emailInput = document.getElementById("auth-email").value.trim();
+  const emailInput = (document.getElementById("auth-email")?.value || "").trim();
 
   if (!emailInput) {
     window.showToast(
       t("toasts.auth.emailRequired"),
       "error",
     );
-    document.getElementById("auth-email").focus();
+    document.getElementById("auth-email")?.focus();
     if (typeof window.triggerVibration === "function")
       window.triggerVibration("error");
     return;
@@ -257,11 +264,36 @@ async function resetPassword() {
       window.triggerVibration("success");
   } catch (error) {
     console.error("Erreur reset password :", error);
-    window.showToast(mapAuthError(error.code), "error");
+    // 🛡️ OWASP Anti-Énumération : Ne pas divulguer si l'email existe ou non en DB
+    if (error.code === "auth/user-not-found" || error.code === "auth/invalid-email") {
+      window.showToast(t("toasts.auth.resetEmailSent"), "success");
+    } else {
+      window.showToast(mapAuthError(error.code), "error");
+    }
   }
 }
 
+/**
+ * Permet à un utilisateur connecté de modifier son mot de passe avec ré-authentification.
+ * @param {string} currentPassword - Ancien mot de passe requis pour ré-authentification
+ * @param {string} newPassword - Nouveau mot de passe
+ * @returns {Promise<void>}
+ */
+export async function changeUserPassword(currentPassword, newPassword) {
+  const user = auth.currentUser;
+  if (!user || !user.email) {
+    throw new Error("auth/requires-recent-login");
+  }
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error("auth/weak-password");
+  }
+  const credential = EmailAuthProvider.credential(user.email, currentPassword);
+  await reauthenticateWithCredential(user, credential);
+  await updatePassword(user, newPassword);
+}
+
 window.resetPassword = resetPassword;
+window.changeUserPassword = changeUserPassword;
 
 // ============================================================================
 // 🚀 CONNEXION AVEC GOOGLE

@@ -344,10 +344,10 @@
         </button>
         <div class="flex items-center mb-6"><div class="grow border-t"></div><span class="mx-4 text-text-muted text-sm font-medium" data-i18n="auth.or">OU</span><div class="grow border-t"></div></div>
         <form id="auth-form" class="space-y-5">
-          <input type="email" id="auth-email" required data-i18n-placeholder="auth.email" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text" placeholder="Email" />
+          <input type="email" id="auth-email" required autocomplete="username email" aria-label="Adresse e-mail" data-i18n-placeholder="auth.email" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text" placeholder="Email" />
           <div class="relative">
-            <input type="password" id="auth-password" required data-i18n-placeholder="auth.password" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text pr-12" placeholder="Mot de passe" />
-            <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"><i data-lucide="eye" id="eye-icon"></i></button>
+            <input type="password" id="auth-password" required autocomplete="current-password" aria-label="Mot de passe" data-i18n-placeholder="auth.password" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text pr-12" placeholder="Mot de passe" />
+            <button type="button" id="toggle-password" aria-label="Afficher ou masquer le mot de passe" class="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"><i data-lucide="eye" id="eye-icon"></i></button>
           </div>
           <div class="text-right"><button type="button" data-action="reset-password" data-i18n="auth.forgotShort" class="text-sm text-text-muted hover:text-primary transition">Oublié ?</button></div>
           <button type="submit" id="auth-submit-btn" data-i18n="auth.login" class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2">Se connecter</button>
