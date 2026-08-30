@@ -24,8 +24,9 @@ export class AdminStore extends EventTarget {
     }
 
     get state() {
-        // Retourne une copie profonde pour éviter les mutations directes accidentelles
-        return JSON.parse(JSON.stringify(this.#state));
+        // Retourne une copie profonde via structuredClone (plus performant que JSON.parse
+        // et préserve les types complexes comme les Dates si on en ajoute plus tard).
+        return structuredClone(this.#state);
     }
 
     emit(eventName) {
