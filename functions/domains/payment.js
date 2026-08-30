@@ -134,7 +134,7 @@ exports.createPaymentIntent = onCall(
         const createdAt = snackData.createdAt?.toDate() || new Date();
         const now = new Date();
         const diffMonths = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
-        if (diffMonths >= 6) {
+        if (diffMonths >= 2) {
           // Commission : 8%, mais avec un minimum de 0,50 € (50 centimes) par transaction 
           // pour couvrir les frais fixes de Stripe (≈0,25€) + marge de sécurité pour cartes étrangères.
           applicationFeeAmount = Math.max(50, Math.round(totalCents * 0.08));

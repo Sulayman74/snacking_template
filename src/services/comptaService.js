@@ -148,7 +148,7 @@ function computeOrderRow(order = {}) {
 
 // Durée de la franchise (commission 0 %) en mois — ALIGNÉE sur la règle serveur
 // (functions/index.js : 0 % les 6 premiers mois, puis 8 %).
-const FRANCHISE_MONTHS = 6;
+const FRANCHISE_MONTHS = 2;
 const COMMISSION_RATE_PCT = 8;
 
 /**

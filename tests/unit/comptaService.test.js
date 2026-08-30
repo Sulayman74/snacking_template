@@ -146,14 +146,14 @@ describe("computeOrderRow — ligne d'export ventilé (LOT E)", () => {
 
 describe("franchiseInfo — badge franchise 0 % (§8.2)", () => {
   const now = new Date("2026-06-15T12:00:00");
-  it("snack créé il y a 2 mois → franchise active, 4 mois restants, 0 %", () => {
-    const f = franchiseInfo(new Date("2026-04-10"), now);
+  it("snack créé il y a 1 mois → franchise active, 1 mois restant, 0 %", () => {
+    const f = franchiseInfo(new Date("2026-05-10"), now);
     expect(f.active).toBe(true);
-    expect(f.monthsRemaining).toBe(4);
+    expect(f.monthsRemaining).toBe(1);
     expect(f.feeRatePct).toBe(0);
   });
-  it("snack créé il y a 6 mois pile → franchise terminée, 8 %", () => {
-    const f = franchiseInfo(new Date("2025-12-01"), now);
+  it("snack créé il y a 2 mois pile → franchise terminée, 8 %", () => {
+    const f = franchiseInfo(new Date("2026-04-01"), now);
     expect(f.active).toBe(false);
     expect(f.monthsRemaining).toBe(0);
     expect(f.feeRatePct).toBe(8);
