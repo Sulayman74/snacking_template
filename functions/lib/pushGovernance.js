@@ -127,6 +127,52 @@ function pruneRecentPushes(userData = {}, { windowDays, maxLen = 50 }, nowMs = D
   return recent.slice(-maxLen);
 }
 
+// ---------------------------------------------------------------------------
+// 🛡️ GENDARME MARKETING — point de passage OBLIGATOIRE pour tout push automatisé
+// ---------------------------------------------------------------------------
+// Chaque push 1:1 déclenché par le moteur de croissance (panier abandonné,
+// win-back, soir de match) DOIT appeler cette fonction AVANT d'envoyer un FCM.
+// Le Gendarme vérifie dans l'ordre :
+//   1. Opt-out utilisateur (droit RGPD, TOUJOURS respecté)
+//   2. Cooldown 72h (lastMarketingPushAt sur le doc user)
+//   3. Quiet hours (si la gouvernance est activée côté tenant)
+//
+// Le champ `lastMarketingPushAt` est écrit par l'Admin SDK (côté serveur) après
+// chaque envoi marketing autorisé — JAMAIS par le client (pas dans les rules).
+// ---------------------------------------------------------------------------
+
+const MARKETING_COOLDOWN_MS = 72 * 60 * 60 * 1000; // 72 heures
+
+/**
+ * Autorise ou bloque un push marketing 1:1 déclenché automatiquement.
+ * @param {object} userData - Document user (lastMarketingPushAt, pushOptOut).
+ * @param {object} snackData - Document snack (quiet hours, pushGovernance).
+ * @param {number} [nowMs=Date.now()]
+ * @returns {{ allowed: boolean, reason: string|null }}
+ */
+function canSendMarketingPush(userData = {}, snackData = {}, nowMs = Date.now()) {
+  // 1. Droit utilisateur : TOUJOURS respecté, même gouvernance OFF.
+  if (isOptedOut(userData)) {
+    return { allowed: false, reason: "opt-out" };
+  }
+
+  // 2. Cooldown 72h : anti-fatigue. Le champ peut être un Timestamp Firestore
+  //    (toMillis()) ou un number brut (tests unitaires).
+  const lastMs = typeof userData.lastMarketingPushAt?.toMillis === "function"
+    ? userData.lastMarketingPushAt.toMillis()
+    : (typeof userData.lastMarketingPushAt === "number" ? userData.lastMarketingPushAt : 0);
+  if (nowMs - lastMs < MARKETING_COOLDOWN_MS) {
+    return { allowed: false, reason: "cooldown-72h" };
+  }
+
+  // 3. Quiet hours (conditionné au flag tenant pushGovernance).
+  if (isGovernanceEnabled(snackData) && isQuietHours(snackData, new Date(nowMs))) {
+    return { allowed: false, reason: "quiet-hours" };
+  }
+
+  return { allowed: true, reason: null };
+}
+
 module.exports = {
   isQuietHours,
   isOptedOut,
@@ -135,4 +181,6 @@ module.exports = {
   canSendToUser,
   pruneRecentPushes,
   localHour,
+  canSendMarketingPush,
+  MARKETING_COOLDOWN_MS,
 };

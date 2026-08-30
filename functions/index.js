@@ -24,4 +24,5 @@ module.exports = {
   ...require("./domains/admin-mgmt"),
   ...require("./domains/media"),
   ...require("./domains/football"),
+  ...require("./domains/growth"),
 };

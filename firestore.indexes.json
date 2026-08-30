@@ -155,6 +155,31 @@
         { "fieldPath": "snackId", "order": "ASCENDING" },
         { "fieldPath": "role", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "ts", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "snackId", "order": "ASCENDING" },
+        { "fieldPath": "lastOrderDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "campagnes_push",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "snackId", "order": "ASCENDING" },
+        { "fieldPath": "source", "order": "ASCENDING" },
+        { "fieldPath": "matchId", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

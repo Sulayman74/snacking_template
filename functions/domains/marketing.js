@@ -4,6 +4,7 @@
 
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { getMessaging } = require("firebase-admin/messaging");
 const { db, FieldValue, Timestamp } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
@@ -174,8 +175,7 @@ exports.processPushCampaigns = onSchedule(
           const tokens = chunk.map((u) => u.token);
           const payload = { ...basePayload, tokens };
 
-          const response = await admin
-            .messaging()
+          const response = await getMessaging()
             .sendEachForMulticast(payload);
 
           // Mise à jour des compteurs globaux de la campagne
