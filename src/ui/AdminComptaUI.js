@@ -396,6 +396,7 @@ class AdminComptaUI {
             if (it.tailleChoisie) opts.push(escapeHTML(it.tailleChoisie));
             if (it.boissonNom) opts.push(escapeHTML(it.boissonNom));
             if (Array.isArray(it.sauces) && it.sauces.length) opts.push(it.sauces.map(escapeHTML).join(" + "));
+            if (Array.isArray(it.supplements) && it.supplements.length) opts.push("+" + it.supplements.map(s => escapeHTML(s.nom)).join(" +"));
             const optStr = opts.length ? `<span class="text-gray-400"> · ${opts.join(" · ")}</span>` : "";
             const lineTtc = (Number(it.prix) || 0) * (Number(it.quantity) || 0);
             return `<div class="flex justify-between text-sm py-1">

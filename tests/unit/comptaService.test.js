@@ -146,21 +146,27 @@ describe("computeOrderRow — ligne d'export ventilé (LOT E)", () => {
 
 describe("franchiseInfo — badge franchise 0 % (§8.2)", () => {
   const now = new Date("2026-06-15T12:00:00");
-  it("snack créé il y a 1 mois → franchise active, 1 mois restant, 0 %", () => {
-    const f = franchiseInfo(new Date("2026-05-10"), now);
+  it("snack créé il y a 1 mois avec 2 mois d'essai → franchise active, 1 mois restant, 0 %", () => {
+    const f = franchiseInfo(new Date("2026-05-10"), now, 2);
     expect(f.active).toBe(true);
     expect(f.monthsRemaining).toBe(1);
     expect(f.feeRatePct).toBe(0);
   });
-  it("snack créé il y a 2 mois pile → franchise terminée, 8 %", () => {
-    const f = franchiseInfo(new Date("2026-04-01"), now);
+  it("snack créé il y a 1 mois avec 1 mois d'essai (défaut) → franchise terminée, 8 %", () => {
+    const f = franchiseInfo(new Date("2026-05-10"), now); // défaut trialMonths = 1
     expect(f.active).toBe(false);
     expect(f.monthsRemaining).toBe(0);
     expect(f.feeRatePct).toBe(8);
   });
+  it("snack créé il y a 2 mois avec 6 mois d'essai → franchise active, 4 mois restants, 0 %", () => {
+    const f = franchiseInfo(new Date("2026-04-01"), now, 6);
+    expect(f.active).toBe(true);
+    expect(f.monthsRemaining).toBe(4);
+    expect(f.feeRatePct).toBe(0);
+  });
   it("accepte un Timestamp Firestore (toDate) et l'absence de date", () => {
     const ts = { toDate: () => new Date("2026-05-01") };
-    expect(franchiseInfo(ts, now).active).toBe(true);
+    expect(franchiseInfo(ts, now, 3).active).toBe(true);
     expect(franchiseInfo(null, now)).toEqual({ active: false, monthsRemaining: 0, feeRatePct: 8 });
   });
 });

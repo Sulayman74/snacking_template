@@ -75,6 +75,17 @@ document.addEventListener("change", (e) => {
         document.getElementById("edit-new-category")?.focus();
     } else if (target.id === "edit-category") {
         document.getElementById("edit-new-category")?.classList.add("hidden");
+        if (target.value === "supplements" || target.value === "extras") {
+            const prixEl = document.getElementById("edit-prix");
+            if (prixEl && (!prixEl.value || parseFloat(prixEl.value) === 0)) {
+                prixEl.value = "1.00";
+            }
+            const allowMenuEl = document.getElementById("edit-allow-menu");
+            if (allowMenuEl) {
+                allowMenuEl.checked = false;
+                allowMenuEl.dispatchEvent(new Event("change"));
+            }
+        }
     }
 });
 

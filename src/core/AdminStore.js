@@ -613,8 +613,9 @@ export class AdminStore extends EventTarget {
               }
             : null;
 
-        // Badge franchise 0 % (depuis la date de création du snack, règle 6 mois).
-        const franchise = franchiseInfo(this.#state.config?.createdAt);
+        // Badge franchise 0 % (depuis la date de création du snack et sa durée d'essai).
+        const trialMonths = typeof this.#state.config?.trialPeriodMonths === "number" ? this.#state.config.trialPeriodMonths : 1;
+        const franchise = franchiseInfo(this.#state.config?.createdAt, new Date(), trialMonths);
 
         // Part livraison : déduite de l'échantillon historique (bornée). Honnête :
         // null si la liste est tronquée (≥200) → on n'affiche pas un % faux.

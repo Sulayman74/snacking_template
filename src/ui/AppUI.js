@@ -185,10 +185,21 @@ class AppUI {
         const fullMenu = document.getElementById("full-menu");
 
         if (banner && text) {
-            if (cfg.promoPhrase) {
-                text.innerText = cfg.promoPhrase;
+            const pausedUntil = cfg.servicePausedUntil ? (cfg.servicePausedUntil.toDate ? cfg.servicePausedUntil.toDate() : new Date(cfg.servicePausedUntil)) : null;
+            const isPaused = pausedUntil && pausedUntil > new Date();
+
+            if (isPaused) {
+                const timeStr = pausedUntil.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+                text.innerText = `⏸️ Cuisine en pause jusqu'à ${timeStr} (forte affluence) — Reprise imminente !`;
+                banner.className = "fixed top-0 left-0 w-full bg-amber-600 text-white text-xs font-black text-center py-2 px-4 z-[60] shadow-md animate-fade-in";
                 banner.classList.remove("hidden");
-                if (navbar) navbar.style.top = "40px";
+                if (navbar) navbar.style.top = "36px";
+                fullMenu?.classList.add("mt-10");
+            } else if (cfg.promoPhrase) {
+                text.innerText = cfg.promoPhrase;
+                banner.className = "fixed top-0 left-0 w-full bg-primary text-on-primary text-xs font-bold text-center py-2 px-4 z-[60] shadow-md";
+                banner.classList.remove("hidden");
+                if (navbar) navbar.style.top = "36px";
                 fullMenu?.classList.add("mt-10");
             } else {
                 banner.classList.add("hidden");

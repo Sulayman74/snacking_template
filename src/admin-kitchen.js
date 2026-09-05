@@ -118,6 +118,10 @@ export function createTicketElement(id, commande) {
         const safeSauces = item.sauces.map((s) => escapeHTML(s)).join(" + ");
         optionsHTML += `<div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="cooking-pot"></i> Sauces : ${safeSauces}</div>`;
       }
+      if (item.supplements && Array.isArray(item.supplements) && item.supplements.length > 0) {
+        const safeSupps = item.supplements.map((s) => escapeHTML(s.nom)).join(" + ");
+        optionsHTML += `<div class="text-emerald-700 font-black text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="plus-circle" class="text-emerald-600"></i> Extra : ${safeSupps}</div>`;
+      }
       if (
         item.sansCrudites &&
         Array.isArray(item.sansCrudites) &&
@@ -525,8 +529,106 @@ async function handleRefundOrder(orderId) {
   }
 }
 
+// ============================================================================
+// ⏸️ PAUSE DE SERVICE CUISINE (COUP DE FEU)
+// ============================================================================
+function renderKitchenPauseStatus() {
+  const cfg = adminStore.state.config;
+  const banner = document.getElementById("kitchen-pause-banner");
+  const timerText = document.getElementById("kitchen-pause-timer-text");
+  const triggerBtn = document.getElementById("btn-kitchen-pause-trigger");
+
+  if (!cfg) return;
+
+  const pausedUntil = cfg.servicePausedUntil
+    ? (cfg.servicePausedUntil.toDate ? cfg.servicePausedUntil.toDate() : new Date(cfg.servicePausedUntil))
+    : null;
+  const isPaused = pausedUntil && pausedUntil > new Date();
+
+  if (banner) {
+    banner.classList.toggle("hidden", !isPaused);
+    if (isPaused && timerText) {
+      const timeStr = pausedUntil.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      const minLeft = Math.max(1, Math.round((pausedUntil.getTime() - Date.now()) / 60000));
+      timerText.innerText = `Reprise automatique à ${timeStr} (encore ~${minLeft} min)`;
+    }
+  }
+
+  if (triggerBtn) {
+    triggerBtn.classList.toggle("bg-amber-100", isPaused);
+    triggerBtn.classList.toggle("text-amber-800", isPaused);
+    triggerBtn.classList.toggle("border-amber-300", isPaused);
+  }
+}
+
+// Écouteur config admin pour mettre à jour l'état de pause
+adminStore.addEventListener("admin-config-updated", () => renderKitchenPauseStatus());
+
+function openKitchenPauseModal() {
+  const modal = document.getElementById("kitchen-pause-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    window.lucide?.createIcons?.();
+  }
+}
+
+function closeKitchenPauseModal() {
+  const modal = document.getElementById("kitchen-pause-modal");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+}
+
+async function setKitchenServicePause(minutes) {
+  const snackId = window.currentAdminSnackId;
+  if (!snackId) return;
+
+  const untilDate = new Date(Date.now() + minutes * 60000);
+
+  try {
+    window.showToast?.(`Mise en pause pour ${minutes} min…`, "info");
+    await updateDoc(doc(db, "snacks", snackId), {
+      servicePausedUntil: untilDate
+    });
+    closeKitchenPauseModal();
+    if (adminStore.state.config) {
+      adminStore.state.config.servicePausedUntil = untilDate;
+    }
+    renderKitchenPauseStatus();
+    window.showToast?.(`Commandes suspendues pour ${minutes} minutes ⏸️`, "success");
+  } catch (err) {
+    console.error("Erreur mise en pause service:", err);
+    window.showToast?.("Impossible d'activer la pause.", "error");
+  }
+}
+
+async function resumeKitchenService() {
+  const snackId = window.currentAdminSnackId;
+  if (!snackId) return;
+
+  try {
+    await updateDoc(doc(db, "snacks", snackId), {
+      servicePausedUntil: null
+    });
+    if (adminStore.state.config) {
+      adminStore.state.config.servicePausedUntil = null;
+    }
+    renderKitchenPauseStatus();
+    window.showToast?.("Service et commandes réactivés ! ▶️", "success");
+  } catch (err) {
+    console.error("Erreur reprise service:", err);
+    window.showToast?.("Impossible de réactiver le service.", "error");
+  }
+}
+
 window.startKitchenRadar = startKitchenRadar;
 window.stopKitchenRadar = stopKitchenRadar;
 window.updateOrderStatus = updateOrderStatus;
 window.updatePaymentStatus = updatePaymentStatus;
 window.handleRefundOrder = handleRefundOrder;
+window.openKitchenPauseModal = openKitchenPauseModal;
+window.closeKitchenPauseModal = closeKitchenPauseModal;
+window.setKitchenServicePause = setKitchenServicePause;
+window.resumeKitchenService = resumeKitchenService;

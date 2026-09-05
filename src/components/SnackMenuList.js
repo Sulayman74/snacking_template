@@ -49,9 +49,12 @@ export class SnackMenuList extends SnackElement {
     const names = {
       burgers: "🍔 Burgers",
       tacos: "🌯 Tacos",
+      pizzas: "🍕 Pizzas",
       drinks: "🥤 Boissons",
       sides: "🍟 Accompagnements",
-      desserts: "🍰 Desserts"
+      desserts: "🍰 Desserts",
+      supplements: "🧀 Suppléments & Extras",
+      extras: "🧀 Suppléments & Extras"
     };
     return names[id] || id.charAt(0).toUpperCase() + id.slice(1);
   }

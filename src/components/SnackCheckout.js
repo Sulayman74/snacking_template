@@ -56,6 +56,14 @@ export class SnackCheckout extends SnackElement {
 
     if (cfg?.features?.maintenanceMode) return window.showToast(t("toasts.checkout.maintenance"), "error");
 
+    if (cfg?.servicePausedUntil) {
+      const pausedUntil = cfg.servicePausedUntil.toDate ? cfg.servicePausedUntil.toDate() : new Date(cfg.servicePausedUntil);
+      if (pausedUntil > new Date()) {
+        const timeStr = pausedUntil.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+        return window.showToast(`Cuisine en pause jusqu'à ${timeStr} pour cause de forte affluence.`, "error");
+      }
+    }
+
     if (isDelivery) {
       if (!delivery.address) {
         window.openCartModal?.();

@@ -16,11 +16,16 @@ const { haversineKm, numberOrNull, isFiniteNum } = require("./geo");
 //   - base : `prix` (produit simple) OU chaque `tailles[].prix` (produit taillé)
 //   - +menu : base + (menuPriceAdd || 2.5), réplique exacte du calcul client
 //             (src/product-modal.js : prixMenu = menuPriceAdd || 2.5).
+//   - +suppléments : somme des prix unitaires des suppléments autorisés en base.
 // On inclut toujours la variante menu : elle ne fait qu'AUGMENTER le prix, donc
 // l'autoriser ne peut pas baisser le plancher anti-fraude.
-function allowedUnitPriceCents(product) {
+function allowedUnitPriceCents(product, supplementProducts = []) {
   const cents = (e) => Math.round(Number(e) * 100);
   const menuAdd = product.menuPriceAdd || 2.5; // 0/undefined → 2.5 (cf. client)
+  const suppAdd = (Array.isArray(supplementProducts) ? supplementProducts : [])
+    .reduce((sum, s) => sum + (Number(s?.prix) || 0), 0);
+  const suppCents = cents(suppAdd);
+
   const bases =
     Array.isArray(product.tailles) && product.tailles.length > 0
       ? product.tailles.map((t) => Number(t.prix))
@@ -29,8 +34,8 @@ function allowedUnitPriceCents(product) {
   const set = new Set();
   for (const b of bases) {
     if (!Number.isFinite(b)) continue;
-    set.add(cents(b));
-    set.add(cents(b + menuAdd));
+    set.add(cents(b) + suppCents);
+    set.add(cents(b + menuAdd) + suppCents);
   }
   return set;
 }
@@ -43,10 +48,15 @@ function allowedUnitPriceCents(product) {
 async function priceCartItems(cartItems, snackId) {
   const TOL = 1; // ±1 centime (arrondis flottants)
 
-  // Lecture groupée des produits (un getAll au lieu de N getDoc).
-  const ids = [...new Set(cartItems.map((i) => i.productId).filter(Boolean))];
-  require_(ids.length > 0, "Aucun produit identifiable dans le panier.");
-  const refs = ids.map((id) => db.collection("produits").doc(id));
+  // Lecture groupée de tous les produits principaux et suppléments
+  const mainIds = cartItems.map((i) => i.productId).filter(Boolean);
+  const suppIds = cartItems.flatMap((i) =>
+    Array.isArray(i.supplements) ? i.supplements.map((s) => s.productId || s.id).filter(Boolean) : []
+  );
+  const allProductIds = [...new Set([...mainIds, ...suppIds])];
+  require_(allProductIds.length > 0, "Aucun produit identifiable dans le panier.");
+
+  const refs = allProductIds.map((id) => db.collection("produits").doc(id));
   const snaps = await db.getAll(...refs);
   const products = new Map();
   snaps.forEach((s) => { if (s.exists) products.set(s.id, s.data()); });
@@ -59,8 +69,19 @@ async function priceCartItems(cartItems, snackId) {
     // Cloisonnement multi-tenant : le produit doit appartenir au snack commandé.
     require_(product.snackId === snackId, "Produit hors du restaurant ciblé.");
 
+    // Validation des suppléments attachés à la ligne
+    const itemSupplements = Array.isArray(item.supplements) ? item.supplements : [];
+    const validatedSuppProducts = [];
+    for (const supp of itemSupplements) {
+      const sId = supp.productId || supp.id;
+      const suppDoc = products.get(sId);
+      require_(!!suppDoc, `Supplément introuvable : ${supp.nom || sId}.`);
+      require_(suppDoc.snackId === snackId, "Supplément hors du restaurant ciblé.");
+      validatedSuppProducts.push(suppDoc);
+    }
+
     const paidCents = Math.round(Number(item.prix) * 100);
-    const allowed = allowedUnitPriceCents(product);
+    const allowed = allowedUnitPriceCents(product, validatedSuppProducts);
     const ok = [...allowed].some((a) => Math.abs(a - paidCents) <= TOL);
     require_(ok, `Prix manipulé pour « ${item.nom} » (${item.prix} € non autorisé).`);
 
@@ -80,16 +101,24 @@ async function priceCartItems(cartItems, snackId) {
  * confiance (prix produits en base, config livraison du snack). Source de vérité
  * UNIQUE (DRY) consommée par createPaymentIntent (montant du PaymentIntent, fixé
  * AVANT débit → anti charge orpheline F1) ET finalizeOrder (montant de la commande).
- * Lève une HttpsError si fraude prix / adresse hors-zone / panier sous le minimum.
+ * Lève une HttpsError si fraude prix / adresse hors-zone / panier sous le minimum / pause service.
  * @param {Object} snackData - Document snacks/{snackId} (config livraison incluse).
  * @param {string} snackId - Clé multi-tenant.
  * @param {Array<Object>} cartItems - Articles du panier (prix recalculés en base).
  * @param {"collect"|"delivery"} orderMode - Mode de la commande.
  * @param {Object|null} livraison - Adresse client {lat,lng,adresse} (mode delivery).
  * @returns {Promise<{itemsCents:number, lines:Array, fraisCents:number, totalCents:number, livraisonData:(Object|null), distanceKm:(number|null)}>}
- * @throws {HttpsError} prix manipulé / out-of-range / minimum non atteint.
+ * @throws {HttpsError} prix manipulé / out-of-range / minimum non atteint / pause service.
  */
 async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison) {
+  // 🛡️ Garde Pause Service / Coup de Feu
+  if (snackData.servicePausedUntil) {
+    const pausedUntilDate = snackData.servicePausedUntil.toDate ? snackData.servicePausedUntil.toDate() : new Date(snackData.servicePausedUntil);
+    if (pausedUntilDate > new Date()) {
+      throw new HttpsError("failed-precondition", "Le restaurant a temporairement suspendu la prise de commandes (cuisine en pause).");
+    }
+  }
+
   const { itemsCents, lines } = await priceCartItems(cartItems, snackId);
 
   let livraisonData = null;

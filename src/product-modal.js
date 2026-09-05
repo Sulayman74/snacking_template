@@ -44,6 +44,7 @@ class ProductModalUI {
       prixMenu: item.menuPriceAdd || 2.5,
       image: item.image,
       allowMenu: item.allowMenu !== false,
+      allowSupplements: item.allowSupplements !== false && item.categorieId !== "supplements" && item.categorieId !== "extras",
       tailleChoisie: null,
     };
 
@@ -243,6 +244,37 @@ class ProductModalUI {
       </fieldset>`;
     }
 
+    // Suppléments / Extras (Catégorie 'supplements' ou 'extras')
+    if (this.currentProduct.allowSupplements) {
+      const supplements = store.state.menu.filter(
+        i => (i.categorieId === "supplements" || i.categorieId === "extras") && i.isAvailable !== false
+      );
+
+      if (supplements.length > 0) {
+        html += `<fieldset class="mb-4">
+          <legend class="text-lg font-black text-text mb-2 flex justify-between items-center">
+              <span>Suppléments & Extras</span>
+              <span class="text-[10px] font-black bg-surface-3 text-text-muted px-2 py-1 rounded uppercase tracking-widest">Optionnel</span>
+          </legend>
+          <div class="grid grid-cols-2 gap-3">
+              ${supplements.map(s => {
+                  const safeNom = escapeHTML(s.nom || "");
+                  const safePrix = (parseFloat(s.prix) || 0).toFixed(2);
+                  const safeId = escapeHTML(s.id);
+                  return `
+                  <label class="relative cursor-pointer">
+                      <input type="checkbox" name="supplement" value="${safeId}" data-nom="${safeNom}" data-prix="${safePrix}" class="sr-only peer supplement-checkbox" onchange="window.updateProductPriceCTA()">
+                      <div class="p-3 border-2 border-line rounded-xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex justify-between items-center">
+                          <span class="font-bold text-text text-sm">${safeNom}</span>
+                          <span class="font-black text-accent text-xs">+${safePrix} ${escapeHTML(devise)}</span>
+                      </div>
+                  </label>
+              `;}).join("")}
+          </div>
+        </fieldset>`;
+      }
+    }
+
     // Sauces
     if (item.choixSauces) {
       const max = parseInt(item.choixSauces.max) || 2;
@@ -329,13 +361,24 @@ class ProductModalUI {
     };
   }
 
+  getCalculatedPrice() {
+    const formule = document.querySelector('input[name="formule"]:checked')?.value || "seul";
+    const isMenu = formule === "menu";
+    const base = Number(this.currentProduct?.prixBase) || 0;
+    const menuAdd = isMenu ? (Number(this.currentProduct?.prixMenu) || 0) : 0;
+    const suppsAdd = Array.from(document.querySelectorAll('.supplement-checkbox:checked'))
+      .reduce((acc, cb) => acc + (parseFloat(cb.getAttribute('data-prix')) || 0), 0);
+    return base + menuAdd + suppsAdd;
+  }
+
   #updateCTA(cfg, btn) {
     if (!btn) return;
     const devise = cfg.identity.currency || "€";
     const isOrderingEnabled = cfg.features?.enableClickAndCollect !== false;
 
     if (isOrderingEnabled) {
-      btn.innerHTML = `<span>Ajouter - ${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+      const prix = this.getCalculatedPrice();
+      btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
       btn.className = "w-full py-4 rounded-xl font-bold text-on-dark bg-gray-900 hover:bg-primary hover:scale-105 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => window.confirmAddToCart();
     } else {
@@ -386,7 +429,7 @@ class ProductModalUI {
   /**
    * Construit l'article au format panier depuis l'état courant du formulaire.
    * Source unique consommée par l'ajout au panier ET la mise en favori (DRY).
-   * @returns {Object} Article personnalisé ({id, productId, nom, prix, image, formule, sauces, boisson, taille}).
+   * @returns {Object} Article personnalisé ({id, productId, nom, prix, image, formule, sauces, boisson, taille, supplements}).
    */
   #buildCartItem() {
     const formule = document.querySelector('input[name="formule"]:checked')?.value || "seul";
@@ -395,21 +438,28 @@ class ProductModalUI {
     const boisson = isMenu ? (document.querySelector('input[name="boisson"]:checked')?.value || null) : null;
     const sansCrudites = Array.from(document.querySelectorAll(".crudite-checkbox:checked")).map((cb) => cb.value);
     const taille = this.currentProduct.tailleChoisie || null;
+    const supplements = Array.from(document.querySelectorAll(".supplement-checkbox:checked")).map((cb) => ({
+      productId: cb.value,
+      nom: cb.getAttribute("data-nom") || "Supplément",
+      prix: parseFloat(cb.getAttribute("data-prix")) || 0,
+    }));
+    const suppKey = supplements.map(s => s.productId).sort().join("-");
+    const totalPrix = this.getCalculatedPrice();
 
     return {
       // ⚠️ La clé `id` doit inclure TOUTES les options qui distinguent deux
-      // articles (boisson, sansCrudites compris), sinon store.addToCart fusionne
-      // par id → mauvaise boisson servie / exclusion perdue.
-      id: `${this.currentProduct.id}-${formule}-${sauces.join("-")}-${boisson || ""}-${sansCrudites.join("-")}-${taille || ""}`,
+      // articles (boisson, sansCrudites, suppléments compris).
+      id: `${this.currentProduct.id}-${formule}-${sauces.join("-")}-${boisson || ""}-${sansCrudites.join("-")}-${taille || ""}-${suppKey}`,
       productId: this.currentProduct.id,
       nom: isMenu ? `Menu ${this.currentProduct.nom}` : this.currentProduct.nom,
-      prix: this.currentProduct.prixBase + (isMenu ? this.currentProduct.prixMenu : 0),
+      prix: totalPrix,
       image: this.currentProduct.image,
       formule,
       sauces,
       boisson,
       sansCrudites,
       taille,
+      supplements,
     };
   }
 
@@ -469,10 +519,17 @@ window.toggleDrinkSection = () => {
     // Update price in CTA
     const btn = document.getElementById("modal-cta");
     const devise = store.state.config.identity.currency || "€";
-    const prix = productModalUI.currentProduct.prixBase + (isMenu ? productModalUI.currentProduct.prixMenu : 0);
+    const prix = productModalUI.getCalculatedPrice();
     if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
     productModalUI.refreshFavButton();
     productModalUI.refreshAddState();
+};
+window.updateProductPriceCTA = () => {
+    const btn = document.getElementById("modal-cta");
+    const devise = store.state.config.identity.currency || "€";
+    const prix = productModalUI.getCalculatedPrice();
+    if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
+    productModalUI.refreshFavButton();
 };
 window.refreshAddState = () => productModalUI.refreshAddState();
 window.checkSauceLimit = (e, max) => {
@@ -491,6 +548,7 @@ window.updateProductSize = (radio) => {
     productModalUI.currentProduct.tailleChoisie = radio.value;
     const btn = document.getElementById("modal-cta");
     const devise = store.state.config.identity.currency || "€";
-    if (btn) btn.innerHTML = `<span>Ajouter - ${productModalUI.currentProduct.prixBase.toFixed(2)} ${devise}</span>`;
+    const prix = productModalUI.getCalculatedPrice();
+    if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
     productModalUI.refreshFavButton();
 };

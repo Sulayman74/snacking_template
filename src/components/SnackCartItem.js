@@ -41,6 +41,11 @@ export class SnackCartItem extends SnackElement {
       detailsTemplate.push(html`<span>🥣 ${safeSauces}</span>`);
     }
 
+    if (Array.isArray(item.supplements) && item.supplements.length > 0) {
+      const safeSupps = item.supplements.map((s) => this.escapeHTML(s.nom)).join(", ");
+      detailsTemplate.push(html`<span class="text-accent font-bold">🧀 +${safeSupps}</span>`);
+    }
+
     if (item.sansCrudites && item.sansCrudites.length > 0) {
       const safeCrudites = item.sansCrudites.map((c) => this.escapeHTML(c)).join(", ");
       detailsTemplate.push(html`<span class="text-danger font-black">⚠️ ${safeCrudites}</span>`);

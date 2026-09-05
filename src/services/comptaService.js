@@ -147,29 +147,31 @@ function computeOrderRow(order = {}) {
 }
 
 // Durée de la franchise (commission 0 %) en mois — ALIGNÉE sur la règle serveur
-// (functions/index.js : 0 % les 6 premiers mois, puis 8 %).
-const FRANCHISE_MONTHS = 2;
+// (functions/domains/payment.js : période d'essai trialPeriodMonths, 1 mois par défaut, puis 8 %).
+const DEFAULT_FRANCHISE_MONTHS = 1;
 const COMMISSION_RATE_PCT = 8;
 
 /**
- * Statut de franchise d'un snack (commission 0 % les 6 premiers mois). Réplique
+ * Statut de franchise d'un snack (commission 0 % pendant la période d'essai). Réplique
  * EXACTEMENT le calcul serveur (diff en mois calendaires depuis createdAt). Sert
  * au badge positif « Franchise 0 % · encore N mois » (§8.2).
  * @param {*} createdAt - Timestamp Firestore | Date | ms | ISO | null.
  * @param {Date} [now] - injecté pour les tests (défaut : maintenant).
+ * @param {number} [trialMonths=1] - durée de la franchise en mois configurée sur le snack.
  * @returns {{active:boolean, monthsRemaining:number, feeRatePct:number}}
  */
-function franchiseInfo(createdAt, now = new Date()) {
+function franchiseInfo(createdAt, now = new Date(), trialMonths = DEFAULT_FRANCHISE_MONTHS) {
   const d = createdAt?.toDate ? createdAt.toDate() : createdAt != null ? new Date(createdAt) : null;
+  const effectiveMonths = typeof trialMonths === "number" && trialMonths >= 0 ? trialMonths : DEFAULT_FRANCHISE_MONTHS;
   if (!d || isNaN(d.getTime())) {
     // Sans date de création connue : on NE prétend pas à une franchise.
     return { active: false, monthsRemaining: 0, feeRatePct: COMMISSION_RATE_PCT };
   }
   const diffMonths = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
-  const active = diffMonths < FRANCHISE_MONTHS;
+  const active = diffMonths < effectiveMonths;
   return {
     active,
-    monthsRemaining: active ? Math.max(0, FRANCHISE_MONTHS - diffMonths) : 0,
+    monthsRemaining: active ? Math.max(0, effectiveMonths - diffMonths) : 0,
     feeRatePct: active ? 0 : COMMISSION_RATE_PCT,
   };
 }

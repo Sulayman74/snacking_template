@@ -203,12 +203,31 @@
 
     <div class="flex-1 overflow-y-auto pb-2 md:pb-0"> 
         
-        <!-- 🔥 Badge de charge cuisine (signal de capacité, décidé serveur via getKitchenLoad) -->
-        <div id="kitchen-load-badge"
-             class="hidden absolute top-2 left-1/2 -translate-x-1/2 z-20 items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow"
-             role="status" aria-live="polite">
-            <span id="kitchen-load-dot" class="w-2.5 h-2.5 rounded-full inline-block"></span>
-            <span id="kitchen-load-text">Charge : —</span>
+        <!-- 🔥 Badge de charge cuisine & Pause de service -->
+        <div class="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+            <div id="kitchen-load-badge"
+                 class="hidden items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow"
+                 role="status" aria-live="polite">
+                <span id="kitchen-load-dot" class="w-2.5 h-2.5 rounded-full inline-block"></span>
+                <span id="kitchen-load-text">Charge : —</span>
+            </div>
+            <button type="button" onclick="window.openKitchenPauseModal()" id="btn-kitchen-pause-trigger" class="bg-white hover:bg-gray-100 text-gray-800 text-xs font-black uppercase px-3 py-1.5 rounded-full border border-line shadow flex items-center gap-1.5 transition active:scale-95">
+                <i data-lucide="pause-circle" class="text-amber-600"></i> Pause Commandes
+            </button>
+        </div>
+
+        <!-- ⏸️ Bandeau Pause Active en Cuisine -->
+        <div id="kitchen-pause-banner" class="hidden mx-4 md:mx-6 mt-12 mb-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-fade-in">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl animate-pulse">⏸️</span>
+                <div>
+                    <p class="font-black text-sm">Prise de commandes EN PAUSE (Forte affluence)</p>
+                    <p id="kitchen-pause-timer-text" class="text-xs text-amber-100 font-bold">Reprise automatique prévue à --:--</p>
+                </div>
+            </div>
+            <button type="button" onclick="window.resumeKitchenService()" class="bg-white text-gray-900 px-4 py-2 rounded-xl text-xs font-black shadow hover:bg-amber-50 transition active:scale-95 flex items-center gap-1">
+                <i data-lucide="play" class="text-xs"></i> Reprendre maintenant
+            </button>
         </div>
 
         <section id="view-cuisine" class="relative flex flex-col md:flex-row gap-6 p-4 pb-20 md:p-6 h-full min-h-full">
@@ -934,6 +953,22 @@
           </div>
 
           <div
+            class="mb-4 flex items-center gap-3 bg-blue-50 p-3 rounded-xl border border-blue-100"
+          >
+            <input
+              type="checkbox"
+              id="edit-allow-supplements"
+              checked
+              class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+            />
+            <label
+              class="font-bold text-blue-800 text-sm cursor-pointer"
+              for="edit-allow-supplements"
+              >🧀 Proposer les suppléments / extras sur ce produit</label
+            >
+          </div>
+
+          <div
             class="mb-4 flex items-center gap-3 bg-amber-50 p-3 rounded-xl border border-amber-100"
           >
             <input
@@ -1054,6 +1089,40 @@
   <i id="admin-snackbar-icon" data-lucide="circle-check" class="text-green-400 text-2xl"></i>
   <span id="admin-snackbar-message" class="font-medium">Message</span>
 </div>
+
+    <!-- ⏸️ MODALE PAUSE CUISINE / COUP DE FEU -->
+    <div id="kitchen-pause-modal" class="fixed inset-0 bg-gray-900/80 z-[200] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+      <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center border border-amber-100 animate-fade-in-up">
+        <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 text-2xl">
+          <i data-lucide="pause-circle"></i>
+        </div>
+        <h3 class="text-xl font-black text-gray-900 mb-1">Mettre en pause les commandes</h3>
+        <p class="text-xs text-gray-500 mb-6 font-medium">Bloque temporairement les nouvelles commandes sur l'app pendant un coup de feu.</p>
+        
+        <div class="grid grid-cols-2 gap-3 mb-6">
+          <button type="button" onclick="window.setKitchenServicePause(15)" class="p-3.5 bg-surface-2 hover:bg-amber-100 hover:text-amber-800 text-gray-800 font-bold rounded-2xl border border-line transition text-sm flex flex-col items-center">
+            <span class="text-lg font-black">15 min</span>
+            <span class="text-[10px] text-gray-400 font-medium">Pause courte</span>
+          </button>
+          <button type="button" onclick="window.setKitchenServicePause(30)" class="p-3.5 bg-surface-2 hover:bg-amber-100 hover:text-amber-800 text-gray-800 font-bold rounded-2xl border border-line transition text-sm flex flex-col items-center">
+            <span class="text-lg font-black">30 min</span>
+            <span class="text-[10px] text-gray-400 font-medium">Coup de feu</span>
+          </button>
+          <button type="button" onclick="window.setKitchenServicePause(45)" class="p-3.5 bg-surface-2 hover:bg-amber-100 hover:text-amber-800 text-gray-800 font-bold rounded-2xl border border-line transition text-sm flex flex-col items-center">
+            <span class="text-lg font-black">45 min</span>
+            <span class="text-[10px] text-gray-400 font-medium">Gros rush</span>
+          </button>
+          <button type="button" onclick="window.setKitchenServicePause(60)" class="p-3.5 bg-surface-2 hover:bg-amber-100 hover:text-amber-800 text-gray-800 font-bold rounded-2xl border border-line transition text-sm flex flex-col items-center">
+            <span class="text-lg font-black">1 heure</span>
+            <span class="text-[10px] text-gray-400 font-medium">Fermeture tempo</span>
+          </button>
+        </div>
+
+        <button type="button" onclick="window.closeKitchenPauseModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition text-sm">
+          Annuler
+        </button>
+      </div>
+    </div>
 
     <!-- Template du toast partagé (utils.js showToast) — sans lui, showToast retombe sur alert() natif -->
     <template id="toast-template">

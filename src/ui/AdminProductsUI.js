@@ -221,6 +221,9 @@ class AdminProductsUI {
             this.populateCategorySelect(product.categorieId);
             document.getElementById("edit-tags").value = product.tags?.[0] || "";
             document.getElementById("edit-allow-menu").checked = product.allowMenu !== false;
+            if (document.getElementById("edit-allow-supplements")) {
+                document.getElementById("edit-allow-supplements").checked = product.allowSupplements !== false;
+            }
             document.getElementById("edit-eligible-wheel").checked = product.eligibleForWheel === true;
             this.setAllergens(product.allergenes);
             
@@ -269,6 +272,9 @@ class AdminProductsUI {
             });
             document.getElementById("edit-allow-menu").checked = true;
             document.getElementById("edit-allow-menu").dispatchEvent(new Event("change"));
+            if (document.getElementById("edit-allow-supplements")) {
+                document.getElementById("edit-allow-supplements").checked = true;
+            }
         }
 
         this.modal.classList.remove("hidden");
@@ -352,9 +358,23 @@ class AdminProductsUI {
         const sel = document.getElementById("edit-category");
         if (!sel) return;
 
-        const categories = [...new Set(adminStore.state.products.map(p => p.categorieId).filter(Boolean))];
+        const defaultCategories = ["burgers", "tacos", "pizzas", "drinks", "sides", "desserts", "supplements"];
+        const existingCategories = adminStore.state.products.map(p => p.categorieId).filter(Boolean);
+        const categories = [...new Set([...existingCategories, ...defaultCategories])];
+
+        const catLabel = (c) => {
+            if (c === "supplements" || c === "extras") return "🧀 Suppléments / Extras";
+            if (c === "burgers") return "🍔 Burgers";
+            if (c === "tacos") return "🌯 Tacos";
+            if (c === "pizzas") return "🍕 Pizzas";
+            if (c === "drinks") return "🥤 Boissons";
+            if (c === "sides") return "🍟 Accompagnements";
+            if (c === "desserts") return "🍰 Desserts";
+            return c;
+        };
+
         sel.innerHTML =
-            categories.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join("") +
+            categories.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(catLabel(c))}</option>`).join("") +
             `<option value="NEW">➕ Nouvelle catégorie…</option>`;
 
         if (selected && categories.includes(selected)) sel.value = selected;
@@ -397,6 +417,7 @@ class AdminProductsUI {
 
         const hasCrudites = document.getElementById("edit-has-crudites").checked;
         const crudites = hasCrudites ? document.getElementById("edit-crudites-list").value.split(",").map(s => s.trim()).filter(s => s !== "") : null;
+        const catId = this.resolveCategory();
 
         return {
             nom: document.getElementById("edit-nom").value.trim(),
@@ -406,10 +427,11 @@ class AdminProductsUI {
             tvaRate: [5.5, 10, 20].includes(parseFloat(document.getElementById("edit-tva-rate").value))
                 ? parseFloat(document.getElementById("edit-tva-rate").value)
                 : 10,
-            categorieId: this.resolveCategory(),
+            categorieId: catId,
             tags: document.getElementById("edit-tags").value ? [document.getElementById("edit-tags").value] : [],
             allergenes: Array.from(document.querySelectorAll(".edit-allergen:checked")).map(cb => cb.value),
-            allowMenu: hasTailles ? false : document.getElementById("edit-allow-menu").checked,
+            allowMenu: hasTailles || catId === "supplements" ? false : document.getElementById("edit-allow-menu").checked,
+            allowSupplements: document.getElementById("edit-allow-supplements") ? document.getElementById("edit-allow-supplements").checked : true,
             eligibleForWheel: document.getElementById("edit-eligible-wheel").checked,
             hasCrudites: !!hasCrudites,
             crudites,
