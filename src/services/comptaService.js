@@ -149,6 +149,7 @@ function computeOrderRow(order = {}) {
 // Durée de la franchise (commission 0 %) en mois — ALIGNÉE sur la règle serveur
 // (functions/domains/payment.js : période d'essai trialPeriodMonths, 1 mois par défaut, puis 8 %).
 const DEFAULT_FRANCHISE_MONTHS = 1;
+const FRANCHISE_MONTHS = DEFAULT_FRANCHISE_MONTHS;
 const COMMISSION_RATE_PCT = 8;
 
 /**
