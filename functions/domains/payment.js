@@ -128,16 +128,24 @@ exports.createPaymentIntent = onCall(
       const { totalCents } = await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison);
       require_(totalCents >= 50, "Montant inférieur au minimum (0,50 €).");
 
-      // Règle Métier : 0% les 6 premiers mois, puis 8% (sur le total SERVEUR).
+      // Règle Métier : Période d'essai (ex: 1 mois par défaut), puis commission selon la formule (Starter 8% ou Pro 0%).
       let applicationFeeAmount = 0;
       if (stripeAccountId) {
+        const trialMonths = typeof snackData.trialPeriodMonths === 'number' ? snackData.trialPeriodMonths : 1;
         const createdAt = snackData.createdAt?.toDate() || new Date();
         const now = new Date();
         const diffMonths = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
-        if (diffMonths >= 2) {
-          // Commission : 8%, mais avec un minimum de 0,50 € (50 centimes) par transaction 
-          // pour couvrir les frais fixes de Stripe (≈0,25€) + marge de sécurité pour cartes étrangères.
-          applicationFeeAmount = Math.max(50, Math.round(totalCents * 0.08));
+        if (diffMonths >= trialMonths) {
+          const plan = snackData.pricingPlan || "starter";
+          if (plan === "starter") {
+            // Offre Starter : 8% avec un minimum de 0,50 € (50 centimes) par transaction
+            const commissionRate = typeof snackData.commissionRate === 'number' ? snackData.commissionRate : 0.08;
+            const minFeeCents = typeof snackData.minFeeCents === 'number' ? snackData.minFeeCents : 50;
+            applicationFeeAmount = Math.max(minFeeCents, Math.round(totalCents * commissionRate));
+          } else if (plan === "pro") {
+            // Offre Pro : Loyer SaaS fixe mensuel (ex: 79 €/mois) -> 0 % de commission transactionnelle
+            applicationFeeAmount = 0;
+          }
         }
       }
 

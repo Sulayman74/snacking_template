@@ -36,7 +36,14 @@ setupSWUpdatePrompt({ context: 'SuperAdmin' });
 
 // Variables Globales
 let allSnacks = [];
-const PRIX_ABONNEMENT_MENSUEL = 49.00; // Ton tarif SaaS de base en euros
+// 💰 PRICING — Source de vérité unique (DRY) pour les tarifs SaaS.
+// Starter : loyer léger + commission transactionnelle (petits/moyens restos).
+// Pro     : loyer fixe sans commission (gros restos, seuil anti-churn).
+const PRICING = {
+    starter: { label: 'Starter', prix: 29, commissionRate: 0.08, minFeeCents: 50, description: '29 €/mois + 8%' },
+    pro:     { label: 'Pro',     prix: 79, commissionRate: 0,    minFeeCents: 0,  description: '79 €/mois · 0%' },
+};
+const getPlanPrix = (plan) => (PRICING[plan] || PRICING.starter).prix;
 
 // ============================================================================
 // 🛡️ 1. LE VIGILE DE SÉCURITÉ (AUTH GUARD)
@@ -105,7 +112,7 @@ async function loadDashboardData() {
         // 💰 MRR : somme des tarifs individuels (prixAbonnement) ou tarif de base
         const mrr = allSnacks
             .filter(s => !s.maintenanceMode)
-            .reduce((sum, s) => sum + (s.prixAbonnement || PRIX_ABONNEMENT_MENSUEL), 0);
+            .reduce((sum, s) => sum + (s.prixAbonnement || getPlanPrix(s.pricingPlan)), 0);
 
         // Mise à jour de l'UI
         document.getElementById("kpi-total-snacks").innerText = allSnacks.length;
@@ -151,7 +158,7 @@ function renderSnacksTable() {
         if (snack.enableViralShare)      featuresHtml += `<i data-lucide="share-2" title="Partage Viral" class="text-teal-500 mx-1"></i>`;
         if (snack.enableUpsell)          featuresHtml += `<i data-lucide="shopping-cart" title="Upsell" class="text-emerald-500 mx-1"></i>`;
 
-        const mrrClient = (parseFloat(snack.prixAbonnement) || PRIX_ABONNEMENT_MENSUEL).toFixed(0);
+        const mrrClient = (parseFloat(snack.prixAbonnement) || getPlanPrix(snack.pricingPlan)).toFixed(0);
         const powerBtnClass = snack.maintenanceMode
             ? "text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
             : "text-gray-500 bg-surface-2 hover:bg-surface-3";
@@ -335,7 +342,9 @@ window.openConfigModal = (snackId) => {
     });
 
     document.getElementById("cfg-maxPoints").value = snack.maxPoints || 10;
-    document.getElementById("cfg-prixAbonnement").value = snack.prixAbonnement || PRIX_ABONNEMENT_MENSUEL;
+    document.getElementById("cfg-prixAbonnement").value = snack.prixAbonnement || getPlanPrix(snack.pricingPlan);
+    document.getElementById("cfg-trialPeriodMonths").value = typeof snack.trialPeriodMonths === 'number' ? snack.trialPeriodMonths : 1;
+    document.getElementById("cfg-pricingPlan").value = snack.pricingPlan || "starter";
     document.getElementById("cfg-colorPalette").value = snack.colorPalette || "ruby";
     document.getElementById("cfg-domaine").value = snack.domaine || "";
     document.getElementById("cfg-stripeAccountId").value = snack.stripeAccountId || "";
@@ -363,11 +372,13 @@ document.getElementById("btn-save-config").addEventListener("click", async () =>
         const el = document.getElementById(`cfg-${flag}`);
         if (el) updates[flag] = el.getAttribute("data-state") === "on";
     });
-    updates.maxPoints       = parseInt(document.getElementById("cfg-maxPoints").value) || 10;
-    updates.prixAbonnement  = parseFloat(document.getElementById("cfg-prixAbonnement").value) || PRIX_ABONNEMENT_MENSUEL;
-    updates.colorPalette    = document.getElementById("cfg-colorPalette").value;
-    updates.domaine         = document.getElementById("cfg-domaine").value.trim().toLowerCase();
-    updates.stripeAccountId = document.getElementById("cfg-stripeAccountId").value.trim();
+    updates.maxPoints          = parseInt(document.getElementById("cfg-maxPoints").value) || 10;
+    updates.prixAbonnement     = parseFloat(document.getElementById("cfg-prixAbonnement").value) || getPlanPrix(updates.pricingPlan);
+    updates.trialPeriodMonths  = parseInt(document.getElementById("cfg-trialPeriodMonths").value) || 1;
+    updates.pricingPlan        = document.getElementById("cfg-pricingPlan").value || "starter";
+    updates.colorPalette       = document.getElementById("cfg-colorPalette").value;
+    updates.domaine            = document.getElementById("cfg-domaine").value.trim().toLowerCase();
+    updates.stripeAccountId    = document.getElementById("cfg-stripeAccountId").value.trim();
     updates.stripeSubscriptionId = document.getElementById("cfg-stripeSubscriptionId").value.trim();
 
     try {
@@ -380,7 +391,7 @@ document.getElementById("btn-save-config").addEventListener("click", async () =>
         // Recalcul MRR avec les nouveaux tarifs
         const mrr = allSnacks
             .filter(s => !s.maintenanceMode)
-            .reduce((sum, s) => sum + (s.prixAbonnement || PRIX_ABONNEMENT_MENSUEL), 0);
+            .reduce((sum, s) => sum + (s.prixAbonnement || getPlanPrix(s.pricingPlan)), 0);
         document.getElementById("kpi-mrr").textContent = `${mrr.toFixed(2)} €`;
 
         renderSnacksTable();
@@ -443,6 +454,8 @@ if (btnOpenModal && modalNewSnack) {
         const theme = document.getElementById("input-snack-theme").value;
         const domaine = document.getElementById("input-snack-domain").value.toLowerCase().trim();
         const adminEmail = document.getElementById("input-snack-admin-email").value.trim();
+        const trialPeriodMonths = parseInt(document.getElementById("input-snack-trial")?.value) || 1;
+        const pricingPlan = document.getElementById("input-snack-plan")?.value || "starter";
 
         try {
 // 🏭 L'USINE À RESTAURANTS : Clonage complet du modèle de base
@@ -453,6 +466,9 @@ if (btnOpenModal && modalNewSnack) {
                 colorPalette: theme, // Le moteur de thème !
                 description: `Découvrez le menu digital de ${nom}. Commandez en ligne vos spécialités en Click & Collect ou Livraison. Gagnez des récompenses !`,
                 currency: "€",
+                trialPeriodMonths: trialPeriodMonths,
+                pricingPlan: pricingPlan,
+                prixAbonnement: getPlanPrix(pricingPlan),
                 
                 // Coordonnées (Vides par défaut, le client les remplira plus tard)
                 city: "",
@@ -624,11 +640,26 @@ async function loadBillingData() {
         } catch (e) {
             console.warn("CA agg échoué pour", snack.id, e);
         }
+        const trialMonths = typeof snack.trialPeriodMonths === 'number' ? snack.trialPeriodMonths : 1;
+        const plan = snack.pricingPlan || "starter";
         const ageMonths = monthsSince(snack.createdAt);
-        const isFree = ageMonths !== null && ageMonths < 6;
-        const subscription = snack.maintenanceMode ? 0 : (parseFloat(snack.prixAbonnement) || PRIX_ABONNEMENT_MENSUEL);
-        const commission = isFree ? 0 : Math.round(ca * 0.08 * 100) / 100;
-        return { id: snack.id, nom: snack.nom || "Sans nom", ageMonths, isFree, maintenance: !!snack.maintenanceMode, subscription, ca, commission, total: subscription + commission };
+        const isFree = ageMonths !== null && ageMonths < trialMonths;
+        const defaultSub = getPlanPrix(plan);
+        const subscription = snack.maintenanceMode ? 0 : (parseFloat(snack.prixAbonnement) || defaultSub);
+        const commission = (isFree || plan === "pro") ? 0 : Math.round(ca * 0.08 * 100) / 100;
+
+        // 🧠 ALGORITHME CONSEIL ANTI-CHURN (OPTIMISATION TARIF)
+        let recommendationHtml = '';
+        if (plan === "starter" && ca > 650) {
+            const eco = Math.round((ca * 0.08 + 29) - 79);
+            recommendationHtml = `<span class="bg-indigo-100 text-indigo-800 font-bold px-2 py-1 rounded-md text-xs shadow-xs inline-flex items-center gap-1"><i data-lucide="sparkles" class="w-3 h-3"></i> Proposer PRO (Éco client: +${eco}€/m)</span>`;
+        } else if (plan === "pro" && ca < 400 && ca > 0) {
+            recommendationHtml = `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded-md text-xs shadow-xs">💡 Proposer STARTER</span>`;
+        } else {
+            recommendationHtml = `<span class="bg-green-100 text-green-800 font-bold px-2 py-1 rounded-md text-xs shadow-xs">✅ Plan Optimal</span>`;
+        }
+
+        return { id: snack.id, nom: snack.nom || "Sans nom", ageMonths, trialMonths, plan, isFree, maintenance: !!snack.maintenanceMode, subscription, ca, commission, total: subscription + commission, recommendationHtml };
     }));
     billingRows = rows;
 
@@ -642,11 +673,15 @@ async function loadBillingData() {
 
     rows.sort((a, b) => b.total - a.total);
     tbody.innerHTML = rows.map(r => {
+        const planBadge = r.plan === "pro"
+            ? `<span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">PRO (79€)</span>`
+            : `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">STARTER (29€+8%)</span>`;
+
         const ageBadge = r.ageMonths === null
             ? `<span class="text-gray-400">—</span>`
             : r.isFree
-                ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois · gratuit</span>`
-                : `<span class="bg-surface-2 text-gray-600 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois · 8%</span>`;
+                ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths}/${r.trialMonths}m · Essai gratuit</span>`
+                : `<span class="bg-surface-2 text-gray-600 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois</span>`;
         return `
             <tr class="hover:bg-surface-2">
                 <td class="p-4">
@@ -654,10 +689,11 @@ async function loadBillingData() {
                     <div class="font-mono text-[11px] text-gray-400">${escapeHTML(r.id)}</div>
                 </td>
                 <td class="p-4 text-center">${ageBadge}</td>
-                <td class="p-4 text-right font-bold">${r.subscription.toFixed(2)} €</td>
+                <td class="p-4 text-center">${planBadge}</td>
                 <td class="p-4 text-right text-gray-600">${r.ca.toFixed(2)} €</td>
                 <td class="p-4 text-right text-indigo-600 font-bold">${r.commission.toFixed(2)} €</td>
                 <td class="p-4 text-right font-black text-gray-900">${r.total.toFixed(2)} €</td>
+                <td class="p-4 text-center">${r.recommendationHtml}</td>
             </tr>`;
     }).join("");
 }
