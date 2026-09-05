@@ -20,6 +20,8 @@
     "deploy:all": "npm run build:all && firebase deploy --only hosting",
     "migrate:snack-fields": "node functions/scripts/migrate-snack-fields.js",
     "migrate:snack-fields:apply": "node functions/scripts/migrate-snack-fields.js --apply",
+    "migrate:pricing-supplements": "node functions/scripts/migrate-pricing-supplements.js",
+    "migrate:pricing-supplements:apply": "node functions/scripts/migrate-pricing-supplements.js --apply",
     "migrate:product-tva": "node functions/scripts/migrate-product-tva.js",
     "migrate:product-tva:apply": "node functions/scripts/migrate-product-tva.js --apply",
     "emulators": "firebase emulators:start --only auth,firestore,functions,storage --project snacking-template",

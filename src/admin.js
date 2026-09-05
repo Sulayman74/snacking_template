@@ -30,6 +30,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
   getDoc,
+  getDocs,
+  addDoc,
+  setDoc,
+  collection,
   doc,
   httpsCallable,
   functions,
@@ -420,3 +424,128 @@ function getInitialsFromEmail(email) {
   // cas simple : john@gmail.com → JO
   return namePart.substring(0, 2).toUpperCase();
 }
+
+// ============================================================================
+// 🧀 SEED & MIGRATION DES SUPPLÉMENTS BURGERS
+// ============================================================================
+window.seedBurgerSupplements = async () => {
+  const cfg = window.snackConfig;
+  const snackId = cfg?.identity?.id || window.currentAdminSnackId;
+  if (!snackId) {
+    window.showToast("Snack ID introuvable.", "error");
+    return;
+  }
+
+  const supps = [
+    {
+      nom: "Cheddar Affiné",
+      description: "Tranche fondue de cheddar affiné",
+      prix: 1.0,
+      categorieId: "supplements",
+      isAvailable: true,
+      tvaRate: 10,
+      allowMenu: false,
+      allowSupplements: false,
+      menuPriceAdd: 0,
+      snackId,
+    },
+    {
+      nom: "Steak Haché Bouchère",
+      description: "Steak haché pur bœuf supplémentaire",
+      prix: 2.0,
+      categorieId: "supplements",
+      isAvailable: true,
+      tvaRate: 10,
+      allowMenu: false,
+      allowSupplements: false,
+      menuPriceAdd: 0,
+      snackId,
+    },
+    {
+      nom: "Bacon Croustillant",
+      description: "Tranches de bacon grillé et croustillant",
+      prix: 1.5,
+      categorieId: "supplements",
+      isAvailable: true,
+      tvaRate: 10,
+      allowMenu: false,
+      allowSupplements: false,
+      menuPriceAdd: 0,
+      snackId,
+    },
+    {
+      nom: "Sauce Fromagère Maison",
+      description: "Onctueuse sauce fromagère préparée sur place",
+      prix: 1.0,
+      categorieId: "supplements",
+      isAvailable: true,
+      tvaRate: 10,
+      allowMenu: false,
+      allowSupplements: false,
+      menuPriceAdd: 0,
+      snackId,
+    },
+    {
+      nom: "Œuf au Plat",
+      description: "Œuf frais cuit sur plancha",
+      prix: 1.0,
+      categorieId: "supplements",
+      isAvailable: true,
+      tvaRate: 10,
+      allowMenu: false,
+      allowSupplements: false,
+      menuPriceAdd: 0,
+      snackId,
+    },
+    {
+      nom: "Oignons Caramélisés",
+      description: "Oignons doux mijotés et confits",
+      prix: 0.8,
+      categorieId: "supplements",
+      isAvailable: true,
+      tvaRate: 10,
+      allowMenu: false,
+      allowSupplements: false,
+      menuPriceAdd: 0,
+      snackId,
+    },
+  ];
+
+  try {
+    const snap = await getDocs(collection(db, "produits"));
+    const existing = new Set(
+      snap.docs.map((d) => (d.data().nom || "").toLowerCase().trim()),
+    );
+    let created = 0;
+
+    for (const s of supps) {
+      if (!existing.has(s.nom.toLowerCase().trim())) {
+        await addDoc(collection(db, "produits"), s);
+        created++;
+      }
+    }
+
+    // Backfill du snack (pricingPlan, trialPeriodMonths, etc.)
+    const snackRef = doc(db, "snacks", snackId);
+    await setDoc(
+      snackRef,
+      {
+        pricingPlan: "starter",
+        prixAbonnement: 29,
+        trialPeriodMonths: 1,
+        servicePausedUntil: null,
+      },
+      { merge: true },
+    );
+
+    window.showToast(
+      created > 0
+        ? `✅ ${created} suppléments créés dans Firestore !`
+        : "✅ Vos suppléments sont déjà tous présents dans Firestore !",
+      "success",
+    );
+  } catch (err) {
+    console.error("❌ Erreur seed suppléments :", err);
+    window.showToast("Erreur lors de l'initialisation des suppléments.", "error");
+  }
+};
