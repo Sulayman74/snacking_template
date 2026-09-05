@@ -87,6 +87,9 @@ class AdminProductsUI {
         const categorySelect = document.getElementById("admin-product-category");
         if (categorySelect && products.length > 0) {
             const currentCat = categorySelect.value;
+            const defaultCategories = ["burgers", "tacos", "pizzas", "drinks", "sides", "desserts", "supplements"];
+            const existingCategories = products.map(p => p.categorieId).filter(Boolean);
+            const categories = [...new Set([...existingCategories, ...defaultCategories])];
             const catLabel = (c) => {
                 if (c === "supplements" || c === "extras") return "🧀 Suppléments / Extras";
                 if (c === "burgers") return "🍔 Burgers";
@@ -99,6 +102,9 @@ class AdminProductsUI {
             };
             categorySelect.innerHTML = `<option value="">Toutes les catégories</option>` + 
                 categories.map(cat => `<option value="${escapeHTML(cat)}" ${currentCat === cat ? 'selected' : ''}>${escapeHTML(catLabel(cat))}</option>`).join("");
+            if (currentCat && categories.includes(currentCat)) {
+                categorySelect.value = currentCat;
+            }
         }
 
         // --- 2. Filtrer les produits ---
