@@ -156,7 +156,8 @@ window.closeCsvInfoModal = () => {
   const modal = document.getElementById("csv-info-modal");
   if (!modal) return;
   modal.classList.add("opacity-0");
-  modal.querySelector(".bg-white").classList.add("scale-95");
+  const inner = modal.querySelector(".bg-surface, .bg-white") || modal.firstElementChild;
+  if (inner) inner.classList.add("scale-95");
   setTimeout(() => {
     modal.classList.add("hidden");
     modal.classList.remove("flex");

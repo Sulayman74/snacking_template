@@ -87,12 +87,18 @@ class AdminProductsUI {
         const categorySelect = document.getElementById("admin-product-category");
         if (categorySelect && products.length > 0) {
             const currentCat = categorySelect.value;
-            const categories = [...new Set(products.map(p => p.categorieId).filter(Boolean))];
-            
-            // On ne reconstruit les options que si nécessaire (ou de manière basique)
-            // Pour faire simple, on les met à jour en gardant la sélection
+            const catLabel = (c) => {
+                if (c === "supplements" || c === "extras") return "🧀 Suppléments / Extras";
+                if (c === "burgers") return "🍔 Burgers";
+                if (c === "tacos") return "🌯 Tacos";
+                if (c === "pizzas") return "🍕 Pizzas";
+                if (c === "drinks") return "🥤 Boissons";
+                if (c === "sides") return "🍟 Accompagnements";
+                if (c === "desserts") return "🍰 Desserts";
+                return c;
+            };
             categorySelect.innerHTML = `<option value="">Toutes les catégories</option>` + 
-                categories.map(cat => `<option value="${escapeHTML(cat)}" ${currentCat === cat ? 'selected' : ''}>${escapeHTML(cat)}</option>`).join("");
+                categories.map(cat => `<option value="${escapeHTML(cat)}" ${currentCat === cat ? 'selected' : ''}>${escapeHTML(catLabel(cat))}</option>`).join("");
         }
 
         // --- 2. Filtrer les produits ---
@@ -280,7 +286,8 @@ class AdminProductsUI {
         this.modal.classList.remove("hidden");
         setTimeout(() => {
             this.modal.classList.remove("opacity-0");
-            this.modal.querySelector(".bg-white").classList.remove("scale-95");
+            const inner = this.modal.querySelector(".bg-surface, .bg-white") || this.modal.firstElementChild;
+            if (inner) inner.classList.remove("scale-95");
         }, 10);
     }
 

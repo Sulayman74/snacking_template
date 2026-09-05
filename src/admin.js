@@ -123,7 +123,7 @@ window.closeModal = (modalId) => {
   if (!modal) return;
 
   modal.classList.add("opacity-0");
-  const inner = modal.querySelector(".bg-white");
+  const inner = modal.querySelector(".bg-surface, .bg-white") || modal.firstElementChild;
   if (inner) inner.classList.add("scale-95");
 
   setTimeout(() => {
