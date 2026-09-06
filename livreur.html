@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="/livreur-icon-192.png" />
 <link rel="stylesheet" href="/src/styles.css" />
   </head>
-  <body class="bg-surface-2 min-h-screen text-gray-900 antialiased">
+  <body class="bg-surface-2 min-h-screen text-text antialiased">
     <div class="app-bg" aria-hidden="true"></div>
 
     <!-- 🔐 ÉCRAN DE CONNEXION -->
@@ -49,6 +49,10 @@
           <p id="driver-name" class="font-black truncate">Livreur</p>
           <p class="text-[11px] text-gray-400">Tournée en cours</p>
         </div>
+        <button data-action="cycle-theme" type="button" title="Changer de thème" aria-label="Changer de thème"
+          class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition text-gray-300 hover:text-white">
+          <i data-lucide="contrast"></i>
+        </button>
         <button id="driver-help-btn" type="button" title="Comment ça marche"
           class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition">
           <i data-lucide="circle-help"></i>
@@ -112,20 +116,20 @@
 
     <!-- ❓ MODALE "COMMENT ÇA MARCHE" -->
     <div id="driver-help-modal" class="hidden fixed inset-0 z-[220] items-center justify-center bg-black/70 p-4">
-      <div class="bg-white rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto p-6 shadow-2xl">
+      <div class="bg-surface rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto p-6 shadow-2xl border border-line">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-black text-gray-900"><i data-lucide="bike" class="text-blue-500 mr-2"></i>Comment ça marche</h2>
-          <button id="driver-help-close" class="w-8 h-8 bg-surface-2 rounded-full flex items-center justify-center text-gray-500 hover:bg-surface-3" aria-label="Fermer"><i data-lucide="x"></i></button>
+          <h2 class="text-xl font-black text-text"><i data-lucide="bike" class="text-blue-500 mr-2"></i>Comment ça marche</h2>
+          <button id="driver-help-close" class="w-8 h-8 bg-surface-2 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-3 hover:text-text" aria-label="Fermer"><i data-lucide="x"></i></button>
         </div>
-        <ol class="space-y-4 text-sm text-gray-700">
-          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center">1</span><div><b>Active notifications & localisation</b> à la connexion (carte « Activer mon espace »).</div></li>
-          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center">2</span><div><b>Prends une course</b> dans « Courses à récupérer ».</div></li>
-          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center">3</span><div>Au resto, fais la <b>photo de prise en charge</b> (étape 1) → vérifie l'aperçu → Envoyer.</div></li>
-          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center">4</span><div>Roule vers le client : il est <b>prévenu de ta distance</b> automatiquement.</div></li>
-          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center">5</span><div>Arrivé (&lt; 200 m), le bouton <b>« J'ai livré »</b> se débloque → photo de dépôt (étape 2) → Envoyer.</div></li>
-          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-green-100 text-green-700 font-black flex items-center justify-center"><i data-lucide="check"></i></span><div>C'est livré ! La commande disparaît de ta liste.</div></li>
+        <ol class="space-y-4 text-sm text-text-muted">
+          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 font-black flex items-center justify-center">1</span><div class="text-text"><b>Active notifications & localisation</b> à la connexion (carte « Activer mon espace »).</div></li>
+          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 font-black flex items-center justify-center">2</span><div class="text-text"><b>Prends une course</b> dans « Courses à récupérer ».</div></li>
+          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 font-black flex items-center justify-center">3</span><div class="text-text">Au resto, fais la <b>photo de prise en charge</b> (étape 1) → vérifie l'aperçu → Envoyer.</div></li>
+          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 font-black flex items-center justify-center">4</span><div class="text-text">Roule vers le client : il est <b>prévenu de ta distance</b> automatiquement.</div></li>
+          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 font-black flex items-center justify-center">5</span><div class="text-text">Arrivé (&lt; 200 m), le bouton <b>« J'ai livré »</b> se débloque → photo de dépôt (étape 2) → Envoyer.</div></li>
+          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-black flex items-center justify-center"><i data-lucide="check"></i></span><div class="text-text">C'est livré ! La commande disparaît de ta liste.</div></li>
         </ol>
-        <p class="mt-4 text-xs text-gray-400"><i data-lucide="lightbulb" class="mr-1"></i>Garde l'app ouverte pendant la course (l'écran reste allumé). Sur iPhone, installe l'app pour recevoir les notifications.</p>
+        <p class="mt-4 text-xs text-text-muted"><i data-lucide="lightbulb" class="mr-1"></i>Garde l'app ouverte pendant la course (l'écran reste allumé). Sur iPhone, installe l'app pour recevoir les notifications.</p>
         <button id="driver-help-ok" type="button" class="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl active:scale-95 transition">J'ai compris</button>
       </div>
     </div>

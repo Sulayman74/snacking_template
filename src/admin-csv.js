@@ -89,20 +89,20 @@ window.openCsvInfoModal = () => {
 
 // Remplace le bloc modal.innerHTML par celui-ci :
 modal.innerHTML = `
-    <div class="bg-white w-full max-w-2xl rounded-3xl p-6 relative shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto font-sans">
-        <button onclick="document.getElementById('csv-info-modal-js').remove()" class="absolute top-4 right-4 w-10 h-10 text-gray-400 hover:text-red-400 bg-surface-2 rounded-full transition flex justify-center items-center">
+    <div class="bg-surface text-text border border-line w-full max-w-2xl rounded-3xl p-6 relative shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto font-sans">
+        <button onclick="document.getElementById('csv-info-modal-js').remove()" class="absolute top-4 right-4 w-10 h-10 text-text-muted hover:text-red-400 bg-surface-2 rounded-full transition flex justify-center items-center">
             <i data-lucide="x" class="text-xl"></i>
         </button>
         
-        <h3 class="text-2xl font-black text-gray-900 mb-2 border-b border-line pb-4">
+        <h3 class="text-2xl font-black text-text mb-2 border-b border-line pb-4">
             <i data-lucide="file-spreadsheet" class="text-blue-500 mr-2"></i> Guide d'importation
         </h3>
 
-        <p class="text-gray-600 mb-6 mt-4">Importez toute votre carte en une seconde. Utilisez un fichier <strong>.csv</strong> avec le point-virgule (;) comme séparateur.</p>
+        <p class="text-text-muted mb-6 mt-4">Importez toute votre carte en une seconde. Utilisez un fichier <strong>.csv</strong> avec le point-virgule (;) comme séparateur.</p>
 
         <div class="overflow-x-auto mb-6 border border-line rounded-xl">
             <table class="w-full text-left text-xs">
-                <thead class="bg-surface-2 text-gray-500 uppercase">
+                <thead class="bg-surface-2 text-text-muted uppercase">
                     <tr>
                         <th class="px-3 py-2">Nom</th>
                         <th class="px-3 py-2">Prix</th>
@@ -110,31 +110,31 @@ modal.innerHTML = `
                         <th class="px-3 py-2">Menu</th>
                     </tr>
                 </thead>
-                <tbody class="text-gray-700">
-                    <tr class="border-t border-gray-50">
+                <tbody class="text-text">
+                    <tr class="border-t border-line">
                         <td class="px-3 py-2 font-bold">Burger Bacon</td>
                         <td class="px-3 py-2">9.50</td>
                         <td class="px-3 py-2">burgers</td>
-                        <td class="px-3 py-2 text-green-600 font-bold">Oui</td>
+                        <td class="px-3 py-2 text-green-600 dark:text-green-400 font-bold">Oui</td>
                     </tr>
-                    <tr class="border-t border-gray-50">
+                    <tr class="border-t border-line">
                         <td class="px-3 py-2 font-bold">Pizza Regina</td>
                         <td class="px-3 py-2">12.00</td>
                         <td class="px-3 py-2">pizzas</td>
-                        <td class="px-3 py-2 text-red-500 font-bold">Non</td>
+                        <td class="px-3 py-2 text-red-500 dark:text-red-400 font-bold">Non</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
-            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                <h4 class="font-bold text-blue-900 mb-1">Obligatoire</h4>
-                <p class="text-blue-800">Nom, Prix, Categorie (tacos, burgers, pizzas, drinks, sides, desserts).</p>
+            <div class="bg-blue-500/10 p-4 rounded-xl border border-blue-500/30">
+                <h4 class="font-bold text-blue-700 dark:text-blue-400 mb-1">Obligatoire</h4>
+                <p class="text-text">Nom, Prix, Categorie (tacos, burgers, pizzas, drinks, sides, desserts).</p>
             </div>
-            <div class="bg-green-50 p-4 rounded-xl border border-green-100">
-                <h4 class="font-bold text-green-900 mb-1">Optionnel</h4>
-                <p class="text-green-800">Description, Image (URL), Menu (Oui/Non), Surplus_Menu (ex: 3.00).</p>
+            <div class="bg-green-500/10 p-4 rounded-xl border border-green-500/30">
+                <h4 class="font-bold text-green-700 dark:text-green-400 mb-1">Optionnel</h4>
+                <p class="text-text">Description, Image (URL), Menu (Oui/Non), Surplus_Menu (ex: 3.00).</p>
             </div>
         </div>
 
@@ -142,7 +142,7 @@ modal.innerHTML = `
             <button onclick="window.downloadCsvTemplate()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
                 <i data-lucide="download"></i> Télécharger le modèle
             </button>
-            <button onclick="document.getElementById('csv-info-modal-js').remove()" class="flex-1 bg-surface-2 hover:bg-surface-3 text-gray-800 font-bold py-4 rounded-xl transition">
+            <button onclick="document.getElementById('csv-info-modal-js').remove()" class="flex-1 bg-surface-2 hover:bg-surface-3 text-text font-bold py-4 rounded-xl transition">
                 J'ai compris
             </button>
         </div>

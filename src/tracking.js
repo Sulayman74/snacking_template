@@ -25,7 +25,7 @@ function openTrackingModal() {
   modal.classList.add("flex");
   setTimeout(() => {
     modal.classList.remove("opacity-0");
-    const inner = modal.querySelector(".bg-white");
+    const inner = modal.querySelector(".bg-surface, .bg-white") || modal.firstElementChild;
     if (inner) inner.classList.remove("scale-95");
   }, 10);
 }
@@ -34,7 +34,7 @@ function closeTrackingModal() {
   const modal = document.getElementById("order-tracking-modal");
   if (!modal) return;
   modal.classList.add("opacity-0");
-  const inner = modal.querySelector(".bg-white");
+  const inner = modal.querySelector(".bg-surface, .bg-white") || modal.firstElementChild;
   if (inner) inner.classList.add("scale-95");
   setTimeout(() => {
     modal.classList.add("hidden");

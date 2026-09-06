@@ -5,6 +5,7 @@
 import './snack-config.js';
 import './firebase-init.js';
 import './icons.js';
+import './theme-mode.js';
 
 import { escapeHTML } from './utils.js';
 import { setupSWUpdatePrompt } from './sw-update.js';
@@ -137,7 +138,7 @@ function renderSnacksTable() {
     tbody.innerHTML = "";
 
     if (allSnacks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">Aucun client pour le moment.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-text-muted">Aucun client pour le moment.</td></tr>`;
         return;
     }
 
@@ -146,8 +147,8 @@ function renderSnacksTable() {
         const safeNom = escapeHTML(snack.nom || "Sans Nom");
 
         const statusBadge = snack.maintenanceMode
-            ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i data-lucide="wrench" class="mr-1"></i> Maintenance</span>`
-            : `<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i data-lucide="globe" class="mr-1"></i> En Ligne</span>`;
+            ? `<span class="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i data-lucide="wrench" class="mr-1"></i> Maintenance</span>`
+            : `<span class="bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30 px-3 py-1 rounded-full text-xs font-bold shadow-sm"><i data-lucide="globe" class="mr-1"></i> En Ligne</span>`;
 
         let featuresHtml = '';
         if (snack.enableClickAndCollect) featuresHtml += `<i data-lucide="shopping-bag" title="Click & Collect" class="text-indigo-500 mx-1"></i>`;
@@ -161,38 +162,38 @@ function renderSnacksTable() {
         const mrrClient = (parseFloat(snack.prixAbonnement) || getPlanPrix(snack.pricingPlan)).toFixed(0);
         const powerBtnClass = snack.maintenanceMode
             ? "text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
-            : "text-gray-500 bg-surface-2 hover:bg-surface-3";
+            : "text-text-muted bg-surface-2 hover:bg-surface-3";
 
         const stripeBadge = snack.stripeAccountId
-            ? `<span class="bg-indigo-50 text-indigo-700 font-black px-2 py-0.5 rounded-md text-[10px]"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/></svg> Connecté</span>`
-            : `<span class="bg-surface-2 text-gray-500 font-bold px-2 py-0.5 rounded-md text-[10px]">Démo / Platform</span>`;
+            ? `<span class="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-black px-2 py-0.5 rounded-md text-[10px]"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/></svg> Connecté</span>`
+            : `<span class="bg-surface-2 text-text-muted font-bold px-2 py-0.5 rounded-md text-[10px]">Démo / Platform</span>`;
 
         return `
             <tr class="hover:bg-surface-2 transition border-b border-line last:border-0">
                 <td class="p-4">
-                    <div class="font-bold text-gray-900 text-lg">${safeNom}</div>
-                    <div class="text-xs text-gray-400 mt-1 flex items-center gap-2 flex-wrap">
+                    <div class="font-bold text-text text-lg">${safeNom}</div>
+                    <div class="text-xs text-text-muted mt-1 flex items-center gap-2 flex-wrap">
                         <span class="font-mono bg-surface-2 px-1.5 py-0.5 rounded">${safeId}</span>
-                        <span class="bg-green-50 text-green-700 font-black px-2 py-0.5 rounded-md">${mrrClient} €/mois</span>
+                        <span class="bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 font-black px-2 py-0.5 rounded-md">${mrrClient} €/mois</span>
                         ${stripeBadge}
                     </div>
                 </td>
                 <td class="p-4 text-center">${statusBadge}</td>
-                <td class="p-4 text-center text-lg">${featuresHtml || '<span class="text-gray-300 text-xs">—</span>'}</td>
+                <td class="p-4 text-center text-lg">${featuresHtml || '<span class="text-text-muted text-xs">—</span>'}</td>
                 <td class="p-4 text-right space-x-1 whitespace-nowrap">
-                    <a href="index.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-indigo-600 hover:text-white font-bold text-sm bg-indigo-50 hover:bg-indigo-600 px-3 py-2 rounded-lg transition">
+                    <a href="index.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-white font-bold text-sm bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-600 px-3 py-2 rounded-lg transition">
                         <i data-lucide="external-link" class="text-xs"></i> Voir
                     </a>
-                    <a href="admin.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-purple-600 hover:text-white font-bold text-sm bg-purple-50 hover:bg-purple-600 px-3 py-2 rounded-lg transition" title="Ouvrir le back-office (mode superadmin)">
+                    <a href="admin.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:text-white font-bold text-sm bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-600 px-3 py-2 rounded-lg transition" title="Ouvrir le back-office (mode superadmin)">
                         <i data-lucide="shield-check" class="text-xs"></i> Admin
                     </a>
-                    <a href="livreur.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-teal-600 hover:text-white font-bold text-sm bg-teal-50 hover:bg-teal-600 px-3 py-2 rounded-lg transition" title="Ouvrir l'app livreur (mode superadmin)">
+                    <a href="livreur.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-teal-600 dark:text-teal-400 hover:text-white font-bold text-sm bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-600 px-3 py-2 rounded-lg transition" title="Ouvrir l'app livreur (mode superadmin)">
                         <i data-lucide="bike" class="text-xs"></i> Livreur
                     </a>
-                    <button data-action="sub-link" data-snack-id="${safeId}" class="text-emerald-700 hover:text-white font-bold text-sm bg-emerald-50 hover:bg-emerald-600 px-3 py-2 rounded-lg transition" title="Générer un lien d'abonnement">
+                    <button data-action="sub-link" data-snack-id="${safeId}" class="text-emerald-700 dark:text-emerald-400 hover:text-white font-bold text-sm bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-600 px-3 py-2 rounded-lg transition" title="Générer un lien d'abonnement">
                         <i data-lucide="credit-card"></i>
                     </button>
-                    <button data-action="open-config" data-snack-id="${safeId}" class="text-gray-700 hover:text-white font-bold text-sm bg-surface-2 hover:bg-indigo-600 px-3 py-2 rounded-lg transition" title="Configurer les modules">
+                    <button data-action="open-config" data-snack-id="${safeId}" class="text-text-muted hover:text-text font-bold text-sm bg-surface-2 hover:bg-surface-3 px-3 py-2 rounded-lg transition" title="Configurer les modules">
                         <i data-lucide="settings"></i>
                     </button>
                     <button data-action="toggle-maintenance" data-snack-id="${safeId}" data-maintenance="${snack.maintenanceMode ? '1' : '0'}" class="font-bold text-sm px-3 py-2 rounded-lg transition ${powerBtnClass}" title="${snack.maintenanceMode ? 'Mettre en ligne' : 'Mettre en maintenance'}">
@@ -223,7 +224,7 @@ async function loadLogs() {
         const snapshot = await getDocs(q);
         
         if (snapshot.empty) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">Aucun log enregistré.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-text-muted">Aucun log enregistré.</td></tr>`;
             return;
         }
 
@@ -232,18 +233,18 @@ async function loadLogs() {
             const log = docSnap.data();
             const dateStr = log.timestamp ? log.timestamp.toDate().toLocaleString("fr-FR") : "N/A";
             
-            let levelClass = "text-gray-500 bg-surface-2";
-            if (log.level === "error") levelClass = "text-red-700 bg-red-50";
-            else if (log.level === "warning") levelClass = "text-yellow-700 bg-yellow-50";
+            let levelClass = "text-text-muted bg-surface-2";
+            if (log.level === "error") levelClass = "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40";
+            else if (log.level === "warning") levelClass = "text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/40";
 
             rows.push(`
                 <tr class="hover:bg-surface-2 transition border-b border-line last:border-0 text-sm">
-                    <td class="p-4 text-gray-500 whitespace-nowrap">${dateStr}</td>
-                    <td class="p-4 font-mono text-xs text-indigo-600">${escapeHTML(log.snackId || "N/A")}</td>
+                    <td class="p-4 text-text-muted whitespace-nowrap">${dateStr}</td>
+                    <td class="p-4 font-mono text-xs text-indigo-600 dark:text-indigo-400">${escapeHTML(log.snackId || "N/A")}</td>
                     <td class="p-4"><span class="px-2 py-1 rounded font-bold text-[10px] uppercase ${levelClass}">${escapeHTML(log.action || "UNKNOWN")}</span></td>
-                    <td class="p-4 font-bold text-gray-800">${escapeHTML(log.message || "")}</td>
+                    <td class="p-4 font-bold text-text">${escapeHTML(log.message || "")}</td>
                     <td class="p-4 text-right">
-                        <button class="text-xs bg-surface-2 hover:bg-surface-3 text-gray-600 px-2 py-1 rounded transition" onclick="alert('${escapeHTML((log.details || "").replace(/'/g, "\\'"))}')">Détails</button>
+                        <button class="text-xs bg-surface-2 hover:bg-surface-3 text-text-muted hover:text-text px-2 py-1 rounded transition" onclick="alert('${escapeHTML((log.details || "").replace(/'/g, "\\'"))}')">Détails</button>
                     </td>
                 </tr>
             `);
@@ -252,7 +253,7 @@ async function loadLogs() {
         tbody.innerHTML = rows.join("");
     } catch (e) {
         console.error("Erreur logs :", e);
-        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500">Erreur lors de la lecture des logs.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-danger">Erreur lors de la lecture des logs.</td></tr>`;
     } finally {
         btn.innerHTML = originalBtn;
         btn.disabled = false;
@@ -598,8 +599,8 @@ function setSuperTab(which) {
     const isCompta = which === "compta";
     viewDash?.classList.toggle("hidden", isCompta);
     viewCompta?.classList.toggle("hidden", !isCompta);
-    const active = "bg-gray-900 text-white";
-    const idle = "bg-white text-gray-600 border border-line hover:bg-surface-2";
+    const active = "bg-primary text-white";
+    const idle = "bg-surface text-text-muted border border-line hover:bg-surface-2";
     if (tabDash) tabDash.className = `px-5 py-2.5 rounded-xl font-bold text-sm transition ${isCompta ? idle : active}`;
     if (tabCompta) tabCompta.className = `px-5 py-2.5 rounded-xl font-bold text-sm transition ${isCompta ? active : idle}`;
     if (isCompta) loadBillingData();
@@ -622,10 +623,10 @@ async function loadBillingData() {
         now.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 
     if (!allSnacks.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">Aucun client.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-text-muted">Aucun client.</td></tr>`;
         return;
     }
-    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i data-lucide="loader-circle" class="animate-spin text-2xl"></i> Calcul de la facturation…</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-text-muted"><i data-lucide="loader-circle" class="animate-spin text-2xl"></i> Calcul de la facturation…</td></tr>`;
 
     // CA du mois par snack via AGRÉGATION serveur (le superadmin lit toutes les
     // commandes : firestore.rules autorise isSuperAdmin). ~1 lecture / 1000 docs.
@@ -652,11 +653,11 @@ async function loadBillingData() {
         let recommendationHtml = '';
         if (plan === "starter" && ca > 650) {
             const eco = Math.round((ca * 0.08 + 29) - 79);
-            recommendationHtml = `<span class="bg-indigo-100 text-indigo-800 font-bold px-2 py-1 rounded-md text-xs shadow-xs inline-flex items-center gap-1"><i data-lucide="sparkles" class="w-3 h-3"></i> Proposer PRO (Éco client: +${eco}€/m)</span>`;
+            recommendationHtml = `<span class="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-bold px-2 py-1 rounded-md text-xs shadow-xs inline-flex items-center gap-1"><i data-lucide="sparkles" class="w-3 h-3"></i> Proposer PRO (Éco client: +${eco}€/m)</span>`;
         } else if (plan === "pro" && ca < 400 && ca > 0) {
-            recommendationHtml = `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded-md text-xs shadow-xs">💡 Proposer STARTER</span>`;
+            recommendationHtml = `<span class="bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold px-2 py-1 rounded-md text-xs shadow-xs">💡 Proposer STARTER</span>`;
         } else {
-            recommendationHtml = `<span class="bg-green-100 text-green-800 font-bold px-2 py-1 rounded-md text-xs shadow-xs">✅ Plan Optimal</span>`;
+            recommendationHtml = `<span class="bg-green-500/10 text-green-700 dark:text-green-400 font-bold px-2 py-1 rounded-md text-xs shadow-xs">✅ Plan Optimal</span>`;
         }
 
         return { id: snack.id, nom: snack.nom || "Sans nom", ageMonths, trialMonths, plan, isFree, maintenance: !!snack.maintenanceMode, subscription, ca, commission, total: subscription + commission, recommendationHtml };
@@ -674,25 +675,25 @@ async function loadBillingData() {
     rows.sort((a, b) => b.total - a.total);
     tbody.innerHTML = rows.map(r => {
         const planBadge = r.plan === "pro"
-            ? `<span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">PRO (79€)</span>`
-            : `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">STARTER (29€+8%)</span>`;
+            ? `<span class="bg-purple-500/10 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">PRO (79€)</span>`
+            : `<span class="bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">STARTER (29€+8%)</span>`;
 
         const ageBadge = r.ageMonths === null
-            ? `<span class="text-gray-400">—</span>`
+            ? `<span class="text-text-muted">—</span>`
             : r.isFree
-                ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths}/${r.trialMonths}m · Essai gratuit</span>`
-                : `<span class="bg-surface-2 text-gray-600 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois</span>`;
+                ? `<span class="bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths}/${r.trialMonths}m · Essai gratuit</span>`
+                : `<span class="bg-surface-2 text-text-muted px-2 py-0.5 rounded-md text-[11px] font-bold">${r.ageMonths} mois</span>`;
         return `
-            <tr class="hover:bg-surface-2">
+            <tr class="hover:bg-surface-2 border-b border-line last:border-0">
                 <td class="p-4">
-                    <div class="font-bold text-gray-900">${escapeHTML(r.nom)} ${r.maintenance ? '<span class="text-yellow-600 text-xs">(maintenance)</span>' : ''}</div>
-                    <div class="font-mono text-[11px] text-gray-400">${escapeHTML(r.id)}</div>
+                    <div class="font-bold text-text">${escapeHTML(r.nom)} ${r.maintenance ? '<span class="text-yellow-600 dark:text-yellow-400 text-xs">(maintenance)</span>' : ''}</div>
+                    <div class="font-mono text-[11px] text-text-muted">${escapeHTML(r.id)}</div>
                 </td>
                 <td class="p-4 text-center">${ageBadge}</td>
                 <td class="p-4 text-center">${planBadge}</td>
-                <td class="p-4 text-right text-gray-600">${r.ca.toFixed(2)} €</td>
-                <td class="p-4 text-right text-indigo-600 font-bold">${r.commission.toFixed(2)} €</td>
-                <td class="p-4 text-right font-black text-gray-900">${r.total.toFixed(2)} €</td>
+                <td class="p-4 text-right text-text-muted">${r.ca.toFixed(2)} €</td>
+                <td class="p-4 text-right text-indigo-600 dark:text-indigo-400 font-bold">${r.commission.toFixed(2)} €</td>
+                <td class="p-4 text-right font-black text-text">${r.total.toFixed(2)} €</td>
                 <td class="p-4 text-center">${r.recommendationHtml}</td>
             </tr>`;
     }).join("");

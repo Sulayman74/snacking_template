@@ -48,7 +48,7 @@ class AdminComptaUI {
 
         if (!complete) {
             onboardBtn.innerHTML = (hasAccount ? "Terminer la configuration" : "Configurer les paiements") +
-                ' <i data-lucide="arrow-right" class="text-sm text-gray-400"></i>';
+                ' <i data-lucide="arrow-right" class="text-sm text-text-muted"></i>';
         }
 
         const badge = document.getElementById("stripe-status-badge");
@@ -128,21 +128,21 @@ class AdminComptaUI {
 
         // Pastille de variation ↑↓ vs période précédente (null → « — » neutre).
         const deltaBadge = (pct) => {
-            if (pct === null || pct === undefined) return `<span class="text-[10px] font-bold text-gray-300">—</span>`;
+            if (pct === null || pct === undefined) return `<span class="text-[10px] font-bold text-text-muted">—</span>`;
             const up = pct >= 0;
-            const cls = up ? "text-green-600" : "text-red-600";
+            const cls = up ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
             return `<span class="text-[10px] font-black ${cls}">${up ? "▲" : "▼"} ${Math.abs(pct).toFixed(1).replace(".", ",")} %</span>`;
         };
 
         // Ligne de cascade avec barre proportionnelle au CA brut.
         const bar = (label, val, kind, extra = "") => {
             const barCls = kind === "deduct" ? "bg-red-400" : "bg-surface-3";
-            const valCls = kind === "deduct" ? "text-red-600" : "text-gray-900";
+            const valCls = kind === "deduct" ? "text-red-600 dark:text-red-400" : "text-text";
             const style = kind === "net" ? 'background:var(--color-primary,#1E2938)' : "";
             return `
                 <div>
                     <div class="flex items-baseline justify-between text-sm mb-1">
-                        <span class="text-gray-500">${label} ${extra}</span>
+                        <span class="text-text-muted">${label} ${extra}</span>
                         <span class="font-bold ${valCls} tabular-nums">${kind === "deduct" ? "−" : ""}${val} €</span>
                     </div>
                     <div class="h-1.5 rounded-full bg-surface-2 overflow-hidden">
@@ -159,11 +159,11 @@ class AdminComptaUI {
             ? `
                 <div>
                     <div class="flex items-baseline justify-between text-sm mb-1">
-                        <span class="text-gray-500">Commission plateforme</span>
-                        <span class="font-black text-green-600">Franchise 0 %</span>
+                        <span class="text-text-muted">Commission plateforme</span>
+                        <span class="font-black text-green-600 dark:text-green-400">Franchise 0 %</span>
                     </div>
-                    <div class="h-1.5 rounded-full bg-green-100 overflow-hidden"><div class="h-full rounded-full bg-green-400" style="width:100%"></div></div>
-                    <p class="text-[10px] font-bold text-green-600 mt-0.5">🎁 Offerte encore ${fr.monthsRemaining} mois</p>
+                    <div class="h-1.5 rounded-full bg-green-500/20 overflow-hidden"><div class="h-full rounded-full bg-green-500" style="width:100%"></div></div>
+                    <p class="text-[10px] font-bold text-green-600 dark:text-green-400 mt-0.5">🎁 Offerte encore ${fr.monthsRemaining} mois</p>
                 </div>`
             : bar("Commission plateforme (nette)", kpis.commissionNette, "deduct");
 
@@ -171,38 +171,38 @@ class AdminComptaUI {
         const tvaRows = (kpis.tvaParTaux || []).length
             ? kpis.tvaParTaux.map(t => `
                 <div class="flex items-center justify-between text-sm">
-                    <span class="text-gray-500">TVA ${String(t.rate).replace(".", ",")} %
-                        <span class="text-gray-400">(HT ${t.ht.toFixed(2)} €)</span></span>
-                    <span class="font-bold text-gray-900 tabular-nums">${t.tva.toFixed(2)} €</span>
+                    <span class="text-text-muted">TVA ${String(t.rate).replace(".", ",")} %
+                        <span class="text-text-muted">(HT ${t.ht.toFixed(2)} €)</span></span>
+                    <span class="font-bold text-text tabular-nums">${t.tva.toFixed(2)} €</span>
                 </div>`).join("")
-            : `<p class="text-xs text-gray-400">Aucune commande ventilée sur la période (commandes antérieures au socle compta).</p>`;
+            : `<p class="text-xs text-text-muted">Aucune commande ventilée sur la période (commandes antérieures au socle compta).</p>`;
 
         // Comparaison période précédente (bandeau discret).
         const comparisonNote = cmp && cmp.hasPrev
-            ? `<div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500 mb-3">
-                   <span class="font-bold uppercase tracking-wider text-gray-400">vs période précédente</span>
+            ? `<div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-text-muted mb-3">
+                   <span class="font-bold uppercase tracking-wider text-text-muted">vs période précédente</span>
                    <span>CA ${deltaBadge(cmp.deltaTotal)}</span>
                    <span>Commandes ${deltaBadge(cmp.deltaCount)}</span>
                </div>`
-            : `<p class="text-[10px] text-gray-400 mb-3">Pas d'historique comparable sur la période précédente.</p>`;
+            : `<p class="text-[10px] text-text-muted mb-3">Pas d'historique comparable sur la période précédente.</p>`;
 
         // Cartes secondaires optionnelles (affichées seulement si pertinentes).
         const deliveryCard = kpis.deliveryShare !== null
             ? `<div class="bg-surface-2 p-3 rounded-xl border border-line">
-                   <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Part livraison</p>
-                   <p class="text-xl font-black text-gray-900">${kpis.deliveryShare} %</p>
+                   <p class="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-1">Part livraison</p>
+                   <p class="text-xl font-black text-text">${kpis.deliveryShare} %</p>
                </div>` : "";
         const upsellCard = Number(kpis.upsellRevenue) > 0
             ? `<div class="bg-surface-2 p-3 rounded-xl border border-line">
-                   <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Upsell généré</p>
-                   <p class="text-xl font-black text-gray-900">${kpis.upsellRevenue} €</p>
+                   <p class="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-1">Upsell généré</p>
+                   <p class="text-xl font-black text-text">${kpis.upsellRevenue} €</p>
                </div>` : "";
 
         this.kpiExtrasEl.innerHTML = `
             <div class="sm:col-span-2 lg:col-span-3 bg-surface-2 p-4 rounded-2xl border border-line">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-[10px] text-gray-500 font-black uppercase tracking-wider">Du brut au net</p>
-                    ${fr.active ? `<span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-500/15 text-green-600">Franchise 0 % · ${fr.monthsRemaining} mois</span>` : ""}
+                    <p class="text-[10px] text-text-muted font-black uppercase tracking-wider">Du brut au net</p>
+                    ${fr.active ? `<span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-500/15 text-green-600 dark:text-green-400">Franchise 0 % · ${fr.monthsRemaining} mois</span>` : ""}
                 </div>
                 ${comparisonNote}
                 <div class="space-y-2.5">
@@ -212,7 +212,7 @@ class AdminComptaUI {
                     ${bar("Frais Stripe", kpis.stripeFee, "deduct")}
                     <div class="pt-2 mt-1 border-t border-line">
                         <div class="flex items-center justify-between mb-1">
-                            <span class="text-sm font-black text-gray-900">CA net encaissé</span>
+                            <span class="text-sm font-black text-text">CA net encaissé</span>
                             <span class="text-2xl font-black tabular-nums" style="color:var(--color-primary,#1E2938)">${kpis.caNet} €</span>
                         </div>
                         <div class="h-2 rounded-full bg-surface-2 overflow-hidden">
@@ -223,16 +223,16 @@ class AdminComptaUI {
             </div>
 
             <div class="bg-surface-2 p-3 rounded-xl border border-line">
-                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Panier Moyen</p>
-                <p class="text-xl font-black text-gray-900">${kpis.avg} €</p>
+                <p class="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-1">Panier Moyen</p>
+                <p class="text-xl font-black text-text">${kpis.avg} €</p>
             </div>
             ${deliveryCard}
             ${upsellCard}
 
             <div class="sm:col-span-2 lg:col-span-3 bg-surface-2 p-3 rounded-xl border border-line">
-                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">TVA collectée par taux</p>
+                <p class="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-2">TVA collectée par taux</p>
                 <div class="space-y-1.5">${tvaRows}</div>
-                <p class="text-[10px] text-gray-400 mt-2 leading-snug">
+                <p class="text-[10px] text-text-muted mt-2 leading-snug">
                     TVA <b>collectée</b> (hors TVA déductible sur vos achats) — à valider avec votre comptable. Données de gestion, non certifiées NF525.
                 </p>
             </div>
@@ -246,8 +246,8 @@ class AdminComptaUI {
         if (sales.length === 0) {
             this.historyTableEl.innerHTML = `
                 <div class="text-center py-12 bg-surface-2 rounded-2xl border-2 border-dashed border-line">
-                    <i data-lucide="search" class="text-3xl text-gray-200 mb-3"></i>
-                    <p class="text-gray-400 font-bold">Aucune vente sur cette période.</p>
+                    <i data-lucide="search" class="text-3xl text-text-muted mb-3"></i>
+                    <p class="text-text-muted font-bold">Aucune vente sur cette période.</p>
                 </div>
             `;
             return;
@@ -256,7 +256,7 @@ class AdminComptaUI {
         // L'historique est borné à 200 lignes (affichage). Les KPIs ci-dessus
         // restent exacts (agrégat serveur). Au-delà, inviter à l'export CSV complet.
         const truncatedNote = sales.length >= 200 ? `
-            <div class="mb-3 px-4 py-2 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 text-xs font-bold">
+            <div class="mb-3 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-bold">
                 <i data-lucide="info" class="mr-1"></i> 200 commandes les plus récentes affichées. Les totaux restent exacts ; utilisez l'export CSV pour le détail complet.
             </div>` : "";
 
@@ -264,7 +264,7 @@ class AdminComptaUI {
             ${truncatedNote}
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
-                    <thead class="bg-surface-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <thead class="bg-surface-2 text-[10px] font-black text-text-muted uppercase tracking-widest">
                         <tr>
                             <th class="px-4 py-3">Date</th>
                             <th class="px-4 py-3">Client</th>
@@ -273,7 +273,7 @@ class AdminComptaUI {
                             <th class="px-4 py-3 text-right">Détails</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody class="divide-y divide-line">
                         ${sales.map(s => this.renderTableRow(s)).join("")}
                     </tbody>
                 </table>
@@ -291,24 +291,24 @@ class AdminComptaUI {
         const timeStr = valid ? escapeHTML(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : "";
 
         return `
-            <tr class="hover:bg-blue-50/30 transition-colors group">
+            <tr class="hover:bg-surface-2 transition-colors group">
                 <td class="px-4 py-4">
-                    <p class="font-black text-gray-900 text-sm">${dateStr}</p>
-                    <p class="text-[10px] text-gray-400 font-bold">${timeStr}</p>
+                    <p class="font-black text-text text-sm">${dateStr}</p>
+                    <p class="text-[10px] text-text-muted font-bold">${timeStr}</p>
                 </td>
                 <td class="px-4 py-4">
-                    <p class="text-sm font-bold text-gray-700">${escapeHTML(s.clientNom || s.clientEmail?.split("@")[0] || "Anonyme")}</p>
+                    <p class="text-sm font-bold text-text">${escapeHTML(s.clientNom || s.clientEmail?.split("@")[0] || "Anonyme")}</p>
                 </td>
                 <td class="px-4 py-4">
-                    <p class="text-sm font-black text-gray-900">${(parseFloat(s.total) || 0).toFixed(2)} €</p>
+                    <p class="text-sm font-black text-text">${(parseFloat(s.total) || 0).toFixed(2)} €</p>
                 </td>
                 <td class="px-4 py-4">
-                    <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter bg-green-100 text-green-700">
+                    <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-700 dark:text-green-400">
                         ${escapeHTML(s.statut || "payé")}
                     </span>
                 </td>
                 <td class="px-4 py-4 text-right">
-                    <button type="button" data-action="order-detail" data-id="${escapeHTML(s.id)}" aria-label="Voir le détail de la commande" class="w-8 h-8 rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center ml-auto">
+                    <button type="button" data-action="order-detail" data-id="${escapeHTML(s.id)}" aria-label="Voir le détail de la commande" class="w-8 h-8 rounded-lg bg-surface-2 text-text-muted hover:bg-surface-3 hover:text-text transition-all flex items-center justify-center ml-auto">
                         <i data-lucide="eye" class="text-xs pointer-events-none"></i>
                     </button>
                 </td>
@@ -397,69 +397,69 @@ class AdminComptaUI {
             if (it.boissonNom) opts.push(escapeHTML(it.boissonNom));
             if (Array.isArray(it.sauces) && it.sauces.length) opts.push(it.sauces.map(escapeHTML).join(" + "));
             if (Array.isArray(it.supplements) && it.supplements.length) opts.push("+" + it.supplements.map(s => escapeHTML(s.nom)).join(" +"));
-            const optStr = opts.length ? `<span class="text-gray-400"> · ${opts.join(" · ")}</span>` : "";
+            const optStr = opts.length ? `<span class="text-text-muted"> · ${opts.join(" · ")}</span>` : "";
             const lineTtc = (Number(it.prix) || 0) * (Number(it.quantity) || 0);
             return `<div class="flex justify-between text-sm py-1">
-                <span class="text-gray-700"><b>${Number(it.quantity) || 0}×</b> ${escapeHTML(it.nom || "?")}${optStr}</span>
-                <span class="font-bold text-gray-900 tabular-nums">${eur(lineTtc)}</span></div>`;
-        }).join("") || `<p class="text-xs text-gray-400">Aucun article.</p>`;
+                <span class="text-text"><b>${Number(it.quantity) || 0}×</b> ${escapeHTML(it.nom || "?")}${optStr}</span>
+                <span class="font-bold text-text tabular-nums">${eur(lineTtc)}</span></div>`;
+        }).join("") || `<p class="text-xs text-text-muted">Aucun article.</p>`;
 
         const tvaLines = [["5,5 %", r.ht5_5, r.tva5_5], ["10 %", r.ht10, r.tva10], ["20 %", r.ht20, r.tva20]]
             .filter(([, ht, tva]) => ht > 0 || tva > 0)
-            .map(([lbl, ht, tva]) => `<div class="flex justify-between text-xs"><span class="text-gray-500">TVA ${lbl} <span class="text-gray-400">(HT ${eur(ht)})</span></span><span class="tabular-nums">${eur(tva)}</span></div>`).join("");
+            .map(([lbl, ht, tva]) => `<div class="flex justify-between text-xs"><span class="text-text-muted">TVA ${lbl} <span class="text-text-muted">(HT ${eur(ht)})</span></span><span class="tabular-nums">${eur(tva)}</span></div>`).join("");
 
         const stripeFeeStr = (order.stripeFee == null || order.stripeFeePending)
-            ? `<span class="text-amber-600">en attente</span>` : eur(r.stripeFee);
+            ? `<span class="text-amber-600 dark:text-amber-400">en attente</span>` : eur(r.stripeFee);
 
         const refundItems = Array.isArray(order.refund?.items) ? order.refund.items : [];
         const refundHist = refundItems.length
             ? refundItems.map((it) => {
                 const rd = it.at?.toDate ? it.at.toDate() : (it.at != null ? new Date(it.at) : null);
                 const rdStr = rd && !isNaN(rd.getTime()) ? rd.toLocaleDateString("fr-FR") : "";
-                return `<div class="flex justify-between text-xs"><span class="text-gray-500">${eur((Number(it.amount) || 0) / 100)} <span class="text-gray-400">· ${escapeHTML(it.reason || "")} ${rdStr}</span></span><span class="text-gray-400">${it.source === "stripe" ? "Stripe" : "App"}</span></div>`;
+                return `<div class="flex justify-between text-xs"><span class="text-text-muted">${eur((Number(it.amount) || 0) / 100)} <span class="text-text-muted">· ${escapeHTML(it.reason || "")} ${rdStr}</span></span><span class="text-text-muted">${it.source === "stripe" ? "Stripe" : "App"}</span></div>`;
             }).join("")
-            : `<p class="text-xs text-gray-400">Aucun remboursement.</p>`;
+            : `<p class="text-xs text-text-muted">Aucun remboursement.</p>`;
 
         return `
-        <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between">
+        <div class="bg-surface text-text border border-line w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-surface border-b border-line px-5 py-4 flex items-center justify-between">
                 <div>
-                    <p class="font-black text-gray-900">Commande <span class="font-mono">${escapeHTML(order.secretCode || "—")}</span></p>
-                    <p class="text-xs text-gray-400">${dateStr} · ${mode}</p>
+                    <p class="font-black text-text">Commande <span class="font-mono">${escapeHTML(order.secretCode || "—")}</span></p>
+                    <p class="text-xs text-text-muted">${dateStr} · ${mode}</p>
                 </div>
-                <button type="button" data-action="close-order-detail" aria-label="Fermer" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center"><i data-lucide="x" class="pointer-events-none"></i></button>
+                <button type="button" data-action="close-order-detail" aria-label="Fermer" class="w-9 h-9 rounded-lg bg-surface-2 text-text-muted hover:bg-surface-3 hover:text-text flex items-center justify-center"><i data-lucide="x" class="pointer-events-none"></i></button>
             </div>
             <div class="p-5 space-y-4">
                 <div class="flex items-center gap-2 text-xs">
-                    <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-bold">${escapeHTML(order.statut || "—")}</span>
-                    <span class="px-2 py-0.5 rounded bg-green-100 text-green-700 font-bold">Paiement : ${payStatut}</span>
+                    <span class="px-2 py-0.5 rounded bg-surface-2 text-text font-bold">${escapeHTML(order.statut || "—")}</span>
+                    <span class="px-2 py-0.5 rounded bg-green-500/10 text-green-700 dark:text-green-400 font-bold">Paiement : ${payStatut}</span>
                 </div>
                 <div>
-                    <p class="text-[10px] uppercase font-black text-gray-400 mb-1">Client</p>
-                    <p class="text-sm text-gray-700">${escapeHTML(order.clientNom || "—")} <span class="text-gray-400">${escapeHTML(order.clientEmail || "")}</span></p>
+                    <p class="text-[10px] uppercase font-black text-text-muted mb-1">Client</p>
+                    <p class="text-sm text-text">${escapeHTML(order.clientNom || "—")} <span class="text-text-muted">${escapeHTML(order.clientEmail || "")}</span></p>
                 </div>
                 <div>
-                    <p class="text-[10px] uppercase font-black text-gray-400 mb-1">Articles</p>
+                    <p class="text-[10px] uppercase font-black text-text-muted mb-1">Articles</p>
                     ${items}
                 </div>
-                <div class="border-t border-gray-100 pt-3">
+                <div class="border-t border-line pt-3">
                     <div class="flex justify-between text-sm font-bold"><span>Total TTC</span><span class="tabular-nums">${eur(r.ttc)}</span></div>
-                    ${r.fraisLivraison > 0 ? `<div class="flex justify-between text-xs text-gray-500"><span>dont frais livraison</span><span class="tabular-nums">${eur(r.fraisLivraison)}</span></div>` : ""}
-                    ${tvaLines ? `<div class="mt-2 space-y-0.5">${tvaLines}</div>` : `<p class="text-xs text-gray-400 mt-1">Commande non ventilée (antérieure au socle compta).</p>`}
+                    ${r.fraisLivraison > 0 ? `<div class="flex justify-between text-xs text-text-muted"><span>dont frais livraison</span><span class="tabular-nums">${eur(r.fraisLivraison)}</span></div>` : ""}
+                    ${tvaLines ? `<div class="mt-2 space-y-0.5">${tvaLines}</div>` : `<p class="text-xs text-text-muted mt-1">Commande non ventilée (antérieure au socle compta).</p>`}
                 </div>
-                <div class="border-t border-gray-100 pt-3 space-y-0.5">
-                    <p class="text-[10px] uppercase font-black text-gray-400 mb-1">Compta</p>
-                    <div class="flex justify-between text-xs"><span class="text-gray-500">Commission plateforme</span><span class="tabular-nums">${eur(r.commission)}</span></div>
-                    <div class="flex justify-between text-xs"><span class="text-gray-500">Frais Stripe</span><span class="tabular-nums">${stripeFeeStr}</span></div>
+                <div class="border-t border-line pt-3 space-y-0.5">
+                    <p class="text-[10px] uppercase font-black text-text-muted mb-1">Compta</p>
+                    <div class="flex justify-between text-xs"><span class="text-text-muted">Commission plateforme</span><span class="tabular-nums">${eur(r.commission)}</span></div>
+                    <div class="flex justify-between text-xs"><span class="text-text-muted">Frais Stripe</span><span class="tabular-nums">${stripeFeeStr}</span></div>
                     <div class="flex justify-between text-sm font-black pt-1"><span>CA net</span><span class="tabular-nums" style="color:var(--color-primary,#1E2938)">${eur(r.net)}</span></div>
                 </div>
-                <div class="border-t border-gray-100 pt-3">
-                    <p class="text-[10px] uppercase font-black text-gray-400 mb-1">Remboursements ${(Number(order.refund?.total) || 0) > 0 ? `· ${eur((Number(order.refund.total) || 0) / 100)}` : ""}</p>
+                <div class="border-t border-line pt-3">
+                    <p class="text-[10px] uppercase font-black text-text-muted mb-1">Remboursements ${(Number(order.refund?.total) || 0) > 0 ? `· ${eur((Number(order.refund.total) || 0) / 100)}` : ""}</p>
                     ${refundHist}
                 </div>
                 ${canRefund
-                    ? `<button type="button" data-action="refund-order" data-id="${escapeHTML(order.id)}" class="w-full mt-1 bg-white text-red-600 border border-red-200 hover:bg-red-50 font-bold py-3 rounded-xl transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="rotate-ccw" class="pointer-events-none"></i> Rembourser</button>`
-                    : (order.paiement?.statut === "rembourse" ? `<p class="text-center text-xs font-bold text-gray-400">Commande remboursée.</p>` : "")}
+                    ? `<button type="button" data-action="refund-order" data-id="${escapeHTML(order.id)}" class="w-full mt-1 bg-surface text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-surface-2 font-bold py-3 rounded-xl transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="rotate-ccw" class="pointer-events-none"></i> Rembourser</button>`
+                    : (order.paiement?.statut === "rembourse" ? `<p class="text-center text-xs font-bold text-text-muted">Commande remboursée.</p>` : "")}
             </div>
         </div>`;
     }

@@ -238,15 +238,15 @@ class LivreurUI {
     const el = this.els.courses;
     if (this.activeOrderId) { el.innerHTML = ""; return; } // on masque la liste pendant une livraison
     if (list.length === 0) {
-      el.innerHTML = `<div class="bg-white border border-dashed border-line rounded-2xl p-8 text-center text-gray-500">
-        <i data-lucide="coffee" class="text-3xl text-gray-300 mb-3"></i>
+      el.innerHTML = `<div class="bg-surface border border-dashed border-line rounded-2xl p-8 text-center text-text-muted">
+        <i data-lucide="coffee" class="text-3xl text-text-muted mb-3"></i>
         <p class="font-bold">Aucune course à récupérer.</p>
         <p class="text-sm">Les commandes prêtes apparaîtront ici.</p>
       </div>`;
       return;
     }
     el.innerHTML =
-      `<h2 class="text-sm font-black text-gray-500 uppercase tracking-wide px-1 mb-2">Courses à récupérer (${list.length})</h2>` +
+      `<h2 class="text-sm font-black text-text-muted uppercase tracking-wide px-1 mb-2">Courses à récupérer (${list.length})</h2>` +
       list.map((o) => this.courseCard(o)).join("");
   }
 
@@ -254,15 +254,15 @@ class LivreurUI {
     const items = (o.items || []).reduce((n, i) => n + (i.quantity || 1), 0);
     const dist = o.livraison?.distanceKm != null ? formatDistance(o.livraison.distanceKm) : "—";
     return `
-      <div class="bg-white rounded-2xl shadow-sm border border-line p-4 mb-3">
+      <div class="bg-surface rounded-2xl shadow-sm border border-line p-4 mb-3">
         <div class="flex justify-between items-start gap-2 mb-2">
           <div class="min-w-0">
-            <p class="font-black text-gray-900 truncate">${escapeHTML(o.clientNom || "Client")}</p>
-            <p class="text-sm text-gray-600 truncate"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(o.livraison?.adresse || "Adresse")}</p>
+            <p class="font-black text-text truncate">${escapeHTML(o.clientNom || "Client")}</p>
+            <p class="text-sm text-text-muted truncate"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(o.livraison?.adresse || "Adresse")}</p>
           </div>
-          <span class="shrink-0 bg-gray-900 text-white text-xs font-mono font-bold px-2 py-1 rounded">${escapeHTML(o.secretCode || "")}</span>
+          <span class="shrink-0 bg-surface-2 text-text border border-line text-xs font-mono font-bold px-2 py-1 rounded">${escapeHTML(o.secretCode || "")}</span>
         </div>
-        <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
+        <div class="flex items-center gap-3 text-xs text-text-muted mb-3">
           <span><i data-lucide="box" class="mr-1"></i>${items} article${items > 1 ? "s" : ""}</span>
           <span><i data-lucide="route" class="mr-1"></i>${dist}</span>
           <span><i data-lucide="euro" class="mr-1"></i>${Number(o.total || 0).toFixed(2)}</span>
@@ -293,19 +293,19 @@ class LivreurUI {
       : "";
 
     this.els.active.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-md border-2 border-blue-500 p-4 mb-4">
+      <div class="bg-surface rounded-2xl shadow-md border-2 border-blue-500 p-4 mb-4">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-black text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full uppercase tracking-wide"><i data-lucide="bike" class="mr-1"></i>En livraison</span>
-          <span class="bg-gray-900 text-white text-xs font-mono font-bold px-2 py-1 rounded">${escapeHTML(o.secretCode || "")}</span>
+          <span class="text-xs font-black text-blue-700 dark:text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full uppercase tracking-wide"><i data-lucide="bike" class="mr-1"></i>En livraison</span>
+          <span class="bg-surface-2 text-text border border-line text-xs font-mono font-bold px-2 py-1 rounded">${escapeHTML(o.secretCode || "")}</span>
         </div>
-        <p class="font-black text-xl text-gray-900">${escapeHTML(o.clientNom || "Client")}</p>
-        <p class="text-gray-600 mb-1"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(client?.adresse || "Adresse")}</p>
-        <p class="text-sm text-gray-500 mb-3">À <b id="active-distance" class="text-gray-900">…</b> de vous</p>
+        <p class="font-black text-xl text-text">${escapeHTML(o.clientNom || "Client")}</p>
+        <p class="text-text-muted mb-1"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(client?.adresse || "Adresse")}</p>
+        <p class="text-sm text-text-muted mb-3">À <b id="active-distance" class="text-text">…</b> de vous</p>
 
-        ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="block w-full text-center bg-surface-2 hover:bg-surface-3 text-gray-800 font-bold py-3 rounded-xl mb-2 transition"><i data-lucide="navigation" class="mr-2"></i>Itinéraire</a>` : ""}
+        ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="block w-full text-center bg-surface-2 hover:bg-surface-3 text-text font-bold py-3 rounded-xl mb-2 transition"><i data-lucide="navigation" class="mr-2"></i>Itinéraire</a>` : ""}
 
         <button type="button" data-livreur-action="pickup" ${pickupDone ? "disabled" : ""}
-          class="w-full ${pickupDone ? "bg-green-100 text-green-700 cursor-default" : "bg-gray-900 text-white hover:bg-black"} font-bold py-3 rounded-xl mb-2 transition active:scale-95">
+          class="w-full ${pickupDone ? "bg-green-500/10 text-green-700 dark:text-green-400 cursor-default" : "bg-primary text-white hover:opacity-90"} font-bold py-3 rounded-xl mb-2 transition active:scale-95">
           <i data-lucide="${pickupDone ? "check" : "camera"}" class="mr-2"></i>${pickupDone ? "Prise en charge confirmée" : "1. Photo de prise en charge"}
         </button>
 
@@ -353,7 +353,7 @@ class LivreurUI {
     btn.classList.toggle("cursor-not-allowed", !gate.ok);
     if (hint) {
       hint.textContent = gate.ok ? "" : gate.reason;
-      hint.className = `text-center text-xs mt-2 min-h-4 ${gate.ok ? "text-gray-400" : "text-amber-600 font-bold"}`;
+      hint.className = `text-center text-xs mt-2 min-h-4 ${gate.ok ? "text-text-muted" : "text-amber-600 dark:text-amber-400 font-bold"}`;
     }
   }
 
@@ -561,9 +561,9 @@ class LivreurUI {
       return;
     }
     el.innerHTML = `
-      <div class="bg-white rounded-2xl border border-blue-200 p-4 mb-2 shadow-sm">
-        <p class="font-black text-gray-900 mb-1"><i data-lucide="zap" class="text-blue-500 mr-1"></i>Activer mon espace</p>
-        <p class="text-xs text-gray-500 mb-2">Pour recevoir les courses et être suivi pendant les livraisons.</p>
+      <div class="bg-surface rounded-2xl border border-blue-500/30 p-4 mb-2 shadow-sm">
+        <p class="font-black text-text mb-1"><i data-lucide="zap" class="text-blue-500 mr-1"></i>Activer mon espace</p>
+        <p class="text-xs text-text-muted mb-2">Pour recevoir les courses et être suivi pendant les livraisons.</p>
         ${this.permRow("notifs", "Notifications", "bell", notif === "granted", notif === "denied")}
         ${this.permRow("geo", "Localisation", "map-pin", geo === "granted", geo === "denied")}
       </div>`;
@@ -571,12 +571,12 @@ class LivreurUI {
 
   permRow(kind, label, icon, ok, denied) {
     const right = ok
-      ? `<span class="text-green-600 font-bold text-sm shrink-0"><i data-lucide="circle-check" class="mr-1"></i>Activé</span>`
+      ? `<span class="text-green-600 dark:text-green-400 font-bold text-sm shrink-0"><i data-lucide="circle-check" class="mr-1"></i>Activé</span>`
       : denied
-        ? `<span class="text-[11px] text-amber-600 font-bold shrink-0 text-right">Bloqué — à réactiver<br>dans les réglages</span>`
+        ? `<span class="text-[11px] text-amber-600 dark:text-amber-400 font-bold shrink-0 text-right">Bloqué — à réactiver<br>dans les réglages</span>`
         : `<button type="button" data-livreur-action="enable-${kind}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition shrink-0">Activer</button>`;
     return `<div class="flex items-center justify-between gap-3 py-2 border-t border-line first:border-0">
-      <span class="font-bold text-gray-800 text-sm"><i data-lucide="${icon}" class="text-gray-400 mr-2"></i>${label}</span>
+      <span class="font-bold text-text text-sm"><i data-lucide="${icon}" class="text-text-muted mr-2"></i>${label}</span>
       ${right}
     </div>`;
   }

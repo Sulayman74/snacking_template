@@ -186,7 +186,7 @@ class AdminMarketingUI {
         if (!this.tipsContainer) return;
 
         if (tips.length === 0) {
-            this.tipsContainer.innerHTML = `<p class="text-xs text-gray-400 italic">Aucun conseil particulier pour le moment.</p>`;
+            this.tipsContainer.innerHTML = `<p class="text-xs text-text-muted italic">Aucun conseil particulier pour le moment.</p>`;
             return;
         }
 
@@ -200,10 +200,10 @@ class AdminMarketingUI {
 
         this.tipsContainer.innerHTML = tips.map(tip => {
             const isAlert = tip.type === "sales-trend";
-            const bgClass = isAlert ? "bg-red-50 border-red-100" : "bg-blue-50 border-blue-100";
+            const bgClass = isAlert ? "bg-red-500/10 border-red-500/30" : "bg-blue-500/10 border-blue-500/30";
             const dotClass = isAlert ? "bg-red-500" : "bg-blue-500";
-            const titleClass = isAlert ? "text-red-900" : "text-blue-900";
-            const msgClass = isAlert ? "text-red-700" : "text-blue-700";
+            const titleClass = isAlert ? "text-red-700 dark:text-red-400" : "text-blue-700 dark:text-blue-400";
+            const msgClass = isAlert ? "text-red-600 dark:text-red-300" : "text-blue-600 dark:text-blue-300";
             const icon = ICON_BY_TYPE[tip.type] || "star";
 
             return `
@@ -231,13 +231,13 @@ class AdminMarketingUI {
         this.quotaContainer.innerHTML = `
             <div class="space-y-2">
                 <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
-                    <span class="text-gray-400">Quota mensuel</span>
-                    <span class="${percentage >= 100 ? 'text-red-500' : 'text-gray-900'}">${parseInt(eligibility.count) || 0} / ${parseInt(eligibility.limit) || 0}</span>
+                    <span class="text-text-muted">Quota mensuel</span>
+                    <span class="${percentage >= 100 ? 'text-red-500' : 'text-text'}">${parseInt(eligibility.count) || 0} / ${parseInt(eligibility.limit) || 0}</span>
                 </div>
                 <div class="w-full h-2 bg-surface-2 rounded-full overflow-hidden">
                     <div class="h-full ${colorClass} transition-all duration-1000" style="width: ${safePct}%"></div>
                 </div>
-                <p class="text-[10px] text-gray-500 italic">${escapeHTML(eligibility.message || 'Utilisez vos notifications stratégiquement pour maximiser l\'impact.')}</p>
+                <p class="text-[10px] text-text-muted italic">${escapeHTML(eligibility.message || 'Utilisez vos notifications stratégiquement pour maximiser l\'impact.')}</p>
             </div>
         `;
 

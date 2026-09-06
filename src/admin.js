@@ -4,6 +4,7 @@
 
 // import "./bridge.js";
 import "./firebase-init.js";
+import "./theme-mode.js";
 import "./snack-config.js";
 import "./icons.js";
 import "./admin-kitchen.js";
@@ -175,7 +176,7 @@ window.switchAdminTab = (tabName) => {
     }
     if (btnMobile) {
       btnMobile.className =
-        "flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-900 w-16";
+        "flex flex-col items-center gap-1 p-2 text-text-muted hover:text-text w-16";
     }
     if (view) view.classList.add("hidden");
   });

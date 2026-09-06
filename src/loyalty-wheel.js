@@ -172,11 +172,11 @@ function updateCartWheelBanner() {
   if (!host) return;
   const prize = window.currentWheelPrize;
   host.innerHTML = prize?.nom
-    ? `<div class="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3">
+    ? `<div class="mb-4 flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3">
          <span class="text-2xl">🎁</span>
          <div class="text-sm min-w-0">
-           <p class="font-black text-amber-700 uppercase text-[11px] tracking-wide">Lot gagné — offert</p>
-           <p class="font-bold text-gray-900 truncate">${esc(prize.nom)} <span class="text-green-600">· gratuit sur cette commande</span></p>
+           <p class="font-black text-amber-700 dark:text-amber-400 uppercase text-[11px] tracking-wide">Lot gagné — offert</p>
+           <p class="font-bold text-text truncate">${esc(prize.nom)} <span class="text-green-600 dark:text-green-400">· gratuit sur cette commande</span></p>
          </div>
        </div>`
     : "";

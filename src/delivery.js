@@ -87,7 +87,7 @@ class DeliveryUI {
       const active = mode === m;
       const cls = active
         ? "bg-primary text-on-primary shadow"
-        : "bg-transparent text-gray-500 hover:text-gray-800";
+        : "bg-transparent text-text-muted hover:text-text";
       return `<button type="button" data-delivery-action="set-mode" data-mode="${m}"
         aria-pressed="${active}"
         class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-all ${cls}">
@@ -104,9 +104,9 @@ class DeliveryUI {
     const d = this.cfg?.delivery || {};
     const prep = etaPrepMin(d.prepBaseMin, 0, 0);
     return `
-      <div class="flex items-center gap-2 mb-4 text-sm text-gray-600 bg-white border border-line rounded-xl p-3">
+      <div class="flex items-center gap-2 mb-4 text-sm text-text-muted bg-surface border border-line rounded-xl p-3">
         <i data-lucide="clock" class="text-primary"></i>
-        <span>Prêt en magasin dans <b class="text-gray-900">${formatEta(prep)}</b> environ.</span>
+        <span>Prêt en magasin dans <b class="text-text">${formatEta(prep)}</b> environ.</span>
       </div>`;
   }
 
@@ -120,19 +120,19 @@ class DeliveryUI {
     if (!addr || !isLatLng(addr)) {
       return `
         ${this.geoSupportNote()}
-        <div class="bg-white border border-line rounded-xl p-3 mb-4 space-y-3">
+        <div class="bg-surface border border-line rounded-xl p-3 mb-4 space-y-3">
           <button type="button" data-delivery-action="locate"
             class="w-full bg-primary text-on-primary font-bold py-3 rounded-lg flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-50">
             <i data-lucide="locate-fixed"></i> Me localiser
           </button>
-          <div class="flex items-center gap-2 text-[11px] text-gray-400">
+          <div class="flex items-center gap-2 text-[11px] text-text-muted">
             <span class="flex-1 h-px bg-surface-3"></span>ou<span class="flex-1 h-px bg-surface-3"></span>
           </div>
           <form data-delivery-form="address" class="flex gap-2">
             <input name="address" type="text" autocomplete="street-address" required
               placeholder="Saisir mon adresse (ville, rue…)"
-              class="flex-1 min-w-0 border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
-            <button type="submit" class="shrink-0 bg-gray-900 text-white font-bold px-4 rounded-lg text-sm active:scale-95 transition">OK</button>
+              class="flex-1 min-w-0 bg-surface text-text border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <button type="submit" class="shrink-0 bg-primary text-white font-bold px-4 rounded-lg text-sm active:scale-95 transition">OK</button>
           </form>
         </div>`;
     }
@@ -150,16 +150,16 @@ class DeliveryUI {
       <div class="flex items-start justify-between gap-2 mb-3">
         <div class="flex items-start gap-2 min-w-0">
           <i data-lucide="map-pin" class="text-primary mt-1"></i>
-          <p class="text-sm text-gray-800 font-medium truncate">${escapeText(addr.adresse || "Position GPS")}</p>
+          <p class="text-sm text-text font-medium truncate">${escapeText(addr.adresse || "Position GPS")}</p>
         </div>
         <button type="button" data-delivery-action="reset-address" class="shrink-0 text-xs text-primary font-bold underline">Changer</button>
       </div>`;
 
     if (outOfRange) {
       return `
-        <div class="bg-white border border-line rounded-xl p-3 mb-4">
+        <div class="bg-surface border border-line rounded-xl p-3 mb-4">
           ${addrLine}
-          <div class="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-2.5">
+          <div class="flex items-center gap-2 text-sm text-red-700 dark:text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-2.5">
             <i data-lucide="triangle-alert"></i>
             <span>Hors zone de livraison (${formatDistance(quote.distanceKm)} > ${d.radiusKm} km).</span>
           </div>
@@ -168,27 +168,27 @@ class DeliveryUI {
 
     const etaRow = `
       <div class="flex items-center justify-between text-sm py-1.5">
-        <span class="text-gray-500"><i data-lucide="clock" class="mr-1.5 text-primary"></i>Livraison estimée</span>
-        <span class="font-bold text-gray-900">${formatEta(quote.totalMin)}${restoKnown ? ` · ${formatDistance(quote.distanceKm)}` : ""}</span>
+        <span class="text-text-muted"><i data-lucide="clock" class="mr-1.5 text-primary"></i>Livraison estimée</span>
+        <span class="font-bold text-text">${formatEta(quote.totalMin)}${restoKnown ? ` · ${formatDistance(quote.distanceKm)}` : ""}</span>
       </div>`;
 
     const feeRow = `
       <div class="flex items-center justify-between text-sm py-1.5 border-t border-line">
-        <span class="text-gray-500">Sous-total</span><span class="text-gray-700">${subtotal.toFixed(2)} €</span>
+        <span class="text-text-muted">Sous-total</span><span class="text-text">${subtotal.toFixed(2)} €</span>
       </div>
       <div class="flex items-center justify-between text-sm py-1.5">
-        <span class="text-gray-500"><i data-lucide="bike" class="mr-1.5 text-primary"></i>Frais de livraison</span>
-        <span class="text-gray-700">${Number(quote.frais).toFixed(2)} €</span>
+        <span class="text-text-muted"><i data-lucide="bike" class="mr-1.5 text-primary"></i>Frais de livraison</span>
+        <span class="text-text">${Number(quote.frais).toFixed(2)} €</span>
       </div>`;
 
     const minWarn = belowMin
-      ? `<div class="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 mt-2">
+      ? `<div class="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 mt-2">
            <i data-lucide="info"></i><span>Minimum de commande : ${d.minOrder.toFixed(2)} € (il manque ${(d.minOrder - subtotal).toFixed(2)} €).</span>
          </div>`
       : "";
 
     return `
-      <div class="bg-white border border-line rounded-xl p-3 mb-4">
+      <div class="bg-surface border border-line rounded-xl p-3 mb-4">
         ${addrLine}${etaRow}${feeRow}${minWarn}
       </div>`;
   }
@@ -215,7 +215,7 @@ class DeliveryUI {
 
   geoSupportNote() {
     if (isGeolocationSupported()) return "";
-    return `<p class="text-[11px] text-gray-400 mb-2">Géolocalisation indisponible : saisissez votre adresse.</p>`;
+    return `<p class="text-[11px] text-text-muted mb-2">Géolocalisation indisponible : saisissez votre adresse.</p>`;
   }
 
   // --- Interactions -------------------------------------------------------

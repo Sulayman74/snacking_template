@@ -27,9 +27,9 @@ class AdminUpsellUI {
         if (rows.length === 0) {
             this.tableEl.innerHTML = `
                 <div class="text-center py-12 bg-surface-2 rounded-2xl border-2 border-dashed border-line">
-                    <i data-lucide="trending-up" class="text-3xl text-gray-200 mb-3"></i>
-                    <p class="text-gray-400 font-bold">Aucune donnée d'upsell pour le moment.</p>
-                    <p class="text-gray-300 text-sm mt-1">Les suggestions affichées et acceptées s'afficheront ici.</p>
+                    <i data-lucide="trending-up" class="text-3xl text-text-muted mb-3"></i>
+                    <p class="text-text-muted font-bold">Aucune donnée d'upsell pour le moment.</p>
+                    <p class="text-text-muted text-sm mt-1">Les suggestions affichées et acceptées s'afficheront ici.</p>
                 </div>
             `;
             return;
@@ -38,7 +38,7 @@ class AdminUpsellUI {
         this.tableEl.innerHTML = `
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
-                    <thead class="bg-surface-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <thead class="bg-surface-2 text-[10px] font-black text-text-muted uppercase tracking-widest">
                         <tr>
                             <th class="px-4 py-3">Produit</th>
                             <th class="px-4 py-3 text-right">Vues</th>
@@ -47,7 +47,7 @@ class AdminUpsellUI {
                             <th class="px-4 py-3 text-right">CA attribuable</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody class="divide-y divide-line">
                         ${rows.map((r) => this.renderRow(r)).join("")}
                     </tbody>
                 </table>
@@ -63,21 +63,21 @@ class AdminUpsellUI {
 
         // Couleur du badge taux : vert ≥ 25%, ambre ≥ 10%, gris sinon.
         const rateCls = rate >= 25
-            ? "bg-green-100 text-green-700"
+            ? "bg-green-500/10 text-green-700 dark:text-green-400"
             : rate >= 10
-                ? "bg-amber-100 text-amber-700"
-                : "bg-surface-2 text-gray-500";
+                ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                : "bg-surface-2 text-text-muted";
 
         return `
-            <tr class="hover:bg-blue-50/30 transition-colors">
+            <tr class="hover:bg-surface-2 transition-colors">
                 <td class="px-4 py-4">
-                    <p class="text-sm font-bold text-gray-800">${escapeHTML(r.nom || r.productId)}</p>
+                    <p class="text-sm font-bold text-text">${escapeHTML(r.nom || r.productId)}</p>
                 </td>
                 <td class="px-4 py-4 text-right">
-                    <p class="text-sm font-bold text-gray-600">${shown}</p>
+                    <p class="text-sm font-bold text-text-muted">${shown}</p>
                 </td>
                 <td class="px-4 py-4 text-right">
-                    <p class="text-sm font-black text-gray-900">${accepted}</p>
+                    <p class="text-sm font-black text-text">${accepted}</p>
                 </td>
                 <td class="px-4 py-4 text-right">
                     <span class="px-2 py-1 rounded-md text-[10px] font-black ${rateCls}">
@@ -85,7 +85,7 @@ class AdminUpsellUI {
                     </span>
                 </td>
                 <td class="px-4 py-4 text-right">
-                    <p class="text-sm font-black text-gray-900">${revenue.toFixed(2)} €</p>
+                    <p class="text-sm font-black text-text">${revenue.toFixed(2)} €</p>
                 </td>
             </tr>
         `;

@@ -44,14 +44,9 @@
             // 1. Mise à jour du Titre
             title.innerText = `404 - ${cfg.identity.name}`;
 
-            // 2. Thème (Sombre ou Clair selon ton choix dans la config)
-            if (cfg.theme.templateId === 'neon-vibes') {
-                body.classList.add('bg-gray-900', 'text-white');
-                document.getElementById('error-icon').classList.add('text-white');
-            } else {
-                body.classList.add('bg-surface-2', 'text-gray-900');
-                document.getElementById('error-icon').classList.add('text-gray-900');
-            }
+            // 2. Thème
+            body.classList.add('bg-surface-2', 'text-text');
+            document.getElementById('error-icon').classList.add('text-text');
 
             // 3. Couleurs du bouton (Prend la couleur primaire de ton snack !)
             btn.className += ` ${cfg.theme.colors.primary} text-white`;

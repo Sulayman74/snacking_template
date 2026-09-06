@@ -191,11 +191,14 @@
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <h1 class="text-xl font-black uppercase tracking-widest">Admin <span class="text-red-500">Fusion</span></h1>
             </div>
-            <div>
-              <a  href="index.html" class="text-gray-400 hover:text-green-500 transition p-2 ml-2" aria-label="Se déconnecter">
+            <div class="flex items-center gap-1">
+              <button data-action="cycle-theme" type="button" title="Changer de thème" aria-label="Changer de thème" class="text-gray-400 hover:text-white transition p-2">
+                <i data-lucide="contrast" class="text-lg"></i>
+              </button>
+              <a  href="index.html" class="text-gray-400 hover:text-green-500 transition p-2 ml-1" aria-label="Se déconnecter">
                 <i data-lucide="door-open" class="text-lg"></i>
               </a>
-              <button onclick="logoutAdmin()" class="text-gray-400 hover:text-red-500 transition">
+              <button onclick="logoutAdmin()" class="text-gray-400 hover:text-red-500 transition p-2">
                 <i data-lucide="log-out" class="text-lg"></i>
               </button>
             </div>
@@ -211,8 +214,8 @@
                 <span id="kitchen-load-dot" class="w-2.5 h-2.5 rounded-full inline-block"></span>
                 <span id="kitchen-load-text">Charge : —</span>
             </div>
-            <button type="button" onclick="window.openKitchenPauseModal()" id="btn-kitchen-pause-trigger" class="bg-white hover:bg-gray-100 text-gray-800 text-xs font-black uppercase px-3 py-1.5 rounded-full border border-line shadow flex items-center gap-1.5 transition active:scale-95">
-                <i data-lucide="pause-circle" class="text-amber-600"></i> Pause Commandes
+            <button type="button" onclick="window.openKitchenPauseModal()" id="btn-kitchen-pause-trigger" class="bg-surface hover:bg-surface-3 text-text text-xs font-black uppercase px-3 py-1.5 rounded-full border border-line shadow flex items-center gap-1.5 transition active:scale-95">
+                <i data-lucide="pause-circle" class="text-amber-600 dark:text-amber-400"></i> Pause Commandes
             </button>
         </div>
 
@@ -225,7 +228,7 @@
                     <p id="kitchen-pause-timer-text" class="text-xs text-amber-100 font-bold">Reprise automatique prévue à --:--</p>
                 </div>
             </div>
-            <button type="button" onclick="window.resumeKitchenService()" class="bg-white text-gray-900 px-4 py-2 rounded-xl text-xs font-black shadow hover:bg-amber-50 transition active:scale-95 flex items-center gap-1">
+            <button type="button" onclick="window.resumeKitchenService()" class="bg-surface text-text px-4 py-2 rounded-xl text-xs font-black shadow hover:bg-surface-3 transition active:scale-95 flex items-center gap-1">
                 <i data-lucide="play" class="text-xs"></i> Reprendre maintenant
             </button>
         </div>
@@ -233,21 +236,21 @@
         <section id="view-cuisine" class="relative flex flex-col md:flex-row gap-6 p-4 pb-20 md:p-6 h-full min-h-full">
             <div class="flex-1 min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line">
                 <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
-                    <h2 class="text-xl font-black text-gray-600 uppercase"><i data-lucide="car" class="text-gray-500 mr-2"></i> Attente Client</h2>
+                    <h2 class="text-xl font-black text-text-muted uppercase"><i data-lucide="car" class="text-text-muted mr-2"></i> Attente Client</h2>
                     <span id="count-waiting" class="bg-gray-500 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
                 <div id="orders-waiting" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
             </div>
             <div class="flex-1 min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line">
                 <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
-                    <h2 class="text-xl font-black text-gray-800 uppercase"><i data-lucide="flame" class="text-red-600 mr-2"></i> À Préparer</h2>
+                    <h2 class="text-xl font-black text-text uppercase"><i data-lucide="flame" class="text-red-600 mr-2"></i> À Préparer</h2>
                     <span id="count-new" class="bg-red-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
                 <div id="orders-new" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
             </div>
             <div class="flex-1 min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line">
                 <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
-                    <h2 class="text-xl font-black text-gray-800 uppercase"><i data-lucide="circle-check" class="text-green-600 mr-2"></i> Prêtes</h2>
+                    <h2 class="text-xl font-black text-text uppercase"><i data-lucide="circle-check" class="text-green-600 mr-2"></i> Prêtes</h2>
                     <span id="count-ready" class="bg-green-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
                 </div>
                 <div id="orders-ready" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>

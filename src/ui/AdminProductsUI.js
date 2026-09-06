@@ -62,7 +62,7 @@ class AdminProductsUI {
         const grid = document.getElementById("edit-allergens-grid");
         if (!grid) return;
         grid.innerHTML = ALLERGENS.map(({ name, emoji }) => `
-            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-900 bg-white px-2 py-1.5 rounded-lg border border-amber-100 hover:border-amber-300 transition">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-700 dark:text-amber-400 bg-surface px-2 py-1.5 rounded-lg border border-amber-500/30 hover:border-amber-500 transition">
                 <input type="checkbox" class="edit-allergen w-4 h-4 text-amber-600 rounded focus:ring-amber-500 cursor-pointer" value="${escapeHTML(name)}">
                 <span>${emoji} ${escapeHTML(name)}</span>
             </label>`).join("");
@@ -124,7 +124,7 @@ class AdminProductsUI {
         }
         
         if (products.length === 0) {
-            this.grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-400 font-bold">Aucun produit trouvé.</p>`;
+            this.grid.innerHTML = `<p class="col-span-full text-center py-10 text-text-muted font-bold">Aucun produit trouvé.</p>`;
             return;
         }
 
@@ -139,18 +139,18 @@ class AdminProductsUI {
         const safeImg = p.image ? safeURL(p.image) : "";
         const prix = (parseFloat(p.prix) || 0).toFixed(2);
         return `
-            <div class="bg-white rounded-3xl shadow-sm border border-line overflow-hidden flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 group ${!isAvailable ? 'opacity-75 grayscale-[0.5]' : ''}">
+            <div class="bg-surface rounded-3xl shadow-sm border border-line overflow-hidden flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 group ${!isAvailable ? 'opacity-75 grayscale-[0.5]' : ''}">
                 <div class="relative h-48 overflow-hidden bg-surface-2">
                     ${p.image ? `
                         <img src="${safeImg}" alt="${safeNom}"
                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                              onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-300 hidden">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-text-muted hidden">
                             <i data-lucide="pizza" class="text-4xl mb-2 opacity-20"></i>
                             <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Photo absente... 👨‍🍳</span>
                         </div>
                     ` : `
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-text-muted">
                             <i data-lucide="pizza" class="text-4xl mb-2 opacity-20"></i>
                             <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Pas de photo... 👨‍🍳</span>
                         </div>
@@ -164,19 +164,19 @@ class AdminProductsUI {
 
                 <div class="p-6 flex-1 flex flex-col">
                     <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-black text-xl text-gray-900">${safeNom}</h4>
+                        <h4 class="font-black text-xl text-text">${safeNom}</h4>
                         <button data-action="toggle-product-ui" data-id="${safeId}" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isAvailable ? 'bg-green-500' : 'bg-surface-3'}">
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isAvailable ? 'translate-x-5' : 'translate-x-0'}"></span>
                         </button>
                     </div>
-                    <p class="text-gray-400 text-sm font-bold mb-4 line-clamp-2">${safeDesc}</p>
-                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
-                        <span class="text-2xl font-black text-gray-900">${prix} €</span>
+                    <p class="text-text-muted text-sm font-bold mb-4 line-clamp-2">${safeDesc}</p>
+                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-line">
+                        <span class="text-2xl font-black text-text">${prix} €</span>
                         <div class="flex gap-2">
-                            <button data-action="open-edit-modal" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-surface-2 text-gray-400 hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center">
+                            <button data-action="open-edit-modal" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-surface-2 text-text-muted hover:bg-surface-3 hover:text-text transition-all flex items-center justify-center">
                                 <i data-lucide="pen" class="text-sm"></i>
                             </button>
-                            <button data-action="delete-product-ui" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-red-50 text-red-400 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">
+                            <button data-action="delete-product-ui" data-id="${safeId}" class="w-10 h-10 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">
                                 <i data-lucide="trash" class="text-sm"></i>
                             </button>
                         </div>

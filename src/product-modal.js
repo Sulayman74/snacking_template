@@ -213,7 +213,7 @@ class ProductModalUI {
                 <input type="radio" name="formule" value="seul" checked class="sr-only peer" onchange="window.toggleDrinkSection()">
                 <div class="p-4 border-2 border-line rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
                     <span class="font-bold text-text">Seul</span>
-                    <span class="text-sm font-black text-gray-500">${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>
+                    <span class="text-sm font-black text-text-muted">${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>
                 </div>
             </label>
             <label class="relative cursor-pointer">

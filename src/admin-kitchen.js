@@ -109,18 +109,18 @@ export function createTicketElement(id, commande) {
     .map((item) => {
       let optionsHTML = "";
       if (item.tailleChoisie) {
-        optionsHTML += `<div class="text-gray-800 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="ruler" class="text-gray-500"></i> Taille : ${escapeHTML(item.tailleChoisie)}</div>`;
+        optionsHTML += `<div class="text-text font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="ruler" class="text-text-muted"></i> Taille : ${escapeHTML(item.tailleChoisie)}</div>`;
       }
       if (item.boissonNom) {
-        optionsHTML += `<div class="text-blue-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="glass-water"></i> ${escapeHTML(item.boissonNom)}</div>`;
+        optionsHTML += `<div class="text-blue-600 dark:text-blue-400 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="glass-water"></i> ${escapeHTML(item.boissonNom)}</div>`;
       }
       if (item.sauces && Array.isArray(item.sauces) && item.sauces.length > 0) {
         const safeSauces = item.sauces.map((s) => escapeHTML(s)).join(" + ");
-        optionsHTML += `<div class="text-orange-600 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="cooking-pot"></i> Sauces : ${safeSauces}</div>`;
+        optionsHTML += `<div class="text-orange-600 dark:text-orange-400 font-bold text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="cooking-pot"></i> Sauces : ${safeSauces}</div>`;
       }
       if (item.supplements && Array.isArray(item.supplements) && item.supplements.length > 0) {
         const safeSupps = item.supplements.map((s) => escapeHTML(s.nom)).join(" + ");
-        optionsHTML += `<div class="text-emerald-700 font-black text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="plus-circle" class="text-emerald-600"></i> Extra : ${safeSupps}</div>`;
+        optionsHTML += `<div class="text-emerald-700 dark:text-emerald-400 font-black text-sm mt-1 ml-6 flex items-center gap-2"><i data-lucide="plus-circle" class="text-emerald-600 dark:text-emerald-400"></i> Extra : ${safeSupps}</div>`;
       }
       if (
         item.sansCrudites &&
@@ -136,8 +136,8 @@ export function createTicketElement(id, commande) {
       return `
             <li class="flex flex-col border-b border-line/50 py-3 last:border-0">
                 <div class="flex items-start">
-                    <span class="font-black text-lg text-red-600" aria-hidden="true">${escapeHTML(String(item.quantity))}x</span>
-                    <span class="font-bold ml-2 text-gray-900 text-lg">${escapeHTML(item.nom)}</span>
+                    <span class="font-black text-lg text-red-600 dark:text-red-400" aria-hidden="true">${escapeHTML(String(item.quantity))}x</span>
+                    <span class="font-bold ml-2 text-text text-lg">${escapeHTML(item.nom)}</span>
                 </div>
                 ${optionsHTML}
             </li>`;
@@ -150,38 +150,38 @@ export function createTicketElement(id, commande) {
   // 🚚 Bandeau livraison (mode delivery) : le staff voit l'adresse + distance.
   const isDelivery = commande.mode === "delivery";
   const deliveryHtml = isDelivery
-    ? `<div class="mb-3 flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
-         <i data-lucide="bike" class="text-blue-600 mt-0.5"></i>
+    ? `<div class="mb-3 flex items-start gap-2 bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
+         <i data-lucide="bike" class="text-blue-600 dark:text-blue-400 mt-0.5"></i>
          <div class="text-sm min-w-0">
-           <p class="font-black text-blue-700 uppercase text-xs tracking-wide">Livraison</p>
-           <p class="text-gray-800 font-bold">${escapeHTML(commande.livraison?.adresse || "Adresse non renseignée")}</p>
-           ${commande.livraison?.distanceKm != null ? `<p class="text-gray-500 text-xs">${escapeHTML(String(commande.livraison.distanceKm))} km du resto</p>` : ""}
+           <p class="font-black text-blue-700 dark:text-blue-400 uppercase text-xs tracking-wide">Livraison</p>
+           <p class="text-text font-bold">${escapeHTML(commande.livraison?.adresse || "Adresse non renseignée")}</p>
+           ${commande.livraison?.distanceKm != null ? `<p class="text-text-muted text-xs">${escapeHTML(String(commande.livraison.distanceKm))} km du resto</p>` : ""}
          </div>
        </div>`
     : "";
 
   // 🎡 Lot de roue OFFERT sur cette commande (fidélité) : le staff doit l'ajouter gratuitement.
   const wheelPrizeHtml = commande.wheelPrize?.nom
-    ? `<div class="mb-3 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
+    ? `<div class="mb-3 flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
          <span class="text-xl">🎁</span>
          <div class="text-sm min-w-0">
-           <p class="font-black text-amber-700 uppercase text-xs tracking-wide">Lot fidélité — OFFERT</p>
-           <p class="text-gray-800 font-bold">${escapeHTML(commande.wheelPrize.nom)}</p>
+           <p class="font-black text-amber-700 dark:text-amber-400 uppercase text-xs tracking-wide">Lot fidélité — OFFERT</p>
+           <p class="text-text font-bold">${escapeHTML(commande.wheelPrize.nom)}</p>
          </div>
        </div>`
     : "";
 
-  let ticketColor = "bg-white border-l-8 border-green-500";
-  let textColor = "text-green-700";
+  let ticketColor = "bg-surface text-text border-l-8 border-green-500";
+  let textColor = "text-green-700 dark:text-green-400";
   let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="package" class="mr-2"></i> DONNÉE AU CLIENT</button>`;
 
   if (isWaiting) {
-    ticketColor = "bg-white border-l-8 border-gray-400 opacity-80";
-    textColor = "text-gray-600";
+    ticketColor = "bg-surface text-text border-l-8 border-gray-400 opacity-80";
+    textColor = "text-text-muted";
     btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i data-lucide="flame" class="mr-2"></i> Forcer Cuisson</button>`;
   } else if (isNew) {
-    ticketColor = "bg-white border-l-8 border-red-500";
-    textColor = "text-red-700";
+    ticketColor = "bg-surface text-text border-l-8 border-red-500";
+    textColor = "text-red-700 dark:text-red-400";
     btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="check" class="mr-2"></i> MARQUER PRÊTE</button>`;
   }
 
@@ -189,36 +189,34 @@ export function createTicketElement(id, commande) {
   const isPaid = paymentStatus === "paye";
 
   const priceDisplay = isPaid
-    ? `<p class="font-black text-2xl text-green-600 opacity-50 line-through">${(Number(commande.total) || 0).toFixed(2)} €</p>`
+    ? `<p class="font-black text-2xl text-green-600 dark:text-green-400 opacity-50 line-through">${(Number(commande.total) || 0).toFixed(2)} €</p>`
     : `<p class="font-black text-2xl ${textColor}">${(Number(commande.total) || 0).toFixed(2)} €</p>`;
 
   const paymentBadgeHtml = isPaid
-    ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition flex items-center gap-1 hover:bg-green-200"><i data-lucide="circle-check"></i> PAYÉ</button>`
-    : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition flex items-center gap-1 animate-pulse hover:bg-orange-200"><i data-lucide="receipt"></i> ENCAISSER</button>`;
+    ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-500/10 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-lg text-xs font-black border border-green-500/30 shadow-sm transition flex items-center gap-1 hover:bg-green-500/20"><i data-lucide="circle-check"></i> PAYÉ</button>`
+    : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" class="mt-2 bg-orange-500/10 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-500/30 shadow-md transition flex items-center gap-1 animate-pulse hover:bg-orange-500/20"><i data-lucide="receipt"></i> ENCAISSER</button>`;
 
-  // 💸 Remboursement (LOT B → UI). Disponible sur une commande payée (ou déjà
-  // partiellement remboursée). refundOrder valide tout côté serveur ; ici on
-  // ne fait qu'ouvrir le flux. Carte bancaire uniquement (espèces non concernées).
+  // 💸 Remboursement (LOT B → UI).
   const onlineCard = (commande.paiement?.methode || "carte_bancaire") === "carte_bancaire";
   const refundBtnHtml = onlineCard && (paymentStatus === "paye" || paymentStatus === "partiellement_rembourse")
-    ? `<button type="button" data-action="refund-order" data-id="${id}" aria-label="Rembourser cette commande" class="w-full mt-2 bg-white text-red-600 border border-red-200 hover:bg-red-50 font-bold py-2 rounded-xl text-sm transition active:scale-95 flex items-center justify-center gap-2"><i class="fas fa-rotate-left"></i> Rembourser${paymentStatus === "partiellement_rembourse" ? " (partiel)" : ""}</button>`
+    ? `<button type="button" data-action="refund-order" data-id="${id}" aria-label="Rembourser cette commande" class="w-full mt-2 bg-surface text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-surface-2 font-bold py-2 rounded-xl text-sm transition active:scale-95 flex items-center justify-center gap-2"><i class="fas fa-rotate-left"></i> Rembourser${paymentStatus === "partiellement_rembourse" ? " (partiel)" : ""}</button>`
     : paymentStatus === "rembourse"
-      ? `<p class="w-full mt-2 text-center text-xs font-bold text-gray-400"><i class="fas fa-circle-check mr-1"></i>Remboursé</p>`
+      ? `<p class="w-full mt-2 text-center text-xs font-bold text-text-muted"><i class="fas fa-circle-check mr-1"></i>Remboursé</p>`
       : "";
 
   const ticketDiv = document.createElement("div");
   ticketDiv.id = `ticket-${id}`;
-  ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up`;
+  ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up border border-line`;
   ticketDiv.setAttribute("data-status", commande.statut);
 
   ticketDiv.innerHTML = `
         <div class="flex justify-between items-start mb-4 pb-3 border-b border-line">
             <div>
                 <div class="flex items-center gap-2">
-                  <h3 class="font-black text-2xl text-gray-900">${safeClientName}</h3>
-                  <span class="bg-gray-900 text-white px-2 py-0.5 rounded text-sm font-mono font-bold">${secretCode}</span>
+                  <h3 class="font-black text-2xl text-text">${safeClientName}</h3>
+                  <span class="bg-surface-2 text-text border border-line px-2 py-0.5 rounded text-sm font-mono font-bold">${secretCode}</span>
                 </div>
-                <p class="text-sm text-gray-500 font-bold mt-1"><i data-lucide="clock"></i> ${timeString}</p>
+                <p class="text-sm text-text-muted font-bold mt-1"><i data-lucide="clock"></i> ${timeString}</p>
             </div>
             <div class="flex flex-col items-end">
                 <div class="price-display-container">${priceDisplay}</div>
@@ -226,7 +224,7 @@ export function createTicketElement(id, commande) {
             </div>
         </div>
         ${deliveryHtml}
-        <ul class="mb-5 text-gray-800 space-y-1">${itemsHtml}</ul>
+        <ul class="mb-5 text-text space-y-1">${itemsHtml}</ul>
         ${wheelPrizeHtml}
         <div class="action-button-container">${btnHtml}</div>
         <div class="refund-button-container">${refundBtnHtml}</div>
@@ -247,35 +245,35 @@ function updateTicketDOM(ticketDiv, commande, id) {
   const isWaiting = commande.statut === "en_attente_client";
   const isNew = commande.statut === "nouvelle";
 
-  let ticketColor = "bg-white border-l-8 border-green-500";
-  let textColor = "text-green-700";
+  let ticketColor = "bg-surface text-text border-l-8 border-green-500";
+  let textColor = "text-green-700 dark:text-green-400";
   let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="package" class="mr-2"></i> DONNÉE AU CLIENT</button>`;
 
   if (isWaiting) {
-    ticketColor = "bg-white border-l-8 border-gray-400 opacity-80";
-    textColor = "text-gray-600";
+    ticketColor = "bg-surface text-text border-l-8 border-gray-400 opacity-80";
+    textColor = "text-text-muted";
     btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i data-lucide="flame" class="mr-2"></i> Forcer Cuisson</button>`;
   } else if (isNew) {
-    ticketColor = "bg-white border-l-8 border-red-500";
-    textColor = "text-red-700";
+    ticketColor = "bg-surface text-text border-l-8 border-red-500";
+    textColor = "text-red-700 dark:text-red-400";
     btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="check" class="mr-2"></i> MARQUER PRÊTE</button>`;
   }
 
-  ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up`;
+  ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up border border-line`;
   ticketDiv.setAttribute("data-status", commande.statut);
 
   const priceContainer = ticketDiv.querySelector(".price-display-container");
   if (priceContainer) {
     priceContainer.innerHTML = isPaid
-      ? `<p class="font-black text-2xl text-green-600 opacity-50 line-through">${(Number(commande.total) || 0).toFixed(2)} €</p>`
+      ? `<p class="font-black text-2xl text-green-600 dark:text-green-400 opacity-50 line-through">${(Number(commande.total) || 0).toFixed(2)} €</p>`
       : `<p class="font-black text-2xl ${textColor}">${(Number(commande.total) || 0).toFixed(2)} €</p>`;
   }
 
   const paymentBadgeContainer = ticketDiv.querySelector(".payment-badge-container");
   if (paymentBadgeContainer) {
     paymentBadgeContainer.innerHTML = isPaid
-      ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-black border border-green-300 shadow-sm transition flex items-center gap-1 hover:bg-green-200"><i data-lucide="circle-check"></i> PAYÉ</button>`
-      : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" class="mt-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-300 shadow-md transition flex items-center gap-1 animate-pulse hover:bg-orange-200"><i data-lucide="receipt"></i> ENCAISSER</button>`;
+      ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-500/10 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-lg text-xs font-black border border-green-500/30 shadow-sm transition flex items-center gap-1 hover:bg-green-500/20"><i data-lucide="circle-check"></i> PAYÉ</button>`
+      : `<button type="button" data-action="update-payment" data-id="${id}" data-status="en_attente" class="mt-2 bg-orange-500/10 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black border border-orange-500/30 shadow-md transition flex items-center gap-1 animate-pulse hover:bg-orange-500/20"><i data-lucide="receipt"></i> ENCAISSER</button>`;
   }
 
   const actionBtnContainer = ticketDiv.querySelector(".action-button-container");
@@ -287,9 +285,9 @@ function updateTicketDOM(ticketDiv, commande, id) {
   const refundBtnContainer = ticketDiv.querySelector(".refund-button-container");
   if (refundBtnContainer) {
     refundBtnContainer.innerHTML = onlineCard && (paymentStatus === "paye" || paymentStatus === "partiellement_rembourse")
-      ? `<button type="button" data-action="refund-order" data-id="${id}" aria-label="Rembourser cette commande" class="w-full mt-2 bg-white text-red-600 border border-red-200 hover:bg-red-50 font-bold py-2 rounded-xl text-sm transition active:scale-95 flex items-center justify-center gap-2"><i class="fas fa-rotate-left"></i> Rembourser${paymentStatus === "partiellement_rembourse" ? " (partiel)" : ""}</button>`
+      ? `<button type="button" data-action="refund-order" data-id="${id}" aria-label="Rembourser cette commande" class="w-full mt-2 bg-surface text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-surface-2 font-bold py-2 rounded-xl text-sm transition active:scale-95 flex items-center justify-center gap-2"><i class="fas fa-rotate-left"></i> Rembourser${paymentStatus === "partiellement_rembourse" ? " (partiel)" : ""}</button>`
       : paymentStatus === "rembourse"
-        ? `<p class="w-full mt-2 text-center text-xs font-bold text-gray-400"><i class="fas fa-circle-check mr-1"></i>Remboursé</p>`
+        ? `<p class="w-full mt-2 text-center text-xs font-bold text-text-muted"><i class="fas fa-circle-check mr-1"></i>Remboursé</p>`
         : "";
   }
 

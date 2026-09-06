@@ -69,8 +69,8 @@ export class SnackMenuItem extends SnackElement {
           
           <div class="flex items-center justify-between pt-4 border-t border-line">
             <div class="flex gap-2">
-              ${p.isVegan ? html`<span class="px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[9px] font-bold uppercase tracking-widest">Vegan</span>` : nothing}
-              ${p.isSpicy ? html`<span class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[9px] font-bold uppercase tracking-widest">Pimenté</span>` : nothing}
+              ${p.isVegan ? html`<span class="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[9px] font-bold uppercase tracking-widest">Vegan</span>` : nothing}
+              ${p.isSpicy ? html`<span class="px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 text-[9px] font-bold uppercase tracking-widest">Pimenté</span>` : nothing}
             </div>
             
             ${isSoldOut ? html`
