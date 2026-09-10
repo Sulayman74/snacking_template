@@ -174,7 +174,7 @@
       <section id="favorites-view" role="dialog" aria-modal="true" aria-labelledby="favorites-title" class="hidden opacity-0 h-full w-full bg-surface-2 fixed inset-0 z-60 overflow-y-auto transition-opacity duration-300">
         <div class="sticky top-0 z-10 bg-surface/90 backdrop-blur-xl border-b border-line shadow-sm pt-[env(safe-area-inset-top)]">
           <div class="container mx-auto px-4 py-4 flex items-center justify-between gap-3">
-            <h2 id="favorites-title" class="text-xl font-black text-text flex items-center gap-2"><i data-lucide="heart" aria-hidden="true" class="text-red-500"></i> Mes Favoris</h2>
+            <h2 id="favorites-title" class="text-xl font-black text-text flex items-center gap-2"><i data-lucide="heart" aria-hidden="true" class="text-red-500"></i> <span data-i18n="navbar.favorites">Mes Favoris</span></h2>
             <button data-action="close-favorites" aria-label="Fermer mes favoris" class="w-11 h-11 shrink-0 bg-surface-2 border border-line rounded-2xl shadow-sm flex items-center justify-center text-text-muted hover:text-red-500 transition-colors">
               <i data-lucide="x" aria-hidden="true" class="text-lg"></i>
             </button>
@@ -187,13 +187,13 @@
 
       <section id="loyalty" class="py-5 hidden bg-surface">
         <div class="container mx-auto px-4">
-          <h2 class="text-4xl text-center font-black text-text mb-4 tracking-tight">Bons plans</h2>
+          <h2 class="text-4xl text-center font-black text-text mb-4 tracking-tight" data-i18n="loyalty.title">Bons plans</h2>
           <div id="loyalty-card" class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-text border shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]" style="border-color: var(--color-primary)">
             <div id="loyalty-blur" class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full blur-[80px] opacity-30 pointer-events-none" style="background-color: var(--color-accent);"></div>
             <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
               <div class="text-center md:text-left flex-1">
-                <h3 class="text-4xl font-bold mb-4 tracking-tight" id="loyalty-title">Club Fidélité</h3>
-                <p class="mb-8 text-lg opacity-90 font-light" id="loyalty-desc">Gagnez des points à chaque commande !</p>
+                <h3 class="text-4xl font-bold mb-4 tracking-tight" id="loyalty-title" data-i18n="loyalty.clubTitle">Club Fidélité</h3>
+                <p class="mb-8 text-lg opacity-90 font-light" id="loyalty-desc" data-i18n="loyalty.clubDesc">Gagnez des points à chaque commande !</p>
                 <div class="flex gap-4 justify-center md:justify-start">
                   <button type="button" id="loyalty-main-btn" data-action="toggle-auth-modal" data-i18n="auth.login" class="bg-surface px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 active:scale-95" style="color: var(--color-primary);">Connexion</button>
                 </div>

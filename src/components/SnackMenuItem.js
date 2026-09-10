@@ -1,6 +1,7 @@
 import { html, nothing } from 'lit';
 import { SnackElement } from './SnackElement.js';
 import './SnackBadge.js'; // Assure que la dépendance est chargée
+import { t } from '../i18n/index.js';
 
 export class SnackMenuItem extends SnackElement {
   static properties = {
@@ -28,7 +29,7 @@ export class SnackMenuItem extends SnackElement {
     let badgeText = null;
     let badgeType = 'default';
     if (isSoldOut) {
-      badgeText = 'Épuisé';
+      badgeText = t('product.soldOut');
       badgeType = 'sold-out';
     } else if (p.badge) {
       badgeText = p.badge;
@@ -53,7 +54,7 @@ export class SnackMenuItem extends SnackElement {
           ` : html`
             <div class="absolute inset-0 flex flex-col items-center justify-center text-primary transition-opacity duration-300">
               <i data-lucide="pizza" class="text-4xl mb-2 opacity-20"></i>
-              <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Photo en préparation... 👨‍🍳</span>
+              <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">${t('product.photoPrep')}</span>
             </div>
           `}
           
@@ -69,8 +70,8 @@ export class SnackMenuItem extends SnackElement {
           
           <div class="flex items-center justify-between pt-4 border-t border-line">
             <div class="flex gap-2">
-              ${p.isVegan ? html`<span class="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[9px] font-bold uppercase tracking-widest">Vegan</span>` : nothing}
-              ${p.isSpicy ? html`<span class="px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 text-[9px] font-bold uppercase tracking-widest">Pimenté</span>` : nothing}
+              ${p.isVegan ? html`<span class="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[9px] font-bold uppercase tracking-widest">${t('product.vegan')}</span>` : nothing}
+              ${p.isSpicy ? html`<span class="px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 text-[9px] font-bold uppercase tracking-widest">${t('product.spicy')}</span>` : nothing}
             </div>
             
             ${isSoldOut ? html`
@@ -100,7 +101,7 @@ export class SnackMenuItem extends SnackElement {
     parent.innerHTML += `
       <div class="absolute inset-0 flex flex-col items-center justify-center text-primary transition-opacity duration-300">
         <i data-lucide="pizza" class="text-4xl mb-2 opacity-20"></i>
-        <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Photo indisponible 👨‍🍳</span>
+        <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">${t('product.photoUnavail')}</span>
       </div>
     `;
     if (window.lucide) window.lucide.createIcons({ root: parent });

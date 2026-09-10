@@ -53,7 +53,9 @@ export default {
   },
   common: {
     close: "Close",
-    cancel: "Cancel"
+    cancel: "Cancel",
+    addFavorite: "Add to favorites",
+    removeFavorite: "Remove from favorites"
   },
   contact: {
     submit: "Send message",
@@ -61,13 +63,32 @@ export default {
     messagePlaceholder: "Your message"
   },
   product: {
-    share: "Share with a friend"
+    share: "Share with a friend",
+    photoPrep: "Photo in preparation... 👨‍🍳",
+    photoUnavail: "Photo unavailable 👨‍🍳",
+    vegan: "Vegan",
+    spicy: "Spicy",
+    soldOut: "Sold out"
+  },
+  payment: {
+    secureTitle: "Secure Payment",
+    total: "Total:",
+    processing: "Verifying with bank...",
+    pay: "Pay",
+    emailRequired: "Please enter your email to receive the receipt.",
+    stripeError: "Failed to load Stripe.",
+    invalidResponse: "Invalid server response.",
+    webOrder: "Web Order",
+    clientDefault: "Guest"
   },
   pwa: {
     install: "Install",
     refresh: "Refresh"
   },
   loyalty: {
+    title: "Good Deals",
+    clubTitle: "Loyalty Club",
+    clubDesc: "Earn points with every order!",
     enableNotifications: "ENABLE NOTIFICATIONS 🔔",
     referralButton: "GIVE A FREE FRIES TO A FRIEND 🍟",
     notificationsBlocked: "Notifications blocked in your browser",

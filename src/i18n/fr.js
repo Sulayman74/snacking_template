@@ -53,7 +53,9 @@ export default {
   },
   common: {
     close: "Fermer",
-    cancel: "Annuler"
+    cancel: "Annuler",
+    addFavorite: "Ajouter aux favoris",
+    removeFavorite: "Retirer des favoris"
   },
   contact: {
     submit: "Envoyer le message",
@@ -61,13 +63,32 @@ export default {
     messagePlaceholder: "Votre message"
   },
   product: {
-    share: "Partager à un pote"
+    share: "Partager à un pote",
+    photoPrep: "Photo en préparation... 👨‍🍳",
+    photoUnavail: "Photo indisponible 👨‍🍳",
+    vegan: "Vegan",
+    spicy: "Pimenté",
+    soldOut: "Épuisé"
+  },
+  payment: {
+    secureTitle: "Paiement Sécurisé",
+    total: "Total :",
+    processing: "Vérification banque...",
+    pay: "Payer",
+    emailRequired: "Renseignez votre email pour recevoir le reçu.",
+    stripeError: "Échec du chargement de Stripe.",
+    invalidResponse: "Réponse serveur invalide.",
+    webOrder: "Commande Web",
+    clientDefault: "Client"
   },
   pwa: {
     install: "Installer",
     refresh: "Rafraîchir"
   },
   loyalty: {
+    title: "Bons plans",
+    clubTitle: "Club Fidélité",
+    clubDesc: "Gagnez des points à chaque commande !",
     enableNotifications: "ACTIVER LES NOTIFICATIONS 🔔",
     referralButton: "OFFRE UNE FRITE À UN AMI 🍟",
     notificationsBlocked: "Notifications bloquées dans votre navigateur",

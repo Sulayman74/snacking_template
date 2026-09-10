@@ -1,6 +1,7 @@
 import { html, nothing } from 'lit';
 import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
+import { t } from '../i18n/index.js';
 
 export class SnackCartItem extends SnackElement {
   static properties = {
@@ -88,7 +89,7 @@ export class SnackCartItem extends SnackElement {
         <button type="button" 
                 class="w-9 h-9 shrink-0 transition-colors flex items-center justify-center cursor-pointer ${isFav ? 'text-red-500' : 'text-text-muted hover:text-red-500'}"
                 aria-pressed="${isFav ? 'true' : 'false'}"
-                aria-label="${isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'}"
+                aria-label="${isFav ? t('common.removeFavorite') : t('common.addFavorite')}"
                 @click="${this._toggleFavorite}">
           <i data-lucide="heart" aria-hidden="true" class="text-lg ${isFav ? 'fill-current' : ''}"></i>
         </button>

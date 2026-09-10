@@ -137,7 +137,7 @@ export class SnackCheckout extends SnackElement {
         snackId: cfg.identity.id || "Ym1YiO4Ue5Fb5UXlxr06",
         amount: Math.round(this.totalAmount * 100),
         currency: "eur",
-        description: `Commande Web - ${cfg.identity.name}`,
+        description: `${t('payment.webOrder')} - ${cfg.identity.name}`,
         cartItems: this._buildOrderItemsPayload(),
         mode,
         livraison,
@@ -148,7 +148,7 @@ export class SnackCheckout extends SnackElement {
       });
 
       const clientSecret = response.data?.clientSecret;
-      if (!clientSecret) throw new Error("Réponse de paiement invalide (clientSecret manquant).");
+      if (!clientSecret) throw new Error(t('payment.invalidResponse'));
       
       const connectedAccountId = response.data?.stripeAccountId || null;
       this.stripeInstance = Stripe(this.stripePublicKey, connectedAccountId ? { stripeAccount: connectedAccountId } : undefined);
@@ -192,7 +192,7 @@ export class SnackCheckout extends SnackElement {
 
     const currentUser = auth?.currentUser;
     if (currentUser?.isAnonymous && !this.guestEmail) {
-      this.errorMessage = "Renseignez votre email pour recevoir le reçu.";
+      this.errorMessage = t('payment.emailRequired');
       window.triggerVibration?.("error");
       const linkEl = this.shadowRoot.getElementById("link-authentication-element");
       if (linkEl) {
@@ -243,7 +243,7 @@ export class SnackCheckout extends SnackElement {
       const { mode, livraison } = this._getDeliveryPayload();
       
       const email = currentUser?.email || this.guestEmail;
-      const clientNom = currentUser?.displayName || (email ? email.split("@")[0] : "Client");
+      const clientNom = currentUser?.displayName || (email ? email.split("@")[0] : t("payment.clientDefault"));
 
       const finalizeOrder = httpsCallable(functions, "finalizeOrder");
       const result = await finalizeOrder({
@@ -259,7 +259,7 @@ export class SnackCheckout extends SnackElement {
       });
 
       const orderId = result?.data?.orderId;
-      if (!orderId) throw new Error("Réponse serveur invalide : orderId manquant.");
+      if (!orderId) throw new Error(t('payment.invalidResponse'));
 
       store.clearCart();
       window.triggerVibration?.("jackpot");
@@ -315,7 +315,7 @@ export class SnackCheckout extends SnackElement {
       const existing = document.getElementById("stripe-js");
       if (existing) {
         existing.addEventListener("load", () => resolve());
-        existing.addEventListener("error", () => reject(new Error("Échec du chargement de Stripe.")));
+        existing.addEventListener("error", () => reject(new Error(t("payment.stripeError"))));
         return;
       }
       const s = document.createElement("script");
@@ -323,7 +323,7 @@ export class SnackCheckout extends SnackElement {
       s.src = "https://js.stripe.com/v3/";
       s.async = true;
       s.onload = () => resolve();
-      s.onerror = () => reject(new Error("Échec du chargement de Stripe."));
+      s.onerror = () => reject(new Error(t("payment.stripeError")));
       document.head.appendChild(s);
     });
   }
@@ -362,8 +362,8 @@ export class SnackCheckout extends SnackElement {
 
           <div class="overflow-y-auto pr-1 custom-scrollbar">
             <div class="mb-6 text-center">
-              <h3 class="text-xl font-black text-text">Paiement Sécurisé</h3>
-              <p class="text-lg font-bold text-red-600">Total : ${this.totalAmount.toFixed(2)} €</p>
+              <h3 class="text-xl font-black text-text">${t('payment.secureTitle')}</h3>
+              <p class="text-lg font-bold text-red-600">${t('payment.total')} ${this.totalAmount.toFixed(2)} €</p>
             </div>
 
             <div id="link-authentication-element" class="mb-3 hidden"></div>
@@ -381,11 +381,11 @@ export class SnackCheckout extends SnackElement {
                     ?disabled="${this.isProcessing}"
                     class="flex w-full items-center justify-center rounded-xl bg-green-600 py-4 text-lg font-black text-on-dark shadow-lg transition active:scale-95 hover:bg-green-700 disabled:opacity-70 disabled:active:scale-100">
               ${this.isProcessing 
-                ? html`<i data-lucide="loader-circle" class="animate-spin mr-2"></i> Vérification banque...` 
-                : html`<i data-lucide="lock" class="mr-2"></i> Payer ${this.totalAmount.toFixed(2)} €`}
+                ? html`<i data-lucide="loader-circle" class="animate-spin mr-2"></i> ${t('payment.processing')}` 
+                : html`<i data-lucide="lock" class="mr-2"></i> ${t('payment.pay')} ${this.totalAmount.toFixed(2)} €`}
             </button>
             <button @click="${this.closePaymentSheet}" class="w-full py-3 text-sm font-bold text-text-muted hover:text-text">
-              Annuler
+              ${t('common.cancel')}
             </button>
           </div>
           
