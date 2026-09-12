@@ -62,9 +62,15 @@ jobs:
       # qui ne dépendent PAS du paiement Stripe (cf. package.json → test:e2e).
       # L'app se branche sur les émulateurs grâce à VITE_E2E_TESTING=true.
       - name: 🧪 Tests E2E
-        run: npm run test:e2e
+        run: |
+          if [ -n "${{ secrets.STRIPE_SECRET_KEY }}" ]; then
+            echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" > functions/.env
+          else
+            echo "STRIPE_SECRET_KEY=sk_test_51TG1RfIfiBxoqwsyO2yoMirsEnrFhIph722SR3E8LrHakSZCkj3ol6riBD19A7d4JSfSBHkRVSOcR9lUZL5yCN8s00dMYYurX9" > functions/.env
+          fi
+          npm run test:e2e
         env:
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'sk_test_51TG1RfIfiBxoqwsyO2yoMirsEnrFhIph722SR3E8LrHakSZCkj3ol6riBD19A7d4JSfSBHkRVSOcR9lUZL5yCN8s00dMYYurX9' }}
 
       - name: 📁 Rapport Playwright
         uses: actions/upload-artifact@v4

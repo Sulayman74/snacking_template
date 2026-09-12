@@ -23,9 +23,15 @@ const STRIPE_API_VERSION = "2026-03-25.dahlia";
  * — ex. tests unitaires en CI où `functions/node_modules` n'est pas installé.
  * @returns {import("stripe").Stripe} Client Stripe configuré.
  */
+const TEST_KEY_FALLBACK = "sk_test_51TG1RfIfiBxoqwsyO2yoMirsEnrFhIph722SR3E8LrHakSZCkj3ol6riBD19A7d4JSfSBHkRVSOcR9lUZL5yCN8s00dMYYurX9";
+
 function getStripe() {
     const Stripe = require("stripe");
-    return Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION });
+    const key = process.env.STRIPE_SECRET_KEY || (process.env.FUNCTIONS_EMULATOR || process.env.CI ? TEST_KEY_FALLBACK : null);
+    if (!key) {
+        throw new Error("STRIPE_SECRET_KEY non configurée.");
+    }
+    return Stripe(key, { apiVersion: STRIPE_API_VERSION });
 }
 
 /**

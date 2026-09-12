@@ -144,7 +144,7 @@ class UpsellUI {
             </svg> Ajouté
         `;
         btnElement.classList.remove("bg-primary", "hover:bg-primary-hover");
-        btnElement.classList.add("bg-emerald-600", "text-white", "cursor-default");
+        btnElement.classList.add("bg-emerald-600", "text-on-dark", "cursor-default");
         liElement.classList.add("opacity-80", "ring-2", "ring-emerald-500", "rounded-xl");
     }
 
