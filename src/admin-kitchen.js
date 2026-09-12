@@ -171,26 +171,26 @@ export function createTicketElement(id, commande) {
        </div>`
     : "";
 
-  let ticketColor = "bg-surface text-text border-l-8 border-green-500";
+  let ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-green-500";
   let textColor = "text-green-700 dark:text-green-400";
-  let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="package" class="mr-2"></i> DONNÉE AU CLIENT</button>`;
+  let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 md:py-4 rounded-xl text-base md:text-xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="package"></i> DONNÉE AU CLIENT</button>`;
 
   if (isWaiting) {
-    ticketColor = "bg-surface text-text border-l-8 border-gray-400 opacity-80";
+    ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-gray-400 opacity-80";
     textColor = "text-text-muted";
-    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i data-lucide="flame" class="mr-2"></i> Forcer Cuisson</button>`;
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-2.5 md:py-3 rounded-xl text-sm shadow-sm transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="flame"></i> Forcer Cuisson</button>`;
   } else if (isNew) {
-    ticketColor = "bg-surface text-text border-l-8 border-red-500";
+    ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-red-500";
     textColor = "text-red-700 dark:text-red-400";
-    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="check" class="mr-2"></i> MARQUER PRÊTE</button>`;
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 md:py-4 rounded-xl text-base md:text-xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="check"></i> MARQUER PRÊTE</button>`;
   }
 
   const paymentStatus = commande.paiement?.statut || "en_attente";
   const isPaid = paymentStatus === "paye";
 
   const priceDisplay = isPaid
-    ? `<p class="font-black text-2xl text-green-600 dark:text-green-400 opacity-50 line-through">${(Number(commande.total) || 0).toFixed(2)} €</p>`
-    : `<p class="font-black text-2xl ${textColor}">${(Number(commande.total) || 0).toFixed(2)} €</p>`;
+    ? `<p class="font-black text-xl md:text-2xl text-green-600 dark:text-green-400 opacity-50 line-through">${(Number(commande.total) || 0).toFixed(2)} €</p>`
+    : `<p class="font-black text-xl md:text-2xl ${textColor}">${(Number(commande.total) || 0).toFixed(2)} €</p>`;
 
   const paymentBadgeHtml = isPaid
     ? `<button type="button" data-action="update-payment" data-id="${id}" data-status="paye" class="mt-2 bg-green-500/10 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-lg text-xs font-black border border-green-500/30 shadow-sm transition flex items-center gap-1 hover:bg-green-500/20"><i data-lucide="circle-check"></i> PAYÉ</button>`
@@ -206,19 +206,19 @@ export function createTicketElement(id, commande) {
 
   const ticketDiv = document.createElement("div");
   ticketDiv.id = `ticket-${id}`;
-  ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up border border-line`;
+  ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-3.5 md:p-5 animate-fade-in-up border border-line`;
   ticketDiv.setAttribute("data-status", commande.statut);
 
   ticketDiv.innerHTML = `
         <div class="flex justify-between items-start mb-4 pb-3 border-b border-line">
-            <div>
+            <div class="min-w-0 flex-1 pr-2">
                 <div class="flex items-center gap-2">
-                  <h3 class="font-black text-2xl text-text">${safeClientName}</h3>
-                  <span class="bg-surface-2 text-text border border-line px-2 py-0.5 rounded text-sm font-mono font-bold">${secretCode}</span>
+                  <h3 class="font-black text-xl md:text-2xl text-text truncate">${safeClientName}</h3>
+                  <span class="bg-surface-2 text-text border border-line px-2 py-0.5 rounded text-xs font-mono font-bold shrink-0">${secretCode}</span>
                 </div>
-                <p class="text-sm text-text-muted font-bold mt-1"><i data-lucide="clock"></i> ${timeString}</p>
+                <p class="text-xs md:text-sm text-text-muted font-bold mt-1 flex items-center gap-1"><i data-lucide="clock" class="text-xs"></i> ${timeString}</p>
             </div>
-            <div class="flex flex-col items-end">
+            <div class="flex flex-col items-end shrink-0">
                 <div class="price-display-container">${priceDisplay}</div>
                 <div class="payment-badge-container">${paymentBadgeHtml}</div>
             </div>
@@ -245,21 +245,21 @@ function updateTicketDOM(ticketDiv, commande, id) {
   const isWaiting = commande.statut === "en_attente_client";
   const isNew = commande.statut === "nouvelle";
 
-  let ticketColor = "bg-surface text-text border-l-8 border-green-500";
+  let ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-green-500";
   let textColor = "text-green-700 dark:text-green-400";
-  let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="package" class="mr-2"></i> DONNÉE AU CLIENT</button>`;
+  let btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="terminee" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 md:py-4 rounded-xl text-base md:text-xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="package"></i> DONNÉE AU CLIENT</button>`;
 
   if (isWaiting) {
-    ticketColor = "bg-surface text-text border-l-8 border-gray-400 opacity-80";
+    ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-gray-400 opacity-80";
     textColor = "text-text-muted";
-    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm transition active:scale-95"><i data-lucide="flame" class="mr-2"></i> Forcer Cuisson</button>`;
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-2.5 md:py-3 rounded-xl text-sm shadow-sm transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="flame"></i> Forcer Cuisson</button>`;
   } else if (isNew) {
-    ticketColor = "bg-surface text-text border-l-8 border-red-500";
+    ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-red-500";
     textColor = "text-red-700 dark:text-red-400";
-    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition active:scale-95"><i data-lucide="check" class="mr-2"></i> MARQUER PRÊTE</button>`;
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="prete" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 md:py-4 rounded-xl text-base md:text-xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="check"></i> MARQUER PRÊTE</button>`;
   }
 
-  ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-5 animate-fade-in-up border border-line`;
+  ticketDiv.className = `${ticketColor} rounded-2xl shadow-md p-3.5 md:p-5 animate-fade-in-up border border-line`;
   ticketDiv.setAttribute("data-status", commande.statut);
 
   const priceContainer = ticketDiv.querySelector(".price-display-container");
@@ -375,14 +375,28 @@ function startKitchenRadar() {
     });
 
     const countWaiting = document.getElementById("count-waiting");
-    if (countWaiting && waitingOrdersContainer)
-      countWaiting.innerText = waitingOrdersContainer.children.length;
+    const tabCountWaiting = document.getElementById("tab-count-waiting");
+    if (waitingOrdersContainer) {
+      const len = waitingOrdersContainer.children.length;
+      if (countWaiting) countWaiting.innerText = len;
+      if (tabCountWaiting) tabCountWaiting.innerText = len;
+    }
+
     const countNew = document.getElementById("count-new");
-    if (countNew && newOrdersContainer)
-      countNew.innerText = newOrdersContainer.children.length;
+    const tabCountNew = document.getElementById("tab-count-new");
+    if (newOrdersContainer) {
+      const len = newOrdersContainer.children.length;
+      if (countNew) countNew.innerText = len;
+      if (tabCountNew) tabCountNew.innerText = len;
+    }
+
     const countReady = document.getElementById("count-ready");
-    if (countReady && readyOrdersContainer)
-      countReady.innerText = readyOrdersContainer.children.length;
+    const tabCountReady = document.getElementById("tab-count-ready");
+    if (readyOrdersContainer) {
+      const len = readyOrdersContainer.children.length;
+      if (countReady) countReady.innerText = len;
+      if (tabCountReady) tabCountReady.innerText = len;
+    }
 
     if (ringTheBell && bell) bell.play().catch((e) => console.log("Son bloqué"));
 
@@ -621,6 +635,49 @@ async function resumeKitchenService() {
   }
 }
 
+export function switchKitchenTab(tab) {
+  const tabs = ["waiting", "new", "ready"];
+  const cols = {
+    waiting: document.getElementById("col-kitchen-waiting"),
+    new: document.getElementById("col-kitchen-new"),
+    ready: document.getElementById("col-kitchen-ready"),
+  };
+  const btns = {
+    waiting: document.getElementById("tab-btn-waiting"),
+    new: document.getElementById("tab-btn-new"),
+    ready: document.getElementById("tab-btn-ready"),
+  };
+
+  tabs.forEach((t) => {
+    const col = cols[t];
+    const btn = btns[t];
+    const badge = document.getElementById(`tab-count-${t}`);
+    if (!col || !btn) return;
+
+    if (t === tab) {
+      col.classList.remove("hidden");
+      col.classList.add("flex");
+      btn.setAttribute("aria-selected", "true");
+      if (t === "new") {
+        btn.className = "flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 bg-red-600 text-white shadow-sm";
+        if (badge) badge.className = "bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md";
+      } else if (t === "ready") {
+        btn.className = "flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 bg-green-600 text-white shadow-sm";
+        if (badge) badge.className = "bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md";
+      } else {
+        btn.className = "flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 bg-gray-600 text-white shadow-sm";
+        if (badge) badge.className = "bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md";
+      }
+    } else {
+      col.classList.add("hidden");
+      col.classList.remove("flex");
+      btn.setAttribute("aria-selected", "false");
+      btn.className = "flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 text-text-muted hover:text-text";
+      if (badge) badge.className = "bg-surface-2 text-text text-[10px] font-bold px-1.5 py-0.5 rounded-md";
+    }
+  });
+}
+
 window.startKitchenRadar = startKitchenRadar;
 window.stopKitchenRadar = stopKitchenRadar;
 window.updateOrderStatus = updateOrderStatus;
@@ -630,3 +687,5 @@ window.openKitchenPauseModal = openKitchenPauseModal;
 window.closeKitchenPauseModal = closeKitchenPauseModal;
 window.setKitchenServicePause = setKitchenServicePause;
 window.resumeKitchenService = resumeKitchenService;
+window.switchKitchenTab = switchKitchenTab;
+

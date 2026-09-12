@@ -195,25 +195,38 @@ class AdminMarketingUI {
             "event": "calendar",
             "weekend": "calendar-days",
             "sales-trend": "chart-line",
-            "football": "volleyball",
+            "football": "trophy",
         };
 
         this.tipsContainer.innerHTML = tips.map(tip => {
             const isAlert = tip.type === "sales-trend";
-            const bgClass = isAlert ? "bg-red-500/10 border-red-500/30" : "bg-blue-500/10 border-blue-500/30";
-            const dotClass = isAlert ? "bg-red-500" : "bg-blue-500";
-            const titleClass = isAlert ? "text-red-700 dark:text-red-400" : "text-blue-700 dark:text-blue-400";
-            const msgClass = isAlert ? "text-red-600 dark:text-red-300" : "text-blue-600 dark:text-blue-300";
-            const icon = ICON_BY_TYPE[tip.type] || "star";
+            const isFootball = tip.type === "football";
+
+            let bgClass = "bg-blue-500/10 border-blue-500/20";
+            let dotClass = "bg-blue-600 text-white";
+            let titleClass = "text-blue-700 dark:text-blue-400";
+            let msgClass = "text-text-muted";
+
+            if (isAlert) {
+                bgClass = "bg-red-500/10 border-red-500/20";
+                dotClass = "bg-red-600 text-white";
+                titleClass = "text-red-700 dark:text-red-400";
+            } else if (isFootball) {
+                bgClass = "bg-amber-500/10 border-amber-500/20";
+                dotClass = "bg-amber-600 text-white";
+                titleClass = "text-amber-700 dark:text-amber-400";
+            }
+
+            const icon = ICON_BY_TYPE[tip.type] || "sparkles";
 
             return `
-                <div class="flex items-start gap-3 p-3 ${bgClass} rounded-xl border animate-fade-in">
-                    <div class="w-8 h-8 rounded-full ${dotClass} text-white flex items-center justify-center shrink-0">
+                <div class="flex items-start gap-3 p-3.5 ${bgClass} rounded-2xl border transition">
+                    <div class="w-8 h-8 rounded-xl ${dotClass} flex items-center justify-center shrink-0 shadow-sm mt-0.5">
                         <i data-lucide="${icon}" class="text-xs"></i>
                     </div>
-                    <div>
-                        <h5 class="text-xs font-black ${titleClass} mb-0.5">${escapeHTML(tip.title || "")}</h5>
-                        <p class="text-[10px] ${msgClass} leading-tight">${escapeHTML(tip.message || "")}</p>
+                    <div class="min-w-0 flex-1">
+                        <h5 class="text-xs font-black ${titleClass} mb-1">${escapeHTML(tip.title || "")}</h5>
+                        <p class="text-[11px] ${msgClass} leading-relaxed">${escapeHTML(tip.message || "")}</p>
                     </div>
                 </div>
             `;

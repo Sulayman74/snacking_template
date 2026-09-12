@@ -199,7 +199,7 @@ class AdminComptaUI {
                </div>` : "";
 
         this.kpiExtrasEl.innerHTML = `
-            <div class="sm:col-span-2 lg:col-span-3 bg-surface-2 p-4 rounded-2xl border border-line">
+            <div class="col-span-full bg-surface-2 p-4 rounded-2xl border border-line">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-[10px] text-text-muted font-black uppercase tracking-wider">Du brut au net</p>
                     ${fr.active ? `<span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-500/15 text-green-600 dark:text-green-400">Franchise 0 % · ${fr.monthsRemaining} mois</span>` : ""}
@@ -222,14 +222,14 @@ class AdminComptaUI {
                 </div>
             </div>
 
-            <div class="bg-surface-2 p-3 rounded-xl border border-line">
+            <div class="bg-surface-2 p-3.5 rounded-xl border border-line">
                 <p class="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-1">Panier Moyen</p>
                 <p class="text-xl font-black text-text">${kpis.avg} €</p>
             </div>
             ${deliveryCard}
             ${upsellCard}
 
-            <div class="sm:col-span-2 lg:col-span-3 bg-surface-2 p-3 rounded-xl border border-line">
+            <div class="col-span-full bg-surface-2 p-3.5 rounded-xl border border-line">
                 <p class="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-2">TVA collectée par taux</p>
                 <div class="space-y-1.5">${tvaRows}</div>
                 <p class="text-[10px] text-text-muted mt-2 leading-snug">
@@ -262,7 +262,7 @@ class AdminComptaUI {
 
         this.historyTableEl.innerHTML = `
             ${truncatedNote}
-            <div class="overflow-x-auto">
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left">
                     <thead class="bg-surface-2 text-[10px] font-black text-text-muted uppercase tracking-widest">
                         <tr>
@@ -277,6 +277,42 @@ class AdminComptaUI {
                         ${sales.map(s => this.renderTableRow(s)).join("")}
                     </tbody>
                 </table>
+            </div>
+            <div class="block md:hidden space-y-2.5">
+                ${sales.map(s => this.renderMobileCard(s)).join("")}
+            </div>
+        `;
+    }
+
+    renderMobileCard(s) {
+        const d = s.date?.toDate ? s.date.toDate() : (s.date != null ? new Date(s.date) : null);
+        const valid = d && !isNaN(d.getTime());
+        const dateStr = valid ? escapeHTML(d.toLocaleDateString([], { day: '2-digit', month: '2-digit' })) : "—";
+        const timeStr = valid ? escapeHTML(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : "";
+        const clientName = escapeHTML(s.clientNom || s.clientEmail?.split("@")[0] || "Anonyme");
+        const totalStr = (parseFloat(s.total) || 0).toFixed(2);
+        const statutStr = escapeHTML(s.statut || "payé");
+
+        return `
+            <div class="bg-surface-2 p-3.5 rounded-xl border border-line flex items-center justify-between gap-3 hover:bg-surface-3 transition">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-black text-text text-sm truncate">${clientName}</span>
+                        <span class="shrink-0 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-700 dark:text-green-400">
+                            ${statutStr}
+                        </span>
+                    </div>
+                    <p class="text-xs text-text-muted flex items-center gap-1.5">
+                        <span>${dateStr}</span>
+                        ${timeStr ? `<span>•</span><span>${timeStr}</span>` : ""}
+                    </p>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    <span class="font-black text-text text-base">${totalStr} €</span>
+                    <button type="button" data-action="order-detail" data-id="${escapeHTML(s.id)}" aria-label="Voir le détail de la commande" class="min-w-[40px] min-h-[40px] rounded-lg bg-surface text-text-muted hover:text-text border border-line transition-all flex items-center justify-center">
+                        <i data-lucide="eye" class="text-sm pointer-events-none"></i>
+                    </button>
+                </div>
             </div>
         `;
     }

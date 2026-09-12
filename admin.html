@@ -233,27 +233,46 @@
             </button>
         </div>
 
-        <section id="view-cuisine" class="relative flex flex-col md:flex-row gap-6 p-4 pb-20 md:p-6 h-full min-h-full">
-            <div class="flex-1 min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line">
-                <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
-                    <h2 class="text-xl font-black text-text-muted uppercase"><i data-lucide="car" class="text-text-muted mr-2"></i> Attente Client</h2>
-                    <span id="count-waiting" class="bg-gray-500 text-white font-bold px-3 py-1 rounded-lg">0</span>
-                </div>
-                <div id="orders-waiting" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
+        <section id="view-cuisine" class="relative flex flex-col p-4 pb-20 md:p-6 h-full min-h-full">
+            <!-- Sélecteur d'onglets Cuisine sur mobile (< 768px) -->
+            <div class="flex md:hidden gap-1.5 p-1 bg-surface-3 rounded-2xl border border-line shrink-0 mb-4" id="kitchen-mobile-tabs" role="tablist">
+                <button type="button" onclick="window.switchKitchenTab('waiting')" id="tab-btn-waiting" role="tab" aria-selected="false" class="flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 text-text-muted hover:text-text">
+                    <span>Attente</span>
+                    <span id="tab-count-waiting" class="bg-surface-2 text-text text-[10px] font-bold px-1.5 py-0.5 rounded-md">0</span>
+                </button>
+                <button type="button" onclick="window.switchKitchenTab('new')" id="tab-btn-new" role="tab" aria-selected="true" class="flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 bg-red-600 text-white shadow-sm">
+                    <span>À Préparer</span>
+                    <span id="tab-count-new" class="bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">0</span>
+                </button>
+                <button type="button" onclick="window.switchKitchenTab('ready')" id="tab-btn-ready" role="tab" aria-selected="false" class="flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 text-text-muted hover:text-text">
+                    <span>Prêtes</span>
+                    <span id="tab-count-ready" class="bg-surface-2 text-text text-[10px] font-bold px-1.5 py-0.5 rounded-md">0</span>
+                </button>
             </div>
-            <div class="flex-1 min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line">
-                <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
-                    <h2 class="text-xl font-black text-text uppercase"><i data-lucide="flame" class="text-red-600 mr-2"></i> À Préparer</h2>
-                    <span id="count-new" class="bg-red-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
+
+            <!-- Colonnes KDS (grille desktop / onglet sélectionné mobile) -->
+            <div class="flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 overflow-hidden">
+                <div id="col-kitchen-waiting" class="flex-1 min-w-0 md:min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line hidden md:flex">
+                    <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
+                        <h2 class="text-lg md:text-xl font-black text-text-muted uppercase flex items-center"><i data-lucide="car" class="text-text-muted mr-2"></i> Attente Client</h2>
+                        <span id="count-waiting" class="bg-gray-500 text-white font-bold px-3 py-1 rounded-lg">0</span>
+                    </div>
+                    <div id="orders-waiting" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
                 </div>
-                <div id="orders-new" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
-            </div>
-            <div class="flex-1 min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line">
-                <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
-                    <h2 class="text-xl font-black text-text uppercase"><i data-lucide="circle-check" class="text-green-600 mr-2"></i> Prêtes</h2>
-                    <span id="count-ready" class="bg-green-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
+                <div id="col-kitchen-new" class="flex-1 min-w-0 md:min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line flex">
+                    <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
+                        <h2 class="text-lg md:text-xl font-black text-text uppercase flex items-center"><i data-lucide="flame" class="text-red-600 mr-2"></i> À Préparer</h2>
+                        <span id="count-new" class="bg-red-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
+                    </div>
+                    <div id="orders-new" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
                 </div>
-                <div id="orders-ready" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
+                <div id="col-kitchen-ready" class="flex-1 min-w-0 md:min-w-75 bg-surface-3 rounded-2xl p-4 flex flex-col max-h-full border border-line hidden md:flex">
+                    <div class="flex justify-between items-center mb-4 border-b border-line pb-3">
+                        <h2 class="text-lg md:text-xl font-black text-text uppercase flex items-center"><i data-lucide="circle-check" class="text-green-600 mr-2"></i> Prêtes</h2>
+                        <span id="count-ready" class="bg-green-600 text-white font-bold px-3 py-1 rounded-lg">0</span>
+                    </div>
+                    <div id="orders-ready" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-20 md:pb-0"></div>
+                </div>
             </div>
         </section>
 
@@ -371,9 +390,9 @@
 
                     <!-- Colonne Droite : Advisor & Stats -->
                     <div class="space-y-6">
-                        <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg">
-                            <h3 class="text-lg font-black mb-4 flex items-center gap-2">
-                                <i data-lucide="lightbulb" class="text-yellow-300"></i> Smart Advisor
+                        <div class="bg-surface rounded-3xl p-6 border border-line shadow-sm">
+                            <h3 class="text-lg font-black text-text mb-4 flex items-center gap-2">
+                                <i data-lucide="sparkles" class="text-amber-500"></i> Smart Advisor
                             </h3>
                             <div id="marketing-tips-container" class="space-y-3">
                                 <!-- Injecté par AdminMarketingUI -->
@@ -406,18 +425,18 @@
                         <h3 class="text-lg font-bold text-text mb-4 flex items-center gap-2">
                             <i data-lucide="chart-line" class="text-blue-500"></i> Ce mois-ci
                         </h3>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div class="bg-surface-2 p-4 rounded-xl border border-line">
-                                <p class="text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Total Encaissé</p>
-                                <p class="text-4xl font-black text-text" id="compta-total-sales">-- €</p>
+                        <div class="grid grid-cols-2 gap-3 md:gap-4 mb-4">
+                            <div class="bg-surface-2 p-3.5 md:p-4 rounded-xl border border-line">
+                                <p class="text-[10px] md:text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Total Encaissé</p>
+                                <p class="text-xl sm:text-3xl lg:text-4xl font-black text-text truncate" id="compta-total-sales">-- €</p>
                             </div>
-                            <div class="bg-surface-2 p-4 rounded-xl border border-line">
-                                <p class="text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Commandes</p>
-                                <p class="text-4xl font-black text-text" id="compta-total-orders">--</p>
+                            <div class="bg-surface-2 p-3.5 md:p-4 rounded-xl border border-line">
+                                <p class="text-[10px] md:text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Commandes</p>
+                                <p class="text-xl sm:text-3xl lg:text-4xl font-black text-text" id="compta-total-orders">--</p>
                             </div>
                         </div>
                         <!-- KPIs supplémentaires : CA du jour, panier moyen, TVA -->
-                        <div class="grid grid-cols-3 gap-4" id="compta-kpi-extras"></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4" id="compta-kpi-extras"></div>
                     </div>
 
                     <div id="stripe-connect-card" class="bg-gradient-to-br from-indigo-900 to-gray-900 rounded-2xl p-6 shadow-md text-white flex flex-col justify-between">
@@ -445,12 +464,12 @@
                     <h3 class="text-lg font-bold text-text mb-4 flex items-center gap-2">
                         <i data-lucide="file-spreadsheet" class="text-green-500"></i> Export Livre de Caisse
                     </h3>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="setComptaDateRange('today')" class="px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-sm font-bold rounded-lg transition border border-line">Aujourd'hui</button>
-                        <button onclick="setComptaDateRange('week')" class="px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-sm font-bold rounded-lg transition border border-line">Cette semaine</button>
-                        <button onclick="setComptaDateRange('month')" class="px-3 py-1.5 bg-blue-600 text-white text-sm font-bold rounded-lg transition shadow-sm">Ce mois</button>
-                        <button onclick="setComptaDateRange('last-month')" class="px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-sm font-bold rounded-lg transition border border-line">Mois précédent</button>
-                        <button onclick="setComptaDateRange('quarter')" class="px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-sm font-bold rounded-lg transition border border-line">Ce trimestre</button>
+                    <div class="flex overflow-x-auto no-scrollbar gap-2 pb-2 mb-4 -mx-1 px-1 sm:flex-wrap sm:overflow-visible">
+                        <button onclick="setComptaDateRange('today')" class="whitespace-nowrap px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-xs md:text-sm font-bold rounded-lg transition border border-line">Aujourd'hui</button>
+                        <button onclick="setComptaDateRange('week')" class="whitespace-nowrap px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-xs md:text-sm font-bold rounded-lg transition border border-line">Cette semaine</button>
+                        <button onclick="setComptaDateRange('month')" class="whitespace-nowrap px-3 py-1.5 bg-blue-600 text-white text-xs md:text-sm font-bold rounded-lg transition shadow-sm">Ce mois</button>
+                        <button onclick="setComptaDateRange('last-month')" class="whitespace-nowrap px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-xs md:text-sm font-bold rounded-lg transition border border-line">Mois précédent</button>
+                        <button onclick="setComptaDateRange('quarter')" class="whitespace-nowrap px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-xs md:text-sm font-bold rounded-lg transition border border-line">Ce trimestre</button>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3 items-end">
                         <div class="flex-1">
