@@ -17,6 +17,27 @@ export default {
     starsDesc: "Les favoris du moment, validés par la team.",
     viewMenu: "Voir toute la carte"
   },
+  categories: {
+    burgers: "🍔 Burgers",
+    tacos: "🌯 Tacos",
+    pizzas: "🍕 Pizzas",
+    drinks: "🥤 Boissons",
+    sides: "🍟 Accompagnements",
+    desserts: "🍰 Desserts",
+    supplements: "🧀 Suppléments & Extras",
+    extras: "🧀 Suppléments & Extras"
+  },
+  menu: {
+    searchPlaceholder: "Un p'tit creux ?",
+    emptySearch: "Aucun produit trouvé"
+  },
+  upsell: {
+    title: "Envie d'un petit plus ?",
+    added: "Ajouté",
+    add: "Ajouter",
+    addAria: "Ajouter {name} au panier",
+    continue: "Continuer"
+  },
   cart: {
     title: "Mon Panier",
     empty: "Votre panier est vide 🛒",

@@ -17,6 +17,27 @@ export default {
     starsDesc: "Current favorites, approved by the team.",
     viewMenu: "See all menu"
   },
+  categories: {
+    burgers: "🍔 Burgers",
+    tacos: "🌯 Tacos",
+    pizzas: "🍕 Pizzas",
+    drinks: "🥤 Drinks",
+    sides: "🍟 Sides & Fries",
+    desserts: "🍰 Desserts",
+    supplements: "🧀 Add-ons & Extras",
+    extras: "🧀 Add-ons & Extras"
+  },
+  menu: {
+    searchPlaceholder: "Craving something?",
+    emptySearch: "No products found"
+  },
+  upsell: {
+    title: "Care for something extra?",
+    added: "Added",
+    add: "Add",
+    addAria: "Add {name} to cart",
+    continue: "Continue"
+  },
   cart: {
     title: "My Cart",
     empty: "Your cart is empty 🛒",

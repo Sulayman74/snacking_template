@@ -137,6 +137,16 @@ document.addEventListener("click", async (event) => {
       break;
     }
 
+    case "toggle-lang": {
+      window.triggerVibration?.("light");
+      const current = localStorage.getItem("snack_locale") || "fr";
+      const next = current === "fr" ? "en" : "fr";
+      if (typeof window.changeLanguage === "function") {
+        window.changeLanguage(next);
+      }
+      break;
+    }
+
     case "open-client-card":
       window.triggerVibration?.("light");
       window.openClientCard();

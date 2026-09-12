@@ -143,6 +143,14 @@ export async function changeLanguage(lang) {
   
   // Notification globale
   window.dispatchEvent(new CustomEvent("snack:locale:changed", { detail: { lang: targetLang } }));
+  document.dispatchEvent(new CustomEvent("language-changed", { detail: { lang: targetLang } }));
+}
+
+/**
+ * Retourne la langue active.
+ */
+export function getCurrentLang() {
+  return currentLang;
 }
 
 /**
@@ -169,4 +177,5 @@ export async function initI18n() {
 if (typeof window !== "undefined") {
   window.t = t;
   window.changeLanguage = changeLanguage;
+  window.getCurrentLang = getCurrentLang;
 }

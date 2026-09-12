@@ -49,4 +49,30 @@ describe("Module i18n - Internationalisation", () => {
     expect(localStorage.getItem("snack_locale")).toBe("en");
     expect(t("navbar.menu")).toBe("The Menu");
   });
+
+  it("doit traduire les catégories en français et anglais", async () => {
+    await changeLanguage("fr");
+    expect(t("categories.burgers")).toBe("🍔 Burgers");
+    expect(t("categories.drinks")).toBe("🥤 Boissons");
+
+    await changeLanguage("en");
+    expect(t("categories.burgers")).toBe("🍔 Burgers");
+    expect(t("categories.drinks")).toBe("🥤 Drinks");
+  });
+
+  it("doit émettre les événements language-changed et snack:locale:changed", async () => {
+    const localeListener = vi.fn();
+    const docListener = vi.fn();
+
+    window.addEventListener("snack:locale:changed", localeListener);
+    document.addEventListener("language-changed", docListener);
+
+    await changeLanguage("en");
+
+    expect(localeListener).toHaveBeenCalled();
+    expect(docListener).toHaveBeenCalled();
+
+    window.removeEventListener("snack:locale:changed", localeListener);
+    document.removeEventListener("language-changed", docListener);
+  });
 });

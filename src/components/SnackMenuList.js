@@ -2,6 +2,7 @@ import { html } from 'lit';
 import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
 import { StoreController } from '../store/StoreController.js';
+import { t } from '../i18n/index.js';
 import './SnackMenuItem.js';
 
 export class SnackMenuList extends SnackElement {
@@ -46,6 +47,10 @@ export class SnackMenuList extends SnackElement {
   }
 
   getCategoryName(id) {
+    const translated = t(`categories.${id}`);
+    if (translated && translated !== `categories.${id}`) {
+      return translated;
+    }
     const names = {
       burgers: "🍔 Burgers",
       tacos: "🌯 Tacos",
@@ -141,7 +146,7 @@ export class SnackMenuList extends SnackElement {
           <div class="relative flex-1">
             <input type="text" 
                    id="menu-search-input" 
-                   placeholder="Un p'tit creux ?" 
+                   placeholder="${t('menu.searchPlaceholder') || 'Un p\'tit creux ?'}" 
                    .value="${this.searchQuery}"
                    @input="${this._handleSearchInput}"
                    class="w-full pl-10 pr-10 py-3 bg-surface-2 border-none rounded-2xl focus:ring-2 focus:ring-primary focus:bg-surface outline-none transition-all text-text font-medium text-sm" />

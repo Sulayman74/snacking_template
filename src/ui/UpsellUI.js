@@ -17,6 +17,7 @@
 import { store } from "../core/Store.js";
 import { escapeHTML } from "../utils.js";
 import { functions, httpsCallable } from "../core/firebase.js";
+import { t } from "../i18n/index.js";
 
 class UpsellUI {
     constructor() {
@@ -107,7 +108,7 @@ class UpsellUI {
             clone.querySelector(".upsell-item-price").textContent = `${prix.toFixed(2)} €`;
 
             const addBtn = clone.querySelector(".upsell-add-btn");
-            addBtn.setAttribute("aria-label", `Ajouter ${p.nom || "ce produit"} au panier`);
+            addBtn.setAttribute("aria-label", t("upsell.addAria", { name: p.nom || "" }));
             addBtn.onclick = () => this.#handleAdd(p, li, addBtn);
 
             fragment.appendChild(clone);
@@ -138,10 +139,11 @@ class UpsellUI {
 
         // 3. Feedback visuel inline instantané 1-tap sans modal bloquante
         btnElement.disabled = true;
+        const addedLabel = t("upsell.added") || "Ajouté";
         btnElement.innerHTML = `
             <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-            </svg> Ajouté
+            </svg> ${addedLabel}
         `;
         btnElement.classList.remove("bg-primary", "hover:bg-primary-hover");
         btnElement.classList.add("bg-emerald-600", "text-on-dark", "cursor-default");
