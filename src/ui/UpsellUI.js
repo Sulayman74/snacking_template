@@ -117,7 +117,14 @@ class UpsellUI {
     }
 
     #handleAdd(product, liElement, btnElement) {
-        // L'ajout passe par le Store, qui émet "cart-updated" et persiste.
+        // 1. Feedback haptique immédiat (mobile 40ms)
+        if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+            try { navigator.vibrate(40); } catch (_) {}
+        } else if (typeof window.triggerVibration === "function") {
+            window.triggerVibration("light");
+        }
+
+        // 2. L'ajout passe par le Store, qui émet "cart-updated" et persiste.
         store.addToCart({
             id: product.id,
             productId: product.id,
@@ -129,15 +136,16 @@ class UpsellUI {
             viaUpsell: true, // 📊 tag d'attribution (mesure accepted/revenue serveur)
         });
 
-        window.triggerVibration?.("light");
-
-        // Feedback visuel inline : pas de re-render complet (l'item disparaîtra
-        // si on rouvre la modale, c'est suffisant pour ce flow court).
+        // 3. Feedback visuel inline instantané 1-tap sans modal bloquante
         btnElement.disabled = true;
-        btnElement.innerHTML = `<i data-lucide="check" class="mr-1"></i> Ajouté`;
-        btnElement.classList.add("bg-green-600");
-        btnElement.classList.remove("bg-primary");
-        liElement.classList.add("opacity-60");
+        btnElement.innerHTML = `
+            <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg> Ajouté
+        `;
+        btnElement.classList.remove("bg-primary", "hover:bg-primary-hover");
+        btnElement.classList.add("bg-emerald-600", "text-white", "cursor-default");
+        liElement.classList.add("opacity-80", "ring-2", "ring-emerald-500", "rounded-xl");
     }
 
     /**

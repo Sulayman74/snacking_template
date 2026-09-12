@@ -1,3 +1,5 @@
+import { calculateUpsellScoring } from "./suggestionEngine.js";
+
 /**
  * 🗄️ Store — Source de Vérité Unique (Flux Unidirectionnel)
  * Gère l'état de l'application de manière privée et émet des événements lors des changements.
@@ -254,22 +256,17 @@ export class Store extends EventTarget {
      * @returns {Array<Object>} Produits suggérés.
      */
     getUpsellSuggestions(maxItems = 3, { rushMode = false } = {}) {
-        const menu = this.#state.menu || [];
-        const cart = this.#state.cart || [];
-        if (menu.length === 0) return [];
-
-        const LIGHT_RE = /(drinks?|boissons?|desserts?)/i;
-        const ALL_RE = /(drinks?|boissons?|sides?|accompagnements?|desserts?)/i;
-        const UPSELL_RE = rushMode ? LIGHT_RE : ALL_RE;
-        const cartProductIds = new Set(
-            cart.map((i) => i.productId || (typeof i.id === "string" ? i.id.split("-")[0] : i.id))
+        return calculateUpsellScoring(
+            this.#state.cart || [],
+            this.#state.menu || [],
+            {
+                currentHour: new Date().getHours(),
+                weatherCondition: (typeof window !== "undefined" && window.currentWeatherCondition) || "sunny",
+                isRushMode: Boolean(rushMode),
+                associationsMatrix: this.#state.associationsMatrix || {},
+                maxItems
+            }
         );
-
-        return menu
-            .filter((p) => p.isAvailable !== false)
-            .filter((p) => typeof p.categorieId === "string" && UPSELL_RE.test(p.categorieId))
-            .filter((p) => !cartProductIds.has(p.id))
-            .slice(0, maxItems);
     }
 
     // --- HELPERS ---

@@ -3,6 +3,7 @@
 // ============================================================================
 
 import "./scanner.js";
+import { extractTenantIdentifier } from "./core/tenantResolver.js";
 
 import {
   GoogleAuthProvider,
@@ -221,9 +222,8 @@ onAuthStateChanged(auth, async (user) => {
   // bootstrap du menu client ici).
   if (isAdminPage) return;
 
-  const urlParams = new URLSearchParams(window.location.search);
   let snackIdToLoad =
-    urlParams.get("s") || window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
+    extractTenantIdentifier() || window.CURRENT_SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06";
 
   try {
     // 1. Chargement de la config SaaS

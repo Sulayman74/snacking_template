@@ -25,4 +25,5 @@ module.exports = {
   ...require("./domains/media"),
   ...require("./domains/football"),
   ...require("./domains/growth"),
+  ...require("./domains/order-aggregations"),
 };

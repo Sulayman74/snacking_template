@@ -60,6 +60,33 @@ service cloud.firestore {
         allow read: if isSnackAdmin(snackId) || isSuperAdmin();
         allow write: if false;
       }
+
+      // 📊 AGRÉGATIONS JOURNALIÈRES (Mission 3) :
+      // Écriture réservée exclusivement aux Cloud Functions (Admin SDK).
+      // Lecture réservée à l'admin du snack ou superadmin.
+      match /dailyStats/{dateId} {
+        allow read: if isSnackAdmin(snackId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // 👤 CLIENTS DU TENANT (Mission 1 - Isolation OWASP anti-BOLA/IDOR) :
+      match /customers/{userId} {
+        // Le client lit son propre profil de ce snack ; l'admin lit les fiches de son snack.
+        allow get: if isOwner(userId) || isSnackAdmin(snackId) || isSuperAdmin();
+        allow list: if isSnackAdmin(snackId) || isSuperAdmin();
+
+        // Création : uniquement par le client pour son propre UID (sans falsifier soldes financiers).
+        allow create: if isOwner(userId)
+                      && !request.resource.data.keys().hasAny(['loyaltyPoints', 'totalSpent', 'ordersCount']);
+
+        // Modification : le client modifie ses coordonnées sans toucher aux champs financiers / fidélité.
+        allow update: if isOwner(userId) &&
+                         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                           'loyaltyPoints', 'totalSpent', 'ordersCount'
+                         ]);
+
+        allow delete: if isSuperAdmin();
+      }
     }
 
     match /users/{userId} {
