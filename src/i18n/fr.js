@@ -100,7 +100,8 @@ export default {
     stripeError: "Échec du chargement de Stripe.",
     invalidResponse: "Réponse serveur invalide.",
     webOrder: "Commande Web",
-    clientDefault: "Client"
+    clientDefault: "Client",
+    notConfirmed: "Paiement non confirmé par votre banque : la commande n'est pas enregistrée. Réessayez, ou contactez le restaurant si vous avez été débité."
   },
   pwa: {
     install: "Installer",

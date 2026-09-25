@@ -40,6 +40,76 @@ function allowedUnitPriceCents(product, supplementProducts = []) {
   return set;
 }
 
+function assertAvailable(product, label) {
+  if (product.isAvailable === false) {
+    throw new HttpsError("failed-precondition", `« ${label} » est épuisé.`);
+  }
+}
+
+// 🛡️ Le snack accepte-t-il les commandes en ligne dans ce mode ? Réplique serveur
+// des gardes de SnackCheckout.processCheckout (contournables par appel direct).
+// Seuls les flags EXPLICITEMENT coupés bloquent (=== false) : un snack legacy sans
+// le champ reste commandable, comme avant l'introduction du flag.
+function assertSnackAcceptsOrders(snackData, orderMode) {
+  if (snackData.maintenanceMode === true) {
+    throw new HttpsError("failed-precondition", "Le restaurant est momentanément indisponible.");
+  }
+  if (snackData.enableOnlineOrder === false) {
+    throw new HttpsError("failed-precondition", "La commande en ligne est désactivée pour ce restaurant.");
+  }
+  if (orderMode === "delivery" && snackData.enableDelivery === false) {
+    throw new HttpsError("failed-precondition", "La livraison est désactivée pour ce restaurant.");
+  }
+  if (orderMode !== "delivery" && snackData.enableClickAndCollect === false) {
+    throw new HttpsError("failed-precondition", "Le Click & Collect est désactivé pour ce restaurant.");
+  }
+}
+
+// Prix unitaire ATTENDU (centimes) pour la ligne TELLE QUE DÉCLARÉE : taille
+// choisie (ou prix simple), + menu si type "menu" (menuPriceAdd || 2.5, cf. client),
+// + suppléments. Lier le prix aux options empêche de payer un « Senior seul » en
+// déclarant « Mega en menu » (le ticket cuisine affiche les options déclarées).
+function expectedUnitPriceCents(product, item, supplementProducts = []) {
+  const cents = (e) => Math.round(Number(e) * 100);
+  const tailles = Array.isArray(product.tailles) && product.tailles.length > 0 ? product.tailles : null;
+  let base = Number(product.prix);
+  if (tailles) {
+    const taille = tailles.find((t) => t.nom === item.tailleChoisie);
+    require_(!!taille, `Taille invalide pour « ${product.nom} ».`);
+    base = Number(taille.prix);
+  }
+  require_(Number.isFinite(base), `Prix indisponible pour « ${product.nom} ».`);
+  const menuAdd = item.type === "menu" ? (product.menuPriceAdd || 2.5) : 0;
+  const suppAdd = supplementProducts.reduce((sum, sp) => sum + (Number(sp.prix) || 0), 0);
+  return cents(base + menuAdd) + cents(suppAdd);
+}
+
+const optStr = (v, max) => (typeof v === "string" && v.length > 0 ? v.slice(0, max) : null);
+const strList = (v, maxItems, maxLen) =>
+  (Array.isArray(v) ? v : []).filter((x) => typeof x === "string").slice(0, maxItems).map((x) => x.slice(0, maxLen));
+
+// Ligne de commande PERSISTÉE : reconstruite depuis la base (nom, suppléments,
+// prix validé) + options bornées. Jamais le payload client brut (sinon on paie
+// une canette et la cuisine lit « Menu XXL »). Champs = ceux lus par KDS, compta,
+// re-commande et agrégations.
+function buildOrderLine(item, product, supplementProducts, unitCents) {
+  const isMenu = item.type === "menu";
+  return {
+    id: optStr(item.id, 300) || item.productId,
+    productId: item.productId,
+    nom: isMenu ? `Menu ${product.nom}` : product.nom,
+    type: isMenu ? "menu" : "seul",
+    tailleChoisie: optStr(item.tailleChoisie, 50),
+    boissonNom: isMenu ? optStr(item.boissonNom, 100) : null,
+    sauces: strList(item.sauces, 15, 50),
+    sansCrudites: strList(item.sansCrudites, 15, 50),
+    supplements: supplementProducts.map((sp) => ({ productId: sp.id, nom: sp.nom, prix: Number(sp.prix) || 0 })),
+    prix: unitCents / 100,
+    quantity: item.quantity,
+    viaUpsell: item.viaUpsell === true,
+  };
+}
+
 // Vérifie que CHAQUE prix unitaire facturé correspond à un prix réel du produit en
 // base (anti-fraude) et calcule le sous-total articles + la ventilation TVA. La
 // couverture par l'encaissement Stripe est vérifiée par l'appelant (finalizeOrder),
@@ -63,11 +133,15 @@ async function priceCartItems(cartItems, snackId) {
 
   let expectedItemsCents = 0;
   const lines = [];
+  const orderItems = [];
   for (const item of cartItems) {
     const product = products.get(item.productId);
     require_(!!product, `Produit introuvable : ${item.productId}.`);
     // Cloisonnement multi-tenant : le produit doit appartenir au snack commandé.
     require_(product.snackId === snackId, "Produit hors du restaurant ciblé.");
+    // Stock : un panier resté en localStorage peut contenir un produit épuisé
+    // depuis (le client ne revalide qu'à l'ouverture de la modale).
+    assertAvailable(product, item.nom || product.nom);
 
     // Validation des suppléments attachés à la ligne
     const itemSupplements = Array.isArray(item.supplements) ? item.supplements : [];
@@ -81,23 +155,33 @@ async function priceCartItems(cartItems, snackId) {
       const suppDoc = products.get(sId);
       require_(!!suppDoc, `Supplément introuvable : ${supp.nom || sId}.`);
       require_(suppDoc.snackId === snackId, "Supplément hors du restaurant ciblé.");
-      validatedSuppProducts.push(suppDoc);
+      assertAvailable(suppDoc, supp.nom || suppDoc.nom);
+      validatedSuppProducts.push({ ...suppDoc, id: sId });
     }
 
+    require_(
+      item.type === undefined || item.type === null || item.type === "seul" || item.type === "menu",
+      "Formule invalide."
+    );
     const paidCents = Math.round(Number(item.prix) * 100);
-    const allowed = allowedUnitPriceCents(product, validatedSuppProducts);
-    const ok = [...allowed].some((a) => Math.abs(a - paidCents) <= TOL);
-    require_(ok, `Prix manipulé pour « ${item.nom} » (${item.prix} € non autorisé).`);
+    const expectedCents = expectedUnitPriceCents(product, item, validatedSuppProducts);
+    require_(
+      Math.abs(expectedCents - paidCents) <= TOL,
+      `Prix manipulé pour « ${product.nom} » (${item.prix} € non autorisé).`
+    );
 
-    const ttcCents = paidCents * item.quantity;
+    // Prix persisté = prix SERVEUR (pas l'arrondi client à ±1c).
+    const ttcCents = expectedCents * item.quantity;
     expectedItemsCents += ttcCents;
     // tvaRate LU EN BASE (jamais du client) → ventilation TVA fiable (LOT A).
     lines.push({ productId: item.productId, ttcCents, tvaRate: normalizeTvaRate(product.tvaRate) });
+    orderItems.push(buildOrderLine(item, product, validatedSuppProducts, expectedCents));
   }
 
   // itemsCents : sous-total articles (centimes), prix validés → réutilisable (minOrder).
   // lines : ventilation par ligne (TTC + taux) pour le calcul tvaBreakdown (LOT A).
-  return { itemsCents: expectedItemsCents, lines };
+  // orderItems : lignes à PERSISTER dans la commande (reconstruites serveur).
+  return { itemsCents: expectedItemsCents, lines, orderItems };
 }
 
 /**
@@ -115,6 +199,8 @@ async function priceCartItems(cartItems, snackId) {
  * @throws {HttpsError} prix manipulé / out-of-range / minimum non atteint / pause service.
  */
 async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison) {
+  assertSnackAcceptsOrders(snackData, orderMode);
+
   // 🛡️ Garde Pause Service / Coup de Feu
   if (snackData.servicePausedUntil) {
     const pausedUntilDate = snackData.servicePausedUntil.toDate ? snackData.servicePausedUntil.toDate() : new Date(snackData.servicePausedUntil);
@@ -123,7 +209,7 @@ async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMod
     }
   }
 
-  const { itemsCents, lines } = await priceCartItems(cartItems, snackId);
+  const { itemsCents, lines, orderItems } = await priceCartItems(cartItems, snackId);
 
   let livraisonData = null;
   let distanceKm = null;
@@ -164,7 +250,7 @@ async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMod
     fraisCents = Math.round((livraisonData.frais || 0) * 100);
   }
 
-  return { itemsCents, lines, fraisCents, totalCents: itemsCents + fraisCents, livraisonData, distanceKm };
+  return { itemsCents, lines, orderItems, fraisCents, totalCents: itemsCents + fraisCents, livraisonData, distanceKm };
 }
 
 /**

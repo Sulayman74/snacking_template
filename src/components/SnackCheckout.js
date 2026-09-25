@@ -38,7 +38,20 @@ export class SnackCheckout extends SnackElement {
     return subtotal + fee;
   }
 
+  // 🛡️ Verrou anti double-clic : sans lui, deux clics rapides sur « Valider »
+  // créaient deux PaymentIntents et deux montages Stripe concurrents. Le verrou
+  // couvre tout le tunnel (auth invité, upsell, création du PI).
   async processCheckout() {
+    if (this._checkoutInFlight) return;
+    this._checkoutInFlight = true;
+    try {
+      await this._processCheckout();
+    } finally {
+      this._checkoutInFlight = false;
+    }
+  }
+
+  async _processCheckout() {
     const cfg = window.snackConfig;
     if (store.state.cart.length === 0) return window.showToast(t("toasts.checkout.emptyCart") || "Votre panier est vide", "error");
 
@@ -117,7 +130,7 @@ export class SnackCheckout extends SnackElement {
     this.totalAmount = this.getCartTotal();
     this.openPaymentSheet();
     this.errorMessage = '';
-    this._mountStripeElement(auth?.currentUser, cfg);
+    await this._mountStripeElement(auth?.currentUser, cfg);
   }
 
   async _mountStripeElement(currentUser, cfg) {
@@ -186,6 +199,8 @@ export class SnackCheckout extends SnackElement {
   }
 
   async submitStripePayment() {
+    // 🛡️ Anti double-clic : `?disabled` n'est appliqué qu'au prochain rendu Lit.
+    if (this.isProcessing) return;
     if (!this.stripeInstance || !this.stripeElements) {
       window.showToast(t("toasts.checkout.secureConnectionWait"), "error");
       return;
@@ -225,6 +240,10 @@ export class SnackCheckout extends SnackElement {
         window.showToast(t("toasts.checkout.paymentSuccess"), "success");
         this.closePaymentSheet();
         await this.finalizeOrderInFirestore(paymentIntent.id);
+      } else {
+        // processing / requires_* sans `error` : ne JAMAIS laisser l'écran muet.
+        this.errorMessage = t("payment.notConfirmed");
+        window.triggerVibration?.("error");
       }
     } catch (err) {
       console.error("Erreur critique au moment du paiement :", err);

@@ -100,7 +100,8 @@ export default {
     stripeError: "Failed to load Stripe.",
     invalidResponse: "Invalid server response.",
     webOrder: "Web Order",
-    clientDefault: "Guest"
+    clientDefault: "Guest",
+    notConfirmed: "Payment not confirmed by your bank: your order was not placed. Please retry, or contact the restaurant if you were charged."
   },
   pwa: {
     install: "Install",

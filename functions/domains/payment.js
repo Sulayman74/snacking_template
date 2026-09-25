@@ -166,7 +166,11 @@ exports.createPaymentIntent = onCall(
           snack_id: snackId,
           client_email: request.auth?.token?.email || metadata?.clientEmail || "",
         }),
-        automatic_payment_methods: { enabled: true },
+        // 🛡️ Pas de moyens de paiement à REDIRECTION (PayPal/Klarna/iDEAL…) : le
+        // client ne gère pas le retour sur return_url → client débité sans
+        // commande. Cartes (3DS en modale, redirect:"if_required"), Apple/Google
+        // Pay et Link restent disponibles.
+        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
       };
 
       // 4. Optionnel : Routage Stripe Connect (charge directe sur le compte connecté).
@@ -322,9 +326,9 @@ exports.finalizeOrder = onCall(
     // divergent), on rembourse AUTOMATIQUEMENT la charge avant de propager l'erreur
     // — plus de charge orpheline (F1). Le chemin nominal est déjà validé en amont
     // par createPaymentIntent, donc ce filet ne se déclenche qu'exceptionnellement.
-    let itemsCents, lines, fraisCents, livraisonData, distanceKm;
+    let itemsCents, lines, orderItems, fraisCents, livraisonData, distanceKm;
     try {
-      ({ itemsCents, lines, fraisCents, livraisonData, distanceKm } =
+      ({ itemsCents, lines, orderItems, fraisCents, livraisonData, distanceKm } =
         await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison));
 
       // 🛡️ TOTAL ATTENDU SERVEUR = articles + frais de livraison (config). On EXIGE
@@ -393,7 +397,9 @@ exports.finalizeOrder = onCall(
       // Collect : on attend l'arrivée du client avant de cuisiner.
       // Livraison : la cuisine démarre immédiatement (pas d'arrivée client).
       statut: orderMode === "delivery" ? "nouvelle" : "en_attente_client",
-      items: cartItems,
+      // Lignes RECONSTRUITES serveur (nom/suppléments/prix en base, options
+      // bornées) — jamais le payload client brut (cf. lib/pricing buildOrderLine).
+      items: orderItems,
       // Total cohérent avec livraison.frais (articles + frais config), recalculé
       // serveur — pas le brut Stripe (qui pourrait inclure un sur-paiement client).
       total: expectedTotalCents / 100,
@@ -561,7 +567,7 @@ exports.finalizeOrder = onCall(
     try {
       const upsellBatch = db.batch();
       let hasUpsell = false;
-      for (const item of cartItems) {
+      for (const item of orderItems) {
         if (item.viaUpsell !== true || !V.isDocId(item.productId)) continue;
         const qty = Number(item.quantity) || 0;
         const prix = Number(item.prix) || 0;

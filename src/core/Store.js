@@ -139,15 +139,30 @@ export class Store extends EventTarget {
         if (!product) return { ok: false, reason: "missing", currentItem: null };
         if (product.isAvailable === false) return { ok: false, reason: "unavailable", currentItem: null };
 
+        // Deux formats : panier (formule/taille) et commande persistée par le
+        // serveur (type/tailleChoisie) — la re-commande relit `commandes`.
+        const formule = item.formule || item.type || "seul";
+        const tailleNom = item.taille || item.tailleChoisie || null;
+
         let base = Number(product.prix) || 0;
-        if (item.taille) {
-            const taille = (product.tailles || []).find((t) => t.nom === item.taille);
+        if (tailleNom) {
+            const taille = (product.tailles || []).find((t) => t.nom === tailleNom);
             // La taille mémorisée n'existe plus → on ne devine pas, on signale.
             if (!taille) return { ok: false, reason: "missing", currentItem: null };
             base = Number(taille.prix) || 0;
         }
-        const menuAdd = item.formule === "menu" ? (Number(product.menuPriceAdd) || 2.5) : 0;
-        const currentPrix = base + menuAdd;
+        const menuAdd = formule === "menu" ? (Number(product.menuPriceAdd) || 2.5) : 0;
+
+        // Suppléments au prix COURANT ; un supplément retiré/épuisé → article ignoré
+        // (on ne sert pas silencieusement un burger sans son extra payé).
+        const supplements = [];
+        for (const s of Array.isArray(item.supplements) ? item.supplements : []) {
+            const sp = menu.find((p) => p.id === (s.productId || s.id));
+            if (!sp || sp.isAvailable === false) return { ok: false, reason: "unavailable", currentItem: null };
+            supplements.push({ productId: sp.id, nom: sp.nom, prix: Number(sp.prix) || 0 });
+        }
+        const suppAdd = supplements.reduce((sum, s) => sum + s.prix, 0);
+        const currentPrix = base + menuAdd + suppAdd;
 
         // Comparaison en centimes : pas d'arrondi flottant.
         const repriced =
@@ -156,7 +171,17 @@ export class Store extends EventTarget {
         return {
             ok: true,
             reason: repriced ? "reprice" : null,
-            currentItem: { ...item, prix: currentPrix, image: product.image || item.image },
+            // Normalisé au format panier : le payload (orderPayload.js) relit
+            // formule/taille/boisson ; le serveur lie le prix à ces options.
+            currentItem: {
+                ...item,
+                formule,
+                taille: tailleNom,
+                boisson: item.boisson || item.boissonNom || null,
+                supplements,
+                prix: currentPrix,
+                image: product.image || item.image,
+            },
         };
     }
 

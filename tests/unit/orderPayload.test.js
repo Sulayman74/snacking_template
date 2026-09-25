@@ -11,6 +11,10 @@ const PRODUITS = {
   cheddar: { snackId: "snackA", nom: "Cheddar", prix: 1.0, tvaRate: 10 },
   bacon: { snackId: "snackA", nom: "Bacon", prix: 1.5, tvaRate: 10 },
   supp_autre_snack: { snackId: "snackB", nom: "Truffe", prix: 0.1, tvaRate: 10 },
+  soda_epuise: { snackId: "snackA", nom: "Soda", prix: 2, tvaRate: 5.5, isAvailable: false },
+  oeuf_epuise: { snackId: "snackA", nom: "Oeuf", prix: 1, tvaRate: 10, isAvailable: false },
+  pizza: { snackId: "snackA", nom: "Pizza", tailles: [{ nom: "Senior", prix: 10 }, { nom: "Mega", prix: 14 }], tvaRate: 10 },
+  canette: { snackId: "snackA", nom: "Canette", prix: 2, tvaRate: 5.5 },
 };
 
 const mockDb = {
@@ -27,7 +31,7 @@ Module.prototype.require = function (id) {
   }
   return originalRequire.apply(this, arguments);
 };
-const { priceCartItems } = createRequire(import.meta.url)("../../functions/lib/pricing.js");
+const { priceCartItems, computeAuthoritativeOrder } = createRequire(import.meta.url)("../../functions/lib/pricing.js");
 Module.prototype.require = originalRequire;
 
 // Article tel que produit par product-modal.js#buildCartItem
@@ -89,5 +93,104 @@ describe("payload client → priceCartItems (serveur)", () => {
     const supplements = Array.from({ length: 21 }, () => ({ productId: "cheddar", nom: "Cheddar", prix: 1 }));
     await expect(priceCartItems([{ ...buildOrderItemsPayload([cartItem()])[0], supplements }], "snackA"))
       .rejects.toThrow(/Trop de suppléments/);
+  });
+});
+
+describe("computeAuthoritativeOrder — le snack accepte-t-il la commande ?", () => {
+  const cart = () => buildOrderItemsPayload([cartItem()]);
+  const run = (snackData, mode = "collect") =>
+    computeAuthoritativeOrder(snackData, "snackA", cart(), mode, mode === "delivery" ? { lat: 45, lng: 6 } : null);
+
+  it("snack legacy sans aucun flag → commandable (pas de régression)", async () => {
+    await expect(run({})).resolves.toMatchObject({ itemsCents: 2900 });
+  });
+
+  it("flags actifs → commandable en collect et en livraison", async () => {
+    const snack = { enableOnlineOrder: true, enableClickAndCollect: true, enableDelivery: true };
+    await expect(run(snack)).resolves.toBeTruthy();
+    await expect(run(snack, "delivery")).resolves.toBeTruthy();
+  });
+
+  it.each([
+    [{ maintenanceMode: true }, "collect", /indisponible/],
+    [{ enableOnlineOrder: false }, "collect", /commande en ligne est désactivée/],
+    [{ enableClickAndCollect: false }, "collect", /Click & Collect est désactivé/],
+    [{ enableDelivery: false }, "delivery", /livraison est désactivée/],
+  ])("REJETTE %j en %s", async (snack, mode, msg) => {
+    await expect(run(snack, mode)).rejects.toThrow(msg);
+  });
+
+  it("Click & Collect coupé n'empêche pas la livraison (et inversement)", async () => {
+    await expect(run({ enableClickAndCollect: false }, "delivery")).resolves.toBeTruthy();
+    await expect(run({ enableDelivery: false }, "collect")).resolves.toBeTruthy();
+  });
+});
+
+describe("priceCartItems — stock", () => {
+  it("REJETTE un produit épuisé (panier localStorage périmé)", async () => {
+    const item = { productId: "soda_epuise", nom: "Soda", prix: 2, quantity: 1 };
+    await expect(priceCartItems([item], "snackA")).rejects.toThrow(/Soda.*épuisé/);
+  });
+
+  it("REJETTE un supplément épuisé", async () => {
+    const item = cartItem({ prix: 13, supplements: [{ productId: "oeuf_epuise", nom: "Oeuf", prix: 1 }] });
+    await expect(priceCartItems(buildOrderItemsPayload([item]), "snackA")).rejects.toThrow(/Oeuf.*épuisé/);
+  });
+});
+
+describe("priceCartItems — prix lié aux options déclarées", () => {
+  const pizza = (over) => ({ productId: "pizza", nom: "Pizza", type: "seul", tailleChoisie: "Mega", prix: 14, quantity: 1, ...over });
+
+  it("ACCEPTE la taille déclarée à son prix, seule ou en menu", async () => {
+    await expect(priceCartItems([pizza()], "snackA")).resolves.toMatchObject({ itemsCents: 1400 });
+    await expect(priceCartItems([pizza({ type: "menu", prix: 16.5 })], "snackA")).resolves.toMatchObject({ itemsCents: 1650 });
+  });
+
+  it("REJETTE « Mega » payée au prix « Senior »", async () => {
+    await expect(priceCartItems([pizza({ prix: 10 })], "snackA")).rejects.toThrow(/Prix manipulé/);
+  });
+
+  it("REJETTE un menu payé au prix « seul »", async () => {
+    await expect(priceCartItems([pizza({ type: "menu", prix: 14 })], "snackA")).rejects.toThrow(/Prix manipulé/);
+  });
+
+  it("REJETTE une taille inexistante ou absente sur un produit taillé", async () => {
+    await expect(priceCartItems([pizza({ tailleChoisie: "XXL" })], "snackA")).rejects.toThrow(/Taille invalide/);
+    await expect(priceCartItems([pizza({ tailleChoisie: null })], "snackA")).rejects.toThrow(/Taille invalide/);
+  });
+
+  it("REJETTE une formule inconnue", async () => {
+    await expect(priceCartItems([pizza({ type: "gratuit" })], "snackA")).rejects.toThrow(/Formule invalide/);
+  });
+});
+
+describe("priceCartItems — lignes de commande reconstruites serveur", () => {
+  it("le nom vient de la base, pas du client (canette déclarée « Menu XXL »)", async () => {
+    const item = { productId: "canette", nom: "Menu Tacos XXL + boisson", prix: 2, quantity: 1 };
+    const { orderItems } = await priceCartItems([item], "snackA");
+    expect(orderItems[0]).toMatchObject({ nom: "Canette", type: "seul", prix: 2, quantity: 1 });
+  });
+
+  it("menu : nom préfixé, boisson conservée, suppléments nommés depuis la base", async () => {
+    const payload = buildOrderItemsPayload([cartItem({
+      supplements: [{ productId: "cheddar", nom: "<b>Faux</b>", prix: 1 }, { productId: "bacon", nom: "Bacon", prix: 1.5 }],
+    })]);
+    const { orderItems } = await priceCartItems(payload, "snackA");
+    expect(orderItems[0]).toMatchObject({
+      productId: "burger", nom: "Menu Burger", type: "menu", boissonNom: "Coca", prix: 14.5, quantity: 2,
+      supplements: [{ productId: "cheddar", nom: "Cheddar", prix: 1 }, { productId: "bacon", nom: "Bacon", prix: 1.5 }],
+    });
+  });
+
+  it("formule seule : pas de boisson persistée ; options bornées", async () => {
+    const item = {
+      productId: "canette", prix: 2, quantity: 1, type: "seul", boissonNom: "Coca",
+      sauces: Array.from({ length: 30 }, () => "x".repeat(80)), sansCrudites: [42, "Oignons"],
+    };
+    const { orderItems } = await priceCartItems([item], "snackA");
+    expect(orderItems[0].boissonNom).toBeNull();
+    expect(orderItems[0].sauces).toHaveLength(15);
+    expect(orderItems[0].sauces[0]).toHaveLength(50);
+    expect(orderItems[0].sansCrudites).toEqual(["Oignons"]);
   });
 });
