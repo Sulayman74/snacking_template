@@ -56,6 +56,7 @@ async function makeSucceededPI(amountCents) {
   const pi = await stripe.paymentIntents.create({
     amount: amountCents,
     currency: "eur",
+    metadata: { snack_id: SNACK },
     payment_method: "pm_card_visa",
     confirm: true,
     automatic_payment_methods: { enabled: true, allow_redirects: "never" },

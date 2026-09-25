@@ -18,6 +18,7 @@ const { computeAuthoritativeOrder, refundOrphanChargeBestEffort } = require("../
 const { generateSecretCode } = require("../lib/util");
 const { applyRefundToOrder } = require("../lib/refund");
 const { emitEvent } = require("../lib/events");
+const { ORDER_CURRENCY, assertPaymentIntentMatchesOrder } = require("../lib/paymentGuards");
 
 // Limite la profondeur des metadata acceptés par Stripe (clés/valeurs <=500 chars)
 function sanitizeStripeMetadata(metadata) {
@@ -152,7 +153,10 @@ exports.createPaymentIntent = onCall(
       // 3. Préparation des paramètres du PaymentIntent (montant = total serveur).
       const params = {
         amount: totalCents,
-        currency: currency ? currency.toLowerCase() : "eur",
+        // 🛡️ Devise IMPOSÉE serveur : le montant est calculé en centimes d'euro.
+        // Accepter la devise client permettait de payer 1500 KRW (~1 €) une
+        // commande de 15 € (devises sans décimales). Le param client est ignoré.
+        currency: ORDER_CURRENCY,
         description: description || "Commande en ligne",
         // Metadata SERVEUR de confiance (traçabilité) en plus de celles du client.
         // order_id ≡ paymentIntentId (id de commande déterministe dans finalizeOrder),
@@ -293,6 +297,9 @@ exports.finalizeOrder = onCall(
     if (paymentIntent.status !== "succeeded") {
       throw new HttpsError("failed-precondition", `Paiement non confirmé (statut: ${paymentIntent.status}).`);
     }
+
+    // 🛡️ PI émis pour CE snack et en EUR (cf. lib/paymentGuards).
+    assertPaymentIntentMatchesOrder(paymentIntent, snackId);
 
     // 3. Le contrôle du montant encaissé est fait plus bas, APRÈS recalcul serveur
     //    du total attendu (articles validés + frais de livraison config). On ne se

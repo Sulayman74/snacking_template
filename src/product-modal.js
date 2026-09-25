@@ -213,14 +213,14 @@ class ProductModalUI {
                 <input type="radio" name="formule" value="seul" checked class="sr-only peer" onchange="window.toggleDrinkSection()">
                 <div class="p-4 border-2 border-line rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
                     <span class="font-bold text-text">Seul</span>
-                    <span class="text-sm font-black text-text-muted">${this.currentProduct.prixBase.toFixed(2)} ${devise}</span>
+                    <span class="text-sm font-black text-text-muted">${this.currentProduct.prixBase.toFixed(2)} ${escapeHTML(devise)}</span>
                 </div>
             </label>
             <label class="relative cursor-pointer">
                 <input type="radio" name="formule" value="menu" class="sr-only peer" onchange="window.toggleDrinkSection()">
                 <div class="p-4 border-2 border-line rounded-2xl peer-checked:border-accent peer-checked:bg-primary/15 transition-all flex flex-col items-center">
                     <span class="font-bold text-text">En Menu</span>
-                    <span class="text-sm font-black text-accent">+ ${this.currentProduct.prixMenu.toFixed(2)} ${devise}</span>
+                    <span class="text-sm font-black text-accent">+ ${this.currentProduct.prixMenu.toFixed(2)} ${escapeHTML(devise)}</span>
                 </div>
             </label>
         </div>
@@ -378,7 +378,7 @@ class ProductModalUI {
 
     if (isOrderingEnabled) {
       const prix = this.getCalculatedPrice();
-      btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
+      btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${escapeHTML(devise)}</span>`;
       btn.className = "w-full py-4 rounded-xl font-bold text-on-dark bg-gray-900 hover:bg-primary hover:scale-105 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => window.confirmAddToCart();
     } else {
@@ -520,7 +520,7 @@ window.toggleDrinkSection = () => {
     const btn = document.getElementById("modal-cta");
     const devise = store.state.config.identity.currency || "€";
     const prix = productModalUI.getCalculatedPrice();
-    if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
+    if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${escapeHTML(devise)}</span>`;
     productModalUI.refreshFavButton();
     productModalUI.refreshAddState();
 };
@@ -528,7 +528,7 @@ window.updateProductPriceCTA = () => {
     const btn = document.getElementById("modal-cta");
     const devise = store.state.config.identity.currency || "€";
     const prix = productModalUI.getCalculatedPrice();
-    if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
+    if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${escapeHTML(devise)}</span>`;
     productModalUI.refreshFavButton();
 };
 window.refreshAddState = () => productModalUI.refreshAddState();
@@ -549,6 +549,6 @@ window.updateProductSize = (radio) => {
     const btn = document.getElementById("modal-cta");
     const devise = store.state.config.identity.currency || "€";
     const prix = productModalUI.getCalculatedPrice();
-    if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${devise}</span>`;
+    if (btn) btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${escapeHTML(devise)}</span>`;
     productModalUI.refreshFavButton();
 };

@@ -57,6 +57,7 @@ const farAddr = { adresse: "loin", lat: 49.5, lng: 3.5 };       // > 5 km → ho
 async function confirmedPI(amountCents) {
   return stripe.paymentIntents.create({
     amount: amountCents, currency: "eur", confirm: true,
+    metadata: { snack_id: SNACK },
     payment_method: "pm_card_visa",
     automatic_payment_methods: { enabled: true, allow_redirects: "never" },
   });

@@ -305,7 +305,7 @@ class AppUI {
             desktopBtn.setAttribute("data-action", action);
             if (url) desktopBtn.setAttribute("data-url", url);
             if (phone) desktopBtn.setAttribute("data-phone", phone);
-            desktopBtn.innerHTML = `<i data-lucide="${iconName}" class="mr-2 ${iconExtra}"></i> ${text}`;
+            desktopBtn.innerHTML = `<i data-lucide="${iconName}" class="mr-2 ${iconExtra}"></i> ${escapeHTML(text)}`;
         }
     }
 

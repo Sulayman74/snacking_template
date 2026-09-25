@@ -65,6 +65,7 @@ async function makeSucceededPI(amountCents) {
   return stripe.paymentIntents.create({
     amount: amountCents,
     currency: "eur",
+    metadata: { snack_id: SNACK },
     payment_method: "pm_card_visa",
     confirm: true,
     automatic_payment_methods: { enabled: true, allow_redirects: "never" },
@@ -80,6 +81,7 @@ async function makeConnectSucceededPI(amountCents, feeCents) {
     {
       amount: amountCents,
       currency: "eur",
+      metadata: { snack_id: SNACK_CONNECT },
       payment_method: "pm_card_visa",
       confirm: true,
       application_fee_amount: feeCents,

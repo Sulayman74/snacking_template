@@ -51,6 +51,7 @@ async function seed() {
 async function confirmedPI(amountCents) {
   const pi = await stripe.paymentIntents.create({
     amount: amountCents, currency: "eur", confirm: true,
+    metadata: { snack_id: SNACK },
     payment_method: "pm_card_visa",
     automatic_payment_methods: { enabled: true, allow_redirects: "never" },
   });

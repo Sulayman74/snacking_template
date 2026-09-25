@@ -214,7 +214,7 @@ export function createTicketElement(id, commande) {
             <div class="min-w-0 flex-1 pr-2">
                 <div class="flex items-center gap-2">
                   <h3 class="font-black text-xl md:text-2xl text-text truncate">${safeClientName}</h3>
-                  <span class="bg-surface-2 text-text border border-line px-2 py-0.5 rounded text-xs font-mono font-bold shrink-0">${secretCode}</span>
+                  <span class="bg-surface-2 text-text border border-line px-2 py-0.5 rounded text-xs font-mono font-bold shrink-0">${escapeHTML(secretCode)}</span>
                 </div>
                 <p class="text-xs md:text-sm text-text-muted font-bold mt-1 flex items-center gap-1"><i data-lucide="clock" class="text-xs"></i> ${timeString}</p>
             </div>
