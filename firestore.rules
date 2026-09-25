@@ -42,12 +42,21 @@ service cloud.firestore {
       // Update : superadmin (tout) OU admin du snack mais SANS toucher les champs
       // sensibles — gérés exclusivement par les Cloud Functions (Admin SDK) et le
       // superadmin (onboarding Stripe, statut Connect, suspension SaaS).
+      // Facturation plateforme (pricingPlan/commissionRate/minFeeCents/essai/
+      // prixAbonnement/createdAt) : lue par createPaymentIntent pour calculer
+      // application_fee_amount → l'admin pourrait sinon annuler la commission.
+      // Routage tenant (domaine/slug) : un slug usurpé détournerait les visiteurs
+      // d'un autre snack (tenantResolver).
       allow update: if isSuperAdmin()
                     || (
                          isSnackAdmin(snackId)
                          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
                               'stripeAccountId', 'stripeSubscriptionId', 'maintenanceMode',
-                              'stripeChargesEnabled', 'stripeDetailsSubmitted', 'stripePayoutsEnabled'
+                              'stripeChargesEnabled', 'stripeDetailsSubmitted', 'stripePayoutsEnabled',
+                              'stripeCustomerId',
+                              'pricingPlan', 'commissionRate', 'minFeeCents', 'trialPeriodMonths',
+                              'prixAbonnement', 'createdAt',
+                              'domaine', 'slug'
                             ])
                        );
 
@@ -191,15 +200,20 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'dateArriveeClient'])
           && request.resource.data.statut == 'nouvelle'
         ) ||
-        // L'admin du snack gère sa commande (statut cuisine, paiement, livreur…)
-        // MAIS ne peut PAS muter les champs financiers de compta : ils naissent
-        // dans finalizeOrder/refundOrder (Admin SDK, hors rules) et doivent rester
-        // une source de vérité serveur (LOT A). Le superadmin garde le plein accès.
+        // L'admin du snack gère sa commande : UNIQUEMENT le statut cuisine et le
+        // statut d'encaissement (paiement.statut, bouton caisse du KDS). Liste
+        // BLANCHE : snackId/userId/items/total/secretCode/compta (commission,
+        // stripeFee, tvaBreakdown, refund… LOT A) naissent dans finalizeOrder/
+        // refundOrder (Admin SDK) et restent la source de vérité serveur. Sans ça
+        // l'admin pouvait déplacer une commande (et un payload) vers le KDS d'un
+        // autre snack. Le superadmin garde le plein accès.
         (
           isSnackAdmin(resource.data.snackId)
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-               'commission', 'stripeFee', 'stripeNet', 'stripeFeePending', 'tvaBreakdown', 'refund'
-             ])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'paiement'])
+          && (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['paiement'])
+            || request.resource.data.paiement.diff(resource.data.paiement).affectedKeys().hasOnly(['statut'])
+          )
         ) ||
         isSuperAdmin() ||
         (

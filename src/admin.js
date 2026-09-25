@@ -526,18 +526,11 @@ window.seedBurgerSupplements = async () => {
       }
     }
 
-    // Backfill du snack (pricingPlan, trialPeriodMonths, etc.)
+    // Backfill du snack. Les champs de facturation (pricingPlan, trialPeriodMonths,
+    // prixAbonnement) sont réservés au superadmin par les rules : ils se règlent
+    // depuis la config snack du dashboard superadmin.
     const snackRef = doc(db, "snacks", snackId);
-    await setDoc(
-      snackRef,
-      {
-        pricingPlan: "starter",
-        prixAbonnement: 29,
-        trialPeriodMonths: 1,
-        servicePausedUntil: null,
-      },
-      { merge: true },
-    );
+    await setDoc(snackRef, { servicePausedUntil: null }, { merge: true });
 
     window.showToast(
       created > 0

@@ -67,3 +67,39 @@ describe("commandes — champs financiers serveur-only (LOT A)", () => {
     await assertFails(updateDoc(doc(db, "commandes", "cmd1"), { stripeNet: 999999 }));
   });
 });
+
+describe("commandes — liste blanche admin (statut + paiement.statut)", () => {
+  it("REFUSE de déplacer la commande vers un autre snack (KDS cross-tenant)", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertFails(updateDoc(doc(db, "commandes", "cmd1"), { snackId: "snackB", statut: "nouvelle" }));
+  });
+
+  it.each([
+    ["total", 0],
+    ["userId", "autre_client"],
+    ["secretCode", "<img src=x onerror=alert(1)>"],
+    ["items", [{ nom: "Menu XXL", quantity: 1 }]],
+  ])("REFUSE l'admin de modifier %s", async (field, value) => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertFails(updateDoc(doc(db, "commandes", "cmd1"), { [field]: value }));
+  });
+
+  it("REFUSE de modifier paiement.* hors statut (méthode, PI Stripe)", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertFails(updateDoc(doc(db, "commandes", "cmd1"), { "paiement.stripeSessionId": "pi_autre" }));
+    await assertFails(updateDoc(doc(db, "commandes", "cmd1"), { "paiement.methode": "especes" }));
+  });
+
+  it("AUTORISE le batch caisse du KDS (paiement.statut seul)", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertSucceeds(updateDoc(doc(db, "commandes", "cmd1"), { "paiement.statut": "paye", statut: "terminee" }));
+  });
+
+  it("REFUSE l'admin d'un autre snack", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", "admin_B"), { role: "admin", snackId: "snackB" });
+    });
+    const db = testEnv.authenticatedContext("admin_B").firestore();
+    await assertFails(updateDoc(doc(db, "commandes", "cmd1"), { statut: "prete" }));
+  });
+});

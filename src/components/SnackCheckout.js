@@ -1,6 +1,7 @@
 import { html } from 'lit';
 import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
+import { buildOrderItemsPayload } from '../core/orderPayload.js';
 import { upsellUI } from '../ui/UpsellUI.js';
 import { t } from "../i18n/index.js";
 import { auth, functions, httpsCallable, signInAnonymously } from '../core/firebase.js';
@@ -282,21 +283,7 @@ export class SnackCheckout extends SnackElement {
   }
 
   _buildOrderItemsPayload() {
-    return store.state.cart.map((item) => ({
-      id: item.id,
-      productId: item.productId || (typeof item.id === "string" ? item.id.split("-")[0] : null),
-      nom: item.nom,
-      type: item.formule || item.type || "seul",
-      boissonNom: item.boisson || null,
-      sauces: item.sauces || [],
-      sansCrudites: item.sansCrudites || [],
-      tailleChoisie: item.taille || item.tailleChoisie || null,
-      prix: item.prix || item.prixBase || 0,
-      prixBase: item.prixBase || item.prix,
-      prixMenuAdd: item.prixMenuAdd || 0,
-      quantity: item.quantity,
-      viaUpsell: item.viaUpsell === true,
-    }));
+    return buildOrderItemsPayload(store.state.cart);
   }
 
   _getDeliveryPayload() {

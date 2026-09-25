@@ -51,7 +51,7 @@ async function priceCartItems(cartItems, snackId) {
   // Lecture groupée de tous les produits principaux et suppléments
   const mainIds = cartItems.map((i) => i.productId).filter(Boolean);
   const suppIds = cartItems.flatMap((i) =>
-    Array.isArray(i.supplements) ? i.supplements.map((s) => s.productId || s.id).filter(Boolean) : []
+    Array.isArray(i.supplements) ? i.supplements.map((s) => s?.productId || s?.id).filter(Boolean) : []
   );
   const allProductIds = [...new Set([...mainIds, ...suppIds])];
   require_(allProductIds.length > 0, "Aucun produit identifiable dans le panier.");
@@ -71,8 +71,12 @@ async function priceCartItems(cartItems, snackId) {
 
     // Validation des suppléments attachés à la ligne
     const itemSupplements = Array.isArray(item.supplements) ? item.supplements : [];
+    require_(itemSupplements.length <= 20, "Trop de suppléments sur un article.");
     const validatedSuppProducts = [];
     for (const supp of itemSupplements) {
+      // Stocké tel quel dans la commande (items) et affiché au KDS → borné.
+      require_(supp && typeof supp === "object" && !Array.isArray(supp), "Supplément invalide.");
+      require_(supp.nom === undefined || (typeof supp.nom === "string" && supp.nom.length <= 100), "Nom de supplément invalide.");
       const sId = supp.productId || supp.id;
       const suppDoc = products.get(sId);
       require_(!!suppDoc, `Supplément introuvable : ${supp.nom || sId}.`);
