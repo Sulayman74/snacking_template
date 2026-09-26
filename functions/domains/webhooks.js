@@ -3,7 +3,7 @@
 // ============================================================================
 
 const { onRequest } = require("firebase-functions/v2/https");
-const { getStripe, resolveSubscriptionId } = require("../lib/stripe");
+const { getStripe, resolveSubscriptionId, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } = require("../lib/stripe");
 const { db, FieldValue } = require("../lib/admin");
 const { applyRefundToOrder } = require("../lib/refund");
 const { registerApplePayDomains } = require("../lib/wallets");
@@ -33,10 +33,10 @@ async function setSnackMaintenanceBySubscription(subscriptionId, maintenanceMode
     console.log(`${icon}: snack ${snackDoc.id} — ${reason} (Sub: ${subscriptionId}).`);
 }
 
-exports.stripeWebhook = onRequest({ region: "europe-west9" }, async (request, response) => {
+exports.stripeWebhook = onRequest({ region: "europe-west9", secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET] }, async (request, response) => {
     const stripe = getStripe();
     const sig = request.headers['stripe-signature'];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const endpointSecret = STRIPE_WEBHOOK_SECRET.value();
 
     let event;
 

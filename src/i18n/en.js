@@ -100,7 +100,8 @@ export default {
     stripeError: "Failed to load Stripe.",
     invalidResponse: "Invalid server response.",
     webOrder: "Web Order",
-    clientDefault: "Guest"
+    clientDefault: "Guest",
+    notConfirmed: "Payment not confirmed by your bank: your order was not placed. Please retry, or contact the restaurant if you were charged."
   },
   pwa: {
     install: "Install",
@@ -177,6 +178,10 @@ export default {
       deliveryDisabled: "Delivery is disabled.",
       clickCollectDisabled: "Online ordering is disabled.",
       maintenance: "Service temporarily under maintenance.",
+      closedNow: "The restaurant is closed.",
+      ordersClosed: "Online ordering is closed for this service (closing at {time}).",
+      reopenToday: "Reopens at {time}.",
+      reopenTomorrow: "Reopens tomorrow at {time}.",
       addressRequired: "Provide your delivery address.",
       outOfZone: "Your address is out of our delivery area.",
       minOrderRequired: "Minimum {min} € for delivery.",

@@ -48,6 +48,8 @@ export class AdminConfigUI {
         if (this.hoursGrid) {
             this.hoursGrid.innerHTML = cfg.hours.map(h => this.renderDayRow(h)).join("");
         }
+        const lastOrder = document.getElementById("config-last-order");
+        if (lastOrder) lastOrder.value = String(cfg.lastOrderMinutesBeforeClose || 0);
 
         // 3. Coordonnées & Réseaux
         const c = cfg.contact || {};
@@ -227,7 +229,11 @@ export class AdminConfigUI {
             breakEnd: row.querySelector(".hour-break-end").value
         }));
 
+        // Lu AVANT updateConfigField : chaque update relance render() (formulaire réécrit).
+        const lastOrderMinutes = Number(document.getElementById("config-last-order")?.value) || 0;
+
         adminStore.updateConfigField("hours", hours);
+        adminStore.updateConfigField("lastOrderMinutesBeforeClose", lastOrderMinutes);
         this.saveToServer("Horaires mis à jour !");
     }
 

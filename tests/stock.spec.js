@@ -44,8 +44,13 @@ test.describe('Gestion des Stocks & Sécurité', () => {
     await adminPage.waitForSelector('text="En Stock"', { timeout: 10000 });
 
     // Le chef trouve le premier produit "En stock"
-    const activeToggle = adminPage.locator('button.bg-green-500').first();
+    const activeToggle = adminPage.locator('button[data-action="toggle-product-ui"].bg-green-500').first();
     await expect(activeToggle).toBeVisible();
+    // Mémorisé pour REMETTRE EN STOCK en fin de test : les autres specs achètent
+    // ce même produit (données seedées partagées) et le serveur refuse désormais
+    // un produit épuisé.
+    const productId = await activeToggle.getAttribute('data-id');
+    const toggleOf = adminPage.locator(`button[data-action="toggle-product-ui"][data-id="${productId}"]`);
 
     // On force le clic DIRECTEMENT dans le moteur Javascript du navigateur
     await activeToggle.evaluate(node => node.click());
@@ -53,38 +58,44 @@ test.describe('Gestion des Stocks & Sécurité', () => {
     // On attend que le composant se rafraîchisse et affiche "Épuisé"
     await expect(adminPage.locator('text="Épuisé"').first()).toBeVisible({ timeout: 10000 });
 
-    // ==========================================
-    // 📱 2. LE CLIENT NAVIGUE SUR LA CARTE
-    // ==========================================
-    await clientPage.goto('http://localhost:5173?lang=fr');
+    try {
+      // ==========================================
+      // 📱 2. LE CLIENT NAVIGUE SUR LA CARTE
+      // ==========================================
+      await clientPage.goto('http://localhost:5173?lang=fr');
     
-    // Masquer le splash screen
-    await expect(clientPage.locator('#splash-screen')).toBeHidden({ timeout: 10000 });
-    await clientPage.evaluate(() => window.switchView('menu'));
+      // Masquer le splash screen
+      await expect(clientPage.locator('#splash-screen')).toBeHidden({ timeout: 10000 });
+      await clientPage.evaluate(() => window.switchView('menu'));
 
-    // On vérifie que la grande page du menu complet est bien affichée
-    const fullMenu = clientPage.locator('#full-menu');
-    await expect(fullMenu).toBeVisible();
+      // On vérifie que la grande page du menu complet est bien affichée
+      const fullMenu = clientPage.locator('#full-menu');
+      await expect(fullMenu).toBeVisible();
 
-    // ==========================================
-    // 🛑 3. VÉRIFICATION DU GARDE-FOU
-    // ==========================================
+      // ==========================================
+      // 🛑 3. VÉRIFICATION DU GARDE-FOU
+      // ==========================================
     
-    // Le robot cherche spécifiquement une carte produit qui contient le texte "Épuisé"
-    const outOfStockCard = clientPage.locator('#full-menu-container .group').filter({ hasText: 'Épuisé' }).first();
-    await expect(outOfStockCard).toBeVisible({ timeout: 10000 });
+      // Le robot cherche spécifiquement une carte produit qui contient le texte "Épuisé"
+      const outOfStockCard = clientPage.locator('#full-menu-container .group').filter({ hasText: 'Épuisé' }).first();
+      await expect(outOfStockCard).toBeVisible({ timeout: 10000 });
     
-    // Le client clique sur le produit grisé
-    await outOfStockCard.click();
+      // Le client clique sur le produit grisé
+      await outOfStockCard.click();
 
-    // VÉRIFICATION (comportement actuel) : la modale s'ouvre MAIS le bouton d'ajout
-    // est neutralisé — il affiche « Épuisé » et n'est pas commandable (cf.
-    // product-modal.js : isAvailable === false → CTA "Épuisé", cursor-not-allowed,
-    // onclick null). Le garde-fou anti-commande est bien là.
-    const modalCta = clientPage.locator('#modal-cta');
-    await expect(modalCta).toBeVisible({ timeout: 10000 });
-    await expect(modalCta).toHaveText('Épuisé');
-    await expect(modalCta).toHaveClass(/cursor-not-allowed/);
+      // VÉRIFICATION (comportement actuel) : la modale s'ouvre MAIS le bouton d'ajout
+      // est neutralisé — il affiche « Épuisé » et n'est pas commandable (cf.
+      // product-modal.js : isAvailable === false → CTA "Épuisé", cursor-not-allowed,
+      // onclick null). Le garde-fou anti-commande est bien là.
+      const modalCta = clientPage.locator('#modal-cta');
+      await expect(modalCta).toBeVisible({ timeout: 10000 });
+      await expect(modalCta).toHaveText('Épuisé');
+      await expect(modalCta).toHaveClass(/cursor-not-allowed/);
+    } finally {
+      // 🧹 Remise en stock (même si une assertion a échoué).
+      await toggleOf.evaluate(node => node.click());
+      await expect(toggleOf).toHaveClass(/bg-green-500/, { timeout: 10000 });
+    }
   });
 
 });

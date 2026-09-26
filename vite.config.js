@@ -1,5 +1,5 @@
 import { VitePWA } from 'vite-plugin-pwa' // 👈 1. L'import du plugin
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import fs from 'fs'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
@@ -22,7 +22,30 @@ const seoPath = resolve(__dirname, 'snacks-seo.json');
     };
   }
 
-export default defineConfig(() => {
+// 🛡️ GARDE-FOU SECRETS : toute variable VITE_* est écrite EN CLAIR dans le JS public.
+// Une clé secrète Stripe (sk_/rk_) ou un secret de webhook (whsec_) ne doit JAMAIS
+// y arriver → le build (et le serveur de dev) échoue. En build de production, la
+// clé publishable est OBLIGATOIRE : plus de clé de secours silencieuse dans le code.
+const SECRET_VALUE = /\b(sk|rk)_(test|live)_|\bwhsec_/;
+function assertPublicEnv(env, { command, mode }) {
+  for (const [name, value] of Object.entries(env)) {
+    if (name.startsWith('VITE_') && SECRET_VALUE.test(String(value))) {
+      throw new Error(`🚨 ${name} contient une clé SECRÈTE (sk_/rk_/whsec_) : elle serait publiée dans le site. Build annulé — mettez-y une clé publishable pk_… .`)
+    }
+  }
+  if (command === 'build' && mode === 'production') {
+    const pk = env.VITE_STRIPE_PUBLISHABLE_KEY || ''
+    if (!/^pk_(test|live)_/.test(pk)) {
+      throw new Error('🚨 VITE_STRIPE_PUBLISHABLE_KEY absente ou invalide (attendu pk_test_… ou pk_live_…). En CI : secret GitHub du même nom. En local : fichier .env.production.local (gitignoré). Cf. docs/STRIPE-GO-LIVE.md.')
+    }
+    if (pk.startsWith('pk_test_')) {
+      console.warn('⚠️  Build de PRODUCTION avec une clé Stripe de TEST : les paiements sont fictifs.')
+    }
+  }
+}
+
+export default defineConfig(({ command, mode }) => {
+  assertPublicEnv(loadEnv(mode, process.cwd(), 'VITE_'), { command, mode })
   const currentSnackId = process.env.SNACK_ID || 'Ym1YiO4Ue5Fb5UXlxr06'
   const seoData = snacksSeo[currentSnackId] || snacksSeo["Ym1YiO4Ue5Fb5UXlxr06"];
   const iconUrl = seoData.iconUrl || seoData.logoUrl;

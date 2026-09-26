@@ -58,19 +58,26 @@ jobs:
       - name: 🌐 Navigateurs Playwright
         run: npx playwright install --with-deps chromium
 
-      # Démarre auth/firestore/storage en émulateur, seed, puis lance les 3 specs
-      # qui ne dépendent PAS du paiement Stripe (cf. package.json → test:e2e).
+      # Démarre les émulateurs, seed, puis lance les specs E2E (cf. package.json →
+      # test:e2e), dont guest-checkout qui appelle l'API Stripe TEST.
       # L'app se branche sur les émulateurs grâce à VITE_E2E_TESTING=true.
       - name: 🧪 Tests E2E
+        # Clé Stripe TEST fournie UNIQUEMENT par le secret GitHub (aucune clé en dur).
+        # Les Functions la lisent comme un secret → functions/.secret.local en émulateur.
         run: |
-          if [ -n "${{ secrets.STRIPE_SECRET_KEY }}" ]; then
-            echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" > functions/.env
-          else
-            echo "STRIPE_SECRET_KEY=sk_test_51TG1RfIfiBxoqwsyO2yoMirsEnrFhIph722SR3E8LrHakSZCkj3ol6riBD19A7d4JSfSBHkRVSOcR9lUZL5yCN8s00dMYYurX9" > functions/.env
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "::error::Secret GitHub STRIPE_SECRET_KEY manquant (clé sk_test_ du sandbox Stripe)."
+            exit 1
           fi
+          case "$STRIPE_SECRET_KEY" in
+            sk_test_*) ;;
+            *) echo "::error::STRIPE_SECRET_KEY doit être une clé TEST (sk_test_)."; exit 1 ;;
+          esac
+          umask 077
+          echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" > functions/.secret.local
           npm run test:e2e
         env:
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'sk_test_51TG1RfIfiBxoqwsyO2yoMirsEnrFhIph722SR3E8LrHakSZCkj3ol6riBD19A7d4JSfSBHkRVSOcR9lUZL5yCN8s00dMYYurX9' }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
       - name: 📁 Rapport Playwright
         uses: actions/upload-artifact@v4

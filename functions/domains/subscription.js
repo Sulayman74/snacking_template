@@ -3,7 +3,7 @@
 // ============================================================================
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { getStripe } = require("../lib/stripe");
+const { getStripe, STRIPE_SECRET_KEY } = require("../lib/stripe");
 const { admin, db } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
@@ -14,7 +14,7 @@ const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
 // SUPERADMIN uniquement. Montant mensuel choisi (ex. 20/39/49 €) → prix INLINE
 // (price_data), donc aucun Price à pré-créer dans Stripe. Le snack_id voyage en
 // metadata → le webhook checkout.session.completed lie l'abonnement au snack.
-exports.createSubscriptionCheckout = onCall({ region: "europe-west1" }, async (request) => {
+exports.createSubscriptionCheckout = onCall({ region: "europe-west1", secrets: [STRIPE_SECRET_KEY] }, async (request) => {
   const stripe = getStripe();
   const { snackId, amountEur, origin } = request.data || {};
   require_(V.isDocId(snackId), "snackId invalide.");

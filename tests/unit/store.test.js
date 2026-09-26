@@ -157,3 +157,33 @@ describe("Store.addToCart / updateQuantity (jamais de NaN)", () => {
     expect(store.state.cart).toHaveLength(0);
   });
 });
+
+describe("Store.validateAgainstMenu — ligne de commande persistée (re-commande)", () => {
+  const menu = [
+    { id: "burger", nom: "Burger", prix: 9.5, menuPriceAdd: 2.5, isAvailable: true },
+    { id: "pizza", nom: "Pizza", tailles: [{ nom: "Mega", prix: 14 }], isAvailable: true },
+    { id: "cheddar", nom: "Cheddar", prix: 1, isAvailable: true },
+    { id: "oeuf", nom: "Oeuf", prix: 1, isAvailable: false },
+  ];
+  beforeEach(() => store.setMenu(menu));
+
+  it("format serveur (type/tailleChoisie/boissonNom/supplements) → prix menu + taille + suppléments", () => {
+    const r = store.validateAgainstMenu({
+      productId: "burger", nom: "Menu Burger", type: "menu", boissonNom: "Coca", prix: 13, quantity: 1,
+      supplements: [{ productId: "cheddar", nom: "Cheddar", prix: 1 }],
+    });
+    expect(r).toMatchObject({ ok: true, reason: null });
+    expect(r.currentItem).toMatchObject({ formule: "menu", boisson: "Coca", prix: 13 });
+    expect(r.currentItem.supplements).toEqual([{ productId: "cheddar", nom: "Cheddar", prix: 1 }]);
+  });
+
+  it("taille lue depuis tailleChoisie", () => {
+    const r = store.validateAgainstMenu({ productId: "pizza", type: "seul", tailleChoisie: "Mega", prix: 14 });
+    expect(r.currentItem).toMatchObject({ taille: "Mega", prix: 14 });
+  });
+
+  it("supplément épuisé → article ignoré", () => {
+    const r = store.validateAgainstMenu({ productId: "burger", prix: 10.5, supplements: [{ productId: "oeuf" }] });
+    expect(r).toMatchObject({ ok: false, reason: "unavailable" });
+  });
+});

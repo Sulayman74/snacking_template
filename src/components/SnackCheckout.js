@@ -1,6 +1,8 @@
 import { html } from 'lit';
 import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
+import { buildOrderItemsPayload } from '../core/orderPayload.js';
+import { getOrderingState } from '../core/openingHours.js';
 import { upsellUI } from '../ui/UpsellUI.js';
 import { t } from "../i18n/index.js";
 import { auth, functions, httpsCallable, signInAnonymously } from '../core/firebase.js';
@@ -25,7 +27,9 @@ export class SnackCheckout extends SnackElement {
     
     this.stripeInstance = null;
     this.stripeElements = null;
-    this.stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J";
+    // Aucune clé de secours : le build de prod échoue sans VITE_STRIPE_PUBLISHABLE_KEY
+    // (vite.config.js), le dev la lit dans .env.development.
+    this.stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
   }
 
   getCartTotal() {
@@ -37,7 +41,20 @@ export class SnackCheckout extends SnackElement {
     return subtotal + fee;
   }
 
+  // 🛡️ Verrou anti double-clic : sans lui, deux clics rapides sur « Valider »
+  // créaient deux PaymentIntents et deux montages Stripe concurrents. Le verrou
+  // couvre tout le tunnel (auth invité, upsell, création du PI).
   async processCheckout() {
+    if (this._checkoutInFlight) return;
+    this._checkoutInFlight = true;
+    try {
+      await this._processCheckout();
+    } finally {
+      this._checkoutInFlight = false;
+    }
+  }
+
+  async _processCheckout() {
     const cfg = window.snackConfig;
     if (store.state.cart.length === 0) return window.showToast(t("toasts.checkout.emptyCart") || "Votre panier est vide", "error");
 
@@ -55,6 +72,18 @@ export class SnackCheckout extends SnackElement {
     }
 
     if (cfg?.features?.maintenanceMode) return window.showToast(t("toasts.checkout.maintenance"), "error");
+
+    // 🕐 Horaires + heure limite de commande (même règle que createPaymentIntent).
+    const ordering = getOrderingState(cfg?.hours, new Date(), cfg?.timezone, cfg?.lastOrderMinutesBeforeClose);
+    if (!ordering.accepting) {
+      const why = ordering.reason === "cutoff"
+        ? t("toasts.checkout.ordersClosed", { time: ordering.closeTime })
+        : t("toasts.checkout.closedNow");
+      const when = ordering.nextOpenDayOffset === 0 ? t("toasts.checkout.reopenToday", { time: ordering.nextOpenTime })
+        : ordering.nextOpenDayOffset === 1 ? t("toasts.checkout.reopenTomorrow", { time: ordering.nextOpenTime })
+        : "";
+      return window.showToast(`${why} ${when}`.trim(), "error");
+    }
 
     if (cfg?.servicePausedUntil) {
       const pausedUntil = cfg.servicePausedUntil.toDate ? cfg.servicePausedUntil.toDate() : new Date(cfg.servicePausedUntil);
@@ -116,7 +145,7 @@ export class SnackCheckout extends SnackElement {
     this.totalAmount = this.getCartTotal();
     this.openPaymentSheet();
     this.errorMessage = '';
-    this._mountStripeElement(auth?.currentUser, cfg);
+    await this._mountStripeElement(auth?.currentUser, cfg);
   }
 
   async _mountStripeElement(currentUser, cfg) {
@@ -185,6 +214,8 @@ export class SnackCheckout extends SnackElement {
   }
 
   async submitStripePayment() {
+    // 🛡️ Anti double-clic : `?disabled` n'est appliqué qu'au prochain rendu Lit.
+    if (this.isProcessing) return;
     if (!this.stripeInstance || !this.stripeElements) {
       window.showToast(t("toasts.checkout.secureConnectionWait"), "error");
       return;
@@ -224,6 +255,10 @@ export class SnackCheckout extends SnackElement {
         window.showToast(t("toasts.checkout.paymentSuccess"), "success");
         this.closePaymentSheet();
         await this.finalizeOrderInFirestore(paymentIntent.id);
+      } else {
+        // processing / requires_* sans `error` : ne JAMAIS laisser l'écran muet.
+        this.errorMessage = t("payment.notConfirmed");
+        window.triggerVibration?.("error");
       }
     } catch (err) {
       console.error("Erreur critique au moment du paiement :", err);
@@ -282,21 +317,7 @@ export class SnackCheckout extends SnackElement {
   }
 
   _buildOrderItemsPayload() {
-    return store.state.cart.map((item) => ({
-      id: item.id,
-      productId: item.productId || (typeof item.id === "string" ? item.id.split("-")[0] : null),
-      nom: item.nom,
-      type: item.formule || item.type || "seul",
-      boissonNom: item.boisson || null,
-      sauces: item.sauces || [],
-      sansCrudites: item.sansCrudites || [],
-      tailleChoisie: item.taille || item.tailleChoisie || null,
-      prix: item.prix || item.prixBase || 0,
-      prixBase: item.prixBase || item.prix,
-      prixMenuAdd: item.prixMenuAdd || 0,
-      quantity: item.quantity,
-      viaUpsell: item.viaUpsell === true,
-    }));
+    return buildOrderItemsPayload(store.state.cart);
   }
 
   _getDeliveryPayload() {

@@ -4,6 +4,7 @@
  */
 import { store } from "../core/Store.js";
 import { escapeHTML, safeURL, showToast } from "../utils.js";
+import { getOrderingState, localClock } from "../core/openingHours.js";
 
 /**
  * Garantit la présence d'un <link> de police web, sans doublon (idempotent).
@@ -305,7 +306,7 @@ class AppUI {
             desktopBtn.setAttribute("data-action", action);
             if (url) desktopBtn.setAttribute("data-url", url);
             if (phone) desktopBtn.setAttribute("data-phone", phone);
-            desktopBtn.innerHTML = `<i data-lucide="${iconName}" class="mr-2 ${iconExtra}"></i> ${text}`;
+            desktopBtn.innerHTML = `<i data-lucide="${iconName}" class="mr-2 ${iconExtra}"></i> ${escapeHTML(text)}`;
         }
     }
 
@@ -347,8 +348,13 @@ class AppUI {
         const heroStatus = document.getElementById("hero-status");
         if (!list || !cfg.hours) return;
 
-        const now = new Date();
-        const todayIndex = now.getDay() === 0 ? 6 : now.getDay() - 1;
+        // Jour et heure du SNACK (son fuseau), pas ceux du téléphone du client.
+        const todayIndex = localClock(new Date(), cfg.timezone).dayIndex;
+        const status = heroStatus ? this.getOpeningStatus(cfg) : null;
+        if (status) {
+            heroStatus.innerText = status.label;
+            heroStatus.className = `inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border rounded-full backdrop-blur-md text-on-dark ${status.classes}`;
+        }
 
         list.innerHTML = cfg.hours.map((h, index) => {
             const isToday = index === todayIndex;
@@ -359,11 +365,6 @@ class AppUI {
             const hoursText = h.closed
                 ? `<span class="text-danger/50">Fermé</span>`
                 : (h.hasBreak ? `${safeOpen}–${safeBreakStart} / ${safeBreakEnd}–${safeClose}` : `${safeOpen} – ${safeClose}`);
-            if (isToday && heroStatus) {
-                const status = this.getOpeningStatus(h);
-                heroStatus.innerText = status.label;
-                heroStatus.className = `inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border rounded-full backdrop-blur-md text-on-dark ${status.classes}`;
-            }
             return `<li class="flex justify-between items-center py-2 ${isToday ? "text-on-dark/90 font-medium" : "text-on-dark/40"}">
                 <span class="flex items-center gap-2">
                     ${isToday ? `<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>` : `<span class="w-1.5 h-1.5 inline-block"></span>`}
@@ -374,22 +375,15 @@ class AppUI {
         }).join("");
     }
 
-    getOpeningStatus(h) {
-        if (!h || h.closed) return { status: "ferme", label: "Fermé actuellement", classes: "border-red-500 bg-red-500/50" };
-        const now = new Date();
-        const cur = now.getHours() * 60 + now.getMinutes();
-        const toMin = (str) => str.split(":").map(Number)[0] * 60 + str.split(":").map(Number)[1];
-        const openMin = toMin(h.open);
-        let closeMin = toMin(h.close);
-        if (closeMin <= openMin) closeMin += 1440;
-
-        if (h.hasBreak && h.breakStart && h.breakEnd) {
-            const bStart = toMin(h.breakStart), bEnd = toMin(h.breakEnd);
-            if (cur >= bStart && cur < bEnd) return { status: "ferme", label: `Fermé • Réouvre à ${h.breakEnd}`, classes: "border-red-500 bg-red-500/50" };
-        }
-
-        if (cur >= openMin && cur < closeMin) return { status: "ouvert", label: "Ouvert actuellement", classes: "border-green-500 bg-green-600/50" };
-        return { status: "ferme", label: "Fermé actuellement", classes: "border-red-500 bg-red-500/50" };
+    getOpeningStatus(cfg) {
+        const OPEN = "border-green-500 bg-green-600/50";
+        const CLOSED = "border-red-500 bg-red-500/50";
+        const state = getOrderingState(cfg?.hours, new Date(), cfg?.timezone, cfg?.lastOrderMinutesBeforeClose);
+        if (!state.configured) return null; // horaires absents/mal formés : badge inchangé
+        if (state.accepting) return { status: "ouvert", label: "Ouvert actuellement", classes: OPEN };
+        const reopen = state.nextOpenTime && state.nextOpenDayOffset === 0 ? ` • Réouvre à ${state.nextOpenTime}` : "";
+        if (state.reason === "cutoff") return { status: "commandes_closes", label: `Commandes closes${reopen}`, classes: CLOSED };
+        return { status: "ferme", label: reopen ? `Fermé${reopen}` : "Fermé actuellement", classes: CLOSED };
     }
 
     setupMobileMenu() {

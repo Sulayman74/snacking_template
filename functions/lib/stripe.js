@@ -15,22 +15,31 @@
 /** Version d'API Stripe épinglée — cf. endpoint webhook "snacks_events". */
 const STRIPE_API_VERSION = "2026-03-25.dahlia";
 
+// 🔐 Clés Stripe = SECRETS (Secret Manager), jamais de fichier déployé ni de
+// valeur en dur. Chaque Cloud Function qui appelle getStripe() DOIT déclarer
+// `secrets: [STRIPE_SECRET_KEY]` dans ses options (sinon la valeur est vide au
+// runtime). Prod : `firebase functions:secrets:set STRIPE_SECRET_KEY`.
+// Émulateur : functions/.secret.local (gitignoré). Harnais in-process :
+// process.env (lu par .value()). Cf. docs/STRIPE-GO-LIVE.md.
+const { defineSecret } = require("firebase-functions/params");
+
+const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
+const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
+
 /**
- * Instancie un client Stripe avec la clé secrète d'environnement et l'apiVersion
+ * Instancie un client Stripe avec la clé secrète (Secret Manager) et l'apiVersion
  * épinglée. À utiliser à la place de `require("stripe")(...)` direct.
  * Le SDK `stripe` est requis EN LAZY (ici, pas au chargement du module) pour que
  * la logique pure ré-exportée (resolveSubscriptionId) reste importable sans le SDK
  * — ex. tests unitaires en CI où `functions/node_modules` n'est pas installé.
  * @returns {import("stripe").Stripe} Client Stripe configuré.
  */
-const TEST_KEY_FALLBACK = "sk_test_51TG1RfIfiBxoqwsyO2yoMirsEnrFhIph722SR3E8LrHakSZCkj3ol6riBD19A7d4JSfSBHkRVSOcR9lUZL5yCN8s00dMYYurX9";
-
 function getStripe() {
-    const Stripe = require("stripe");
-    const key = process.env.STRIPE_SECRET_KEY || (process.env.FUNCTIONS_EMULATOR || process.env.CI ? TEST_KEY_FALLBACK : null);
+    const key = STRIPE_SECRET_KEY.value();
     if (!key) {
-        throw new Error("STRIPE_SECRET_KEY non configurée.");
+        throw new Error("STRIPE_SECRET_KEY non configurée (secret absent : cf. docs/STRIPE-GO-LIVE.md).");
     }
+    const Stripe = require("stripe");
     return Stripe(key, { apiVersion: STRIPE_API_VERSION });
 }
 
@@ -53,4 +62,4 @@ function resolveSubscriptionId(invoice) {
     return null;
 }
 
-module.exports = { getStripe, STRIPE_API_VERSION, resolveSubscriptionId };
+module.exports = { getStripe, STRIPE_API_VERSION, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, resolveSubscriptionId };

@@ -44,7 +44,7 @@ window.addTailleRow = (nom = "", prix = "") => {
   row.innerHTML = `
     <input type="text" placeholder="Ex: M, L, 33cm…" value="${escapeHTML(String(nom))}"
       class="edit-taille-nom flex-1 px-3 py-2 rounded-lg border border-line focus:border-blue-500 outline-none text-sm font-bold">
-    <input type="number" step="0.10" min="0" placeholder="Prix" value="${prix !== "" ? prix : ""}"
+    <input type="number" step="0.10" min="0" placeholder="Prix" value="${prix !== "" ? escapeHTML(String(prix)) : ""}"
       class="edit-taille-prix w-24 px-3 py-2 rounded-lg border border-line focus:border-blue-500 outline-none text-sm font-bold text-center">
     <span class="text-gray-500 text-sm font-bold shrink-0">€</span>
     <button type="button" onclick="this.closest('.taille-row').remove()"

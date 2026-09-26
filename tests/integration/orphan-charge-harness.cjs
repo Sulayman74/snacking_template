@@ -5,19 +5,13 @@
 //   O3. createPaymentIntent (livraison légitime)        → PI.amount = articles+frais (serveur)
 //   O4. finalizeOrder (PI payé + panier manipulé)       → REJET *et* charge remboursée
 // Lancé via `firebase emulators:exec --only firestore`. Clés lues depuis
-// functions/.env.local (gitignored).
+// functions/.secret.local (gitignored — cf. loadTestEnv.cjs).
 const path = require("node:path");
 const fs = require("node:fs");
 const FUNC_DIR = path.join(__dirname, "..", "..", "functions");
 
-// 1) Charger les clés test AVANT de requérir index.js (.env.local prioritaire).
-const envFile = fs.existsSync(path.join(FUNC_DIR, ".env.local"))
-  ? path.join(FUNC_DIR, ".env.local")
-  : path.join(FUNC_DIR, ".env");
-for (const line of fs.readFileSync(envFile, "utf8").split("\n")) {
-  const m = line.match(/^([A-Z_]+)=(.*)$/);
-  if (m) process.env[m[1]] = m[2];
-}
+// 1) Charger les clés TEST AVANT de requérir index.js (cf. loadTestEnv.cjs).
+require("./loadTestEnv.cjs").loadTestEnv();
 process.env.GCLOUD_PROJECT = "snacking-template";
 process.env.GOOGLE_CLOUD_PROJECT = "snacking-template";
 
@@ -57,6 +51,7 @@ const farAddr = { adresse: "loin", lat: 49.5, lng: 3.5 };       // > 5 km → ho
 async function confirmedPI(amountCents) {
   return stripe.paymentIntents.create({
     amount: amountCents, currency: "eur", confirm: true,
+    metadata: { snack_id: SNACK },
     payment_method: "pm_card_visa",
     automatic_payment_methods: { enabled: true, allow_redirects: "never" },
   });

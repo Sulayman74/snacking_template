@@ -100,7 +100,8 @@ export default {
     stripeError: "Échec du chargement de Stripe.",
     invalidResponse: "Réponse serveur invalide.",
     webOrder: "Commande Web",
-    clientDefault: "Client"
+    clientDefault: "Client",
+    notConfirmed: "Paiement non confirmé par votre banque : la commande n'est pas enregistrée. Réessayez, ou contactez le restaurant si vous avez été débité."
   },
   pwa: {
     install: "Installer",
@@ -177,6 +178,10 @@ export default {
       deliveryDisabled: "La livraison est désactivée.",
       clickCollectDisabled: "La commande en ligne est désactivée.",
       maintenance: "Service momentanément en maintenance.",
+      closedNow: "Le restaurant est fermé.",
+      ordersClosed: "Les commandes en ligne sont closes pour ce service (fermeture à {time}).",
+      reopenToday: "Réouverture à {time}.",
+      reopenTomorrow: "Réouverture demain à {time}.",
       addressRequired: "Indiquez votre adresse de livraison.",
       outOfZone: "Votre adresse est hors zone de livraison.",
       minOrderRequired: "Minimum {min} € pour la livraison.",

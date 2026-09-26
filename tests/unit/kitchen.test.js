@@ -63,6 +63,16 @@ describe("createTicketElement — rendu & statuts", () => {
     expect(el.innerHTML).toContain("&lt;img");
   });
 
+  it("échappe le secretCode (anti-XSS stockée cross-tenant)", () => {
+    const el = createTicketElement("o4c", {
+      ...baseCmd,
+      secretCode: '<img src=x onerror=alert(1)>',
+      statut: "nouvelle",
+    });
+    expect(el.querySelector("img")).toBeNull();
+    expect(el.textContent).toContain("<img src=x onerror=alert(1)>");
+  });
+
   it("nom client absent → 'Client Anonyme'", () => {
     const el = createTicketElement("o4b", { ...baseCmd, clientNom: undefined, statut: "nouvelle" });
     expect(el.textContent).toContain("Client Anonyme");

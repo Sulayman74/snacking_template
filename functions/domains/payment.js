@@ -4,7 +4,7 @@
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getMessaging } = require("firebase-admin/messaging");
-const { getStripe } = require("../lib/stripe");
+const { getStripe, STRIPE_SECRET_KEY } = require("../lib/stripe");
 const { ventilateTva } = require("../lib/tva");
 const { db, FieldValue, Timestamp } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
@@ -18,6 +18,7 @@ const { computeAuthoritativeOrder, refundOrphanChargeBestEffort } = require("../
 const { generateSecretCode } = require("../lib/util");
 const { applyRefundToOrder } = require("../lib/refund");
 const { emitEvent } = require("../lib/events");
+const { ORDER_CURRENCY, assertPaymentIntentMatchesOrder } = require("../lib/paymentGuards");
 
 // Limite la profondeur des metadata acceptés par Stripe (clés/valeurs <=500 chars)
 function sanitizeStripeMetadata(metadata) {
@@ -38,7 +39,7 @@ function sanitizeStripeMetadata(metadata) {
 // ============================================================================
 
 exports.createPaymentIntent = onCall(
-  { region: "europe-west1" },
+  { region: "europe-west1", secrets: [STRIPE_SECRET_KEY] },
   async (request) => {
     const stripe = getStripe();
 
@@ -125,7 +126,9 @@ exports.createPaymentIntent = onCall(
 
       // 2. 🛡️ MONTANT AUTORITATIF — recalcul + validation panier/zone/minimum AVANT
       //    tout débit. Toute manipulation rejette ici, sans charge orpheline (F1).
-      const { totalCents } = await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison);
+      const { totalCents } = await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison, {
+        enforceOpeningHours: true,
+      });
       require_(totalCents >= 50, "Montant inférieur au minimum (0,50 €).");
 
       // Règle Métier : Période d'essai (ex: 1 mois par défaut), puis commission selon la formule (Starter 8% ou Pro 0%).
@@ -152,7 +155,10 @@ exports.createPaymentIntent = onCall(
       // 3. Préparation des paramètres du PaymentIntent (montant = total serveur).
       const params = {
         amount: totalCents,
-        currency: currency ? currency.toLowerCase() : "eur",
+        // 🛡️ Devise IMPOSÉE serveur : le montant est calculé en centimes d'euro.
+        // Accepter la devise client permettait de payer 1500 KRW (~1 €) une
+        // commande de 15 € (devises sans décimales). Le param client est ignoré.
+        currency: ORDER_CURRENCY,
         description: description || "Commande en ligne",
         // Metadata SERVEUR de confiance (traçabilité) en plus de celles du client.
         // order_id ≡ paymentIntentId (id de commande déterministe dans finalizeOrder),
@@ -162,7 +168,11 @@ exports.createPaymentIntent = onCall(
           snack_id: snackId,
           client_email: request.auth?.token?.email || metadata?.clientEmail || "",
         }),
-        automatic_payment_methods: { enabled: true },
+        // 🛡️ Pas de moyens de paiement à REDIRECTION (PayPal/Klarna/iDEAL…) : le
+        // client ne gère pas le retour sur return_url → client débité sans
+        // commande. Cartes (3DS en modale, redirect:"if_required"), Apple/Google
+        // Pay et Link restent disponibles.
+        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
       };
 
       // 4. Optionnel : Routage Stripe Connect (charge directe sur le compte connecté).
@@ -193,7 +203,7 @@ exports.createPaymentIntent = onCall(
 // 💳 FONCTION 5 : FINALISATION COMMANDE (vérification Stripe côté serveur)
 // ============================================================================
 exports.finalizeOrder = onCall(
-  { region: "europe-west1" },
+  { region: "europe-west1", secrets: [STRIPE_SECRET_KEY] },
   async (request) => {
     const stripe = getStripe();
 
@@ -294,6 +304,9 @@ exports.finalizeOrder = onCall(
       throw new HttpsError("failed-precondition", `Paiement non confirmé (statut: ${paymentIntent.status}).`);
     }
 
+    // 🛡️ PI émis pour CE snack et en EUR (cf. lib/paymentGuards).
+    assertPaymentIntentMatchesOrder(paymentIntent, snackId);
+
     // 3. Le contrôle du montant encaissé est fait plus bas, APRÈS recalcul serveur
     //    du total attendu (articles validés + frais de livraison config). On ne se
     //    fie PAS au `totalCents` envoyé par le client (cf. CLAUDE.md §6.1).
@@ -315,9 +328,9 @@ exports.finalizeOrder = onCall(
     // divergent), on rembourse AUTOMATIQUEMENT la charge avant de propager l'erreur
     // — plus de charge orpheline (F1). Le chemin nominal est déjà validé en amont
     // par createPaymentIntent, donc ce filet ne se déclenche qu'exceptionnellement.
-    let itemsCents, lines, fraisCents, livraisonData, distanceKm;
+    let itemsCents, lines, orderItems, fraisCents, livraisonData, distanceKm;
     try {
-      ({ itemsCents, lines, fraisCents, livraisonData, distanceKm } =
+      ({ itemsCents, lines, orderItems, fraisCents, livraisonData, distanceKm } =
         await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison));
 
       // 🛡️ TOTAL ATTENDU SERVEUR = articles + frais de livraison (config). On EXIGE
@@ -386,7 +399,9 @@ exports.finalizeOrder = onCall(
       // Collect : on attend l'arrivée du client avant de cuisiner.
       // Livraison : la cuisine démarre immédiatement (pas d'arrivée client).
       statut: orderMode === "delivery" ? "nouvelle" : "en_attente_client",
-      items: cartItems,
+      // Lignes RECONSTRUITES serveur (nom/suppléments/prix en base, options
+      // bornées) — jamais le payload client brut (cf. lib/pricing buildOrderLine).
+      items: orderItems,
       // Total cohérent avec livraison.frais (articles + frais config), recalculé
       // serveur — pas le brut Stripe (qui pourrait inclure un sur-paiement client).
       total: expectedTotalCents / 100,
@@ -554,7 +569,7 @@ exports.finalizeOrder = onCall(
     try {
       const upsellBatch = db.batch();
       let hasUpsell = false;
-      for (const item of cartItems) {
+      for (const item of orderItems) {
         if (item.viaUpsell !== true || !V.isDocId(item.productId)) continue;
         const qty = Number(item.quantity) || 0;
         const prix = Number(item.prix) || 0;
@@ -595,7 +610,7 @@ exports.finalizeOrder = onCall(
  * (Idempotency-Key + dédup refundId).
  * @param {object} request.data - `{ orderId, amount?, reason? }`.
  */
-exports.refundOrder = onCall({ region: "europe-west1" }, async (request) => {
+exports.refundOrder = onCall({ region: "europe-west1", secrets: [STRIPE_SECRET_KEY] }, async (request) => {
   const stripe = getStripe();
   if (!request.auth) throw new HttpsError("unauthenticated", "Authentification requise.");
 
