@@ -233,6 +233,20 @@
             </button>
         </div>
 
+        <!-- 🔔 Bandeau « arrêt des commandes en ligne dans ≤ 15 min » (horaires + heure limite) -->
+        <div id="kitchen-closing-banner" class="hidden mx-4 md:mx-6 mt-12 mb-2 bg-surface border-2 border-amber-500 text-text px-5 py-3 rounded-2xl shadow-lg flex-col sm:flex-row gap-3 sm:items-center justify-between animate-fade-in">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">⏰</span>
+                <div>
+                    <p id="kitchen-closing-title" class="font-black text-sm">Arrêt des commandes en ligne bientôt</p>
+                    <p id="kitchen-closing-detail" class="text-xs text-text-muted font-bold"></p>
+                </div>
+            </div>
+            <button type="button" onclick="window.stopOrdersUntilReopening()" class="bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-black shadow hover:bg-amber-600 transition active:scale-95 flex items-center justify-center gap-1 shrink-0">
+                <i data-lucide="octagon-x" class="text-xs"></i> Arrêter maintenant
+            </button>
+        </div>
+
         <section id="view-cuisine" class="relative flex flex-col p-4 pb-20 md:p-6 h-full min-h-full">
             <!-- Sélecteur d'onglets Cuisine sur mobile (< 768px) -->
             <div class="flex md:hidden gap-1.5 p-1 bg-surface-3 rounded-2xl border border-line shrink-0 mb-4" id="kitchen-mobile-tabs" role="tablist">
@@ -692,6 +706,19 @@
                         <div id="config-hours-grid" class="space-y-3">
                             <!-- Injecté par JS : 7 lignes (Lundi-Dimanche) -->
                         </div>
+                        <div class="p-4 bg-surface rounded-2xl border border-line shadow-sm flex flex-col sm:flex-row sm:items-center gap-3">
+                            <label for="config-last-order" class="flex-1">
+                                <span class="block font-black text-text text-sm">Dernière commande en ligne</span>
+                                <span class="block text-xs text-text-muted">Les commandes s'arrêtent automatiquement avant chaque fermeture (midi et soir), pour laisser le temps à la cuisine.</span>
+                            </label>
+                            <select id="config-last-order" class="p-2 rounded-xl border border-line font-bold text-text bg-surface-2 outline-none">
+                                <option value="0">À la fermeture</option>
+                                <option value="15">15 min avant</option>
+                                <option value="30">30 min avant</option>
+                                <option value="45">45 min avant</option>
+                                <option value="60">1 h avant</option>
+                            </select>
+                        </div>
                         <div class="pt-4 flex justify-end">
                             <button type="submit" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-green-700 transition flex items-center gap-2">
                                 <i data-lucide="save"></i> Mettre à jour les horaires
@@ -1126,7 +1153,7 @@
           <i data-lucide="pause-circle"></i>
         </div>
         <h3 class="text-xl font-black text-text mb-1">Mettre en pause les commandes</h3>
-        <p class="text-xs text-text-muted mb-6 font-medium">Bloque temporairement les nouvelles commandes sur l'app pendant un coup de feu.</p>
+        <p class="text-xs text-text-muted mb-6 font-medium">Bloque les nouvelles commandes sur l'app (coup de feu, manque de personnel, fin de service). Les commandes en cours ne sont pas touchées.</p>
         
         <div class="grid grid-cols-2 gap-3 mb-6">
           <button type="button" onclick="window.setKitchenServicePause(15)" class="p-3.5 bg-surface-2 hover:bg-amber-500/20 hover:text-amber-400 text-text font-bold rounded-2xl border border-line transition text-sm flex flex-col items-center">
@@ -1144,6 +1171,10 @@
           <button type="button" onclick="window.setKitchenServicePause(60)" class="p-3.5 bg-surface-2 hover:bg-amber-500/20 hover:text-amber-400 text-text font-bold rounded-2xl border border-line transition text-sm flex flex-col items-center">
             <span class="text-lg font-black">1 heure</span>
             <span class="text-[10px] text-text-muted font-medium">Fermeture tempo</span>
+          </button>
+          <button type="button" onclick="window.stopOrdersUntilReopening()" class="col-span-2 p-3.5 bg-surface-2 hover:bg-amber-500/20 hover:text-amber-400 text-text font-bold rounded-2xl border border-line transition text-sm flex flex-col items-center">
+            <span class="text-lg font-black">Jusqu'à la réouverture</span>
+            <span class="text-[10px] text-text-muted font-medium">Coupe le reste du service, reprise auto selon vos horaires</span>
           </button>
         </div>
 

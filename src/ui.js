@@ -12,4 +12,4 @@ window.initAppVisuals = () => appUI.initAppVisuals(store.state.config);
 window.switchView = (viewName) => appUI.switchView(viewName);
 
 // Bridge pour les méthodes utilitaires si nécessaire
-window.getOpeningStatus = (h) => appUI.getOpeningStatus(h);
+window.getOpeningStatus = (cfg) => appUI.getOpeningStatus(cfg);

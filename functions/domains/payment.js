@@ -126,7 +126,9 @@ exports.createPaymentIntent = onCall(
 
       // 2. 🛡️ MONTANT AUTORITATIF — recalcul + validation panier/zone/minimum AVANT
       //    tout débit. Toute manipulation rejette ici, sans charge orpheline (F1).
-      const { totalCents } = await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison);
+      const { totalCents } = await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison, {
+        enforceOpeningHours: true,
+      });
       require_(totalCents >= 50, "Montant inférieur au minimum (0,50 €).");
 
       // Règle Métier : Période d'essai (ex: 1 mois par défaut), puis commission selon la formule (Starter 8% ou Pro 0%).

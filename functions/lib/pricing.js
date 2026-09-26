@@ -10,6 +10,7 @@ const { db } = require("./admin");
 const { require_ } = require("./validation");
 const { normalizeTvaRate } = require("./tva");
 const { haversineKm, numberOrNull, isFiniteNum } = require("./geo");
+const { getOrderingState, snackTimezone } = require("./openingHours");
 
 // --- Anti-fraude prix : recalcul depuis la base, jamais le prix du client ------
 // Ensemble des prix unitaires LÉGITIMES d'un produit (en centimes) :
@@ -63,6 +64,21 @@ function assertSnackAcceptsOrders(snackData, orderMode) {
   if (orderMode !== "delivery" && snackData.enableClickAndCollect === false) {
     throw new HttpsError("failed-precondition", "Le Click & Collect est désactivé pour ce restaurant.");
   }
+}
+
+// 🕐 Horaires d'ouverture + heure limite de commande (lastOrderMinutesBeforeClose),
+// évalués dans le fuseau du snack (Functions = UTC). Horaires absents/mal formés
+// → on ne bloque pas (cf. lib/openingHours).
+function assertSnackIsOpen(snackData, now) {
+  const state = getOrderingState(snackData.hours, now, snackTimezone(snackData), snackData.lastOrderMinutesBeforeClose);
+  if (state.accepting) return;
+  let reopening = "";
+  if (state.nextOpenTime && state.nextOpenDayOffset === 0) reopening = ` Réouverture à ${state.nextOpenTime}.`;
+  else if (state.nextOpenTime && state.nextOpenDayOffset === 1) reopening = ` Réouverture demain à ${state.nextOpenTime}.`;
+  const why = state.reason === "cutoff"
+    ? `Les commandes en ligne sont closes pour ce service (fermeture à ${state.closeTime}).`
+    : "Le restaurant est fermé.";
+  throw new HttpsError("failed-precondition", `${why}${reopening}`);
 }
 
 // Prix unitaire ATTENDU (centimes) pour la ligne TELLE QUE DÉCLARÉE : taille
@@ -195,11 +211,17 @@ async function priceCartItems(cartItems, snackId) {
  * @param {Array<Object>} cartItems - Articles du panier (prix recalculés en base).
  * @param {"collect"|"delivery"} orderMode - Mode de la commande.
  * @param {Object|null} livraison - Adresse client {lat,lng,adresse} (mode delivery).
+ * @param {{enforceOpeningHours?:boolean, now?:Date}} [options] - Horaires contrôlés si enforceOpeningHours.
  * @returns {Promise<{itemsCents:number, lines:Array, fraisCents:number, totalCents:number, livraisonData:(Object|null), distanceKm:(number|null)}>}
  * @throws {HttpsError} prix manipulé / out-of-range / minimum non atteint / pause service.
  */
-async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison) {
+async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison, options = {}) {
+  const { enforceOpeningHours = false, now = new Date() } = options;
   assertSnackAcceptsOrders(snackData, orderMode);
+  // Horaires : contrôlés AVANT débit (createPaymentIntent) uniquement. À la
+  // finalisation, un client qui a payé à 21:59:50 ne doit pas être remboursé
+  // parce que finalizeOrder s'exécute à 22:00:02.
+  if (enforceOpeningHours) assertSnackIsOpen(snackData, now);
 
   // 🛡️ Garde Pause Service / Coup de Feu
   if (snackData.servicePausedUntil) {

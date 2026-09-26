@@ -194,3 +194,42 @@ describe("priceCartItems — lignes de commande reconstruites serveur", () => {
     expect(orderItems[0].sansCrudites).toEqual(["Oignons"]);
   });
 });
+
+describe("computeAuthoritativeOrder — horaires d'ouverture (fuseau du snack)", () => {
+  const week = Array.from({ length: 7 }, () => ({ open: "11:00", close: "22:00", closed: false }));
+  const run = (snackData, iso, enforceOpeningHours = true) =>
+    computeAuthoritativeOrder(snackData, "snackA", buildOrderItemsPayload([cartItem()]), "collect", null, {
+      enforceOpeningHours, now: new Date(iso),
+    });
+
+  it("ouvert (21:30 à Paris) → accepté", async () => {
+    await expect(run({ hours: week }, "2026-09-23T19:30:00Z")).resolves.toBeTruthy();
+  });
+
+  it("fermé (22:30 à Paris) → rejet avec heure de réouverture", async () => {
+    await expect(run({ hours: week }, "2026-09-23T20:30:00Z")).rejects.toThrow("Le restaurant est fermé. Réouverture demain à 11:00.");
+  });
+
+  it("serveur en UTC : 21:30 UTC = 23:30 Paris → fermé", async () => {
+    await expect(run({ hours: week }, "2026-09-23T21:30:00Z")).rejects.toThrow(/fermé/);
+  });
+
+  it("fuseau du snack respecté (pushTimezone La Réunion : 17:30 UTC = 21:30 → ouvert)", async () => {
+    await expect(run({ hours: week, pushTimezone: "Indian/Reunion" }, "2026-09-23T17:30:00Z")).resolves.toBeTruthy();
+    await expect(run({ hours: week, pushTimezone: "Indian/Reunion" }, "2026-09-23T18:30:00Z")).rejects.toThrow(/fermé/);
+  });
+
+  it("dernière commande 30 min avant : 21:40 Paris → rejet « commandes closes »", async () => {
+    await expect(run({ hours: week, lastOrderMinutesBeforeClose: 30 }, "2026-09-23T19:40:00Z"))
+      .rejects.toThrow("Les commandes en ligne sont closes pour ce service (fermeture à 22:00). Réouverture demain à 11:00.");
+    await expect(run({ hours: week, lastOrderMinutesBeforeClose: 30 }, "2026-09-23T19:20:00Z")).resolves.toBeTruthy();
+  });
+
+  it("horaires absents → pas de blocage (snack legacy)", async () => {
+    await expect(run({}, "2026-09-23T01:00:00Z")).resolves.toBeTruthy();
+  });
+
+  it("finalisation (enforceOpeningHours false) → un client qui a payé juste avant la fermeture n'est pas rejeté", async () => {
+    await expect(run({ hours: week }, "2026-09-23T20:00:30Z", false)).resolves.toBeTruthy();
+  });
+});

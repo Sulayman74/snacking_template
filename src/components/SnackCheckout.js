@@ -2,6 +2,7 @@ import { html } from 'lit';
 import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
 import { buildOrderItemsPayload } from '../core/orderPayload.js';
+import { getOrderingState } from '../core/openingHours.js';
 import { upsellUI } from '../ui/UpsellUI.js';
 import { t } from "../i18n/index.js";
 import { auth, functions, httpsCallable, signInAnonymously } from '../core/firebase.js';
@@ -69,6 +70,18 @@ export class SnackCheckout extends SnackElement {
     }
 
     if (cfg?.features?.maintenanceMode) return window.showToast(t("toasts.checkout.maintenance"), "error");
+
+    // 🕐 Horaires + heure limite de commande (même règle que createPaymentIntent).
+    const ordering = getOrderingState(cfg?.hours, new Date(), cfg?.timezone, cfg?.lastOrderMinutesBeforeClose);
+    if (!ordering.accepting) {
+      const why = ordering.reason === "cutoff"
+        ? t("toasts.checkout.ordersClosed", { time: ordering.closeTime })
+        : t("toasts.checkout.closedNow");
+      const when = ordering.nextOpenDayOffset === 0 ? t("toasts.checkout.reopenToday", { time: ordering.nextOpenTime })
+        : ordering.nextOpenDayOffset === 1 ? t("toasts.checkout.reopenTomorrow", { time: ordering.nextOpenTime })
+        : "";
+      return window.showToast(`${why} ${when}`.trim(), "error");
+    }
 
     if (cfg?.servicePausedUntil) {
       const pausedUntil = cfg.servicePausedUntil.toDate ? cfg.servicePausedUntil.toDate() : new Date(cfg.servicePausedUntil);

@@ -5,6 +5,7 @@
 //               window.showToast
 
 import { escapeHTML } from "./utils.js";
+import { getOrderingState, snackTimezone } from "./core/openingHours.js";
 import { adminStore } from "./core/AdminStore.js";
 import {
   db,
@@ -28,6 +29,14 @@ import {
 // Throttlé : la décision rushMode vit côté serveur (getKitchenLoad, cache 30s).
 // On ne l'interroge qu'au plus une fois toutes les 30s, déclenché par les
 // changements du radar — pas à chaque docChange (coût + cache serveur).
+// Doc snack suivi en temps réel pendant le service (pause, horaires, heure limite) :
+// indépendant de l'onglet Config (adminStore.config n'est chargé qu'à son ouverture).
+let kitchenSnack = null;
+let unsubscribeKitchenSnack = null;
+let kitchenClockTimer = null;
+let closingNotifiedKey = null;
+const CLOSING_WARNING_MIN = 15;
+
 let lastKitchenLoadAt = 0;
 const KITCHEN_LOAD_THROTTLE_MS = 30_000;
 
@@ -305,6 +314,7 @@ function startKitchenRadar() {
   }
   
   requestWakeLock();
+  watchKitchenSnack();
 
   const waitingOrdersContainer = document.getElementById("orders-waiting");
   const newOrdersContainer = document.getElementById("orders-new");
@@ -411,6 +421,7 @@ function startKitchenRadar() {
 }
 
 function stopKitchenRadar() {
+  unwatchKitchenSnack();
   if (unsubscribeKitchenRadar) {
     unsubscribeKitchenRadar();
     unsubscribeKitchenRadar = null;
@@ -544,25 +555,114 @@ async function handleRefundOrder(orderId) {
 // ============================================================================
 // ⏸️ PAUSE DE SERVICE CUISINE (COUP DE FEU)
 // ============================================================================
+function watchKitchenSnack() {
+  unwatchKitchenSnack();
+  const snackId = window.currentAdminSnackId;
+  if (!snackId) return;
+  unsubscribeKitchenSnack = onSnapshot(
+    doc(db, "snacks", snackId),
+    (snap) => {
+      kitchenSnack = snap.exists() ? snap.data() : null;
+      refreshKitchenClock();
+    },
+    (err) => console.warn("Suivi snack (pause/horaires) indisponible :", err?.message),
+  );
+  // Le temps passe sans écriture Firestore : on réévalue horaires/pause toutes les 30 s.
+  kitchenClockTimer = setInterval(refreshKitchenClock, 30_000);
+}
+
+function unwatchKitchenSnack() {
+  unsubscribeKitchenSnack?.();
+  unsubscribeKitchenSnack = null;
+  if (kitchenClockTimer) clearInterval(kitchenClockTimer);
+  kitchenClockTimer = null;
+}
+
+function refreshKitchenClock() {
+  renderKitchenPauseStatus();
+  renderClosingSoon();
+}
+
+function kitchenOrderingState() {
+  if (!kitchenSnack) return null;
+  return getOrderingState(
+    kitchenSnack.hours, new Date(), snackTimezone(kitchenSnack), kitchenSnack.lastOrderMinutesBeforeClose,
+  );
+}
+
+function currentPauseEnd() {
+  const src = kitchenSnack || adminStore.state.config;
+  const raw = src?.servicePausedUntil;
+  const until = raw ? (raw.toDate ? raw.toDate() : new Date(raw)) : null;
+  return until && until > new Date() ? until : null;
+}
+
+// 🔔 Bandeau « arrêt des commandes dans ≤ 15 min » + bouton pour arrêter tout de suite.
+function renderClosingSoon() {
+  const banner = document.getElementById("kitchen-closing-banner");
+  if (!banner) return;
+  const state = kitchenOrderingState();
+  const show = !!state && state.configured && state.accepting && !currentPauseEnd()
+    && state.minutesToCutoff !== null && state.minutesToCutoff <= CLOSING_WARNING_MIN;
+  banner.classList.toggle("hidden", !show);
+  banner.classList.toggle("flex", show);
+  if (!show) return;
+
+  const title = document.getElementById("kitchen-closing-title");
+  const detail = document.getElementById("kitchen-closing-detail");
+  if (title) title.innerText = `Arrêt des commandes en ligne à ${state.cutoffTime}`;
+  if (detail) {
+    detail.innerText = state.lastOrderMinutes > 0
+      ? `Fermeture à ${state.closeTime} (dernière commande ${state.lastOrderMinutes} min avant) — encore ~${state.minutesToCutoff} min`
+      : `Fermeture à ${state.closeTime} — encore ~${state.minutesToCutoff} min`;
+  }
+
+  // Alerte sonore/vibrante une seule fois par service.
+  const key = `${new Date().toDateString()}-${state.cutoffTime}`;
+  if (closingNotifiedKey !== key) {
+    closingNotifiedKey = key;
+    window.triggerVibration?.("warning");
+    window.showToast?.(`Les commandes en ligne s'arrêtent à ${state.cutoffTime}.`, "info");
+  }
+}
+
+// ⏹️ Coupe les commandes jusqu'à la PROCHAINE ouverture (rush, sous-effectif, fin de service).
+async function stopOrdersUntilReopening() {
+  const state = kitchenOrderingState();
+  if (!state?.configured) {
+    return window.showToast?.("Renseignez vos horaires (onglet Config) pour utiliser cette option.", "error");
+  }
+  if (state.minutesToOpen === null) {
+    return window.showToast?.("Aucune réouverture prévue dans vos horaires.", "error");
+  }
+  const when = state.nextOpenDayOffset === 0 ? `à ${state.nextOpenTime}` : state.nextOpenDayOffset === 1
+    ? `demain à ${state.nextOpenTime}` : `à la prochaine ouverture (${state.nextOpenTime})`;
+  await setKitchenServicePause(state.minutesToOpen, `Commandes coupées jusqu'à la réouverture ${when} ⏹️`);
+}
+
 function renderKitchenPauseStatus() {
-  const cfg = adminStore.state.config;
+  const cfg = kitchenSnack || adminStore.state.config;
   const banner = document.getElementById("kitchen-pause-banner");
   const timerText = document.getElementById("kitchen-pause-timer-text");
   const triggerBtn = document.getElementById("btn-kitchen-pause-trigger");
 
   if (!cfg) return;
 
-  const pausedUntil = cfg.servicePausedUntil
-    ? (cfg.servicePausedUntil.toDate ? cfg.servicePausedUntil.toDate() : new Date(cfg.servicePausedUntil))
-    : null;
-  const isPaused = pausedUntil && pausedUntil > new Date();
+  const pausedUntil = currentPauseEnd();
+  const isPaused = !!pausedUntil;
 
   if (banner) {
     banner.classList.toggle("hidden", !isPaused);
     if (isPaused && timerText) {
-      const timeStr = pausedUntil.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
       const minLeft = Math.max(1, Math.round((pausedUntil.getTime() - Date.now()) / 60000));
-      timerText.innerText = `Reprise automatique à ${timeStr} (encore ~${minLeft} min)`;
+      // Heure du SNACK ; jour affiché si la reprise est lointaine (coupure jusqu'à la réouverture).
+      const timeStr = pausedUntil.toLocaleString("fr-FR", {
+        hour: "2-digit", minute: "2-digit", timeZone: snackTimezone(cfg),
+        ...(minLeft > 12 * 60 ? { weekday: "long" } : {}),
+      });
+      timerText.innerText = minLeft > 90
+        ? `Reprise automatique ${timeStr}`
+        : `Reprise automatique à ${timeStr} (encore ~${minLeft} min)`;
     }
   }
 
@@ -593,14 +693,13 @@ function closeKitchenPauseModal() {
   }
 }
 
-async function setKitchenServicePause(minutes) {
+async function setKitchenServicePause(minutes, successMessage) {
   const snackId = window.currentAdminSnackId;
   if (!snackId) return;
 
   const untilDate = new Date(Date.now() + minutes * 60000);
 
   try {
-    window.showToast?.(`Mise en pause pour ${minutes} min…`, "info");
     await updateDoc(doc(db, "snacks", snackId), {
       servicePausedUntil: untilDate
     });
@@ -609,7 +708,8 @@ async function setKitchenServicePause(minutes) {
       adminStore.state.config.servicePausedUntil = untilDate;
     }
     renderKitchenPauseStatus();
-    window.showToast?.(`Commandes suspendues pour ${minutes} minutes ⏸️`, "success");
+    renderClosingSoon();
+    window.showToast?.(successMessage || `Commandes suspendues pour ${minutes} minutes ⏸️`, "success");
   } catch (err) {
     console.error("Erreur mise en pause service:", err);
     window.showToast?.("Impossible d'activer la pause.", "error");
@@ -627,7 +727,7 @@ async function resumeKitchenService() {
     if (adminStore.state.config) {
       adminStore.state.config.servicePausedUntil = null;
     }
-    renderKitchenPauseStatus();
+    refreshKitchenClock();
     window.showToast?.("Service et commandes réactivés ! ▶️", "success");
   } catch (err) {
     console.error("Erreur reprise service:", err);
@@ -687,5 +787,6 @@ window.openKitchenPauseModal = openKitchenPauseModal;
 window.closeKitchenPauseModal = closeKitchenPauseModal;
 window.setKitchenServicePause = setKitchenServicePause;
 window.resumeKitchenService = resumeKitchenService;
+window.stopOrdersUntilReopening = stopOrdersUntilReopening;
 window.switchKitchenTab = switchKitchenTab;
 

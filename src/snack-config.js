@@ -7,6 +7,7 @@
 import { store } from "./core/Store.js";
 import { doc, getDoc } from "./core/firebase.js";
 import { resolveFont } from "./theme-fonts.js";
+import { snackTimezone, normalizeLastOrderMinutes } from "./core/openingHours.js";
 // Palettes = source UNIQUE partagée avec le build (vite.config.js) → le splash/manifest
 // dérivent la même couleur que l'UI runtime, plus de désync. Cf. src/theme-palettes.js.
 import { SAAS_THEMES } from "./theme-palettes.js";
@@ -125,6 +126,10 @@ try {
         lng: numberOr(data.restaurantLng, null),
       },
       hours: data.hours || [],
+      // 🕐 Horaires évalués dans le fuseau du SNACK (pas celui du téléphone) +
+      // heure limite de commande réglée par le restaurateur.
+      timezone: snackTimezone(data),
+      lastOrderMinutesBeforeClose: normalizeLastOrderMinutes(data.lastOrderMinutesBeforeClose),
       reviews: {
         googleMapsReviewLink: data.googleReviewUrl || "",
       },

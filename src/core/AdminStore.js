@@ -3,6 +3,7 @@
  * Flux unidirectionnel, mutations explicites, validation intégrée.
  */
 import { computeComptaSummary, computeOrderRow, franchiseInfo, pctDelta } from "../services/comptaService.js";
+import { normalizeLastOrderMinutes } from "./openingHours.js";
 
 export class AdminStore extends EventTarget {
     #state = {
@@ -150,6 +151,7 @@ export class AdminStore extends EventTarget {
                 description: cfg.identity.description,
                 promoPhrase: cfg.config?.promoPhrase || cfg.promoPhrase || "",
                 hours: cfg.hours,
+                lastOrderMinutesBeforeClose: normalizeLastOrderMinutes(cfg.lastOrderMinutesBeforeClose),
                 phoneNumber: c.phone || "",
                 email: c.email || "",
                 street: a.street || "",

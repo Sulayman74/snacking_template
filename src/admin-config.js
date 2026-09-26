@@ -33,6 +33,7 @@ window.loadConfigView = async () => {
             },
             promoPhrase: data.promoPhrase || "",
             hours: data.hours || [],
+            lastOrderMinutesBeforeClose: data.lastOrderMinutesBeforeClose || 0,
             contact: {
                 phone: data.phoneNumber || "",
                 email: data.email || "",
