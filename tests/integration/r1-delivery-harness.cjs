@@ -9,14 +9,8 @@ const path = require("node:path");
 const fs = require("node:fs");
 const FUNC_DIR = path.join(__dirname, "..", "..", "functions");
 
-// 1) Charger les clés test AVANT de requérir index.js (.env.local prioritaire).
-const envFile = fs.existsSync(path.join(FUNC_DIR, ".env.local"))
-  ? path.join(FUNC_DIR, ".env.local")
-  : path.join(FUNC_DIR, ".env");
-for (const line of fs.readFileSync(envFile, "utf8").split("\n")) {
-  const m = line.match(/^([A-Z_]+)=(.*)$/);
-  if (m) process.env[m[1]] = m[2];
-}
+// 1) Charger les clés TEST AVANT de requérir index.js (cf. loadTestEnv.cjs).
+require("./loadTestEnv.cjs").loadTestEnv();
 process.env.GCLOUD_PROJECT = "snacking-template";
 process.env.GOOGLE_CLOUD_PROJECT = "snacking-template";
 

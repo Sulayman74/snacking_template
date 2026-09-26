@@ -74,7 +74,7 @@ Input utilisateur → router.js (délégation data-action) → mutation Store OU
 - `lib/stripe.js` — `getStripe()`, **API version pinnée** `STRIPE_API_VERSION = "2026-03-25.dahlia"`.
 - `scripts/migrate-snack-fields.js` — migration idempotente (dry-run + `--apply`).
 - `seed-emulator.js` — données fictives pour l'émulateur.
-- `.env` — secrets locaux (clés : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`). **Ne jamais committer / logguer les valeurs.**
+- `functions/.secret.local` — secrets locaux émulateur (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`) ; prod = Secret Manager (cf. docs/STRIPE-GO-LIVE.md). **Ne jamais committer / logguer les valeurs.**
 
 ### Racine
 - `index.html` (storefront client), `admin.html`, `superadmin.html`, `livreur.html`, `legal.html`, `404.html`.

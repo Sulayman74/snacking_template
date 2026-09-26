@@ -4,7 +4,7 @@
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getMessaging } = require("firebase-admin/messaging");
-const { getStripe } = require("../lib/stripe");
+const { getStripe, STRIPE_SECRET_KEY } = require("../lib/stripe");
 const { ventilateTva } = require("../lib/tva");
 const { db, FieldValue, Timestamp } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
@@ -39,7 +39,7 @@ function sanitizeStripeMetadata(metadata) {
 // ============================================================================
 
 exports.createPaymentIntent = onCall(
-  { region: "europe-west1" },
+  { region: "europe-west1", secrets: [STRIPE_SECRET_KEY] },
   async (request) => {
     const stripe = getStripe();
 
@@ -203,7 +203,7 @@ exports.createPaymentIntent = onCall(
 // 💳 FONCTION 5 : FINALISATION COMMANDE (vérification Stripe côté serveur)
 // ============================================================================
 exports.finalizeOrder = onCall(
-  { region: "europe-west1" },
+  { region: "europe-west1", secrets: [STRIPE_SECRET_KEY] },
   async (request) => {
     const stripe = getStripe();
 
@@ -610,7 +610,7 @@ exports.finalizeOrder = onCall(
  * (Idempotency-Key + dédup refundId).
  * @param {object} request.data - `{ orderId, amount?, reason? }`.
  */
-exports.refundOrder = onCall({ region: "europe-west1" }, async (request) => {
+exports.refundOrder = onCall({ region: "europe-west1", secrets: [STRIPE_SECRET_KEY] }, async (request) => {
   const stripe = getStripe();
   if (!request.auth) throw new HttpsError("unauthenticated", "Authentification requise.");
 

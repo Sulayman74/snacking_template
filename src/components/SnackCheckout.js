@@ -27,7 +27,9 @@ export class SnackCheckout extends SnackElement {
     
     this.stripeInstance = null;
     this.stripeElements = null;
-    this.stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_51TG1RfIfiBxoqwsycKUz6o8Mxf5keYpRfFPCgbDE2GkQiz4USCS5tE0lQaO160YDBoXb6mDgWzgzvbosexR6ORKn002PFzjj7J";
+    // Aucune clé de secours : le build de prod échoue sans VITE_STRIPE_PUBLISHABLE_KEY
+    // (vite.config.js), le dev la lit dans .env.development.
+    this.stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
   }
 
   getCartTotal() {

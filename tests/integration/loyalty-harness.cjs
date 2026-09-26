@@ -11,21 +11,15 @@
 //   8. Anti-doublon (F3) : re-scan rapproché du même client → REJET
 //   9. Anti-doublon (F3) cross-canal : commande payée puis scan → REJET
 // Lancé via `firebase emulators:exec --only firestore`. Clés lues depuis
-// functions/.env.local (gitignored). Aucun appel FCM réel : les scénarios à
+// functions/.secret.local (gitignored — cf. loadTestEnv.cjs). Aucun appel FCM réel : les scénarios à
 // récompense utilisent un client sans fcmToken (sendRewardPush = no-op).
 const path = require("node:path");
 const fs = require("node:fs");
 
 const FUNC_DIR = path.join(__dirname, "..", "..", "functions");
 
-// 1) Charger les clés test AVANT de requérir index.js (.env.local prioritaire).
-const envFile = fs.existsSync(path.join(FUNC_DIR, ".env.local"))
-  ? path.join(FUNC_DIR, ".env.local")
-  : path.join(FUNC_DIR, ".env");
-for (const line of fs.readFileSync(envFile, "utf8").split("\n")) {
-  const m = line.match(/^([A-Z_]+)=(.*)$/);
-  if (m) process.env[m[1]] = m[2];
-}
+// 1) Charger les clés TEST AVANT de requérir index.js (cf. loadTestEnv.cjs).
+require("./loadTestEnv.cjs").loadTestEnv();
 process.env.GCLOUD_PROJECT = "snacking-template";
 process.env.GOOGLE_CLOUD_PROJECT = "snacking-template";
 

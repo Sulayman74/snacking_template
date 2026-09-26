@@ -3,7 +3,7 @@
 // ============================================================================
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { getStripe } = require("../lib/stripe");
+const { getStripe, STRIPE_SECRET_KEY } = require("../lib/stripe");
 const { admin, db } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
@@ -15,7 +15,7 @@ const { assertCallerIsSnackAdmin } = require("../lib/auth");
 // Crée (idempotent) le compte Express du snack et renvoie un lien d'onboarding.
 // L'écriture de `stripeAccountId` se fait via l'Admin SDK — JAMAIS par le client
 // (la rule snacks/write est document-level → ne pas laisser un admin l'auto-écrire).
-exports.getStripeOnboardingLink = onCall({ region: "europe-west1" }, async (request) => {
+exports.getStripeOnboardingLink = onCall({ region: "europe-west1", secrets: [STRIPE_SECRET_KEY] }, async (request) => {
   const stripe = getStripe();
   const { snackId, origin } = request.data || {};
   require_(V.isDocId(snackId), "snackId invalide.");
@@ -68,7 +68,7 @@ exports.getStripeOnboardingLink = onCall({ region: "europe-west1" }, async (requ
 
 // Lien de connexion au portail Stripe Express (compte déjà créé).
 // Appelé par le bouton "Ouvrir mon portail" (src/admin.js → openStripeExpressDashboard).
-exports.createStripeConnectLoginLink = onCall({ region: "europe-west1" }, async (request) => {
+exports.createStripeConnectLoginLink = onCall({ region: "europe-west1", secrets: [STRIPE_SECRET_KEY] }, async (request) => {
   const stripe = getStripe();
   const { snackId } = request.data || {};
   require_(V.isDocId(snackId), "snackId invalide.");
@@ -91,7 +91,7 @@ exports.createStripeConnectLoginLink = onCall({ region: "europe-west1" }, async 
 // Statut LIVE du compte connecté (charges_enabled / details_submitted) + sync Firestore.
 // Permet à l'UI de distinguer "compte créé mais onboarding incomplet" de "actif",
 // sans dépendre de la configuration du webhook account.updated.
-exports.getStripeAccountStatus = onCall({ region: "europe-west1" }, async (request) => {
+exports.getStripeAccountStatus = onCall({ region: "europe-west1", secrets: [STRIPE_SECRET_KEY] }, async (request) => {
   const stripe = getStripe();
   const { snackId } = request.data || {};
   require_(V.isDocId(snackId), "snackId invalide.");
