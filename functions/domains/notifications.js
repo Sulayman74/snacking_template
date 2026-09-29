@@ -7,6 +7,7 @@ const { getMessaging } = require("firebase-admin/messaging");
 const { admin, db } = require("../lib/admin");
 const { cleanupInvalidFcmToken } = require("../lib/fcm");
 const { isFiniteNum, haversineKm, bucketForServer } = require("../lib/geo");
+const { getSnackOrigin } = require("../lib/tenantOrigins");
 
 // ============================================================================
 // 🛎️ FONCTION : ALERTE ADMINS À CHAQUE NOUVELLE COMMANDE (push cuisine)
@@ -40,7 +41,8 @@ exports.notifyAdminsOnNewOrder = onDocumentCreated(
 
       const response = await getMessaging().sendEachForMulticast({
         notification: { title: "🛎️ Nouvelle commande", body: `${client} · ${total} · ${modeLabel}` },
-        webpush: { fcm_options: { link: "https://snacking-template.web.app/admin.html" } },
+        // Lien vers le site DU snack (pas celui du tenant par défaut).
+        webpush: { fcm_options: { link: `${await getSnackOrigin(order.snackId)}/admin.html` } },
         tokens: targets.map((t) => t.token),
       });
 
@@ -96,7 +98,7 @@ exports.onOrderStatusChange = onDocumentUpdated(
       }
       const response = await getMessaging().send({
         notification: notif,
-        webpush: { fcm_options: { link: "https://snacking-template.web.app/" } },
+        webpush: { fcm_options: { link: `${await getSnackOrigin(newData.snackId)}/` } },
         token: fcmToken,
       });
       console.log(`✅ Notif "${newData.statut}" envoyée pour commande ${orderId} :`, response);
@@ -151,7 +153,7 @@ exports.onDriverPositionUpdate = onDocumentUpdated(
       const body = bucket <= 300 ? `Votre livreur arrive (${label}), préparez-vous !` : `Votre livreur est à ${label} environ.`;
       await getMessaging().send({
         notification: { title: "🛵 Votre livreur approche", body },
-        webpush: { fcm_options: { link: "https://snacking-template.web.app/" } },
+        webpush: { fcm_options: { link: `${await getSnackOrigin(after.snackId)}/` } },
         token: fcmToken,
       });
     } catch (error) {

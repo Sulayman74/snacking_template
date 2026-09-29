@@ -22,18 +22,15 @@
 //   3. Tester en mode LIVE sur appareil réel (Safari iOS/macOS) — Apple Pay ne
 //      s'affiche pas en environnement non éligible.
 
+const { TENANT_HOSTS } = require("./tenantOrigins");
+
 /**
  * Domaines d'hébergement des tenants sur lesquels enregistrer Apple Pay.
- * Liste CONFIGURABLE (cf. firebase.json hosting + scripts deploy de package.json).
- * Tenir synchronisé avec les cibles hosting / domaines custom ajoutés.
+ * Dérivés de la source unique lib/tenantOrigins (à tenir à jour à chaque
+ * nouveau site Hosting / domaine custom branché).
  * @type {readonly string[]}
  */
-const APPLE_PAY_DOMAINS = Object.freeze([
-  "snacking-template.web.app",
-  "o-bois-pizza.web.app",
-  "pizzeriadelagare.web.app",
-  "belly-smash-burger.web.app",
-]);
+const APPLE_PAY_DOMAINS = Object.freeze(Object.values(TENANT_HOSTS));
 
 /**
  * Détecte une erreur Stripe « ressource déjà existante » (domaine déjà enregistré

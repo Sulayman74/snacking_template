@@ -34,7 +34,8 @@
     "test:refund": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/refund-harness.cjs\"",
     "test:tunnel": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/tunnel-harness.cjs\"",
     "test:r1": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/r1-delivery-harness.cjs\"",
-    "test:orphan": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/orphan-charge-harness.cjs\""
+    "test:orphan": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/orphan-charge-harness.cjs\"",
+    "test:recovery": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/order-recovery-harness.cjs\""
   },
   "repository": {
     "type": "git",

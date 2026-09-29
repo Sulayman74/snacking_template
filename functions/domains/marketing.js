@@ -12,6 +12,7 @@ const { assertCallerIsSnackAdmin } = require("../lib/auth");
 const { computeKitchenLoad } = require("../lib/kitchen");
 const { chunkArray } = require("../lib/util");
 const { emitEvent } = require("../lib/events");
+const { resolveSnackOrigin } = require("../lib/tenantOrigins");
 const {
   isQuietHours,
   isOptedOut,
@@ -147,7 +148,8 @@ exports.processPushCampaigns = onSchedule(
         let totalTokensInvalidated = 0;
         let breakerHit = false; // circuit breaker (LOT 5) : trop de jetons invalides
 
-        const baseUrl = "https://snacking-template.web.app/";
+        // Site DU snack de la campagne (pas celui du tenant par défaut).
+        const baseUrl = `${resolveSnackOrigin(campagne.snackId, snackData)}/`;
 
         const basePayload = {
           notification: {

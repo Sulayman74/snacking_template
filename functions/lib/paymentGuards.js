@@ -22,4 +22,17 @@ function assertPaymentIntentMatchesOrder(paymentIntent, snackId) {
   }
 }
 
-module.exports = { ORDER_CURRENCY, assertPaymentIntentMatchesOrder };
+/**
+ * Vérifie que le PaymentIntent a été créé par CET utilisateur (metadata.uid posé
+ * serveur par createPaymentIntent). Empêche un tiers qui connaîtrait l'id d'un PI
+ * payé de se l'approprier via finalizeOrder. Legacy : un PI créé avant l'ajout de
+ * metadata.uid (pas de champ) reste accepté — les autres gardes s'appliquent.
+ */
+function assertPaymentIntentOwnedBy(paymentIntent, uid) {
+  const owner = paymentIntent?.metadata?.uid;
+  if (owner && owner !== uid) {
+    throw new HttpsError("permission-denied", "Paiement non rattaché à cet utilisateur.");
+  }
+}
+
+module.exports = { ORDER_CURRENCY, assertPaymentIntentMatchesOrder, assertPaymentIntentOwnedBy };

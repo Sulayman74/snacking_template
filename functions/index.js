@@ -1,7 +1,7 @@
 // ============================================================================
 // 🍔 SNACKING TEMPLATE — Cloud Functions (barrel)
 // ----------------------------------------------------------------------------
-// Point d'entrée découvert par Firebase (champ `main`). Les 25 CloudFunctions
+// Point d'entrée découvert par Firebase (champ `main`). Les CloudFunctions
 // sont regroupées par domaine dans ./domains/*.js et la logique partagée dans
 // ./lib/*.js. Ce fichier ne fait que ré-exporter — AUCUNE logique ici.
 // Règle d'or : ne jamais renommer une clé d'export (renommer = delete+create =
@@ -26,4 +26,5 @@ module.exports = {
   ...require("./domains/football"),
   ...require("./domains/growth"),
   ...require("./domains/order-aggregations"),
+  ...require("./domains/order-recovery"),
 };

@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { ORDER_CURRENCY, assertPaymentIntentMatchesOrder } = require("../../functions/lib/paymentGuards.js");
+const { ORDER_CURRENCY, assertPaymentIntentMatchesOrder, assertPaymentIntentOwnedBy } = require("../../functions/lib/paymentGuards.js");
 
 const pi = (over = {}) => ({
   id: "pi_test",
@@ -44,5 +44,22 @@ describe("assertPaymentIntentMatchesOrder", () => {
 
   it("snackId vide ne matche pas un PI sans metadata", () => {
     expect(() => assertPaymentIntentMatchesOrder(pi({ metadata: {} }), undefined)).toThrow(/rattaché/);
+  });
+});
+
+describe("assertPaymentIntentOwnedBy", () => {
+  it("PI créé par cet utilisateur → accepté", () => {
+    expect(() => assertPaymentIntentOwnedBy(pi({ metadata: { snack_id: "snackA", uid: "u1" } }), "u1")).not.toThrow();
+  });
+
+  it("PI créé par un autre utilisateur → rejet permission-denied", () => {
+    expect(() => assertPaymentIntentOwnedBy(pi({ metadata: { snack_id: "snackA", uid: "u1" } }), "u2")).toThrow(
+      expect.objectContaining({ code: "permission-denied" })
+    );
+  });
+
+  it("PI legacy sans metadata.uid → accepté (compat)", () => {
+    expect(() => assertPaymentIntentOwnedBy(pi(), "u2")).not.toThrow();
+    expect(() => assertPaymentIntentOwnedBy(pi({ metadata: undefined }), "u2")).not.toThrow();
   });
 });
