@@ -284,10 +284,13 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-if (messaging) {
-  onMessage(messaging, (payload) => {
-    const titre = payload.notification?.title || "Nouvelle notification";
-    const message = payload.notification?.body || "";
+// 🔔 Push reçu app au PREMIER PLAN : le SW (src/sw.js) poste un message au lieu
+// d'afficher une notification système (comportement historique du SDK FCM).
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    if (event.data?.type !== "PUSH_FOREGROUND") return;
+    const titre = event.data.title || "Nouvelle notification";
+    const message = event.data.body || "";
     window.showToast(`🔔 ${titre} : ${message}`, "success");
   });
 }

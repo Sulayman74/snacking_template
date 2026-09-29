@@ -4,7 +4,6 @@
 
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { getMessaging } = require("firebase-admin/messaging");
 const { db, FieldValue, Timestamp } = require("../lib/admin");
 const { V, require_ } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
@@ -13,6 +12,7 @@ const { computeKitchenLoad } = require("../lib/kitchen");
 const { chunkArray } = require("../lib/util");
 const { emitEvent } = require("../lib/events");
 const { resolveSnackOrigin } = require("../lib/tenantOrigins");
+const { getClientPushTargetsBySnack, sendToTargets } = require("../lib/pushTargets");
 const {
   isQuietHours,
   isOptedOut,
@@ -92,39 +92,39 @@ exports.processPushCampaigns = onSchedule(
 
         const campagne = doc.data();
 
-        const usersSnapshot = await db
-          .collection("users")
-          .where("snackId", "==", campagne.snackId)
-          .where("fcmToken", "!=", null)
-          .get();
-
-        // 🎯 1. On stocke des objets {token, uid} pour identifier qui nettoyer plus tard
+        // 🎯 1. Clients joignables = appareils abonnés au push de CE snack. (Les
+        // fiches client n'ont pas de snackId : l'ancienne requête users.snackId ne
+        // touchait que l'équipe.) Segment + opt-out lus sur la fiche user.
+        const devicesByUid = await getClientPushTargetsBySnack(campagne.snackId);
+        const uidChunks = chunkArray([...devicesByUid.keys()], 300);
         const targetUsers = [];
 
-        usersSnapshot.forEach((userDoc) => {
-          const user = userDoc.data();
-          // 🛡️ Opt-out marketing : TOUJOURS respecté (droit utilisateur), même flag
-          // de gouvernance OFF. Le transactionnel n'est pas concerné (autre chemin).
-          if (isOptedOut(user)) return;
-          const lastOrder = user.lastOrderDate;
+        for (const uids of uidChunks) {
+          const userDocs = await db.getAll(...uids.map((uid) => db.collection("users").doc(uid)));
+          for (const userDoc of userDocs) {
+            if (!userDoc.exists) continue;
+            const user = userDoc.data();
+            // 🛡️ Opt-out marketing : TOUJOURS respecté (droit utilisateur), même flag
+            // de gouvernance OFF. Le transactionnel n'est pas concerné (autre chemin).
+            if (isOptedOut(user)) continue;
+            const lastOrder = user.lastOrderDate;
 
-          let isMatch = false;
-          if (campagne.cible === "active") {
-            if (lastOrder && lastOrder.toMillis() >= thirtyDaysAgo.toMillis()) {
+            let isMatch = false;
+            if (campagne.cible === "active") {
+              if (lastOrder && lastOrder.toMillis() >= thirtyDaysAgo.toMillis()) {
+                isMatch = true;
+              }
+            } else if (campagne.cible === "inactive") {
+              if (!lastOrder || lastOrder.toMillis() < thirtyDaysAgo.toMillis()) {
+                isMatch = true;
+              }
+            } else {
               isMatch = true;
             }
-          } else if (campagne.cible === "inactive") {
-            if (!lastOrder || lastOrder.toMillis() < thirtyDaysAgo.toMillis()) {
-              isMatch = true;
-            }
-          } else {
-            isMatch = true;
-          }
 
-          if (isMatch) {
-            targetUsers.push({ token: user.fcmToken, uid: userDoc.id });
+            if (isMatch) targetUsers.push(...devicesByUid.get(userDoc.id));
           }
-        });
+        }
 
         if (targetUsers.length === 0) {
           await doc.ref.update({
@@ -173,41 +173,12 @@ exports.processPushCampaigns = onSchedule(
         };
 
         for (const chunk of userChunks) {
-          // On extrait uniquement les tokens pour l'envoi FCM
-          const tokens = chunk.map((u) => u.token);
-          const payload = { ...basePayload, tokens };
-
-          const response = await getMessaging()
-            .sendEachForMulticast(payload);
-
-          // Mise à jour des compteurs globaux de la campagne
-          totalSuccess += response.successCount;
-          totalErrors += response.failureCount;
-
-          // 🧹 3. Nettoyage intelligent des jetons obsolètes
-          const batch = db.batch();
-          let needsCleanup = false;
-
-          response.responses.forEach((res, idx) => {
-            if (!res.success) {
-              const error = res.error.code;
-              // On ne supprime que si le token est explicitement invalide ou expiré
-              if (
-                error === "messaging/registration-token-not-registered" ||
-                error === "messaging/invalid-registration-token"
-              ) {
-                const userId = chunk[idx].uid; // Grâce à l'index, on retrouve le bon UID
-                batch.update(db.collection("users").doc(userId), {
-                  fcmToken: FieldValue.delete(),
-                });
-                needsCleanup = true;
-                totalTokensInvalidated += 1;
-              }
-            }
-          });
-
-          if (needsCleanup) {
-            await batch.commit();
+          // Envoi + nettoyage des jetons morts (abonnement supprimé) — lib/pushTargets.
+          const res = await sendToTargets(chunk, basePayload);
+          totalSuccess += res.successCount;
+          totalErrors += res.failureCount;
+          totalTokensInvalidated += res.invalidated;
+          if (res.invalidated > 0) {
             console.log(
               `🧹 Nettoyage : ${totalTokensInvalidated} jeton(s) invalide(s) supprimé(s) (cumul campagne).`,
             );

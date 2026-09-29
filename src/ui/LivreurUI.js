@@ -25,9 +25,9 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
-  getToken,
   storageTools,
 } from "../core/firebase.js";
+import { registerDevicePush } from "../push-register.js";
 import { escapeHTML } from "../utils.js";
 import {
   haversineKm,
@@ -37,9 +37,6 @@ import {
   formatDistance,
   isLatLng,
 } from "../services/geoService.js";
-
-const VAPID_KEY =
-  "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098";
 
 // Rayon d'arrivée : on n'autorise la photo de livraison que si le livreur est à
 // moins de X mètres de l'adresse client (anti-validation à distance). Généreux
@@ -524,13 +521,8 @@ class LivreurUI {
       if (!("Notification" in window)) return window.showToast?.("Notifications non supportées.", "error");
       const perm = await Notification.requestPermission();
       if (perm !== "granted") return window.showToast?.("Notifications refusées.", "error");
-      const reg = await navigator.serviceWorker.ready;
-      const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
-      const uid = auth.currentUser?.uid;
-      if (token && uid) {
-        await updateDoc(doc(db, "users", uid), { fcmToken: token });
-        window.showToast?.("Notifications activées 🔔", "success");
-      }
+      const token = await registerDevicePush({ messaging, snackId: this.snackId, app: "livreur" });
+      if (token) window.showToast?.("Notifications activées 🔔", "success");
     } catch (err) {
       console.error("Erreur notif livreur :", err);
     } finally {

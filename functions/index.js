@@ -27,4 +27,5 @@ module.exports = {
   ...require("./domains/growth"),
   ...require("./domains/order-aggregations"),
   ...require("./domains/order-recovery"),
+  ...require("./domains/push"),
 };

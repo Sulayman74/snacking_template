@@ -35,6 +35,8 @@
     "test:tunnel": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/tunnel-harness.cjs\"",
     "test:r1": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/r1-delivery-harness.cjs\"",
     "test:orphan": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/orphan-charge-harness.cjs\"",
+    "test:pwa": "npm run build:tacos && playwright test -c playwright.pwa.config.js",
+    "test:push": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/push-targets-harness.cjs\"",
     "test:recovery": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/order-recovery-harness.cjs\""
   },
   "repository": {
@@ -63,6 +65,11 @@
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.8",
+    "workbox-cacheable-response": "^7.4.1",
+    "workbox-expiration": "^7.4.1",
+    "workbox-precaching": "^7.4.1",
+    "workbox-routing": "^7.4.1",
+    "workbox-strategies": "^7.4.1",
     "workbox-window": "^7.4.0"
   },
   "dependencies": {

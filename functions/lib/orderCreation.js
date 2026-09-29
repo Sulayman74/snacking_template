@@ -8,11 +8,11 @@
 // jeu d'effets de bord (parrainage, fidélité, roue, upsell, event purchase).
 // Les gardes PI (statut, devise, snack, propriétaire) sont faites PAR L'APPELANT.
 
-const { getMessaging } = require("firebase-admin/messaging");
 const { ventilateTva } = require("./tva");
 const { db, FieldValue, Timestamp } = require("./admin");
 const { V, require_ } = require("./validation");
 const { sendRewardPush } = require("./fcm");
+const { getUserPushTargets, sendToTargets } = require("./pushTargets");
 const { resolveLoyaltyCooldownMs, creditLoyaltyPoints } = require("./loyalty");
 const { isFiniteNum } = require("./geo");
 const { getKitchenQueueCount, computePrepMin } = require("./kitchen");
@@ -221,20 +221,16 @@ async function createOrderFromPaymentIntent({
           [fieldPath]: FieldValue.increment(2)
         });
 
-        // Notification au parrain
-        const referrerData = referrerDoc.data();
-        if (referrerData.fcmToken) {
-          try {
-            await getMessaging().send({
-              notification: {
-                title: "🍟 Une frite offerte !",
-                body: "Votre filleul vient de commander ! Vous avez reçu 2 points de fidélité."
-              },
-              token: referrerData.fcmToken
-            });
-          } catch (e) {
-            console.error("Erreur notif parrainage:", e);
-          }
+        // Notification au parrain (ses appareils abonnés à CE snack).
+        try {
+          await sendToTargets(await getUserPushTargets(referrerId, snackId, "client"), {
+            notification: {
+              title: "🍟 Une frite offerte !",
+              body: "Votre filleul vient de commander ! Vous avez reçu 2 points de fidélité."
+            },
+          });
+        } catch (e) {
+          console.error("Erreur notif parrainage:", e);
         }
       }
     }
@@ -274,7 +270,7 @@ async function createOrderFromPaymentIntent({
     if (res.skipped) {
       console.log(`createOrder fidélité ignorée (anti-doublon F3) pour ${uid} / ${snackId}.`);
     } else if (res.reward) {
-      await sendRewardPush(uid, res.fcmToken, snackId);
+      await sendRewardPush(uid, snackId);
     }
   } catch (loyErr) {
     console.error("createOrder crédit fidélité échoué :", loyErr);

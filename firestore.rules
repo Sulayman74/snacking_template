@@ -291,6 +291,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // 🔔 ABONNEMENTS PUSH (token par appareil / snack / app) : écrits EXCLUSIVEMENT
+    // par le callable registerPushToken (Admin SDK), lus par les Functions d'envoi.
+    // Aucun accès client (un token permet de pousser des messages à l'appareil).
+    match /pushSubscriptions/{subId} {
+      allow read, write: if false;
+    }
+
     // 🛑 LE VIDEUR : Rejette tout ce qui n'est pas explicitement autorisé au-dessus
     match /{document=**} {
       allow read, write: if false;

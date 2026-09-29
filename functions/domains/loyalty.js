@@ -42,7 +42,7 @@ exports.awardLoyaltyPoint = onCall({ region: "europe-west1" }, async (request) =
   }
 
   // Push de palier émis APRÈS commit (jamais dans la transaction, qui peut rejouer).
-  if (result.reward) await sendRewardPush(clientUid, result.fcmToken, snackId);
+  if (result.reward) await sendRewardPush(clientUid, snackId);
 
   // rewardsAvailable remonté au scanner pour proposer la consommation immédiate.
   return {

@@ -2,29 +2,24 @@
 // 🔔 ADMIN-NOTIFS — Activation guidée des alertes "nouvelle commande" (push)
 // ============================================================================
 // Le push est ENVOYÉ par la Cloud Function notifyAdminsOnNewOrder. Ici on gère
-// seulement l'OPT-IN côté cuisine : permission + enregistrement du fcmToken sur
-// users/{uid} (autorisé par les règles : owner peut écrire fcmToken).
+// seulement l'OPT-IN côté cuisine : permission + enregistrement de l'appareil
+// (callable registerPushToken, cf. src/push-register.js).
 // Dépendances : window.messaging, window.showToast.
-import { auth, db, doc, updateDoc, getToken } from "./core/firebase.js";
-
-const VAPID_KEY =
-  "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098";
+import { registerDevicePush, syncDevicePush } from "./push-register.js";
 
 const banner = () => document.getElementById("admin-notif-banner");
 const showBanner = () => banner()?.classList.remove("translate-y-32", "opacity-0", "pointer-events-none");
 const hideBanner = () => banner()?.classList.add("translate-y-32", "opacity-0", "pointer-events-none");
 
+// Superadmin qui pilote un resto : pas d'alertes cuisine sur son compte.
+const pushOpts = () =>
+  window.isSuperadminImpersonating
+    ? null
+    : { messaging: window.messaging, snackId: window.currentAdminSnackId, app: "admin" };
+
 async function writeToken() {
-  const reg = await navigator.serviceWorker.ready;
-  const token = await getToken(window.messaging, {
-    vapidKey: VAPID_KEY,
-    serviceWorkerRegistration: reg,
-  });
-  const uid = auth?.currentUser?.uid;
-  if (token && uid) {
-    await updateDoc(doc(db, "users", uid), { fcmToken: token });
-  }
-  return token;
+  const opts = pushOpts();
+  return opts ? registerDevicePush(opts) : null;
 }
 
 // Clic "Activer" → demande la permission puis enregistre le token.
@@ -50,7 +45,8 @@ async function enableAdminNotifs() {
 async function maybePromptAdminNotifs() {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
-    try { await writeToken(); } catch (e) { console.warn("sync token admin:", e?.message); }
+    const opts = pushOpts();
+    if (opts) await syncDevicePush(opts);
   } else if (Notification.permission === "default") {
     setTimeout(showBanner, 1500);
   }

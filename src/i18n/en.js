@@ -113,6 +113,7 @@ export default {
     clubDesc: "Earn points with every order!",
     enableNotifications: "ENABLE NOTIFICATIONS 🔔",
     referralButton: "GIVE A FREE FRIES TO A FRIEND 🍟",
+    installForNotifications: "On iPhone: install the app (Share → “Add to Home Screen”) to get notifications",
     notificationsBlocked: "Notifications blocked in your browser",
     receivePromos: "Receive offers & promotions"
   },
