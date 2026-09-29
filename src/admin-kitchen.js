@@ -5,6 +5,7 @@
 //               window.showToast
 
 import { escapeHTML } from "./utils.js";
+import { setAppBadgeCount, countPendingKitchenOrders } from "./core/appBadge.js";
 import { getOrderingState, snackTimezone } from "./core/openingHours.js";
 import { adminStore } from "./core/AdminStore.js";
 import {
@@ -409,6 +410,9 @@ function startKitchenRadar() {
     }
 
     if (ringTheBell && bell) bell.play().catch((e) => console.log("Son bloqué"));
+
+    // 🔴 Pastille de l'app = commandes en attente (se met à jour dans les deux sens).
+    setAppBadgeCount(countPendingKitchenOrders(kitchenOrdersMap.values()));
 
     refreshKitchenLoad(isFirstLoad);
     isFirstLoad = false;

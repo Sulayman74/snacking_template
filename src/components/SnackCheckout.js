@@ -46,6 +46,7 @@ export class SnackCheckout extends SnackElement {
 
   connectedCallback() {
     super.connectedCallback();
+    this._stripeHost("express-checkout-element", "stripe-express", "mb-4 hidden");
     this._stripeHost("link-authentication-element", "stripe-link", "mb-3 hidden");
     this._stripeHost("payment-element", "stripe-payment", "min-h-[250px]");
   }
@@ -220,7 +221,9 @@ export class SnackCheckout extends SnackElement {
       this.stripeInstance = Stripe(this.stripePublicKey, connectedAccountId ? { stripeAccount: connectedAccountId } : undefined);
 
       console.info(`[checkout] 3/4 montage du Payment Element (compte connecté : ${connectedAccountId ? "oui" : "non"})`);
-      const appearance = { theme: "stripe" };
+      // 🎨 Formulaire Stripe aux couleurs du snack (variable de thème posée par AppUI).
+      const primary = getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim();
+      const appearance = { theme: "stripe", variables: /^#[0-9a-f]{3,8}$/i.test(primary) ? { colorPrimary: primary } : {} };
       const elements = this.stripeInstance.elements({ appearance, clientSecret });
       this.stripeElements = elements;
 
@@ -244,6 +247,29 @@ export class SnackCheckout extends SnackElement {
       }, STEP_TIMEOUT_MS);
       paymentContainer.innerHTML = "";
       paymentElement.mount(paymentContainer);
+
+      // ⚡ Paiement express (Apple Pay / Google Pay / Link en 1 clic). Affiché seulement
+      // si un wallet est disponible (HTTPS + domaine enregistré + carte dans le wallet).
+      // Un échec ici ne touche pas au formulaire carte ci-dessous.
+      const expressContainer = this.querySelector("#express-checkout-element");
+      if (expressContainer) {
+        expressContainer.classList.add("hidden");
+        expressContainer.innerHTML = "";
+        try {
+          const express = elements.create("expressCheckout", { emailRequired: !!currentUser?.isAnonymous });
+          express.on("ready", ({ availablePaymentMethods }) => {
+            expressContainer.classList.toggle("hidden", !availablePaymentMethods);
+          });
+          express.on("loaderror", (e) => {
+            console.warn("[checkout] Paiement express indisponible :", e?.error?.message);
+            expressContainer.classList.add("hidden");
+          });
+          express.on("confirm", (event) => this._onExpressConfirm(event));
+          express.mount(expressContainer);
+        } catch (e) {
+          console.warn("[checkout] Paiement express non monté :", e?.message);
+        }
+      }
 
       // Guest checkout email element
       this.guestEmail = "";
@@ -295,6 +321,27 @@ export class SnackCheckout extends SnackElement {
       return;
     }
 
+    await this._confirmAndFinalize();
+  }
+
+  /**
+   * Paiement express confirmé dans la feuille Apple Pay / Google Pay : l'email de
+   * l'invité vient du wallet, puis même chemin que le bouton « Payer ».
+   */
+  async _onExpressConfirm(event) {
+    if (this.isProcessing) return;
+    const walletEmail = (event?.billingDetails?.email || "").trim();
+    if (walletEmail && !this.guestEmail) this.guestEmail = walletEmail;
+    if (auth?.currentUser?.isAnonymous && !this.guestEmail) {
+      event?.paymentFailed?.({ reason: "fail" });
+      this.errorMessage = t("payment.emailRequired");
+      return;
+    }
+    await this._confirmAndFinalize();
+  }
+
+  /** Confirme le paiement (formulaire OU express) puis crée la commande. */
+  async _confirmAndFinalize() {
     this.isProcessing = true;
     this.errorMessage = '';
 
@@ -424,6 +471,11 @@ export class SnackCheckout extends SnackElement {
     if (paymentContainer) paymentContainer.innerHTML = "";
     const linkContainer = this.querySelector("#link-authentication-element");
     if (linkContainer) linkContainer.innerHTML = "";
+    const expressContainer = this.querySelector("#express-checkout-element");
+    if (expressContainer) {
+      expressContainer.innerHTML = "";
+      expressContainer.classList.add("hidden");
+    }
   }
 
   updated() {
@@ -451,6 +503,7 @@ export class SnackCheckout extends SnackElement {
             </div>
 
             <!-- Conteneurs Stripe en light DOM (cf. _stripeHost), projetés ici. -->
+            <slot name="stripe-express"></slot>
             <slot name="stripe-link"></slot>
             <slot name="stripe-payment"></slot>
 

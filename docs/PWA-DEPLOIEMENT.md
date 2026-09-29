@@ -34,13 +34,29 @@ gcloud firestore fields ttls update expireAt \
 
 (La suppression effective peut prendre jusqu'à ~24 h après `expireAt`.)
 
+## 3 bis. Domaines Apple Pay / Google Pay (rattrapage, idempotent)
+
+Le webhook n'enregistre le domaine qu'au 1er passage d'un compte connecté à « actif » : les comptes
+déjà actifs (ex. Team Fusion) ne l'ont jamais eu → Apple Pay n'apparaît pas. Avec Node 24 :
+
+```bash
+export STRIPE_SECRET_KEY=$(gcloud secrets versions access latest --secret=STRIPE_SECRET_KEY --project=snacking-template)
+npm run stripe:apple-pay-domains          # dry-run : état par snack, n'écrit rien
+npm run stripe:apple-pay-domains:apply    # enregistre les domaines manquants
+```
+
+À relancer après chaque nouveau snack / domaine custom, et au passage en clés **live**.
+
 ## 4. Vérifications sur appareil réel (non testables en CI)
 
 - **Android / Chrome** : activer les notifications (carte fidélité), passer une commande de test, vérifier
   les notifications « prête » / « en livraison » **app fermée** et le clic (ouvre le bon site).
 - **iPhone** : dans Safari, la carte fidélité doit afficher « installez l'app… ». Une fois installée sur
   l'écran d'accueil, activer les notifications et refaire le test ci-dessus.
-- **Admin** : activer les alertes cuisine, vérifier la notification « Nouvelle commande » tablette en veille.
+- **Admin** : activer les alertes cuisine, vérifier la notification « Nouvelle commande » tablette en veille,
+  et la pastille chiffrée sur l'icône de l'app (commandes en attente).
+- **Paiement express** : sur iPhone (Safari) avec une carte dans Wallet, le bouton Apple Pay doit apparaître
+  au-dessus du formulaire une fois le domaine enregistré (§ 3 bis). Sur Android/Chrome : Google Pay.
 
 ## Tests automatisés associés
 

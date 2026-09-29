@@ -6,6 +6,7 @@ const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/
 const { getUserPushTargets, getStaffPushTargets, sendToTargets } = require("../lib/pushTargets");
 const { isFiniteNum, haversineKm, bucketForServer } = require("../lib/geo");
 const { getSnackOrigin } = require("../lib/tenantOrigins");
+const { getKitchenQueueCount } = require("../lib/kitchen");
 
 // ============================================================================
 // 🛎️ FONCTION : ALERTE ADMINS À CHAQUE NOUVELLE COMMANDE (push cuisine)
@@ -27,8 +28,12 @@ exports.notifyAdminsOnNewOrder = onDocumentCreated(
       const total = typeof order.total === "number" ? `${order.total.toFixed(2)}€` : "";
       const client = order.clientNom || "Client";
 
+      // Pastille de l'app admin = commandes en attente (lue par le SW, src/sw.js).
+      const pending = await getKitchenQueueCount(order.snackId);
+
       await sendToTargets(targets, {
         notification: { title: "🛎️ Nouvelle commande", body: `${client} · ${total} · ${modeLabel}` },
+        data: { badge: String(pending) },
         // Lien vers le site DU snack (pas celui du tenant par défaut).
         webpush: { fcm_options: { link: `${await getSnackOrigin(order.snackId)}/admin.html` } },
       });

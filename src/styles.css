@@ -366,3 +366,21 @@ body.is-offline::after {
     scroll-behavior: auto !important;
   }
 }
+
+/* ✨ View Transitions — ouverture / fermeture du menu (AppUI.switchView).
+   Fondu court de la page ; la barre de navigation est exclue du fondu et reste
+   « live » pour que son indicateur continue de glisser normalement. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+}
+#mobile-nav-container {
+  view-transition-name: app-nav;
+}
+::view-transition-group(app-nav),
+::view-transition-new(app-nav) {
+  animation: none;
+}
+::view-transition-old(app-nav) {
+  display: none;
+}

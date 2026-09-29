@@ -139,6 +139,11 @@ export default defineConfig(({ command, mode }) => {
           globPatterns: ['**/*.{js,css,html}'],
         },
         manifest: {
+          // id explicite = start_url (identité d'install inchangée, pas de doublon).
+          id: '/',
+          start_url: '/',
+          scope: '/',
+          lang: 'fr',
           name: seoData.title,
           short_name: seoData.title.split('|')[0].trim(),
           description: seoData.desc,
@@ -160,7 +165,22 @@ export default defineConfig(({ command, mode }) => {
             }
           ]
         }
-      })
+      }),
+      {
+        // admin / livreur / superadmin déclarent LEUR manifest (scope, icônes, start_url
+        // dédiés). VitePWA injecte en plus /manifest.webmanifest dans chaque page : on
+        // retire ce doublon hors index.html (le 1er lien gagnait, mais c'était fragile).
+        name: 'single-manifest-per-page',
+        enforce: 'post', // après l'injection de VitePWA (elle-même en post)
+        transformIndexHtml: {
+          order: 'post',
+          handler(html, ctx) {
+            if (ctx.filename.endsWith('index.html')) return html;
+            if (!/<link rel="manifest" href="\/(admin|livreur|superadmin)\.webmanifest"/.test(html)) return html;
+            return html.replace(/\s*<link rel="manifest" href="\/manifest\.webmanifest">/g, '');
+          },
+        },
+      },
     ],
     define: {
       __SNACK_ID__: JSON.stringify(currentSnackId),

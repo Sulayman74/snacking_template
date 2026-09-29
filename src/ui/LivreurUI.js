@@ -507,8 +507,16 @@ class LivreurUI {
 
   // --- Wake Lock ----------------------------------------------------------
   async requestWakeLock() {
-    if (!("wakeLock" in navigator) || this.wakeLock) return;
-    try { this.wakeLock = await navigator.wakeLock.request("screen"); } catch (_) {}
+    // Le navigateur relâche lui-même le verrou quand l'app passe en arrière-plan :
+    // un verrou `released` ne doit pas empêcher d'en reprendre un au retour.
+    if (!("wakeLock" in navigator) || (this.wakeLock && !this.wakeLock.released)) return;
+    try {
+      const lock = await navigator.wakeLock.request("screen");
+      lock.addEventListener("release", () => {
+        if (this.wakeLock === lock) this.wakeLock = null;
+      });
+      this.wakeLock = lock;
+    } catch (_) {}
   }
   releaseWakeLock() {
     try { this.wakeLock?.release(); } catch (_) {}

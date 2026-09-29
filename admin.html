@@ -4,8 +4,13 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
+    <!-- App installée iOS : titre sous l'icône + barre d'état standard. viewport-fit=cover
+         active env(safe-area-inset-*) (barre du bas au-dessus de l'indicateur d'accueil). -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Cuisine" />
     <title>Dashboard Admin - Team Fusion</title>
 
     <meta name="robots" content="noindex, nofollow" />

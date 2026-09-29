@@ -24,6 +24,8 @@
     "migrate:pricing-supplements:apply": "node functions/scripts/migrate-pricing-supplements.js --apply",
     "migrate:product-tva": "node functions/scripts/migrate-product-tva.js",
     "migrate:product-tva:apply": "node functions/scripts/migrate-product-tva.js --apply",
+    "stripe:apple-pay-domains": "node functions/scripts/register-apple-pay-domains.js",
+    "stripe:apple-pay-domains:apply": "node functions/scripts/register-apple-pay-domains.js --apply",
     "emulators": "firebase emulators:start --only auth,firestore,functions,storage --project snacking-template",
     "seed": "node functions/seed-emulator.js",
     "test:e2e": "VITE_E2E_TESTING=true SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 firebase emulators:exec --only auth,firestore,functions,storage --project snacking-template \"node functions/seed-emulator.js && playwright test --workers=1 cart.spec.js commande.spec.js stock.spec.js reorder.spec.js radar.spec.js guest-checkout.spec.js\"",
