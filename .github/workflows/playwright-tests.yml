@@ -17,7 +17,7 @@ jobs:
       - name: 🟢 Installation de Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       # Le script n'utilise que des modules Node natifs : pas de npm ci nécessaire.
       - name: 🎨 Vérification des couleurs en dur (surface client)
         run: npm run lint:theming
@@ -34,7 +34,7 @@ jobs:
       - name: 🟢 Installation de Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       # Les émulateurs Firebase (Firestore/Auth/Storage) sont des apps Java :
@@ -78,6 +78,17 @@ jobs:
           npm run test:e2e
         env:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+
+      # 🔒 Règles Firestore (isolation multi-tenant, transitions livreur, tokens push).
+      - name: 🔒 Tests des règles Firestore
+        run: npm run test:rules
+
+      # 🛠️ Service worker sur le build de prod (push, kill-switch). Le build exige
+      # la clé publishable (garde-fou vite.config.js) ; aucun appel externe pendant les tests.
+      - name: 🛠️ Tests PWA (service worker)
+        run: npm run test:pwa
+        env:
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
 
       - name: 📁 Rapport Playwright
         uses: actions/upload-artifact@v4

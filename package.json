@@ -18,6 +18,7 @@
     "deploy:pizzeria": "npm run build:pizzeria && firebase deploy --only hosting:pizzeriadelagare",
     "deploy:belly": "npm run build:belly && firebase deploy --only hosting:belly-smash-burger",
     "deploy:all": "npm run build:all && firebase deploy --only hosting",
+    "deploy:sw-kill": "npm run build:all && node scripts/apply-sw-kill-switch.mjs && firebase deploy --only hosting",
     "migrate:snack-fields": "node functions/scripts/migrate-snack-fields.js",
     "migrate:snack-fields:apply": "node functions/scripts/migrate-snack-fields.js --apply",
     "migrate:pricing-supplements": "node functions/scripts/migrate-pricing-supplements.js",

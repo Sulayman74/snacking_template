@@ -58,11 +58,28 @@ npm run stripe:apple-pay-domains:apply    # enregistre les domaines manquants
 - **Paiement express** : sur iPhone (Safari) avec une carte dans Wallet, le bouton Apple Pay doit apparaître
   au-dessus du formulaire une fois le domaine enregistré (§ 3 bis). Sur Android/Chrome : Google Pay.
 
+## 🧯 En cas d'incident : service worker cassé
+
+Symptôme : l'app ne charge plus / reste bloquée chez les utilisateurs déjà venus, même après un correctif.
+La console affiche au démarrage `🏷️ Client version <commit>` : elle dit quel build tourne chez l'utilisateur.
+
+1. **Couper le service worker partout** (sans toucher au reste du code) :
+   ```bash
+   nvm use 24
+   npm run deploy:sw-kill
+   ```
+   Le SW d'urgence (`scripts/sw-kill-switch.js`) remplace `sw.js` : à la navigation suivante il vide les caches,
+   se désinstalle et recharge la page une fois, depuis le réseau (testé sans boucle : `npm run test:pwa`).
+2. Corriger, puis **redéployer normalement** (`npm run deploy:all`) : le SW normal se réinstalle.
+
+À ne jamais faire : renommer `sw.js` ou retirer `Cache-Control: no-cache` sur `sw.js` (firebase.json) — les
+navigateurs ne verraient plus les mises à jour du service worker.
+
 ## Tests automatisés associés
 
 | Commande | Couvre |
 |---|---|
 | `npm run test:recovery` | Filet « débité sans commande » |
 | `npm run test:push` | Abonnements par appareil / snack, repli legacy, nettoyage des tokens morts |
-| `npm run test:pwa` | Service worker : affichage des push (arrière-plan / premier plan) sur le build |
+| `npm run test:pwa` | Service worker : affichage des push (arrière-plan / premier plan) + kill-switch, sur le build |
 | `npm run test:rules` | Règles Firestore (dont `pushSubscriptions`, transitions livreur, lecture `users`) |

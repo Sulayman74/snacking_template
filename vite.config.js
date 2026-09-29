@@ -2,6 +2,7 @@ import { VitePWA } from 'vite-plugin-pwa' // 👈 1. L'import du plugin
 import { defineConfig, loadEnv } from 'vite'
 import fs from 'fs'
 import { resolve } from 'path'
+import { execSync } from 'child_process'
 import tailwindcss from '@tailwindcss/vite'
 import { resolveFont } from './src/theme-fonts.js'
 import { SAAS_THEMES } from './src/theme-palettes.js'
@@ -41,6 +42,16 @@ function assertPublicEnv(env, { command, mode }) {
     if (pk.startsWith('pk_test_')) {
       console.warn('⚠️  Build de PRODUCTION avec une clé Stripe de TEST : les paiements sont fictifs.')
     }
+  }
+}
+
+/** Commit du build : CI (GITHUB_SHA) ou git local ; "dev" sinon. */
+function appVersion() {
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return 'dev'
   }
 }
 
@@ -184,6 +195,9 @@ export default defineConfig(({ command, mode }) => {
     ],
     define: {
       __SNACK_ID__: JSON.stringify(currentSnackId),
+      // Version du build (commit) affichée au démarrage : savoir ce qui tourne chez
+      // un utilisateur en cas d'incident (cf. kill-switch, docs/PWA-DEPLOIEMENT.md).
+      __APP_VERSION__: JSON.stringify(appVersion()),
     },
     build: {
       outDir: process.env.SNACK_ID ? `dist/${currentSnackId}` : 'dist',
