@@ -73,3 +73,29 @@ Reprendre ce document **à la signature du premier client** (premier snack en `l
 
 **Décision** : non. Pas de besoin métier (vérification d'âge / d'identité), API encore jeune, aucune intégration Firebase.
 À réévaluer seulement si un besoin réglementaire apparaît (ex. vente d'alcool).
+
+---
+
+## 5. Declarative Web Push (iOS/Safari 18.4+)
+
+**État actuel** : le push passe par FCM et fonctionne sur iPhone (app installée, iOS 16.4+) depuis le
+service worker unique (`src/sw.js`). Le SW lit déjà le format déclaratif (`src/sw/push-payload.js` :
+`web_push: 8030`, `navigate`, `app_badge`) — seul l'envoi manque.
+
+**Intérêt** : iOS affiche la notification lui-même, même si le service worker a été arrêté ou évincé
+→ plus fiable sur iPhone. FCM n'émet pas ce format.
+
+**À faire**
+1. Générer une paire VAPID (`npx web-push generate-vapid-keys`) ; clé privée dans Secret Manager
+   (`firebase functions:secrets:set VAPID_PRIVATE_KEY`), publique en `VITE_VAPID_PUBLIC_KEY`.
+2. Front (`src/push-register.js`) : sur Safari installé, `pushManager.subscribe({ userVisibleOnly: true,
+   applicationServerKey })` et envoi de l'abonnement (endpoint + clés) au callable `registerPushToken`
+   (nouveau champ `channel: "webpush"`).
+3. Functions : dépendance `web-push`, `defineSecret("VAPID_PRIVATE_KEY")` déclaré sur chaque fonction
+   qui envoie ; dans `lib/pushTargets.sendToTargets`, router `channel === "webpush"` vers `web-push` avec
+   un payload `{ web_push: 8030, notification: { title, body, navigate, app_badge } }`, FCM sinon.
+   Nettoyage sur HTTP 404/410.
+4. Étendre le garde-fou de secrets du build (`vite.config.js`) : refuser tout `VITE_*PRIVATE*`.
+5. Tests : `test:push` (canal webpush stubbé), test sur iPhone réel (non testable en CI).
+
+**Effort** : 3-5 j.
