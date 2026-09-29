@@ -55,6 +55,8 @@ npm run stripe:apple-pay-domains:apply    # enregistre les domaines manquants
   l'écran d'accueil, activer les notifications et refaire le test ci-dessus.
 - **Admin** : activer les alertes cuisine, vérifier la notification « Nouvelle commande » tablette en veille,
   et la pastille chiffrée sur l'icône de l'app (commandes en attente).
+- **Livreur hors-ligne** : mode avion pendant une course → photo de prise en charge → « envoi en attente » ;
+  couper le mode avion → la photo part seule et la course affiche « Prise en charge confirmée ».
 - **Paiement express** : sur iPhone (Safari) avec une carte dans Wallet, le bouton Apple Pay doit apparaître
   au-dessus du formulaire une fois le domaine enregistré (§ 3 bis). Sur Android/Chrome : Google Pay.
 
