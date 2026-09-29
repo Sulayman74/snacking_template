@@ -7,6 +7,8 @@ test.describe('Flux Guest Checkout et Conversion', () => {
     test.setTimeout(60000);
     page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
     page.on('pageerror', err => console.log('BROWSER ERROR:', err.message));
+    let stripeReady = false;
+    page.on('console', msg => { if (msg.text().includes('[checkout] 4/4')) stripeReady = true; });
 
     // 1. Ouvre le site
     await page.goto('http://localhost:5173?lang=fr');
@@ -43,6 +45,12 @@ test.describe('Flux Guest Checkout et Conversion', () => {
 
     // Attendre l'ouverture de la bottom sheet Stripe
     await expect(page.locator('#payment-bottom-sheet')).toBeVisible({ timeout: 10000 });
+
+    // Le formulaire Stripe doit réellement se monter (régression : squelette infini
+    // sans message quand le chargement échouait).
+    // (Stripe ne fonctionne pas dans un Shadow DOM : il restait bloqué sur son squelette.)
+    await expect(page.locator('#payment-element iframe').first()).toBeAttached({ timeout: 20000 });
+    await expect.poll(() => stripeReady, { timeout: 20000 }).toBe(true);
 
     // Récupérer l'UID anonyme généré pour le client
     const anonymousUid = await page.evaluate(() => {
