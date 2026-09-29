@@ -10,10 +10,18 @@ import {
   getDoc,
   updateDoc,
   onSnapshot,
-  getToken,
 } from "./core/firebase.js";
+import { registerDevicePush, syncDevicePush } from "./push-register.js";
+import { needsInstallForPush } from "./core/platform.js";
 
 let unsubscribeClientCard = null;
+
+// Appareil client abonné au push du snack courant (cf. src/push-register.js).
+const clientPushOpts = () => ({
+  messaging: window.messaging,
+  snackId: window.snackConfig?.identity?.id,
+  app: "client",
+});
 
 /**
  * Génère le QR de la carte fidélité LOCALEMENT (lib `qrcode` importée à la demande)
@@ -163,7 +171,13 @@ function updateNotifUIState() {
   const deniedInfo = document.getElementById("promo-notif-denied");
   if (!btn || !deniedInfo) return;
 
-  if (!("Notification" in window)) {
+  // iPhone dans Safari : on explique comment activer (installer l'app) au lieu
+  // de masquer silencieusement le bouton.
+  const installInfo = document.getElementById("promo-notif-install");
+  const mustInstall = needsInstallForPush();
+  installInfo?.classList.toggle("hidden", !mustInstall);
+
+  if (mustInstall || !("Notification" in window)) {
     btn.classList.add("hidden");
     deniedInfo.classList.add("hidden");
     return;
@@ -246,19 +260,9 @@ async function requestNotif() {
     const permission = await Notification.requestPermission();
 
     if (permission === "granted") {
-      const registration = await navigator.serviceWorker.ready;
-      const messaging = window.messaging;
-
-      const currentToken = await getToken(messaging, {
-        vapidKey:
-          "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098",
-        serviceWorkerRegistration: registration,
-      });
+      const currentToken = await registerDevicePush(clientPushOpts());
 
       if (currentToken) {
-        const user = auth.currentUser;
-        if (user)
-          await updateDoc(doc(db, "users", user.uid), { fcmToken: currentToken });
         window.showToast("🔔 Parfait ! Vous recevrez nos promos.", "success");
       } else {
         window.showToast(
@@ -282,35 +286,7 @@ async function requestNotif() {
 // "granted" la permission mais où le token Firestore est devenu stale
 // (PWA réinstallée, SW changé, token invalidé par FCM puis nettoyé en base).
 async function syncFcmToken() {
-  if (!("Notification" in window)) return;
-  if (Notification.permission !== "granted") return;
-
-  const user = auth?.currentUser;
-  if (!user) return;
-
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    const messaging = window.messaging;
-
-    const currentToken = await getToken(messaging, {
-      vapidKey:
-        "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098",
-      serviceWorkerRegistration: registration,
-    });
-
-    if (!currentToken) return;
-
-    const userRef = doc(db, "users", user.uid);
-    const userDoc = await getDoc(userRef);
-    const oldToken = userDoc.exists() ? userDoc.data().fcmToken : null;
-
-    if (oldToken !== currentToken) {
-      await updateDoc(userRef, { fcmToken: currentToken });
-      console.log("🔄 FCM token resynchronisé.");
-    }
-  } catch (error) {
-    console.error("❌ Erreur sync FCM token :", error);
-  }
+  await syncDevicePush(clientPushOpts());
 }
 
 async function shareReferralLink() {

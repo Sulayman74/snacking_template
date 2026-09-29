@@ -6,6 +6,8 @@
 //               window.switchView, window.closeProductModal, window.closeCartModal
 
 import { haversineKm, formatDistance, isLatLng } from "./services/geoService.js";
+import { needsInstallForPush } from "./core/platform.js";
+import { t } from "./i18n/index.js";
 import {
   auth,
   db,
@@ -65,6 +67,15 @@ function renderNotifPrompt() {
   if (!container) return;
 
   container.innerHTML = "";
+
+  // iPhone dans Safari : notifications disponibles seulement dans l'app installée.
+  if (needsInstallForPush()) {
+    const hint = document.createElement("p");
+    hint.className = "text-xs text-center text-text-muted font-semibold px-2";
+    hint.textContent = t("loyalty.installForNotifications");
+    container.appendChild(hint);
+    return;
+  }
 
   if (!("Notification" in window)) return;
   if (Notification.permission !== "default") return;

@@ -2,6 +2,7 @@ import { VitePWA } from 'vite-plugin-pwa' // 👈 1. L'import du plugin
 import { defineConfig, loadEnv } from 'vite'
 import fs from 'fs'
 import { resolve } from 'path'
+import { execSync } from 'child_process'
 import tailwindcss from '@tailwindcss/vite'
 import { resolveFont } from './src/theme-fonts.js'
 import { SAAS_THEMES } from './src/theme-palettes.js'
@@ -41,6 +42,16 @@ function assertPublicEnv(env, { command, mode }) {
     if (pk.startsWith('pk_test_')) {
       console.warn('⚠️  Build de PRODUCTION avec une clé Stripe de TEST : les paiements sont fictifs.')
     }
+  }
+}
+
+/** Commit du build : CI (GITHUB_SHA) ou git local ; "dev" sinon. */
+function appVersion() {
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return 'dev'
   }
 }
 
@@ -129,42 +140,21 @@ export default defineConfig(({ command, mode }) => {
         // false : l'enregistrement du SW est fait manuellement en JS (registerSW)
         // pour brancher les hooks onNeedRefresh / updateSW.
         injectRegister: false,
-        // 🗄️ Stratégies de cache (CLAUDE.md §8.3). L'app-shell buildé est précaché
-        // par défaut. Le catalogue Firestore (menus/prix) est déjà géré offline par
-        // persistentLocalCache du SDK → pas besoin de le runtime-cacher ici.
-        workbox: {
-          cleanupOutdatedCaches: true,
-          runtimeCaching: [
-            {
-              // Polices & icônes CDN : immuables → cache-first (long TTL).
-              urlPattern: ({ url }) =>
-                ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'ka-f.fontawesome.com'].includes(url.hostname),
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'cdn-assets',
-                expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 30 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
-              // Images produits (Firebase Storage) : stale-while-revalidate (catalogue).
-              urlPattern: ({ url }) =>
-                url.hostname.includes('firebasestorage') || url.hostname.includes('storage.googleapis.com'),
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'product-images',
-                expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 7 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
-              // ❌ Cloud Functions (paiement/commande) : JAMAIS de cache (network-only).
-              urlPattern: ({ url }) => url.hostname.includes('cloudfunctions.net'),
-              handler: 'NetworkOnly',
-            },
-          ],
+        // 🛠️ SW écrit à la main (src/sw.js) : précache + caches runtime (CLAUDE.md
+        // §8.3) + affichage des push FCM et clic. L'ancien SW généré (generateSW)
+        // n'avait AUCUN handler push → notifications génériques / révoquées sur iOS.
+        strategies: 'injectManifest',
+        srcDir: 'src',
+        filename: 'sw.js',
+        injectManifest: {
+          globPatterns: ['**/*.{js,css,html}'],
         },
         manifest: {
+          // id explicite = start_url (identité d'install inchangée, pas de doublon).
+          id: '/',
+          start_url: '/',
+          scope: '/',
+          lang: 'fr',
           name: seoData.title,
           short_name: seoData.title.split('|')[0].trim(),
           description: seoData.desc,
@@ -186,10 +176,28 @@ export default defineConfig(({ command, mode }) => {
             }
           ]
         }
-      })
+      }),
+      {
+        // admin / livreur / superadmin déclarent LEUR manifest (scope, icônes, start_url
+        // dédiés). VitePWA injecte en plus /manifest.webmanifest dans chaque page : on
+        // retire ce doublon hors index.html (le 1er lien gagnait, mais c'était fragile).
+        name: 'single-manifest-per-page',
+        enforce: 'post', // après l'injection de VitePWA (elle-même en post)
+        transformIndexHtml: {
+          order: 'post',
+          handler(html, ctx) {
+            if (ctx.filename.endsWith('index.html')) return html;
+            if (!/<link rel="manifest" href="\/(admin|livreur|superadmin)\.webmanifest"/.test(html)) return html;
+            return html.replace(/\s*<link rel="manifest" href="\/manifest\.webmanifest">/g, '');
+          },
+        },
+      },
     ],
     define: {
       __SNACK_ID__: JSON.stringify(currentSnackId),
+      // Version du build (commit) affichée au démarrage : savoir ce qui tourne chez
+      // un utilisateur en cas d'incident (cf. kill-switch, docs/PWA-DEPLOIEMENT.md).
+      __APP_VERSION__: JSON.stringify(appVersion()),
     },
     build: {
       outDir: process.env.SNACK_ID ? `dist/${currentSnackId}` : 'dist',

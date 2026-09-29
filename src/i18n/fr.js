@@ -113,6 +113,7 @@ export default {
     clubDesc: "Gagnez des points à chaque commande !",
     enableNotifications: "ACTIVER LES NOTIFICATIONS 🔔",
     referralButton: "OFFRE UNE FRITE À UN AMI 🍟",
+    installForNotifications: "Sur iPhone : installez l'app (Partager → « Sur l'écran d'accueil ») pour recevoir les notifications",
     notificationsBlocked: "Notifications bloquées dans votre navigateur",
     receivePromos: "Recevoir les offres & promos"
   },

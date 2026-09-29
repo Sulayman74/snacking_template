@@ -25,9 +25,10 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
-  getToken,
   storageTools,
 } from "../core/firebase.js";
+import { registerDevicePush } from "../push-register.js";
+import { createPodQueue } from "../services/podQueue.js";
 import { escapeHTML } from "../utils.js";
 import {
   haversineKm,
@@ -37,9 +38,6 @@ import {
   formatDistance,
   isLatLng,
 } from "../services/geoService.js";
-
-const VAPID_KEY =
-  "BGsq0EjCQPNq2_r5LC-41oxktxZtCfBCD0GvYjiKV7n2HgEOwKWnFGwgddQfPl9ZoFi6z8AvSM1rQUJkxa1-098";
 
 // Rayon d'arrivée : on n'autorise la photo de livraison que si le livreur est à
 // moins de X mètres de l'adresse client (anti-validation à distance). Généreux
@@ -55,6 +53,9 @@ class LivreurUI {
     this.watchOrderId = null;
     this.lastWritten = null;
     this.wakeLock = null;
+    // 📤 Photos de preuve prises hors-ligne, envoyées au retour du réseau.
+    this.podQueue = createPodQueue();
+    this.pendingPods = [];
     this.activeOrderId = null; // pour router les photos PoD vers la bonne commande
     this.activeOrder = null; // commande en cours de livraison (état complet)
     this.lastPos = null; // dernière position GPS (chaque tick, non throttlée)
@@ -96,7 +97,9 @@ class LivreurUI {
     this.els.app?.addEventListener("click", (e) => this.onAppClick(e));
 
     // Reprise du Wake Lock au retour en avant-plan
+    window.addEventListener("online", () => this.flushPods());
     document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") this.flushPods();
       if (document.visibilityState === "visible" && this.watchOrderId) this.requestWakeLock();
     });
 
@@ -165,6 +168,7 @@ class LivreurUI {
       this.showApp();
       this.startListening();
       this.renderPerms();
+      this.flushPods(); // photos restées en attente depuis la dernière session
       // Ouvre l'aide au tout premier login (une seule fois).
       if (!localStorage.getItem("livreur_help_seen")) {
         this.toggleHelp(true);
@@ -287,7 +291,9 @@ class LivreurUI {
     this.activeOrder = o;
     const client = o.livraison;
     // PoD stocké sous livreur.* (contrainte des règles Firestore).
-    const pickupDone = !!o.livreur?.pickupUrl;
+    const pickupQueued = this.hasPendingPod(o.id, "pickup");
+    const dropoffQueued = this.hasPendingPod(o.id, "dropoff");
+    const pickupDone = !!o.livreur?.pickupUrl || pickupQueued;
     const mapsUrl = isLatLng(client)
       ? `https://www.google.com/maps/dir/?api=1&destination=${client.lat},${client.lng}`
       : "";
@@ -306,14 +312,18 @@ class LivreurUI {
 
         <button type="button" data-livreur-action="pickup" ${pickupDone ? "disabled" : ""}
           class="w-full ${pickupDone ? "bg-green-500/10 text-green-700 dark:text-green-400 cursor-default" : "bg-primary text-white hover:opacity-90"} font-bold py-3 rounded-xl mb-2 transition active:scale-95">
-          <i data-lucide="${pickupDone ? "check" : "camera"}" class="mr-2"></i>${pickupDone ? "Prise en charge confirmée" : "1. Photo de prise en charge"}
+          <i data-lucide="${pickupDone ? "check" : "camera"}" class="mr-2"></i>${pickupQueued ? "Prise en charge enregistrée (envoi en attente)" : pickupDone ? "Prise en charge confirmée" : "1. Photo de prise en charge"}
         </button>
 
+        ${dropoffQueued ? `
+        <div class="w-full text-center bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold py-4 rounded-xl">
+          <i data-lucide="upload" class="mr-2"></i>Livraison enregistrée — envoi dès le retour du réseau
+        </div>` : `
         <button type="button" data-livreur-action="deliver" id="deliver-btn"
           class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition active:scale-95">
           <i data-lucide="camera" class="mr-2"></i> 2. J'ai livré (photo)
         </button>
-        <p id="deliver-hint" class="text-center text-xs mt-2 min-h-4"></p>
+        <p id="deliver-hint" class="text-center text-xs mt-2 min-h-4"></p>`}
       </div>`;
 
     // Démarre/relance le suivi GPS pour cette course
@@ -328,7 +338,9 @@ class LivreurUI {
   // Conditions pour autoriser la photo de livraison.
   canDeliver(o) {
     if (!o) return { ok: false, reason: "" };
-    if (!o.livreur?.pickupUrl) return { ok: false, reason: "Confirmez d'abord la photo de prise en charge." };
+    if (!o.livreur?.pickupUrl && !this.hasPendingPod(o.id, "pickup")) {
+      return { ok: false, reason: "Confirmez d'abord la photo de prise en charge." };
+    }
     const client = o.livraison;
     if (!isLatLng(client)) return { ok: true, reason: "" }; // pas de géo client → on ne bloque pas
     const pos = this.lastPos || this.lastWritten;
@@ -428,34 +440,27 @@ class LivreurUI {
     if (kind) this.triggerPhoto(kind);
   }
 
-  // Étape 2 : confirmation → upload Storage + écriture Firestore.
+  // Étape 2 : confirmation → upload Storage + écriture Firestore (ou file hors-ligne).
   async confirmPhoto() {
     if (!this.pending) return;
     const { kind, blob, orderId } = this.pending;
+    const job = { id: `${orderId}_${kind}_${Date.now()}`, snackId: this.snackId, orderId, kind, blob, createdAt: Date.now() };
     const btn = document.getElementById("pod-confirm-btn");
     const original = btn?.innerHTML;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="animate-spin mr-2"></i>Envoi…'; }
     try {
-      const url = await uploadPod(this.snackId, orderId, kind, blob);
-      const ref = doc(db, "commandes", orderId);
-
-      // PoD stocké sous livreur.* : seul espace autorisé au livreur par les règles
-      // (affectedKeys = {livreur}). Champs pointés → ne pas écraser livreur.position.
-      if (kind === "pickup") {
-        await updateDoc(ref, { "livreur.pickupUrl": url, "livreur.pickupAt": serverTimestamp() });
-        window.showToast?.("Prise en charge confirmée ✅", "success");
-      } else {
-        // Dépôt → commande livrée. On purge la position (RGPD).
-        await updateDoc(ref, {
-          statut: "livree",
-          "livreur.dropoffUrl": url,
-          "livreur.dropoffAt": serverTimestamp(),
-          "livreur.position": null,
-        });
-        window.triggerVibration?.("success");
-        window.showToast?.("Livraison validée ! Merci 🎉", "success");
-        this.stopWatch();
+      if (!navigator.onLine) {
+        await this.queuePod(job);
+        return;
       }
+      try {
+        await this.sendPod(job);
+      } catch (err) {
+        if (!isNetworkError(err)) throw err;
+        await this.queuePod(job);
+        return;
+      }
+      this.onPodSent(job);
       this.hidePreview();
     } catch (err) {
       console.error("Erreur PoD :", err);
@@ -464,6 +469,75 @@ class LivreurUI {
     } finally {
       if (btn) { btn.disabled = false; if (original) btn.innerHTML = original; }
     }
+  }
+
+  /** Upload Storage + écriture Firestore d'une photo de preuve. */
+  async sendPod({ snackId, orderId, kind, blob }) {
+    const url = await withTimeout(uploadPod(snackId, orderId, kind, blob), POD_UPLOAD_TIMEOUT_MS);
+    const ref = doc(db, "commandes", orderId);
+    // PoD stocké sous livreur.* : seul espace autorisé au livreur par les règles
+    // (affectedKeys = {livreur}). Champs pointés → ne pas écraser livreur.position.
+    if (kind === "pickup") {
+      await updateDoc(ref, { "livreur.pickupUrl": url, "livreur.pickupAt": serverTimestamp() });
+    } else {
+      // Dépôt → commande livrée. On purge la position (RGPD).
+      await updateDoc(ref, {
+        statut: "livree",
+        "livreur.dropoffUrl": url,
+        "livreur.dropoffAt": serverTimestamp(),
+        "livreur.position": null,
+      });
+    }
+  }
+
+  onPodSent(job) {
+    if (job.kind === "pickup") {
+      window.showToast?.("Prise en charge confirmée ✅", "success");
+    } else {
+      window.triggerVibration?.("success");
+      window.showToast?.("Livraison validée ! Merci 🎉", "success");
+      this.stopWatch();
+    }
+  }
+
+  // --- Hors-ligne : file des photos de preuve -----------------------------
+  hasPendingPod(orderId, kind) {
+    return this.pendingPods.some((j) => j.orderId === orderId && j.kind === kind);
+  }
+
+  async refreshPendingPods() {
+    try { this.pendingPods = await this.podQueue.list(); } catch (_) { this.pendingPods = []; }
+    if (this.activeOrder) this.renderActive(this.activeOrder);
+  }
+
+  /** Pas de réseau : la photo est gardée sur l'appareil et partira toute seule. */
+  async queuePod(job) {
+    await this.podQueue.add(job);
+    this.hidePreview();
+    if (job.kind === "dropoff") this.stopWatch();
+    await this.refreshPendingPods();
+    window.showToast?.("Hors ligne : photo enregistrée, envoi automatique dès le retour du réseau 📤", "success");
+  }
+
+  /** Envoie les photos en attente (retour réseau, retour dans l'app, connexion). */
+  async flushPods() {
+    if (!navigator.onLine || !auth.currentUser) return;
+    let res;
+    try {
+      res = await this.podQueue.flush((job) => this.sendPod(job));
+    } catch (err) {
+      console.warn("Envoi des photos en attente impossible :", err?.message);
+      return;
+    }
+    if (res.sent.length) {
+      window.showToast?.(`📤 ${res.sent.length} photo(s) en attente envoyée(s)`, "success");
+      if (res.sent.some((j) => j.kind === "dropoff")) window.triggerVibration?.("success");
+    }
+    if (res.dropped.length) {
+      console.error("Photos écartées (refusées) :", res.dropped.map((d) => `${d.orderId}/${d.kind}: ${d.error}`));
+      window.showToast?.("Une photo n'a pas pu être envoyée : la course a changé entre-temps.", "error");
+    }
+    if (res.sent.length || res.dropped.length) await this.refreshPendingPods();
   }
 
   // --- Suivi GPS (throttlé) ----------------------------------------------
@@ -510,8 +584,16 @@ class LivreurUI {
 
   // --- Wake Lock ----------------------------------------------------------
   async requestWakeLock() {
-    if (!("wakeLock" in navigator) || this.wakeLock) return;
-    try { this.wakeLock = await navigator.wakeLock.request("screen"); } catch (_) {}
+    // Le navigateur relâche lui-même le verrou quand l'app passe en arrière-plan :
+    // un verrou `released` ne doit pas empêcher d'en reprendre un au retour.
+    if (!("wakeLock" in navigator) || (this.wakeLock && !this.wakeLock.released)) return;
+    try {
+      const lock = await navigator.wakeLock.request("screen");
+      lock.addEventListener("release", () => {
+        if (this.wakeLock === lock) this.wakeLock = null;
+      });
+      this.wakeLock = lock;
+    } catch (_) {}
   }
   releaseWakeLock() {
     try { this.wakeLock?.release(); } catch (_) {}
@@ -524,13 +606,8 @@ class LivreurUI {
       if (!("Notification" in window)) return window.showToast?.("Notifications non supportées.", "error");
       const perm = await Notification.requestPermission();
       if (perm !== "granted") return window.showToast?.("Notifications refusées.", "error");
-      const reg = await navigator.serviceWorker.ready;
-      const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
-      const uid = auth.currentUser?.uid;
-      if (token && uid) {
-        await updateDoc(doc(db, "users", uid), { fcmToken: token });
-        window.showToast?.("Notifications activées 🔔", "success");
-      }
+      const token = await registerDevicePush({ messaging, snackId: this.snackId, app: "livreur" });
+      if (token) window.showToast?.("Notifications activées 🔔", "success");
     } catch (err) {
       console.error("Erreur notif livreur :", err);
     } finally {
@@ -649,6 +726,27 @@ function compressImage(file, maxDim = 1280, quality = 0.7) {
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image load failed")); };
     img.src = url;
   });
+}
+
+// Au-delà, on considère le réseau trop faible : la photo passe en file hors-ligne.
+const POD_UPLOAD_TIMEOUT_MS = 30000;
+
+function withTimeout(promise, ms) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(Object.assign(new Error("Délai d'envoi dépassé"), { code: "pod/timeout" })), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+/** Erreur due au réseau (→ file hors-ligne) plutôt qu'un refus. */
+function isNetworkError(err) {
+  const code = String(err?.code || "");
+  return !navigator.onLine
+    || code === "pod/timeout"
+    || code === "unavailable"
+    || code === "storage/retry-limit-exceeded"
+    || code === "storage/unknown";
 }
 
 async function uploadPod(snackId, orderId, kind, blob) {

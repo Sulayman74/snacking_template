@@ -15,6 +15,7 @@ const { Timestamp } = require("firebase-admin/firestore");
 const SNACK_ID = process.env.SNACK_ID || "Ym1YiO4Ue5Fb5UXlxr06"; // = snack par défaut du dev server
 const TEST_EMAIL = "robot@test.com";
 const TEST_PASSWORD = "123456";
+const DRIVER_EMAIL = "livreur@test.com";
 
 // 🛡️ Garde-fou : on n'écrit JAMAIS ailleurs que dans un émulateur.
 if (!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_AUTH_EMULATOR_HOST) {
@@ -99,7 +100,38 @@ async function seed() {
     paiement: { methode: "carte_bancaire", statut: "paye", stripeSessionId: "pi_e2e_seed" },
   });
 
-  console.log(`✅ Seed E2E OK — snack ${SNACK_ID}, user ${TEST_EMAIL} (admin), ${produits.length} produits, 1 commande.`);
+  // 5) Livreur + course EN COURS (livreur.spec : photo de preuve hors-ligne).
+  let driverUid;
+  try {
+    driverUid = (await auth.createUser({ email: DRIVER_EMAIL, password: TEST_PASSWORD, emailVerified: true })).uid;
+  } catch (e) {
+    if (e.code !== "auth/email-already-exists") throw e;
+    driverUid = (await auth.getUserByEmail(DRIVER_EMAIL)).uid;
+  }
+  await db.collection("users").doc(driverUid).set(
+    { email: DRIVER_EMAIL, nom: "Livreur Test", role: "livreur", snackId: SNACK_ID, actif: true, pointsBySnack: {} },
+    { merge: true }
+  );
+  // Client DISTINCT du robot : sinon cette course devient sa « dernière commande »
+  // (reorder.spec).
+  await db.collection("commandes").doc("e2e_delivery_1").set({
+    snackId: SNACK_ID,
+    userId: "e2e_delivery_client",
+    clientNom: "Client Livraison",
+    clientEmail: "client.livraison@test.com",
+    secretCode: "E2E002",
+    date: Timestamp.fromDate(new Date("2026-01-01T12:30:00Z")),
+    statut: "en_livraison",
+    mode: "delivery",
+    livreurId: driverUid,
+    livreur: { nom: "Livreur Test", position: null, lastNotifiedBucket: null },
+    livraison: { adresse: "1 rue du Test", lat: 45.9, lng: 6.35, frais: 3 },
+    items: [{ id: "e2e_1-seul--", productId: "e2e_1", nom: "Frites Test", prix: 3.5, image: "", formule: "seul", boisson: null, taille: null, sauces: [], quantity: 1 }],
+    total: 6.5,
+    paiement: { methode: "carte_bancaire", statut: "paye", stripeSessionId: "pi_e2e_delivery" },
+  });
+
+  console.log(`✅ Seed E2E OK — snack ${SNACK_ID}, user ${TEST_EMAIL} (admin), livreur ${DRIVER_EMAIL}, ${produits.length} produits, 2 commandes.`);
 }
 
 seed()

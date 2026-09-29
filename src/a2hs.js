@@ -9,6 +9,8 @@
 // HTTPS + manifest + SW actif, et pas déjà installée) → propose l'install native.
 // iOS/Safari : pas d'événement → on affiche les instructions manuelles.
 
+import { needsInstallForPush } from "./core/platform.js";
+
 export function setupA2HS({ bannerId, btnId, closeId, hintId } = {}) {
   const banner = document.getElementById(bannerId);
   if (!banner) return;
@@ -51,12 +53,14 @@ export function setupA2HS({ bannerId, btnId, closeId, hintId } = {}) {
   window.addEventListener("appinstalled", () => { snooze(); hide(); });
 
   // iOS : instructions manuelles (Partager → Sur l'écran d'accueil).
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-  if (isIOS && !isStandalone) {
+  // (isIOSDevice couvre aussi l'iPad, qui se présente comme un Mac tactile.)
+  if (needsInstallForPush()) {
     document.getElementById(btnId)?.classList.add("hidden");
     const hint = hintId ? document.getElementById(hintId) : null;
-    if (hint) hint.innerHTML = 'Partager <i data-lucide="upload"></i> → « Sur l\'écran d\'accueil »';
+    if (hint) {
+      hint.innerHTML = 'Partager <i data-lucide="upload"></i> → « Sur l\'écran d\'accueil »';
+      window.lucide?.createIcons?.(); // l'icône injectée doit être rendue
+    }
     setTimeout(show, 1500);
   }
 }

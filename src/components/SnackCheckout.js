@@ -8,6 +8,18 @@ import { t } from "../i18n/index.js";
 import { auth, functions, httpsCallable, signInAnonymously } from '../core/firebase.js';
 import { ensureUserDoc } from '../auth.js';
 
+// ⏱️ Délai max par étape du chargement du paiement : au-delà, on affiche une
+// erreur au lieu de laisser le squelette tourner indéfiniment.
+const STEP_TIMEOUT_MS = 20000;
+
+function withTimeout(promise, ms, step) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(Object.assign(new Error(`Délai dépassé (${step})`), { code: "checkout/timeout", step })), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export class SnackCheckout extends SnackElement {
   static properties = {
     isOpen: { type: Boolean },
@@ -30,6 +42,30 @@ export class SnackCheckout extends SnackElement {
     // Aucune clé de secours : le build de prod échoue sans VITE_STRIPE_PUBLISHABLE_KEY
     // (vite.config.js), le dev la lit dans .env.development.
     this.stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._stripeHost("express-checkout-element", "stripe-express", "mb-4 hidden");
+    this._stripeHost("link-authentication-element", "stripe-link", "mb-3 hidden");
+    this._stripeHost("payment-element", "stripe-payment", "min-h-[250px]");
+  }
+
+  /**
+   * Stripe Elements ne fonctionne pas dans un Shadow DOM : monté dedans, le Payment
+   * Element reste sur son squelette sans jamais devenir prêt. Ses conteneurs vivent
+   * donc dans le light DOM du composant et s'affichent dans la feuille via <slot>.
+   */
+  _stripeHost(id, slot, className) {
+    let el = this.querySelector(`#${id}`);
+    if (!el) {
+      el = document.createElement("div");
+      el.id = id;
+      el.slot = slot;
+      el.className = className;
+      this.appendChild(el);
+    }
+    return el;
   }
 
   getCartTotal() {
@@ -150,19 +186,21 @@ export class SnackCheckout extends SnackElement {
 
   async _mountStripeElement(currentUser, cfg) {
     try {
-      if (typeof Stripe === "undefined") await this._loadStripeSdk();
+      console.info("[checkout] 1/4 chargement de Stripe.js");
+      if (typeof Stripe === "undefined") await withTimeout(this._loadStripeSdk(), STEP_TIMEOUT_MS, "stripe-js");
       if (!this.stripeInstance) this.stripeInstance = Stripe(this.stripePublicKey);
 
-      const paymentContainer = this.shadowRoot.getElementById("payment-element");
+      const paymentContainer = this.querySelector("#payment-element");
       paymentContainer.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-circle" class="animate-spin text-3xl text-gray-400"></i></div>';
-      window.lucide?.createIcons({ root: this.shadowRoot });
+      window.lucide?.createIcons({ root: paymentContainer });
 
       const createPaymentIntent = httpsCallable(functions, "createPaymentIntent");
 
       const ticketSummary = store.state.cart.map((item) => `${item.quantity}x ${item.nom}`).join(", ");
       const { mode, livraison } = this._getDeliveryPayload();
 
-      const response = await createPaymentIntent({
+      console.info("[checkout] 2/4 createPaymentIntent");
+      const response = await withTimeout(createPaymentIntent({
         snackId: cfg.identity.id || "Ym1YiO4Ue5Fb5UXlxr06",
         amount: Math.round(this.totalAmount * 100),
         currency: "eur",
@@ -174,7 +212,7 @@ export class SnackCheckout extends SnackElement {
           ticket: ticketSummary.substring(0, 500),
           clientEmail: currentUser?.email || "",
         },
-      });
+      }), STEP_TIMEOUT_MS, "createPaymentIntent");
 
       const clientSecret = response.data?.clientSecret;
       if (!clientSecret) throw new Error(t('payment.invalidResponse'));
@@ -182,19 +220,64 @@ export class SnackCheckout extends SnackElement {
       const connectedAccountId = response.data?.stripeAccountId || null;
       this.stripeInstance = Stripe(this.stripePublicKey, connectedAccountId ? { stripeAccount: connectedAccountId } : undefined);
 
-      const appearance = { theme: "stripe" };
-      this.stripeElements = this.stripeInstance.elements({ appearance, clientSecret });
-      
-      const paymentElement = this.stripeElements.create("payment");
+      console.info(`[checkout] 3/4 montage du Payment Element (compte connecté : ${connectedAccountId ? "oui" : "non"})`);
+      // 🎨 Formulaire Stripe aux couleurs du snack (variable de thème posée par AppUI).
+      const primary = getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim();
+      const appearance = { theme: "stripe", variables: /^#[0-9a-f]{3,8}$/i.test(primary) ? { colorPrimary: primary } : {} };
+      const elements = this.stripeInstance.elements({ appearance, clientSecret });
+      this.stripeElements = elements;
+
+      const paymentElement = elements.create("payment");
+      // Sans ces écouteurs, un échec de chargement Stripe laissait son squelette
+      // tourner indéfiniment, sans aucun message.
+      let ready = false;
+      paymentElement.on("ready", () => {
+        ready = true;
+        console.info("[checkout] 4/4 Payment Element prêt");
+      });
+      paymentElement.on("loaderror", (e) => {
+        console.error("[checkout] Payment Element — échec de chargement :", e?.error);
+        this._failPaymentSheet(e?.error?.message);
+      });
+      setTimeout(() => {
+        if (!ready && this.isOpen && this.stripeElements === elements) {
+          console.error(`[checkout] Payment Element toujours pas prêt après ${STEP_TIMEOUT_MS / 1000} s`);
+          this._failPaymentSheet();
+        }
+      }, STEP_TIMEOUT_MS);
       paymentContainer.innerHTML = "";
       paymentElement.mount(paymentContainer);
 
+      // ⚡ Paiement express (Apple Pay / Google Pay / Link en 1 clic). Affiché seulement
+      // si un wallet est disponible (HTTPS + domaine enregistré + carte dans le wallet).
+      // Un échec ici ne touche pas au formulaire carte ci-dessous.
+      const expressContainer = this.querySelector("#express-checkout-element");
+      if (expressContainer) {
+        expressContainer.classList.add("hidden");
+        expressContainer.innerHTML = "";
+        try {
+          const express = elements.create("expressCheckout", { emailRequired: !!currentUser?.isAnonymous });
+          express.on("ready", ({ availablePaymentMethods }) => {
+            expressContainer.classList.toggle("hidden", !availablePaymentMethods);
+          });
+          express.on("loaderror", (e) => {
+            console.warn("[checkout] Paiement express indisponible :", e?.error?.message);
+            expressContainer.classList.add("hidden");
+          });
+          express.on("confirm", (event) => this._onExpressConfirm(event));
+          express.mount(expressContainer);
+        } catch (e) {
+          console.warn("[checkout] Paiement express non monté :", e?.message);
+        }
+      }
+
       // Guest checkout email element
       this.guestEmail = "";
-      const linkContainer = this.shadowRoot.getElementById("link-authentication-element");
+      const linkContainer = this.querySelector("#link-authentication-element");
       if (currentUser?.isAnonymous && linkContainer) {
         linkContainer.classList.remove("hidden");
         const linkEl = this.stripeElements.create("linkAuthentication");
+        linkEl.on("loaderror", (e) => console.error("[checkout] Link (email invité) — échec de chargement :", e?.error));
         linkEl.mount(linkContainer);
         linkEl.on("change", (e) => {
           this.guestEmail = (e?.value?.email || "").trim();
@@ -205,7 +288,7 @@ export class SnackCheckout extends SnackElement {
       }
 
     } catch (error) {
-      console.error("❌ Erreur préparation paiement :", error);
+      console.error(`❌ Erreur préparation paiement${error?.step ? ` (étape : ${error.step})` : ""} :`, error);
       const code = error?.code || "";
       const isBusiness = /failed-precondition|out-of-range|invalid-argument|resource-exhausted/.test(code);
       window.showToast(isBusiness && error?.message ? error.message : t("toasts.checkout.secureConnectionError"), "error");
@@ -225,7 +308,7 @@ export class SnackCheckout extends SnackElement {
     if (currentUser?.isAnonymous && !this.guestEmail) {
       this.errorMessage = t('payment.emailRequired');
       window.triggerVibration?.("error");
-      const linkEl = this.shadowRoot.getElementById("link-authentication-element");
+      const linkEl = this.querySelector("#link-authentication-element");
       if (linkEl) {
         linkEl.scrollIntoView({ behavior: "smooth", block: "center" });
         linkEl.style.outline = "2px solid var(--color-error, #ef4444)";
@@ -238,6 +321,27 @@ export class SnackCheckout extends SnackElement {
       return;
     }
 
+    await this._confirmAndFinalize();
+  }
+
+  /**
+   * Paiement express confirmé dans la feuille Apple Pay / Google Pay : l'email de
+   * l'invité vient du wallet, puis même chemin que le bouton « Payer ».
+   */
+  async _onExpressConfirm(event) {
+    if (this.isProcessing) return;
+    const walletEmail = (event?.billingDetails?.email || "").trim();
+    if (walletEmail && !this.guestEmail) this.guestEmail = walletEmail;
+    if (auth?.currentUser?.isAnonymous && !this.guestEmail) {
+      event?.paymentFailed?.({ reason: "fail" });
+      this.errorMessage = t("payment.emailRequired");
+      return;
+    }
+    await this._confirmAndFinalize();
+  }
+
+  /** Confirme le paiement (formulaire OU express) puis crée la commande. */
+  async _confirmAndFinalize() {
     this.isProcessing = true;
     this.errorMessage = '';
 
@@ -354,13 +458,24 @@ export class SnackCheckout extends SnackElement {
     document.body.style.overflow = "hidden";
   }
 
+  /** Échec du chargement du paiement : message clair + fermeture (au lieu d'un squelette infini). */
+  _failPaymentSheet(message) {
+    window.showToast(message || t("toasts.checkout.secureConnectionError"), "error");
+    this.closePaymentSheet();
+  }
+
   closePaymentSheet() {
     this.isOpen = false;
     document.body.style.overflow = "";
-    const paymentContainer = this.shadowRoot.getElementById("payment-element");
+    const paymentContainer = this.querySelector("#payment-element");
     if (paymentContainer) paymentContainer.innerHTML = "";
-    const linkContainer = this.shadowRoot.getElementById("link-authentication-element");
+    const linkContainer = this.querySelector("#link-authentication-element");
     if (linkContainer) linkContainer.innerHTML = "";
+    const expressContainer = this.querySelector("#express-checkout-element");
+    if (expressContainer) {
+      expressContainer.innerHTML = "";
+      expressContainer.classList.add("hidden");
+    }
   }
 
   updated() {
@@ -387,8 +502,10 @@ export class SnackCheckout extends SnackElement {
               <p class="text-lg font-bold text-red-600">${t('payment.total')} ${this.totalAmount.toFixed(2)} €</p>
             </div>
 
-            <div id="link-authentication-element" class="mb-3 hidden"></div>
-            <div id="payment-element" class="min-h-[250px]"></div>
+            <!-- Conteneurs Stripe en light DOM (cf. _stripeHost), projetés ici. -->
+            <slot name="stripe-express"></slot>
+            <slot name="stripe-link"></slot>
+            <slot name="stripe-payment"></slot>
 
             ${this.errorMessage ? html`
               <div class="mt-4 rounded-lg bg-danger-subtle p-3 text-center text-sm font-medium text-danger">

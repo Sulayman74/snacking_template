@@ -83,6 +83,10 @@ class AppUI {
         root.style.setProperty("--theme-primary-light", lightHex);
         root.style.setProperty("--theme-on-primary", onPrimaryHex);
 
+        // 📱 Barre d'état / barre d'adresse mobile aux couleurs du snack (le build pose
+        // la couleur de snacks-seo.json ; ici on suit la config Firestore à chaud).
+        if (primaryHex) document.getElementById("theme-color-meta")?.setAttribute("content", primaryHex);
+
         // 🌈 Active les overrides CSS par thème ([data-theme="belly"] .app-bg, futurs réglages).
         if (cfg.theme.colorPalette) root.dataset.theme = cfg.theme.colorPalette;
 
@@ -446,7 +450,16 @@ class AppUI {
     switchView(viewName) {
         const fullMenu = document.getElementById("full-menu");
         const isMenu = viewName === "menu";
-        fullMenu?.classList.toggle("hidden", !isMenu);
+        const showMenu = () => fullMenu?.classList.toggle("hidden", !isMenu);
+
+        // ✨ View Transition : fondu à l'ouverture / fermeture du menu (sinon apparition
+        // sèche). Seul l'affichage du menu passe dans la transition ; le reste ci-dessous
+        // reste synchrone comme avant. Ignoré si non supporté ou « réduire les animations ».
+        const visibilityChanges = !!fullMenu && fullMenu.classList.contains("hidden") === isMenu;
+        const canAnimate = typeof document.startViewTransition === "function"
+            && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+        if (visibilityChanges && canAnimate) document.startViewTransition(showMenu);
+        else showMenu();
         document.body.style.overflow = isMenu ? "hidden" : "";
         if (viewName === "home") window.scrollTo({ top: 0, behavior: "smooth" });
 

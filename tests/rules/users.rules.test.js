@@ -7,7 +7,7 @@ import {
   assertFails,
   assertSucceeds,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { readFileSync } from "node:fs";
 import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
 
@@ -109,5 +109,27 @@ describe("users.create — verrouillage (R3)", () => {
     await assertFails(setDoc(doc(db, "users", "forge5"), {
       role: "client", pointsBySnack: {}, rewardsAvailable: { snackA: 5 },
     }));
+  });
+});
+
+describe("users.get — pas de lecture cross-tenant (audit PWA)", () => {
+  it("AUTORISE l'utilisateur à lire son propre doc", async () => {
+    const db = testEnv.authenticatedContext("client_C").firestore();
+    await assertSucceeds(getDoc(doc(db, "users", "client_C")));
+  });
+
+  it("AUTORISE l'admin à lire un livreur de SON snack", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertSucceeds(getDoc(doc(db, "users", "driver_A")));
+  });
+
+  it("REFUSE l'admin de lire un livreur d'un AUTRE snack", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertFails(getDoc(doc(db, "users", "driver_B")));
+  });
+
+  it("REFUSE l'admin de lire une fiche client (PII, token push)", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertFails(getDoc(doc(db, "users", "client_C")));
   });
 });

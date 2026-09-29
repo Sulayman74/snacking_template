@@ -11,6 +11,8 @@
 import { registerSW } from "virtual:pwa-register";
 
 export function setupSWUpdatePrompt({ context = "App" } = {}) {
+  // eslint-disable-next-line no-undef -- injecté au build (vite.config.js › define)
+  console.info(`🏷️ ${context} version ${typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev"}`);
   const toggle = (show) => {
     const banner = document.getElementById("pwa-update-banner");
     if (!banner) return;

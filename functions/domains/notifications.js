@@ -3,10 +3,10 @@
 // ============================================================================
 
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
-const { getMessaging } = require("firebase-admin/messaging");
-const { admin, db } = require("../lib/admin");
-const { cleanupInvalidFcmToken } = require("../lib/fcm");
+const { getUserPushTargets, getStaffPushTargets, sendToTargets } = require("../lib/pushTargets");
 const { isFiniteNum, haversineKm, bucketForServer } = require("../lib/geo");
+const { getSnackOrigin } = require("../lib/tenantOrigins");
+const { getKitchenQueueCount } = require("../lib/kitchen");
 
 // ============================================================================
 // 🛎️ FONCTION : ALERTE ADMINS À CHAQUE NOUVELLE COMMANDE (push cuisine)
@@ -21,36 +21,23 @@ exports.notifyAdminsOnNewOrder = onDocumentCreated(
     if (!order?.snackId) return;
 
     try {
-      const adminsSnap = await db
-        .collection("users")
-        .where("snackId", "==", order.snackId)
-        .where("role", "==", "admin")
-        .get();
-
-      const targets = [];
-      adminsSnap.forEach((d) => {
-        const token = d.data().fcmToken;
-        if (token) targets.push({ uid: d.id, token });
-      });
+      const targets = await getStaffPushTargets(order.snackId, "admin");
       if (targets.length === 0) return;
 
       const modeLabel = order.mode === "delivery" ? "Livraison" : "Sur place";
       const total = typeof order.total === "number" ? `${order.total.toFixed(2)}€` : "";
       const client = order.clientNom || "Client";
 
-      const response = await getMessaging().sendEachForMulticast({
-        notification: { title: "🛎️ Nouvelle commande", body: `${client} · ${total} · ${modeLabel}` },
-        webpush: { fcm_options: { link: "https://snacking-template.web.app/admin.html" } },
-        tokens: targets.map((t) => t.token),
-      });
+      // Pastille de l'app admin = commandes en attente (lue par le SW, src/sw.js).
+      const pending = await getKitchenQueueCount(order.snackId);
 
-      // Nettoyage des tokens devenus invalides.
-      await Promise.all(
-        response.responses.map((r, i) =>
-          r.success ? null : cleanupInvalidFcmToken(targets[i].uid, r.error)
-        )
-      );
-      console.log(`🛎️ Alerte commande envoyée à ${targets.length} admin(s) (snack ${order.snackId}).`);
+      await sendToTargets(targets, {
+        notification: { title: "🛎️ Nouvelle commande", body: `${client} · ${total} · ${modeLabel}` },
+        data: { badge: String(pending) },
+        // Lien vers le site DU snack (pas celui du tenant par défaut).
+        webpush: { fcm_options: { link: `${await getSnackOrigin(order.snackId)}/admin.html` } },
+      });
+      console.log(`🛎️ Alerte commande envoyée à ${targets.length} appareil(s) admin (snack ${order.snackId}).`);
     } catch (error) {
       console.error("❌ Erreur notifyAdminsOnNewOrder :", error);
     }
@@ -86,23 +73,19 @@ exports.onOrderStatusChange = onDocumentUpdated(
     }
     if (!notif) return;
 
-    const userId = newData.userId;
     try {
-      const userDoc = await db.collection("users").doc(userId).get();
-      const fcmToken = userDoc.exists ? userDoc.data().fcmToken : null;
-      if (!fcmToken) {
-        console.log(`⚠️ Pas de token FCM pour l'utilisateur ${userId}.`);
+      const targets = await getUserPushTargets(newData.userId, newData.snackId, "client");
+      if (targets.length === 0) {
+        console.log(`⚠️ Aucun appareil push pour l'utilisateur ${newData.userId}.`);
         return;
       }
-      const response = await getMessaging().send({
+      const res = await sendToTargets(targets, {
         notification: notif,
-        webpush: { fcm_options: { link: "https://snacking-template.web.app/" } },
-        token: fcmToken,
+        webpush: { fcm_options: { link: `${await getSnackOrigin(newData.snackId)}/` } },
       });
-      console.log(`✅ Notif "${newData.statut}" envoyée pour commande ${orderId} :`, response);
+      console.log(`✅ Notif "${newData.statut}" commande ${orderId} : ${res.successCount}/${targets.length} appareil(s).`);
     } catch (error) {
       console.error("❌ Erreur lors de l'envoi de la notification de commande :", error);
-      await cleanupInvalidFcmToken(userId, error);
     }
   },
 );
@@ -141,24 +124,18 @@ exports.onDriverPositionUpdate = onDocumentUpdated(
     // Marque le palier AVANT l'envoi (idempotence, pas de double notif).
     await event.data.after.ref.update({ "livreur.lastNotifiedBucket": bucket });
 
-    const userId = after.userId;
     try {
-      const userDoc = await db.collection("users").doc(userId).get();
-      const fcmToken = userDoc.exists ? userDoc.data().fcmToken : null;
-      if (!fcmToken) return;
+      const targets = await getUserPushTargets(after.userId, after.snackId, "client");
+      if (targets.length === 0) return;
 
       const label = bucket >= 1000 ? `${bucket / 1000} km` : `${bucket} m`;
       const body = bucket <= 300 ? `Votre livreur arrive (${label}), préparez-vous !` : `Votre livreur est à ${label} environ.`;
-      await getMessaging().send({
+      await sendToTargets(targets, {
         notification: { title: "🛵 Votre livreur approche", body },
-        webpush: { fcm_options: { link: "https://snacking-template.web.app/" } },
-        token: fcmToken,
+        webpush: { fcm_options: { link: `${await getSnackOrigin(after.snackId)}/` } },
       });
     } catch (error) {
       console.error("❌ Erreur notif géofence :", error);
-      await cleanupInvalidFcmToken(userId, error);
     }
   },
 );
-
-

@@ -18,15 +18,18 @@
     "deploy:pizzeria": "npm run build:pizzeria && firebase deploy --only hosting:pizzeriadelagare",
     "deploy:belly": "npm run build:belly && firebase deploy --only hosting:belly-smash-burger",
     "deploy:all": "npm run build:all && firebase deploy --only hosting",
+    "deploy:sw-kill": "npm run build:all && node scripts/apply-sw-kill-switch.mjs && firebase deploy --only hosting",
     "migrate:snack-fields": "node functions/scripts/migrate-snack-fields.js",
     "migrate:snack-fields:apply": "node functions/scripts/migrate-snack-fields.js --apply",
     "migrate:pricing-supplements": "node functions/scripts/migrate-pricing-supplements.js",
     "migrate:pricing-supplements:apply": "node functions/scripts/migrate-pricing-supplements.js --apply",
     "migrate:product-tva": "node functions/scripts/migrate-product-tva.js",
     "migrate:product-tva:apply": "node functions/scripts/migrate-product-tva.js --apply",
+    "stripe:apple-pay-domains": "node functions/scripts/register-apple-pay-domains.js",
+    "stripe:apple-pay-domains:apply": "node functions/scripts/register-apple-pay-domains.js --apply",
     "emulators": "firebase emulators:start --only auth,firestore,functions,storage --project snacking-template",
     "seed": "node functions/seed-emulator.js",
-    "test:e2e": "VITE_E2E_TESTING=true SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 firebase emulators:exec --only auth,firestore,functions,storage --project snacking-template \"node functions/seed-emulator.js && playwright test --workers=1 cart.spec.js commande.spec.js stock.spec.js reorder.spec.js radar.spec.js guest-checkout.spec.js\"",
+    "test:e2e": "VITE_E2E_TESTING=true SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 firebase emulators:exec --only auth,firestore,functions,storage --project snacking-template \"node functions/seed-emulator.js && playwright test --workers=1 cart.spec.js commande.spec.js stock.spec.js reorder.spec.js radar.spec.js guest-checkout.spec.js livreur.spec.js\"",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:loyalty": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/loyalty-harness.cjs\"",
@@ -34,7 +37,10 @@
     "test:refund": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/refund-harness.cjs\"",
     "test:tunnel": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/tunnel-harness.cjs\"",
     "test:r1": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/r1-delivery-harness.cjs\"",
-    "test:orphan": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/orphan-charge-harness.cjs\""
+    "test:orphan": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/orphan-charge-harness.cjs\"",
+    "test:pwa": "npm run build:tacos && playwright test -c playwright.pwa.config.js",
+    "test:push": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/push-targets-harness.cjs\"",
+    "test:recovery": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/order-recovery-harness.cjs\""
   },
   "repository": {
     "type": "git",
@@ -62,6 +68,11 @@
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.8",
+    "workbox-cacheable-response": "^7.4.1",
+    "workbox-expiration": "^7.4.1",
+    "workbox-precaching": "^7.4.1",
+    "workbox-routing": "^7.4.1",
+    "workbox-strategies": "^7.4.1",
     "workbox-window": "^7.4.0"
   },
   "dependencies": {

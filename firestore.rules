@@ -99,10 +99,14 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Lecture UNITAIRE (get par uid) : le client lit son doc ; un admin peut lire
-      // un doc précis (nécessaire au scanner fidélité — les clients sont globaux,
-      // sans snackId, et cumulent des points multi-snack via pointsBySnack).
-      allow get: if isOwner(userId) || isAnyAdmin();
+      // Lecture UNITAIRE (get par uid) : le client lit son doc ; l'admin ne lit que
+      // les docs de SON snack (livreurs/admins portant snackId) ; superadmin tout.
+      // Les fiches client (sans snackId : PII, token push) ne sont plus lisibles par
+      // un admin quelconque (cross-tenant) — le scanner fidélité passe par les
+      // callables awardLoyaltyPoint/redeemLoyaltyReward (Admin SDK).
+      allow get: if isOwner(userId)
+                 || isSuperAdmin()
+                 || isSnackAdmin(resource.data.get('snackId', null));
 
       // Lecture en LISTE (query) : réservée au snack propriétaire des docs ciblés
       // (anti-énumération RGPD cross-tenant). Seuls les docs livreur/admin portent
@@ -220,8 +224,25 @@ service cloud.firestore {
           isDriver(resource.data.snackId)
           && resource.data.mode == 'delivery'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['livreur', 'livreurId', 'statut'])
-          && request.resource.data.statut in ['prete', 'en_livraison', 'livree']
-          && (resource.data.livreurId == null || resource.data.livreurId == request.auth.uid)
+          && (
+            // Prise en charge : course 'prete' LIBRE → 'en_livraison' à SON nom.
+            (
+              resource.data.statut == 'prete'
+              && resource.data.livreurId == null
+              && request.resource.data.statut == 'en_livraison'
+              && request.resource.data.livreurId == request.auth.uid
+            ) ||
+            // Course en cours (la SIENNE) : position/photos (statut inchangé) ou
+            // dépôt ('livree'). Transitions uniquement vers l'avant : une écriture
+            // hors-ligne rejouée ne peut ni faire reculer 'livree', ni toucher une
+            // commande annulée/réattribuée entre-temps par l'admin.
+            (
+              resource.data.statut == 'en_livraison'
+              && resource.data.livreurId == request.auth.uid
+              && request.resource.data.livreurId == request.auth.uid
+              && request.resource.data.statut in ['en_livraison', 'livree']
+            )
+          )
         )
       );
 
@@ -268,6 +289,13 @@ service cloud.firestore {
                     && request.resource.data.uid == request.auth.uid
                     && request.resource.data.ts == request.time;
       allow update, delete: if false;
+    }
+
+    // 🔔 ABONNEMENTS PUSH (token par appareil / snack / app) : écrits EXCLUSIVEMENT
+    // par le callable registerPushToken (Admin SDK), lus par les Functions d'envoi.
+    // Aucun accès client (un token permet de pousser des messages à l'appareil).
+    match /pushSubscriptions/{subId} {
+      allow read, write: if false;
     }
 
     // 🛑 LE VIDEUR : Rejette tout ce qui n'est pas explicitement autorisé au-dessus

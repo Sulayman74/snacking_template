@@ -1,59 +1,32 @@
 // ============================================================================
-// 🔔 FCM — push fidélité + nettoyage des tokens morts
+// 🔔 FCM — push fidélité
 // ============================================================================
-// Partagé par les domaines fidélité (sendRewardPush) et notifications/marketing
-// (cleanupInvalidFcmToken). No-op silencieux si pas de token (le crédit reste OK).
+// Partagé par les domaines fidélité et commande. Les destinataires et le
+// nettoyage des tokens morts passent par lib/pushTargets (abonnements par
+// appareil / snack). No-op silencieux si aucun appareil (le crédit reste OK).
 
-const { getMessaging } = require("firebase-admin/messaging");
-const { db, FieldValue } = require("./admin");
-
-// Détecte un token FCM devenu invalide (PWA réinstallée, désinstallation, etc.)
-function isInvalidFcmTokenError(error) {
-  const code = error?.code || error?.errorInfo?.code;
-  return (
-    code === "messaging/registration-token-not-registered" ||
-    code === "messaging/invalid-registration-token"
-  );
-}
-
-// Nettoie le fcmToken Firestore si l'erreur indique un token mort.
-// Retourne true si nettoyage effectué.
-async function cleanupInvalidFcmToken(userId, error) {
-  if (!isInvalidFcmTokenError(error)) return false;
-  try {
-    await db.collection("users").doc(userId).update({
-      fcmToken: FieldValue.delete(),
-    });
-    console.log(`🧹 Token FCM invalide nettoyé pour user ${userId}`);
-    return true;
-  } catch (e) {
-    console.error(`❌ Échec cleanup token user ${userId}:`, e);
-    return false;
-  }
-}
+const { getUserPushTargets, sendToTargets, isInvalidFcmTokenError } = require("./pushTargets");
 
 /**
  * Émet le push de palier « menu offert ». À appeler APRÈS le commit de la transaction
- * (jamais dans une transaction). No-op si le client n'a pas de token. Nettoie un token mort.
- * @param {string} userId - uid du client (pour le cleanup du token).
- * @param {string|null} fcmToken - Token FCM du client.
- * @param {string} snackId - Snack à l'origine de la récompense (transmis au front).
+ * (jamais dans une transaction). Ne lève jamais.
+ * @param {string} userId - uid du client.
+ * @param {string} snackId - Snack à l'origine de la récompense.
  * @returns {Promise<void>}
  */
-async function sendRewardPush(userId, fcmToken, snackId) {
-  if (!fcmToken) return; // crédit OK sans token → pas de crash
+async function sendRewardPush(userId, snackId) {
   try {
-    await getMessaging().send({
+    const targets = await getUserPushTargets(userId, snackId, "client");
+    await sendToTargets(targets, {
       notification: {
         title: "🎁 Menu offert !",
         body: "Bravo ! Tu as atteint le palier fidélité. Ton prochain menu est offert 🍟",
       },
       data: { type: "REWARD_UNLOCKED", snackId: String(snackId) },
-      token: fcmToken,
     });
   } catch (error) {
-    await cleanupInvalidFcmToken(userId, error);
+    console.error(`❌ Push fidélité (uid ${userId}) échoué :`, error);
   }
 }
 
-module.exports = { isInvalidFcmTokenError, cleanupInvalidFcmToken, sendRewardPush };
+module.exports = { isInvalidFcmTokenError, sendRewardPush };

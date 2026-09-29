@@ -93,8 +93,9 @@ window.lucide = {
 
 let scheduled = false;
 
-/** Rend tous les <i data-lucide> non encore convertis en SVG. Idempotent (les SVG produits
- *  n'ont plus l'attribut data-lucide -> ignorés aux passes suivantes). */
+/** Rend tous les <i data-lucide> non encore convertis en SVG. (lucide 1.x retraite aussi
+ *  les <svg data-lucide> déjà rendus : sans effet visible, mais génère des mutations —
+ *  d'où le filtre de l'observer ci-dessous.) */
 function renderIcons() {
   scheduled = false;
   window.lucide.createIcons();
@@ -107,14 +108,26 @@ function schedule() {
   requestAnimationFrame(renderIcons);
 }
 
+/** Un nœud ajouté contient-il un placeholder <i data-lucide> encore à rendre ? */
+function hasPlaceholder(node) {
+  if (node.nodeType !== Node.ELEMENT_NODE) return false;
+  if (node.tagName === "I" && node.hasAttribute("data-lucide")) return true;
+  return node.querySelector?.("i[data-lucide]") != null;
+}
+
 // Un seul observateur pour tout le document : chaque innerHTML/append qui injecte des
-// placeholders déclenche un rendu (rAF-débouncé). Les SVG réinsérés ne rebouclent pas
-// (pas de data-lucide), au pire une passe no-op.
+// placeholders <i data-lucide> déclenche un rendu (rAF-débouncé).
+// ⚠️ On ne réagit QU'AUX placeholders : lucide 1.x conserve `data-lucide` sur le <svg>
+// produit et le re-remplace à chaque createIcons(). Réagir à tout ajout de nœud créait
+// une boucle infinie (chaque rendu réinsère les SVG → nouvelle mutation → nouveau rendu,
+// ~60×/s) qui saturait la page et empêchait le formulaire Stripe de finir de charger.
 const observer = new MutationObserver((mutations) => {
   for (const m of mutations) {
-    if (m.addedNodes.length) {
-      schedule();
-      return;
+    for (const node of m.addedNodes) {
+      if (hasPlaceholder(node)) {
+        schedule();
+        return;
+      }
     }
   }
 });

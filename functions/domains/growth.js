@@ -12,12 +12,12 @@
 // déjà en place dans ce pipeline).
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { getMessaging } = require("firebase-admin/messaging");
 const logger = require("firebase-functions/logger");
 const { db, FieldValue, Timestamp } = require("../lib/admin");
 const { emitEvent } = require("../lib/events");
+const { chunkArray } = require("../lib/util");
 const { canSendMarketingPush } = require("../lib/pushGovernance");
-const { cleanupInvalidFcmToken } = require("../lib/fcm");
+const { getUserPushTargets, getClientPushTargetsBySnack, sendToTargets } = require("../lib/pushTargets");
 
 // ============================================================================
 // 🛒 PANIER ABANDONNÉ (Priorité 1 — Intention forte)
@@ -96,8 +96,9 @@ exports.processAbandonedCarts = onSchedule(
           const userData = userSnap.data();
           const snackData = snackSnap.exists ? snackSnap.data() : {};
 
-          // Pas de token FCM → impossible d'envoyer
-          if (!userData.fcmToken) continue;
+          // Aucun appareil abonné à CE snack → impossible d'envoyer
+          const targets = await getUserPushTargets(uid, snackId, "client");
+          if (targets.length === 0) continue;
 
           // 🛡️ GENDARME : vérification obligatoire avant tout envoi
           const { allowed, reason } = canSendMarketingPush(userData, snackData);
@@ -108,14 +109,14 @@ exports.processAbandonedCarts = onSchedule(
 
           // ✅ Autorisé → envoyer le push
           const snackName = snackData.identity?.name || "Ton restaurant";
-          await getMessaging().send({
+          const res = await sendToTargets(targets, {
             notification: {
               title: "🛒 Tu as oublié ton panier !",
               body: `Ta commande chez ${snackName} t'attend. Finalise-la en 1 clic.`,
             },
             data: { type: "ABANDONED_CART", snackId },
-            token: userData.fcmToken,
           });
+          if (res.successCount === 0) continue; // tokens morts (nettoyés) : rien d'envoyé
 
           // Mettre à jour le timestamp anti-spam (Admin SDK → côté serveur)
           await db.collection("users").doc(uid).update({
@@ -132,12 +133,8 @@ exports.processAbandonedCarts = onSchedule(
 
           sent++;
         } catch (userErr) {
-          // Nettoyage du token si invalide, sinon log + continue
-          if (userErr?.code?.includes?.("messaging/")) {
-            await cleanupInvalidFcmToken(uid, userErr);
-          } else {
-            logger.warn(`[abandoned-cart] échec user ${uid}:`, userErr?.message);
-          }
+          // Les tokens morts sont nettoyés par sendToTargets ; ici : erreurs imprévues.
+          logger.warn(`[abandoned-cart] échec user ${uid}:`, userErr?.message);
         }
       }
 
@@ -284,16 +281,20 @@ exports.processWinBack = onSchedule(
         const snackData = snackDoc.data() || {};
         const snackName = snackData.identity?.name || "Ton restaurant";
 
-        // Query : users du snack inactifs depuis 14j avec un token FCM
-        const usersSnap = await db
-          .collection("users")
-          .where("snackId", "==", snackId)
-          .where("lastOrderDate", "<=", inactiveThreshold)
-          .get();
+        // Clients abonnés au push de CE snack (les fiches client n'ont pas de
+        // snackId : l'ancienne requête users.snackId ne touchait que l'équipe),
+        // puis filtre « inactif depuis 14 j » sur la fiche user.
+        const devicesByUid = await getClientPushTargetsBySnack(snackId);
+        const userDocs = [];
+        for (const uids of chunkArray([...devicesByUid.keys()], 300)) {
+          userDocs.push(...await db.getAll(...uids.map((uid) => db.collection("users").doc(uid))));
+        }
 
-        for (const userDoc of usersSnap.docs) {
+        for (const userDoc of userDocs) {
+          if (!userDoc.exists) continue;
           const userData = userDoc.data();
-          if (!userData.fcmToken) continue;
+          const lastOrder = userData.lastOrderDate;
+          if (!lastOrder || lastOrder.toMillis() > inactiveThreshold.toMillis()) continue;
 
           // 🛡️ GENDARME : vérification obligatoire
           const { allowed } = canSendMarketingPush(userData, snackData);
@@ -303,14 +304,14 @@ exports.processWinBack = onSchedule(
           }
 
           try {
-            await getMessaging().send({
+            const res = await sendToTargets(devicesByUid.get(userDoc.id), {
               notification: {
                 title: "🎁 Tu nous manques !",
                 body: `Ça fait un moment… Reviens chez ${snackName}, on t'attend !`,
               },
               data: { type: "WINBACK", snackId },
-              token: userData.fcmToken,
             });
+            if (res.successCount === 0) continue; // tokens morts (nettoyés) : rien d'envoyé
 
             // Poser le timestamp anti-spam
             await db.collection("users").doc(userDoc.id).update({
@@ -327,11 +328,8 @@ exports.processWinBack = onSchedule(
 
             totalSent++;
           } catch (sendErr) {
-            if (sendErr?.code?.includes?.("messaging/")) {
-              await cleanupInvalidFcmToken(userDoc.id, sendErr);
-            } else {
-              logger.warn(`[win-back] échec user ${userDoc.id}:`, sendErr?.message);
-            }
+            // Les tokens morts sont nettoyés par sendToTargets ; ici : erreurs imprévues.
+            logger.warn(`[win-back] échec user ${userDoc.id}:`, sendErr?.message);
           }
         }
       }
