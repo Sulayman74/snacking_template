@@ -147,7 +147,8 @@ export default defineConfig(({ command, mode }) => {
         srcDir: 'src',
         filename: 'sw.js',
         injectManifest: {
-          globPatterns: ['**/*.{js,css,html}'],
+          // + sonnerie de l'écran cuisine : disponible même tablette hors ligne.
+          globPatterns: ['**/*.{js,css,html}', 'sounds/*.mp3'],
         },
         manifest: {
           // id explicite = start_url (identité d'install inchangée, pas de doublon).

@@ -38,6 +38,15 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
     // ==========================================
     // 👨‍🍳 2. LE CHEF SE CONNECTE ET OUVRE LE RADAR
     // ==========================================
+    // Compteur de sonneries (hors déblocage du son au démarrage, joué à volume 0).
+    await adminPage.addInitScript(() => {
+      window.__bellPlays = 0;
+      const play = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () {
+        if (this.id === 'kitchen-bell' && this.volume > 0) window.__bellPlays++;
+        return play.call(this);
+      };
+    });
     await adminPage.goto('http://localhost:5173/admin.html');
     
     // Remplissage du login
@@ -74,11 +83,20 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
     const waitingTicket = adminPage.locator('#orders-waiting .border-gray-400').first();
     await expect(waitingTicket).toBeVisible();
 
+    // KDS-1 : le chef est parti sur l'onglet Menu (marquer un produit épuisé…).
+    // L'écoute doit continuer, et l'arrivée du client doit SONNER.
+    await adminPage.evaluate(() => window.switchAdminTab('menu'));
+    const playsBefore = await adminPage.evaluate(() => window.__bellPlays);
+
     // ACTION CLIENT : "Je suis à 5 min"
     await clientPage.locator('#tracking-action-btn').click();
 
-    // VÉRIFICATION 3 (Admin) : Le ticket passe dans la colonne rouge
-    // Le ticket contient la bordure rouge "border-red-500"
+    // VÉRIFICATION 3 (Admin, onglet Menu) : sonnerie + message « à traiter en cuisine »
+    await expect.poll(() => adminPage.evaluate(() => window.__bellPlays), { timeout: 10000 }).toBeGreaterThan(playsBefore);
+    await expect(adminPage.getByText('à traiter en cuisine')).toBeVisible();
+
+    // Retour en cuisine : le ticket est déjà passé dans la colonne rouge (bordure "border-red-500")
+    await adminPage.locator('#tab-cuisine-desktop').click();
     const cookingTicket = adminPage.locator('#orders-new .border-red-500').first();
     await expect(cookingTicket).toBeVisible();
 

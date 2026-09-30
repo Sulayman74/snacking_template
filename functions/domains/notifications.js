@@ -7,6 +7,21 @@ const { getUserPushTargets, getStaffPushTargets, sendToTargets } = require("../l
 const { isFiniteNum, haversineKm, bucketForServer } = require("../lib/geo");
 const { getSnackOrigin } = require("../lib/tenantOrigins");
 const { getKitchenQueueCount } = require("../lib/kitchen");
+const { buildNewOrderAlert, buildClientArrivingAlert, isClientArrival } = require("../lib/kitchenAlerts");
+
+/** Push à tous les appareils admin du snack, pastille = commandes en attente. */
+async function alertKitchen(snackId, notification) {
+  const targets = await getStaffPushTargets(snackId, "admin");
+  if (targets.length === 0) return 0;
+  const pending = await getKitchenQueueCount(snackId);
+  await sendToTargets(targets, {
+    notification,
+    data: { badge: String(pending) },
+    // Lien vers le site DU snack (pas celui du tenant par défaut).
+    webpush: { fcm_options: { link: `${await getSnackOrigin(snackId)}/admin.html` } },
+  });
+  return targets.length;
+}
 
 // ============================================================================
 // 🛎️ FONCTION : ALERTE ADMINS À CHAQUE NOUVELLE COMMANDE (push cuisine)
@@ -21,23 +36,8 @@ exports.notifyAdminsOnNewOrder = onDocumentCreated(
     if (!order?.snackId) return;
 
     try {
-      const targets = await getStaffPushTargets(order.snackId, "admin");
-      if (targets.length === 0) return;
-
-      const modeLabel = order.mode === "delivery" ? "Livraison" : "Sur place";
-      const total = typeof order.total === "number" ? `${order.total.toFixed(2)}€` : "";
-      const client = order.clientNom || "Client";
-
-      // Pastille de l'app admin = commandes en attente (lue par le SW, src/sw.js).
-      const pending = await getKitchenQueueCount(order.snackId);
-
-      await sendToTargets(targets, {
-        notification: { title: "🛎️ Nouvelle commande", body: `${client} · ${total} · ${modeLabel}` },
-        data: { badge: String(pending) },
-        // Lien vers le site DU snack (pas celui du tenant par défaut).
-        webpush: { fcm_options: { link: `${await getSnackOrigin(order.snackId)}/admin.html` } },
-      });
-      console.log(`🛎️ Alerte commande envoyée à ${targets.length} appareil(s) admin (snack ${order.snackId}).`);
+      const sent = await alertKitchen(order.snackId, buildNewOrderAlert(order));
+      if (sent) console.log(`🛎️ Alerte commande envoyée à ${sent} appareil(s) admin (snack ${order.snackId}).`);
     } catch (error) {
       console.error("❌ Erreur notifyAdminsOnNewOrder :", error);
     }
@@ -56,6 +56,19 @@ exports.onOrderStatusChange = onDocumentUpdated(
 
     // On ne déclenche que sur un VRAI changement de statut.
     if (oldData.statut === newData.statut) return;
+
+    // 🏃 Click & collect : le client signale son arrivée → c'est le moment de
+    // cuisiner. Push aux admins (tablette en veille / autre app), dans ce trigger
+    // déjà existant : aucune exécution de fonction supplémentaire.
+    if (isClientArrival(oldData, newData)) {
+      try {
+        const sent = await alertKitchen(newData.snackId, buildClientArrivingAlert(newData, orderId));
+        console.log(`🏃 Arrivée client ${orderId} signalée à ${sent} appareil(s) admin.`);
+      } catch (error) {
+        console.error("❌ Erreur alerte arrivée client :", error);
+      }
+      return; // aucun push client pour ce statut
+    }
 
     const shortId = orderId.slice(-4).toUpperCase();
     const isDelivery = newData.mode === "delivery";

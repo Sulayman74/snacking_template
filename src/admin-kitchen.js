@@ -249,7 +249,25 @@ export function createTicketElement(id, commande) {
 // 📡 RADAR FIREBASE (COMMANDES TEMPS RÉEL)
 // ============================================================================
 let unsubscribeKitchenRadar = null;
-let isFirstLoad = true;
+
+/**
+ * Faut-il alerter la cuisine pour ce changement ? (fonction PURE)
+ * - "nouvelle" : une commande arrive (click & collect en attente du client) ;
+ * - "a-cuisiner" : une commande passe en « à cuisiner » — livraison payée, ou
+ *   client de click & collect qui signale son arrivée. C'est le moment de lancer.
+ * Jamais au chargement initial (tickets déjà là à l'ouverture du service).
+ * @returns {null|"nouvelle"|"a-cuisiner"}
+ */
+export function kitchenAlertFor(changeType, prev, next, isInitialLoad) {
+  if (isInitialLoad || !next) return null;
+  if (changeType === "added") {
+    if (next.statut === "nouvelle") return "a-cuisiner";
+    if (next.statut === "en_attente_client") return "nouvelle";
+    return null;
+  }
+  if (changeType === "modified" && next.statut === "nouvelle" && prev?.statut !== "nouvelle") return "a-cuisiner";
+  return null;
+}
 
 function updateTicketDOM(ticketDiv, commande, id) {
   const paymentStatus = commande.paiement?.statut || "en_attente";
@@ -310,12 +328,14 @@ function updateTicketDOM(ticketDiv, commande, id) {
 
 const kitchenOrdersMap = new Map();
 
+// Idempotent : l'écoute reste active pendant tout le service (changement d'onglet
+// admin, tablette en veille). Un second appel ne recharge pas les tickets.
 function startKitchenRadar() {
   if (unsubscribeKitchenRadar) {
-    unsubscribeKitchenRadar();
-    unsubscribeKitchenRadar = null;
+    requestWakeLock();
+    return;
   }
-  
+
   requestWakeLock();
   watchKitchenSnack();
 
@@ -336,13 +356,22 @@ function startKitchenRadar() {
 
   const bell = document.getElementById("kitchen-bell");
 
+  let isFirstLoad = true; // propre à CET abonnement (réinitialisé à chaque démarrage)
+
   unsubscribeKitchenRadar = onSnapshot(q, (snapshot) => {
     let ringTheBell = false;
+    let alertCount = 0;
 
     snapshot.docChanges().forEach((change) => {
       const commande = change.doc.data();
       const id = change.doc.id;
       const existingTicket = document.getElementById(`ticket-${id}`);
+      // Changement fait sur CETTE tablette (ex. « Forcer cuisson ») : pas de sonnerie.
+      const isOwnWrite = change.doc.metadata?.hasPendingWrites === true;
+      if (!isOwnWrite && kitchenAlertFor(change.type, kitchenOrdersMap.get(id), commande, isFirstLoad)) {
+        ringTheBell = true;
+        alertCount++;
+      }
 
       if (change.type === "added") {
         kitchenOrdersMap.set(id, commande);
@@ -354,7 +383,6 @@ function startKitchenRadar() {
           newOrdersContainer.appendChild(newTicket);
         if (commande.statut === "prete" && readyOrdersContainer)
           readyOrdersContainer.appendChild(newTicket);
-        if (commande.statut === "en_attente_client" && !isFirstLoad) ringTheBell = true;
       } else if (change.type === "modified") {
         kitchenOrdersMap.set(id, commande);
         if (existingTicket) {
@@ -411,7 +439,13 @@ function startKitchenRadar() {
       if (tabCountReady) tabCountReady.innerText = len;
     }
 
-    if (ringTheBell && bell) bell.play().catch((e) => console.log("Son bloqué"));
+    if (ringTheBell) {
+      bell?.play().catch(() => console.warn("Sonnerie bloquée par le navigateur (touchez l'écran)."));
+      // Hors de l'onglet Cuisine : le son seul ne dit pas où regarder.
+      if (window.currentAdminTab !== "cuisine") {
+        window.showToast?.(`🛎️ ${alertCount > 1 ? `${alertCount} commandes` : "Une commande"} à traiter en cuisine`, "info");
+      }
+    }
 
     // 🔴 Pastille de l'app = commandes en attente (se met à jour dans les deux sens).
     setAppBadgeCount(countPendingKitchenOrders(kitchenOrdersMap.values()));
