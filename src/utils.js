@@ -15,6 +15,18 @@ export function escapeHTML(str) {
         .replace(/'/g, "&#039;");
 }
 
+/**
+ * Lien d'appel `tel:` à partir d'un numéro saisi librement : ne garde que les
+ * chiffres et un `+` initial (rien d'autre ne peut entrer dans l'href).
+ * @returns {string} "" si le numéro est inexploitable.
+ */
+export function telHref(phone) {
+    const raw = String(phone || "").trim();
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length < 6 || digits.length > 15) return "";
+    return `tel:${raw.startsWith("+") ? "+" : ""}${digits}`;
+}
+
 // Whitelist d'origines/protocoles pour empêcher javascript:, data:, vbscript:
 const SAFE_URL_SCHEMES = /^(https?:|mailto:|tel:|\/|#|\.\/|\.\.\/)/i;
 

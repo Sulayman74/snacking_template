@@ -1,5 +1,11 @@
 import { calculateUpsellScoring } from "./suggestionEngine.js";
 
+// Téléphone de livraison retenu sur l'appareil (confort : pas de ressaisie).
+const DELIVERY_PHONE_KEY = "snackDeliveryPhone";
+const readSavedPhone = () => {
+    try { return localStorage.getItem(DELIVERY_PHONE_KEY) || ""; } catch { return ""; }
+};
+
 /**
  * 🗄️ Store — Source de Vérité Unique (Flux Unidirectionnel)
  * Gère l'état de l'application de manière privée et émet des événements lors des changements.
@@ -21,8 +27,9 @@ export class Store extends EventTarget {
         // mode 'collect' par défaut → comportement legacy strictement inchangé.
         delivery: {
             mode: "collect",     // 'collect' | 'delivery'
-            address: null,       // { adresse, lat, lng }
-            quote: null          // { distanceKm, inRange, frais, prepMin, travelMin, totalMin }
+            address: null,       // { adresse, lat, lng, type }
+            quote: null,         // { distanceKm, inRange, frais, prepMin, travelMin, totalMin }
+            contact: { complement: "", telephone: readSavedPhone() } // pour le livreur
         },
         // 🎯 INTENT CHECKOUT — flag éphémère posé quand un invité non connecté clique
         // "Commander" (mode auth classique). Consommé par onAuthStateChanged dans
@@ -247,9 +254,27 @@ export class Store extends EventTarget {
         this.emit("delivery-updated");
     }
 
-    /** Remet le tunnel livraison à zéro (après commande validée). */
+    /**
+     * Complément d'adresse et téléphone. Émet `delivery-contact-updated` (et non
+     * `delivery-updated`) : le formulaire n'est pas re-rendu pendant la saisie.
+     */
+    setDeliveryContact({ complement, telephone } = {}) {
+        const prev = this.#state.delivery.contact || { complement: "", telephone: "" };
+        const contact = {
+            complement: complement !== undefined ? String(complement).slice(0, 200) : prev.complement,
+            telephone: telephone !== undefined ? String(telephone).slice(0, 25) : prev.telephone,
+        };
+        this.#state.delivery = { ...this.#state.delivery, contact };
+        if (telephone !== undefined) {
+            try { localStorage.setItem(DELIVERY_PHONE_KEY, contact.telephone); } catch { /* stockage indisponible */ }
+        }
+        this.emit("delivery-contact-updated");
+    }
+
+    /** Remet le tunnel livraison à zéro (après commande validée). Le téléphone est conservé. */
     resetDelivery() {
-        this.#state.delivery = { mode: "collect", address: null, quote: null };
+        const telephone = this.#state.delivery.contact?.telephone || "";
+        this.#state.delivery = { mode: "collect", address: null, quote: null, contact: { complement: "", telephone } };
         this.emit("delivery-updated");
     }
 

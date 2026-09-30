@@ -22,10 +22,41 @@ const V = {
   // Firestore doc IDs : pas de "/", longueur 1..1500
   isDocId: (v) =>
     typeof v === "string" && v.length > 0 && v.length <= 1500 && !v.includes("/"),
+  // Téléphone saisi librement (espaces, points, tirets, parenthèses, + international) :
+  // 6 à 15 chiffres (E.164). Pas de validation par pays : livraisons hors métropole.
+  isPhone: (v) => {
+    if (typeof v !== "string" || v.length > 25) return false;
+    if (!/^\+?[0-9(][0-9 .()-]*$/.test(v.trim())) return false;
+    const digits = v.replace(/\D/g, "").length;
+    return digits >= 6 && digits <= 15;
+  },
 };
+
+const isOptional = (v) => v === undefined || v === null || v === "";
+
+/**
+ * Valide l'objet `livraison` envoyé par le client (createPaymentIntent ET
+ * finalizeOrder). Position obligatoire ; adresse, complément (étage, code…) et
+ * téléphone facultatifs mais bornés — facultatifs pour ne pas rejeter une PWA en
+ * cache antérieure à ces champs (le client exige le téléphone à la saisie).
+ */
+function assertLivraisonInput(livraison) {
+  require_(V.isPlainObject(livraison), "livraison requise pour une commande en livraison.");
+  require_(Number.isFinite(livraison.lat) && Math.abs(livraison.lat) <= 90, "Latitude de livraison invalide.");
+  require_(Number.isFinite(livraison.lng) && Math.abs(livraison.lng) <= 180, "Longitude de livraison invalide.");
+  require_(
+    isOptional(livraison.adresse) || (V.isString(livraison.adresse) && livraison.adresse.length <= 300),
+    "Adresse de livraison invalide."
+  );
+  require_(
+    isOptional(livraison.complement) || (V.isString(livraison.complement) && livraison.complement.length <= 200),
+    "Complément d'adresse invalide (200 caractères max)."
+  );
+  require_(isOptional(livraison.telephone) || V.isPhone(livraison.telephone), "Numéro de téléphone invalide.");
+}
 
 function require_(cond, msg) {
   if (!cond) throw new HttpsError("invalid-argument", msg);
 }
 
-module.exports = { V, require_ };
+module.exports = { V, require_, assertLivraisonInput };

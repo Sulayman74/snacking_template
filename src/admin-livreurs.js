@@ -119,6 +119,7 @@ function renderDeliveries(list) {
           <div class="min-w-0">
             <p class="font-black text-text truncate">${escapeHTML(o.clientNom || "Client")}</p>
             <p class="text-sm text-text-muted truncate"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(o.livraison?.adresse || "—")}</p>
+            ${o.livraison?.complement ? `<p class="text-xs text-text-muted truncate">${escapeHTML(o.livraison.complement)}</p>` : ""}
             <p class="text-xs text-text-muted mt-0.5"><i data-lucide="bike" class="mr-1"></i>${escapeHTML(lv.nom || "—")}${o.livraison?.distanceKm != null ? " · " + escapeHTML(String(o.livraison.distanceKm)) + " km" : ""}</p>
           </div>
           ${badge}

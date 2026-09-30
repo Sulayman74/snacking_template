@@ -3,6 +3,7 @@ import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
 import { buildOrderItemsPayload } from '../core/orderPayload.js';
 import { getOrderingState } from '../core/openingHours.js';
+import { isValidPhone } from '../services/addressService.js';
 import { upsellUI } from '../ui/UpsellUI.js';
 import { t } from "../i18n/index.js";
 import { auth, functions, httpsCallable, signInAnonymously } from '../core/firebase.js';
@@ -135,6 +136,12 @@ export class SnackCheckout extends SnackElement {
         return window.showToast(t("toasts.checkout.addressRequired"), "error");
       }
       if (delivery.quote && delivery.quote.inRange === false) return window.showToast(t("toasts.checkout.outOfZone"), "error");
+      // Le livreur doit pouvoir joindre le client (interphone, adresse introuvable).
+      if (!isValidPhone(delivery.contact?.telephone || "")) {
+        window.openCartModal?.();
+        document.querySelector('[data-delivery-contact="telephone"]')?.focus();
+        return window.showToast(t("toasts.checkout.phoneRequired"), "error");
+      }
       
       const minOrder = cfg?.delivery?.minOrder || 0;
       const subtotal = (store.state.cart || []).reduce((acc, item) => acc + (Number(item.prix) || 0) * (Number(item.quantity) || 1), 0);
@@ -431,6 +438,8 @@ export class SnackCheckout extends SnackElement {
       adresse: delivery.address.adresse || "",
       lat: delivery.address.lat,
       lng: delivery.address.lng,
+      complement: (delivery.contact?.complement || "").trim(),
+      telephone: (delivery.contact?.telephone || "").trim(),
     } : null;
     return { mode: isDelivery ? "delivery" : "collect", livraison };
   }

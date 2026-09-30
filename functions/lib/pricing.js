@@ -264,6 +264,10 @@ async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMod
 
     livraisonData = {
       adresse: (livraison.adresse || "").toString().slice(0, 300),
+      // Précisions pour le livreur (étage, code, bâtiment) + contact : validés en
+      // amont (assertLivraisonInput), nettoyés ici avant persistance.
+      complement: typeof livraison.complement === "string" ? livraison.complement.trim().slice(0, 200) || null : null,
+      telephone: typeof livraison.telephone === "string" ? livraison.telephone.trim().slice(0, 25) || null : null,
       lat: client.lat,
       lng: client.lng,
       distanceKm: hasDist ? Math.round(d * 10) / 10 : null,

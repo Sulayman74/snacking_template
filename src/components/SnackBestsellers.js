@@ -4,6 +4,8 @@ import { store } from '../core/Store.js';
 import { StoreController } from '../store/StoreController.js';
 import './SnackMenuItem.js';
 
+const NON_STANDALONE = new Set(["supplements", "extras"]);
+
 export class SnackBestsellers extends SnackElement {
   
   // Abonnement automatique aux changements du menu
@@ -13,7 +15,12 @@ export class SnackBestsellers extends SnackElement {
     const menu = store.state.menu;
     if (!menu || menu.length === 0) return html``;
 
-    const top3 = [...menu].sort((a, b) => (b.ventes || 0) - (a.ventes || 0)).slice(0, 3);
+    // Vitrine : uniquement des produits commandables tels quels (ni épuisés, ni
+    // suppléments/extras qui ne se vendent qu'attachés à un plat).
+    const top3 = menu
+      .filter((p) => p.isAvailable !== false && !NON_STANDALONE.has(p.categorieId))
+      .sort((a, b) => (b.ventes || 0) - (a.ventes || 0))
+      .slice(0, 3);
 
     return html`
       ${top3.map(p => html`

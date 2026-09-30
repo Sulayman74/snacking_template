@@ -29,7 +29,7 @@ import {
 } from "../core/firebase.js";
 import { registerDevicePush } from "../push-register.js";
 import { createPodQueue } from "../services/podQueue.js";
-import { escapeHTML } from "../utils.js";
+import { escapeHTML, telHref } from "../utils.js";
 import {
   haversineKm,
   watchPosition,
@@ -263,6 +263,7 @@ class LivreurUI {
           <div class="min-w-0">
             <p class="font-black text-text truncate">${escapeHTML(o.clientNom || "Client")}</p>
             <p class="text-sm text-text-muted truncate"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(o.livraison?.adresse || "Adresse")}</p>
+            ${o.livraison?.complement ? `<p class="text-xs text-text-muted truncate">${escapeHTML(o.livraison.complement)}</p>` : ""}
           </div>
           <span class="shrink-0 bg-surface-2 text-text border border-line text-xs font-mono font-bold px-2 py-1 rounded">${escapeHTML(o.secretCode || "")}</span>
         </div>
@@ -306,9 +307,11 @@ class LivreurUI {
         </div>
         <p class="font-black text-xl text-text">${escapeHTML(o.clientNom || "Client")}</p>
         <p class="text-text-muted mb-1"><i data-lucide="map-pin" class="text-blue-500 mr-1"></i>${escapeHTML(client?.adresse || "Adresse")}</p>
+        ${client?.complement ? `<p class="text-text font-bold mb-1"><i data-lucide="info" class="text-blue-500 mr-1"></i>${escapeHTML(client.complement)}</p>` : ""}
         <p class="text-sm text-text-muted mb-3">À <b id="active-distance" class="text-text">…</b> de vous</p>
 
         ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="block w-full text-center bg-surface-2 hover:bg-surface-3 text-text font-bold py-3 rounded-xl mb-2 transition"><i data-lucide="navigation" class="mr-2"></i>Itinéraire</a>` : ""}
+        ${telHref(client?.telephone) ? `<a href="${telHref(client.telephone)}" class="block w-full text-center bg-surface-2 hover:bg-surface-3 text-text font-bold py-3 rounded-xl mb-2 transition"><i data-lucide="phone" class="mr-2"></i>Appeler le client · ${escapeHTML(client.telephone)}</a>` : ""}
 
         <button type="button" data-livreur-action="pickup" ${pickupDone ? "disabled" : ""}
           class="w-full ${pickupDone ? "bg-green-500/10 text-green-700 dark:text-green-400 cursor-default" : "bg-primary text-white hover:opacity-90"} font-bold py-3 rounded-xl mb-2 transition active:scale-95">

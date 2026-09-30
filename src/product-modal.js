@@ -45,6 +45,9 @@ class ProductModalUI {
       image: item.image,
       allowMenu: item.allowMenu !== false,
       allowSupplements: item.allowSupplements !== false && item.categorieId !== "supplements" && item.categorieId !== "extras",
+      // Crudités à retirer (configurées côté admin) : lues par le rendu des options.
+      hasCrudites: item.hasCrudites === true,
+      crudites: Array.isArray(item.crudites) ? item.crudites.filter((c) => typeof c === "string" && c.trim()) : [],
       tailleChoisie: null,
     };
 

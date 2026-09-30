@@ -5,10 +5,9 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getStripe, STRIPE_SECRET_KEY } = require("../lib/stripe");
 const { db, FieldValue } = require("../lib/admin");
-const { V, require_ } = require("../lib/validation");
+const { V, require_, assertLivraisonInput } = require("../lib/validation");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
 const { assertCallerIsSnackAdmin } = require("../lib/auth");
-const { isFiniteNum } = require("../lib/geo");
 const { computeAuthoritativeOrder } = require("../lib/pricing");
 const { applyRefundToOrder } = require("../lib/refund");
 const {
@@ -97,15 +96,7 @@ exports.createPaymentIntent = onCall(
     // 🚚 Mode + adresse de livraison (collect par défaut → legacy inchangé).
     const orderMode = mode === "delivery" ? "delivery" : "collect";
     if (orderMode === "delivery") {
-      require_(V.isPlainObject(livraison), "livraison requise pour une commande en livraison.");
-      require_(isFiniteNum(livraison.lat) && Math.abs(livraison.lat) <= 90, "Latitude de livraison invalide.");
-      require_(isFiniteNum(livraison.lng) && Math.abs(livraison.lng) <= 180, "Longitude de livraison invalide.");
-      require_(
-        livraison.adresse === undefined ||
-          livraison.adresse === null ||
-          (V.isString(livraison.adresse) && livraison.adresse.length <= 300),
-        "Adresse de livraison invalide."
-      );
+      assertLivraisonInput(livraison);
     }
 
     try {
@@ -275,15 +266,7 @@ exports.finalizeOrder = onCall(
     // 🚚 Mode + adresse de livraison (collect par défaut → legacy inchangé).
     const orderMode = mode === "delivery" ? "delivery" : "collect";
     if (orderMode === "delivery") {
-      require_(V.isPlainObject(livraison), "livraison requise pour une commande en livraison.");
-      require_(isFiniteNum(livraison.lat) && Math.abs(livraison.lat) <= 90, "Latitude de livraison invalide.");
-      require_(isFiniteNum(livraison.lng) && Math.abs(livraison.lng) <= 180, "Longitude de livraison invalide.");
-      require_(
-        livraison.adresse === undefined ||
-          livraison.adresse === null ||
-          (V.isString(livraison.adresse) && livraison.adresse.length <= 300),
-        "Adresse de livraison invalide."
-      );
+      assertLivraisonInput(livraison);
     }
 
     // Validation détaillée de chaque item du panier

@@ -104,3 +104,27 @@ describe("require_", () => {
     expect(err.code).toBe("invalid-argument");
   });
 });
+
+describe("V.isPhone + assertLivraisonInput (DLV-1)", () => {
+  const { assertLivraisonInput } = require("../../functions/lib/validation.js");
+  const base = { lat: 46.06, lng: 6.58, adresse: "18 Avenue de la libération 74300 Cluses" };
+
+  it("V.isPhone : mêmes cas que le client (src/services/addressService.js)", () => {
+    for (const ok of ["06 12 34 56 78", "+33 6 12 34 56 78", "06.12.34.56.78", "(0)6-12-34-56-78", "+33 (0)6 12 34 56 78"]) expect(V.isPhone(ok)).toBe(true);
+    for (const ko of ["12345", "abc", "javascript:alert(1)", 612345678, "0".repeat(30)]) expect(V.isPhone(ko)).toBe(false);
+  });
+
+  it("accepte une livraison complète, et une PWA ancienne sans complément ni téléphone", () => {
+    expect(() => assertLivraisonInput({ ...base, complement: "3e étage, code 4521B", telephone: "06 12 34 56 78" })).not.toThrow();
+    expect(() => assertLivraisonInput(base)).not.toThrow();
+    expect(() => assertLivraisonInput({ ...base, complement: "", telephone: "" })).not.toThrow();
+  });
+
+  it("refuse position absente, complément trop long ou téléphone invalide", () => {
+    expect(() => assertLivraisonInput({ adresse: "x" })).toThrow(/Latitude/);
+    expect(() => assertLivraisonInput({ ...base, complement: "x".repeat(201) })).toThrow(/Complément/);
+    expect(() => assertLivraisonInput({ ...base, complement: 42 })).toThrow(/Complément/);
+    expect(() => assertLivraisonInput({ ...base, telephone: "appelle-moi" })).toThrow(/téléphone/);
+    expect(() => assertLivraisonInput(null)).toThrow(/livraison requise/);
+  });
+});

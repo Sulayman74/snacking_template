@@ -27,9 +27,18 @@ export default {
     supplements: "🧀 Suppléments & Extras",
     extras: "🧀 Suppléments & Extras"
   },
+  delivery: {
+    addressLabel: "Adresse de livraison",
+    addressPlaceholder: "N° et rue, ville (ex. 18 av. de la Libération, Cluses)",
+    gpsPosition: "Ma position GPS",
+    complementLabel: "Complément (facultatif)",
+    complementPlaceholder: "Étage, code porte, bâtiment…",
+    phoneLabel: "Téléphone (pour le livreur)"
+  },
   menu: {
     searchPlaceholder: "Un p'tit creux ?",
-    emptySearch: "Aucun produit trouvé"
+    emptySearch: "Aucun produit trouvé",
+    clearSearch: "Effacer la recherche"
   },
   upsell: {
     title: "Envie d'un petit plus ?",
@@ -45,7 +54,16 @@ export default {
     checkout: "Valider la commande",
     deliveryFee: "Frais de livraison",
     minimumOrder: "Minimum de commande non atteint ({min} €)",
-    itemQuantity: "{quantity} x {name}"
+    itemQuantity: "{quantity} x {name}",
+    increase: "Ajouter un {name}",
+    decrease: "Retirer un {name}",
+    remove: "Supprimer {name} du panier",
+    unitPrice: "{price} € l'unité",
+    size: "Taille",
+    drink: "Boisson",
+    sauces: "Sauces",
+    extras: "Suppléments",
+    without: "Sans"
   },
   auth: {
     title: "Connexion",
@@ -184,6 +202,7 @@ export default {
       reopenToday: "Réouverture à {time}.",
       reopenTomorrow: "Réouverture demain à {time}.",
       addressRequired: "Indiquez votre adresse de livraison.",
+      phoneRequired: "Indiquez un numéro de téléphone valide pour le livreur.",
       outOfZone: "Votre adresse est hors zone de livraison.",
       minOrderRequired: "Minimum {min} € pour la livraison.",
       connectionError: "Connexion impossible, réessayez.",
@@ -225,8 +244,9 @@ export default {
       locationDenied: "Localisation refusée. Saisissez votre adresse ci-dessous.",
       locationFailed: "Localisation impossible. Saisissez votre adresse.",
       searchingAddress: "Recherche de l'adresse…",
-      addressNotFound: "Adresse introuvable. Précisez la ville.",
-      searchError: "Erreur de recherche d'adresse."
+      addressNotFound: "Adresse introuvable. Vérifiez le numéro, la rue et la ville.",
+      addressTooVague: "Adresse trop vague : choisissez une rue ou un numéro dans la liste.",
+      searchError: "Recherche d'adresse indisponible. Réessayez ou utilisez « Me localiser »."
     }
   }
 };
