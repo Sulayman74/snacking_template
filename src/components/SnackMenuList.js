@@ -68,6 +68,12 @@ export class SnackMenuList extends SnackElement {
     this.searchQuery = e.target.value.toLowerCase();
   }
 
+  _matchesSearch(p) {
+    if (!this.searchQuery) return true;
+    return (p.nom || '').toLowerCase().includes(this.searchQuery)
+      || (p.description || '').toLowerCase().includes(this.searchQuery);
+  }
+
   _clearSearch() {
     this.searchQuery = '';
     const input = this.shadowRoot.getElementById('menu-search-input');
@@ -177,11 +183,17 @@ export class SnackMenuList extends SnackElement {
       </div>
 
       <div class="container mx-auto px-4 pt-6 pb-32 md:pb-12">
+        ${this.searchQuery && !menu.some((p) => this._matchesSearch(p)) ? html`
+          <div class="flex flex-col items-center text-center gap-3 py-16" role="status">
+            <i data-lucide="search" class="text-4xl text-text-muted"></i>
+            <p class="font-bold text-text">${t('menu.emptySearch')}</p>
+            <button @click="${this._clearSearch}" class="px-4 py-2 rounded-xl bg-surface-2 border border-line font-bold text-sm text-text">
+              ${t('menu.clearSearch')}
+            </button>
+          </div>
+        ` : ''}
         ${categories.map(catId => {
-          const catProduits = menu.filter(p => 
-            p.categorieId === catId && 
-            (p.nom.toLowerCase().includes(this.searchQuery) || (p.description || '').toLowerCase().includes(this.searchQuery))
-          );
+          const catProduits = menu.filter(p => p.categorieId === catId && this._matchesSearch(p));
 
           if (catProduits.length === 0) return '';
 

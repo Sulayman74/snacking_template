@@ -233,3 +233,24 @@ describe("computeAuthoritativeOrder — horaires d'ouverture (fuseau du snack)",
     await expect(run({ hours: week }, "2026-09-23T20:00:30Z", false)).resolves.toBeTruthy();
   });
 });
+
+describe("computeAuthoritativeOrder — coordonnées de livraison persistées (DLV-1)", () => {
+  const run = (livraison) =>
+    computeAuthoritativeOrder({}, "snackA", buildOrderItemsPayload([cartItem()]), "delivery", livraison);
+
+  it("complément et téléphone rejoignent la commande (nettoyés)", async () => {
+    const { livraisonData } = await run({
+      lat: 45, lng: 6, adresse: "18 Avenue de la libération 74300 Cluses",
+      complement: "  3e étage, code 4521B  ", telephone: " 06 12 34 56 78 ",
+    });
+    expect(livraisonData).toMatchObject({
+      adresse: "18 Avenue de la libération 74300 Cluses", complement: "3e étage, code 4521B", telephone: "06 12 34 56 78",
+    });
+  });
+
+  it("absents (PWA en cache) → null, pas de chaîne vide persistée", async () => {
+    const { livraisonData } = await run({ lat: 45, lng: 6, adresse: "x" });
+    expect(livraisonData.complement).toBeNull();
+    expect(livraisonData.telephone).toBeNull();
+  });
+});

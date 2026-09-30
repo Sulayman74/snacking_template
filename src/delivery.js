@@ -17,13 +17,17 @@ import {
   formatEta,
   isLatLng,
 } from "./services/geoService.js";
+import { searchAddresses, reverseGeocode, isPreciseAddress } from "./services/addressService.js";
 
-const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
+const SUGGEST_DEBOUNCE_MS = 250;
 
 class DeliveryUI {
   constructor() {
     this.container = document.getElementById("delivery-section");
     this.busy = false; // verrou anti double-clic géoloc
+    this.suggestions = []; // dernières suggestions d'adresse affichées
+    this.suggestTimer = null;
+    this.suggestAbort = null;
     if (!this.container) return;
     this.init();
   }
@@ -33,6 +37,7 @@ class DeliveryUI {
     // du routeur global.
     this.container.addEventListener("click", (e) => this.onClick(e));
     this.container.addEventListener("submit", (e) => this.onSubmit(e));
+    this.container.addEventListener("input", (e) => this.onInput(e));
 
     // config-updated : la géo resto a pu se charger → on resynchronise le quote.
     store.addEventListener("config-updated", () => { this.syncQuote(); this.render(); });
@@ -128,11 +133,16 @@ class DeliveryUI {
           <div class="flex items-center gap-2 text-[11px] text-text-muted">
             <span class="flex-1 h-px bg-surface-3"></span>ou<span class="flex-1 h-px bg-surface-3"></span>
           </div>
-          <form data-delivery-form="address" class="flex gap-2">
-            <input name="address" type="text" autocomplete="street-address" required
-              placeholder="Saisir mon adresse (ville, rue…)"
-              class="flex-1 min-w-0 bg-surface text-text border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
-            <button type="submit" class="shrink-0 bg-primary text-white font-bold px-4 rounded-lg text-sm active:scale-95 transition">OK</button>
+          <form data-delivery-form="address" class="relative">
+            <div class="flex gap-2">
+              <input name="address" type="text" autocomplete="street-address" required
+                role="combobox" aria-autocomplete="list" aria-controls="delivery-suggestions" aria-expanded="false"
+                aria-label="${escapeText(t("delivery.addressLabel"))}"
+                placeholder="${escapeText(t("delivery.addressPlaceholder"))}"
+                class="flex-1 min-w-0 bg-surface text-text border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+              <button type="submit" class="shrink-0 bg-primary text-on-primary font-bold px-4 rounded-lg text-sm active:scale-95 transition">OK</button>
+            </div>
+            <ul id="delivery-suggestions" role="listbox" class="mt-2 bg-surface border border-line rounded-lg overflow-hidden divide-y divide-line hidden"></ul>
           </form>
         </div>`;
     }
@@ -146,13 +156,30 @@ class DeliveryUI {
     const belowMin = d.minOrder > 0 && subtotal < d.minOrder;
     const outOfRange = restoKnown && !quote.inRange;
 
+    const contact = store.state.delivery.contact || {};
     const addrLine = `
       <div class="flex items-start justify-between gap-2 mb-3">
         <div class="flex items-start gap-2 min-w-0">
           <i data-lucide="map-pin" class="text-primary mt-1"></i>
-          <p class="text-sm text-text font-medium truncate">${escapeText(addr.adresse || "Position GPS")}</p>
+          <p class="text-sm text-text font-medium break-words">${escapeText(addr.adresse || t("delivery.gpsPosition"))}</p>
         </div>
         <button type="button" data-delivery-action="reset-address" class="shrink-0 text-xs text-primary font-bold underline">Changer</button>
+      </div>
+      <div class="grid gap-2 mb-3">
+        <label class="grid gap-1 text-xs font-bold text-text-muted">
+          ${escapeText(t("delivery.complementLabel"))}
+          <input name="complement" data-delivery-contact="complement" type="text" autocomplete="address-line2" maxlength="200"
+            value="${escapeText(contact.complement || "")}"
+            placeholder="${escapeText(t("delivery.complementPlaceholder"))}"
+            class="bg-surface text-text font-normal border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+        </label>
+        <label class="grid gap-1 text-xs font-bold text-text-muted">
+          ${escapeText(t("delivery.phoneLabel"))}
+          <input name="telephone" data-delivery-contact="telephone" type="tel" inputmode="tel" autocomplete="tel" maxlength="25" required
+            value="${escapeText(contact.telephone || "")}"
+            placeholder="06 12 34 56 78"
+            class="bg-surface text-text font-normal border border-line rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+        </label>
       </div>`;
 
     if (outOfRange) {
@@ -233,15 +260,74 @@ class DeliveryUI {
     } else if (action === "reset-address") {
       store.setDeliveryAddress(null);
       this.syncQuote();
+    } else if (action === "pick-suggestion") {
+      const picked = this.suggestions[Number(btn.getAttribute("data-index"))];
+      if (picked) this.setAddress(picked);
     }
+  }
+
+  onInput(e) {
+    const contactField = e.target.closest("[data-delivery-contact]");
+    if (contactField) {
+      store.setDeliveryContact({ [contactField.getAttribute("data-delivery-contact")]: contactField.value });
+      return;
+    }
+    if (e.target.name !== "address") return;
+    clearTimeout(this.suggestTimer);
+    const value = e.target.value;
+    this.suggestTimer = setTimeout(() => this.suggest(value), SUGGEST_DEBOUNCE_MS);
   }
 
   onSubmit(e) {
     const form = e.target.closest('[data-delivery-form="address"]');
     if (!form) return;
     e.preventDefault();
+    clearTimeout(this.suggestTimer);
     const value = form.querySelector('input[name="address"]')?.value?.trim();
     if (value) this.geocodeAndSet(value);
+  }
+
+  // Autocomplétion : ne re-rend QUE la liste (le champ garde le focus).
+  async suggest(text) {
+    this.suggestAbort?.abort();
+    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    this.suggestAbort = ctrl;
+    try {
+      this.suggestions = await searchAddresses(text, { near: this.cfg?.geo, signal: ctrl?.signal });
+    } catch (err) {
+      if (err?.name === "AbortError") return;
+      this.suggestions = [];
+    }
+    this.renderSuggestions();
+  }
+
+  renderSuggestions() {
+    const list = this.container?.querySelector("#delivery-suggestions");
+    const input = this.container?.querySelector('input[name="address"]');
+    if (!list) return;
+    const open = this.suggestions.length > 0;
+    list.classList.toggle("hidden", !open);
+    input?.setAttribute("aria-expanded", String(open));
+    list.innerHTML = this.suggestions.map((s, i) => `
+      <li role="option">
+        <button type="button" data-delivery-action="pick-suggestion" data-index="${i}"
+          class="w-full text-left px-3 py-2.5 text-sm text-text hover:bg-surface-2 flex items-start gap-2">
+          <i data-lucide="map-pin" class="text-text-muted mt-0.5 shrink-0"></i>
+          <span class="min-w-0 break-words">${escapeText(s.label)}</span>
+        </button>
+      </li>`).join("");
+  }
+
+  // Seule porte d'entrée d'une adresse saisie : refuse une commune entière.
+  setAddress(address) {
+    if (!isPreciseAddress(address)) {
+      window.showToast?.(t("toasts.delivery.addressTooVague"), "error");
+      return;
+    }
+    this.suggestions = [];
+    store.setDeliveryAddress({ adresse: address.label, lat: address.lat, lng: address.lng, type: address.type });
+    this.syncQuote();
+    window.triggerVibration?.("success");
   }
 
   async locate(btn) {
@@ -252,7 +338,14 @@ class DeliveryUI {
     btn.innerHTML = `<i data-lucide="loader-circle" class="animate-spin"></i> Localisation…`;
     try {
       const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 12000 });
-      store.setDeliveryAddress({ adresse: "Ma position GPS", lat: pos.lat, lng: pos.lng });
+      // Adresse lisible pour le livreur (géocodage inverse) ; la position GPS reste
+      // la référence de distance. Service injoignable → on garde la position seule.
+      let label = t("delivery.gpsPosition");
+      try {
+        const nearest = await reverseGeocode(pos);
+        if (nearest?.label) label = nearest.label;
+      } catch { /* libellé par défaut */ }
+      store.setDeliveryAddress({ adresse: label, lat: pos.lat, lng: pos.lng, type: "gps" });
       this.syncQuote();
       window.triggerVibration?.("success");
     } catch (err) {
@@ -269,22 +362,21 @@ class DeliveryUI {
   }
 
   async geocodeAndSet(text) {
-    window.showToast?.(t("toasts.delivery.searchingAddress"), "success");
     try {
-      const url = `${GEOCODING_URL}?name=${encodeURIComponent(text)}&count=1&language=fr&format=json`;
-      const resp = await fetch(url);
-      const data = resp.ok ? await resp.json() : null;
-      const match = data?.results?.[0];
-      if (!match?.latitude || !match?.longitude) {
+      const results = await searchAddresses(text, { near: this.cfg?.geo });
+      if (results.length === 0) {
         window.showToast?.(t("toasts.delivery.addressNotFound"), "error");
         return;
       }
-      store.setDeliveryAddress({
-        adresse: [match.name, match.admin1].filter(Boolean).join(", "),
-        lat: match.latitude,
-        lng: match.longitude,
-      });
-      this.syncQuote();
+      // Premier résultat précis ; sinon on montre les suggestions pour préciser.
+      const precise = results.find(isPreciseAddress);
+      if (precise) {
+        this.setAddress(precise);
+      } else {
+        this.suggestions = results;
+        this.renderSuggestions();
+        window.showToast?.(t("toasts.delivery.addressTooVague"), "error");
+      }
     } catch {
       window.showToast?.(t("toasts.delivery.searchError"), "error");
     }

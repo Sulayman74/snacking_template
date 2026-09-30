@@ -4,7 +4,7 @@
 // Dépendances : window.currentAdminSnackId, window.currentAdminTab,
 //               window.showToast
 
-import { escapeHTML } from "./utils.js";
+import { escapeHTML, telHref } from "./utils.js";
 import { setAppBadgeCount, countPendingKitchenOrders } from "./core/appBadge.js";
 import { getOrderingState, snackTimezone } from "./core/openingHours.js";
 import { adminStore } from "./core/AdminStore.js";
@@ -165,6 +165,8 @@ export function createTicketElement(id, commande) {
          <div class="text-sm min-w-0">
            <p class="font-black text-blue-700 dark:text-blue-400 uppercase text-xs tracking-wide">Livraison</p>
            <p class="text-text font-bold">${escapeHTML(commande.livraison?.adresse || "Adresse non renseignée")}</p>
+           ${commande.livraison?.complement ? `<p class="text-text text-xs">${escapeHTML(commande.livraison.complement)}</p>` : ""}
+           ${telHref(commande.livraison?.telephone) ? `<a href="${telHref(commande.livraison.telephone)}" class="text-xs font-bold text-blue-700 dark:text-blue-400 underline">${escapeHTML(commande.livraison.telephone)}</a>` : ""}
            ${commande.livraison?.distanceKm != null ? `<p class="text-text-muted text-xs">${escapeHTML(String(commande.livraison.distanceKm))} km du resto</p>` : ""}
          </div>
        </div>`

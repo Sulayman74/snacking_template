@@ -27,9 +27,18 @@ export default {
     supplements: "🧀 Add-ons & Extras",
     extras: "🧀 Add-ons & Extras"
   },
+  delivery: {
+    addressLabel: "Delivery address",
+    addressPlaceholder: "Number and street, city",
+    gpsPosition: "My GPS location",
+    complementLabel: "Additional details (optional)",
+    complementPlaceholder: "Floor, door code, building…",
+    phoneLabel: "Phone (for the driver)"
+  },
   menu: {
     searchPlaceholder: "Craving something?",
-    emptySearch: "No products found"
+    emptySearch: "No products found",
+    clearSearch: "Clear search"
   },
   upsell: {
     title: "Care for something extra?",
@@ -45,7 +54,16 @@ export default {
     checkout: "Place order",
     deliveryFee: "Delivery fee",
     minimumOrder: "Minimum order amount not met ({min} €)",
-    itemQuantity: "{quantity} x {name}"
+    itemQuantity: "{quantity} x {name}",
+    increase: "Add one {name}",
+    decrease: "Remove one {name}",
+    remove: "Remove {name} from cart",
+    unitPrice: "{price} € each",
+    size: "Size",
+    drink: "Drink",
+    sauces: "Sauces",
+    extras: "Extras",
+    without: "No"
   },
   auth: {
     title: "Login",
@@ -184,6 +202,7 @@ export default {
       reopenToday: "Reopens at {time}.",
       reopenTomorrow: "Reopens tomorrow at {time}.",
       addressRequired: "Provide your delivery address.",
+      phoneRequired: "Enter a valid phone number for the driver.",
       outOfZone: "Your address is out of our delivery area.",
       minOrderRequired: "Minimum {min} € for delivery.",
       connectionError: "Connection failed, try again.",
@@ -225,8 +244,9 @@ export default {
       locationDenied: "Location denied. Enter your address below.",
       locationFailed: "Location unavailable. Enter your address.",
       searchingAddress: "Searching address...",
-      addressNotFound: "Address not found. Please specify the city.",
-      searchError: "Error searching address."
+      addressNotFound: "Address not found. Check the number, street and city.",
+      addressTooVague: "Address too vague: pick a street or house number from the list.",
+      searchError: "Address search unavailable. Try again or use “Locate me”."
     }
   }
 };

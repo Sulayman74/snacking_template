@@ -187,3 +187,27 @@ describe("Store.validateAgainstMenu — ligne de commande persistée (re-command
     expect(r).toMatchObject({ ok: false, reason: "unavailable" });
   });
 });
+
+describe("Store — coordonnées de livraison (DLV-1)", () => {
+  it("setDeliveryContact n'émet PAS delivery-updated (pas de re-rendu pendant la saisie)", () => {
+    const events = [];
+    store.addEventListener("delivery-updated", () => events.push("delivery-updated"));
+    store.addEventListener("delivery-contact-updated", () => events.push("contact"));
+    store.setDeliveryContact({ complement: "3e étage" });
+    expect(events).toEqual(["contact"]);
+    expect(store.state.delivery.contact).toMatchObject({ complement: "3e étage" });
+  });
+
+  it("le téléphone est retenu sur l'appareil et survit à resetDelivery ; le complément non", () => {
+    store.setDeliveryContact({ telephone: "06 12 34 56 78", complement: "code 12" });
+    store.resetDelivery();
+    expect(store.state.delivery.contact).toEqual({ complement: "", telephone: "06 12 34 56 78" });
+    expect(new Store().state.delivery.contact.telephone).toBe("06 12 34 56 78");
+  });
+
+  it("bornes : complément 200, téléphone 25 caractères", () => {
+    store.setDeliveryContact({ complement: "x".repeat(300), telephone: "0".repeat(40) });
+    expect(store.state.delivery.contact.complement).toHaveLength(200);
+    expect(store.state.delivery.contact.telephone).toHaveLength(25);
+  });
+});
