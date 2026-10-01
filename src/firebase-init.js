@@ -251,6 +251,10 @@ onAuthStateChanged(auth, async (user) => {
     // Le store émettra "auth-updated" -> AppUI mettra à jour les boutons nav/fidélité
     store.setUser(user, role);
 
+    // 📡 Commande en cours (app fermée puis rouverte) : on reprend son suivi. Après
+    // setUser : les règles exigent d'être le propriétaire pour lire la commande.
+    if (user) window.resumeOrderTracking?.();
+
     // 🎯 RELANCE CHECKOUT POST-LOGIN (mode auth classique — LOT 4 PR-4)
     // Si un utilisateur non-connecté a cliqué "Commander" et ouvert la modale auth,
     // checkout.js a posé store.setPendingCheckout(true). On consomme ce flag ici,

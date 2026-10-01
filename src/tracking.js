@@ -58,6 +58,84 @@ function etaText(commande) {
 }
 
 // ============================================================================
+// 🧾 REÇU — ce que le client doit avoir sous les yeux dès la confirmation
+// ============================================================================
+const ACTIVE_ORDER_KEY = "activeOrderId";
+// Dernier statut déjà « joué » (toast, vibration, ouverture de la fenêtre) : une
+// reprise de l'app ne rejoue pas « C'est prêt » à chaque fois.
+const seenKey = (orderId) => `orderStatusSeen_${orderId}`;
+function isFirstTimeSeen(orderId, statut) {
+  try {
+    if (localStorage.getItem(seenKey(orderId)) === statut) return false;
+    localStorage.setItem(seenKey(orderId), statut);
+  } catch { /* stockage indisponible : on rejoue plutôt que de rater */ }
+  return true;
+}
+function forgetOrder(orderId) {
+  try {
+    localStorage.removeItem(ACTIVE_ORDER_KEY);
+    localStorage.removeItem(seenKey(orderId));
+  } catch { /* stockage indisponible */ }
+}
+
+// Badge flottant : visible sur mobile aussi (c'était `hidden md:flex` → le client
+// mobile perdait sa commande dès qu'il fermait la fenêtre de suivi).
+const BADGE_TONES = {
+  waiting: "bg-gray-800 text-on-dark",
+  cooking: "bg-yellow-500 text-on-dark shadow-[0_10px_25px_rgba(234,179,8,0.5)]",
+  ready: "bg-green-600 text-on-dark shadow-[0_10px_30px_rgba(22,163,74,0.6)] animate-pulse",
+  delivering: "bg-blue-600 text-on-dark animate-pulse",
+};
+function badgeClass(tone) {
+  return `flex fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 transform -translate-x-1/2 ${BADGE_TONES[tone]} px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] cursor-pointer transition-all hover:scale-105 active:scale-95`;
+}
+
+// Bloc « reçu » : code de retrait, récapitulatif et, en retrait, où aller.
+function receiptHTML(commande) {
+  const esc = window.escapeHTML || ((s) => String(s ?? ""));
+  const code = esc(commande.secretCode || "");
+  const items = Array.isArray(commande.items) ? commande.items : [];
+  const lines = items
+    .map((i) => `<li class="flex justify-between gap-3"><span class="min-w-0 break-words">${esc(i.quantity || 1)}× ${esc(i.nom || "")}</span></li>`)
+    .join("");
+  const total = typeof commande.total === "number" ? `${commande.total.toFixed(2)} €` : "";
+
+  let where = "";
+  if (commande.mode === "delivery") {
+    if (commande.livraison?.adresse) {
+      where = `<p class="flex items-start gap-2 text-sm text-text"><i data-lucide="map-pin" class="text-primary mt-0.5 shrink-0"></i><span>${esc(commande.livraison.adresse)}</span></p>`;
+    }
+  } else {
+    const cfg = window.snackConfig || {};
+    const a = cfg.contact?.address || {};
+    const address = [a.street, [a.zip, a.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    const geo = cfg.geo;
+    const mapsUrl = a.googleMapsUrl
+      || (isLatLng(geo) ? `https://www.google.com/maps/dir/?api=1&destination=${geo.lat},${geo.lng}` : "");
+    const safeMaps = mapsUrl && window.safeURL ? window.safeURL(mapsUrl) : "";
+    if (address || (safeMaps && safeMaps !== "#")) {
+      where = `
+        <div class="flex items-center justify-between gap-3">
+          <p class="flex items-start gap-2 text-sm text-text min-w-0"><i data-lucide="map-pin" class="text-primary mt-0.5 shrink-0"></i><span class="break-words">${esc(address || cfg.identity?.name || "")}</span></p>
+          ${safeMaps && safeMaps !== "#" ? `<a href="${safeMaps}" target="_blank" rel="noopener" class="shrink-0 text-sm font-bold text-primary underline">Itinéraire</a>` : ""}
+        </div>`;
+    }
+  }
+
+  return `
+    <div class="mt-5 p-4 bg-surface-2 rounded-2xl border border-line text-left space-y-3">
+      ${code ? `
+      <div class="flex items-baseline justify-between gap-3">
+        <span class="text-xs text-text-muted uppercase font-black tracking-widest">Code de retrait</span>
+        <span class="text-2xl font-black text-text font-mono tracking-tight">${code}</span>
+      </div>` : ""}
+      ${lines ? `<ul class="text-sm text-text space-y-1 border-t border-line pt-3">${lines}</ul>` : ""}
+      ${total ? `<p class="flex justify-between text-sm font-black text-text border-t border-line pt-3"><span>Total payé</span><span>${total}</span></p>` : ""}
+      ${where ? `<div class="border-t border-line pt-3">${where}</div>` : ""}
+    </div>`;
+}
+
+// ============================================================================
 // 🔔 PROMPT FCM CONTEXTUEL — "M'avertir quand c'est prêt"
 // ============================================================================
 // Le timing optimal pour demander la permission notif : après paiement validé,
@@ -139,8 +217,13 @@ window.notifyArrival = notifyArrival;
 // 📡 RADAR CLIENT — ÉCOUTE FIREBASE EN TEMPS RÉEL
 // ============================================================================
 let unsubscribeClientRadar = null;
+let trackedOrderId = null;
 
+// Idempotent : rappelé à la reprise de l'app sans recréer l'écoute.
 function startOrderTracking(orderId) {
+  if (!orderId) return;
+  if (unsubscribeClientRadar && trackedOrderId === orderId) return;
+  trackedOrderId = orderId;
   const trackingBadge = document.getElementById("order-tracking-badge");
   const badgeText = document.getElementById("badge-text");
 
@@ -160,8 +243,41 @@ function startOrderTracking(orderId) {
   unsubscribeClientRadar = onSnapshot(
     doc(db, "commandes", orderId),
     (docSnap) => {
+      if (!docSnap.exists()) {
+        // Commande supprimée (ou id périmé) : on arrête de la suivre.
+        if (trackingBadge) trackingBadge.className = "hidden";
+        forgetOrder(orderId);
+        stopOrderTracking();
+        return;
+      }
       if (docSnap.exists()) {
         const commande = docSnap.data();
+
+        // 💸 Remboursée (annulée par le restaurant) : le client doit le savoir.
+        if (commande.paiement?.statut === "rembourse") {
+          if (trackingBadge) trackingBadge.className = "hidden";
+          if (iconContainer) {
+            iconContainer.className =
+              "w-24 h-24 bg-surface-2 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner";
+          }
+          window.swapIcon?.(icon, "circle-x", "text-5xl text-text-muted");
+          if (title) {
+            title.textContent = "Commande remboursée";
+            title.className = "text-3xl font-black text-text tracking-tight";
+          }
+          if (subtitle) {
+            subtitle.innerHTML = "Le restaurant a annulé votre commande et vous a remboursé. Le montant apparaîtra sur votre compte sous quelques jours.";
+          }
+          if (actionBtn) {
+            actionBtn.textContent = "Compris";
+            actionBtn.setAttribute("data-action", "close-tracking-modal");
+            actionBtn.removeAttribute("data-id");
+          }
+          if (isFirstTimeSeen(orderId, "rembourse")) openTrackingModal();
+          forgetOrder(orderId);
+          stopOrderTracking();
+          return;
+        }
 
         // 🛒 Guest registration banner display
         const guestBanner = document.getElementById("guest-registration-banner");
@@ -176,8 +292,7 @@ function startOrderTracking(orderId) {
         // ⚪ STATUT 1 : EN ATTENTE DU CLIENT
         if (commande.statut === "en_attente_client") {
           if (trackingBadge) {
-            trackingBadge.className =
-              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-on-dark px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105";
+            trackingBadge.className = badgeClass("waiting");
           }
           if (badgeText) badgeText.textContent = "En attente de votre arrivée";
 
@@ -192,7 +307,7 @@ function startOrderTracking(orderId) {
           }
           if (subtitle) {
             subtitle.innerHTML =
-              "Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.";
+              `Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.${receiptHTML(commande)}`;
           }
 
           if (actionBtn) {
@@ -210,8 +325,7 @@ function startOrderTracking(orderId) {
         // 🟡 STATUT 2 : NOUVELLE (En préparation)
         else if (commande.statut === "nouvelle") {
           if (trackingBadge) {
-            trackingBadge.className =
-              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-on-dark px-6 py-3 rounded-full shadow-[0_10px_25px_rgba(234,179,8,0.5)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-bounce";
+            trackingBadge.className = badgeClass("cooking");
           }
           if (badgeText) badgeText.textContent = "Commande en cours";
 
@@ -230,7 +344,7 @@ function startOrderTracking(orderId) {
               eta
                 ? `<span class="flex items-center justify-center gap-2 mt-3 text-primary font-bold"><i data-lucide="clock"></i> ${eta}</span>`
                 : ""
-            }`;
+            }${receiptHTML(commande)}`;
           }
 
           if (actionBtn) {
@@ -248,8 +362,7 @@ function startOrderTracking(orderId) {
         // 🟢 STATUT : PRÊTE
         else if (commande.statut === "prete") {
           if (trackingBadge) {
-            trackingBadge.className =
-              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-on-dark px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(22,163,74,0.6)] font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
+            trackingBadge.className = badgeClass("ready");
           }
           if (badgeText) badgeText.textContent = "C'EST PRÊT !";
 
@@ -302,18 +415,18 @@ function startOrderTracking(orderId) {
           const notifPrompt = document.getElementById("tracking-notif-prompt");
           if (notifPrompt) notifPrompt.innerHTML = "";
 
-          window.showToast("🔔 DING ! Votre commande est PRÊTE !", "success");
-          if (typeof window.triggerVibration === "function")
-            window.triggerVibration("success");
-
-          openTrackingModal();
+          if (isFirstTimeSeen(orderId, "prete")) {
+            window.showToast("🔔 DING ! Votre commande est PRÊTE !", "success");
+            if (typeof window.triggerVibration === "function")
+              window.triggerVibration("success");
+            openTrackingModal();
+          }
         }
 
         // 🛵 STATUT : EN LIVRAISON (distance live du livreur)
         else if (commande.statut === "en_livraison") {
           if (trackingBadge) {
-            trackingBadge.className =
-              "hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-blue-600 text-on-dark px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] transition-all hover:scale-105 animate-pulse";
+            trackingBadge.className = badgeClass("delivering");
           }
           if (badgeText) badgeText.textContent = "EN LIVRAISON";
           if (iconContainer) {
@@ -381,15 +494,15 @@ function startOrderTracking(orderId) {
             actionBtn.setAttribute("data-action", "close-tracking-modal");
             actionBtn.removeAttribute("data-id");
           }
-          openTrackingModal();
-          localStorage.removeItem("activeOrderId");
+          if (isFirstTimeSeen(orderId, "livree")) openTrackingModal();
+          forgetOrder(orderId);
           stopOrderTracking();
         }
 
         // ⚪ STATUT : TERMINÉE
         else if (commande.statut === "terminee") {
           window.showToast("Bon appétit ! À bientôt.", "success");
-          localStorage.removeItem("activeOrderId");
+          forgetOrder(orderId);
 
           if (trackingBadge) trackingBadge.className = "hidden";
 
@@ -401,7 +514,14 @@ function startOrderTracking(orderId) {
     },
     (err) => {
       console.error("Radar Client (onSnapshot) erreur :", err);
-      window.showToast?.("Suivi interrompu (réseau). Rouvrez la commande pour réessayer.", "error");
+      stopOrderTracking();
+      if (err?.code === "permission-denied") {
+        // Commande d'un autre compte (déconnexion, autre utilisateur) : on l'oublie.
+        if (trackingBadge) trackingBadge.className = "hidden";
+        forgetOrder(orderId);
+        return;
+      }
+      window.showToast?.("Suivi interrompu (réseau). Il reprendra au retour sur l'app.", "error");
     },
   );
 }
@@ -412,10 +532,19 @@ function stopOrderTracking() {
     unsubscribeClientRadar = null;
     console.log("🔴 Radar Client ARRÊTÉ.");
   }
+  trackedOrderId = null;
+}
+
+/** Reprend le suivi de la commande en cours (démarrage de l'app, retour au premier plan). */
+function resumeOrderTracking() {
+  let orderId = null;
+  try { orderId = localStorage.getItem(ACTIVE_ORDER_KEY); } catch { /* stockage indisponible */ }
+  if (orderId) startOrderTracking(orderId);
 }
 
 window.startOrderTracking = startOrderTracking;
 window.stopOrderTracking = stopOrderTracking;
+window.resumeOrderTracking = resumeOrderTracking;
 
 // ============================================================================
 // 🔙 GESTION NATIVE DU BOUTON RETOUR (iOS / Android swipe back)

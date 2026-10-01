@@ -3,7 +3,6 @@
 // ============================================================================
 
 import "./utils.js";
-import { store } from "./core/Store.js";
 import "./theme-mode.js";
 import "./icons.js";
 import "./ui.js";
@@ -36,19 +35,9 @@ initI18n().catch((err) => console.error("🔥 Erreur initialisation i18n :", err
 // ============================================================================
 // 🔄 ORCHESTRATEUR DE CYCLE DE VIE (Client)
 // ============================================================================
+// Le suivi de commande n'est plus coupé en arrière-plan (un seul document écouté :
+// coût nul) ; au retour au premier plan on s'assure qu'il tourne, quel que soit
+// le mode (click & collect ou livraison).
 document.addEventListener("visibilitychange", () => {
-  const activeOrderId = localStorage.getItem("activeOrderId");
-  if (!activeOrderId) return;
-
-  if (document.hidden) {
-    if (typeof window.stopOrderTracking === "function") {
-      window.stopOrderTracking();
-    }
-  } else {
-    // Reprise du radar si on revient sur l'app et qu'une commande est en cours
-    const cfg = store.state.config;
-    if (cfg?.features?.enableClickAndCollect && typeof window.startOrderTracking === "function") {
-      window.startOrderTracking(activeOrderId);
-    }
-  }
+  if (!document.hidden) window.resumeOrderTracking?.();
 });

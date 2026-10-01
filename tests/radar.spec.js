@@ -4,7 +4,8 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
 
   test('Le flux de commande traverse bien les 3 statuts (Attente -> Cuisson -> Prêt)', async ({ browser }) => {
     // Création de 2 téléphones isolés
-    const clientContext = await browser.newContext();
+    // Client sur téléphone (ORD-1 : le badge de suivi était masqué sous 768 px).
+    const clientContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const adminContext = await browser.newContext();
     
     const clientPage = await clientContext.newPage();
@@ -99,6 +100,11 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
     await adminPage.locator('#tab-cuisine-desktop').click();
     const cookingTicket = adminPage.locator('#orders-new .border-red-500').first();
     await expect(cookingTicket).toBeVisible();
+
+    // ORD-1 : le client ferme puis rouvre l'app pendant la cuisson → le suivi reprend tout seul.
+    await clientPage.reload();
+    await expect(clientPage.locator('#splash-screen')).toBeHidden({ timeout: 10000 });
+    await expect(trackingBadge).toBeVisible({ timeout: 15000 });
 
     // ACTION ADMIN : Le chef clique sur "MARQUER PRÊTE"
     await cookingTicket.locator('button', { hasText: 'MARQUER PRÊTE' }).click();
