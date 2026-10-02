@@ -58,6 +58,16 @@ function buildPickupReminderNotification(order, orderId) {
   };
 }
 
+/** Push GÉRANT : un client attend et l'écran cuisine ne donne plus signe de vie. */
+function buildKitchenOfflineAlert(ordersWaiting, silentMin) {
+  const orders = ordersWaiting > 1 ? `${ordersWaiting} commandes à cuisiner` : "1 commande à cuisiner";
+  const since = Number.isFinite(silentMin) ? `dernier signe il y a ${silentMin} min` : "écran pas ouvert aujourd'hui";
+  return {
+    title: "📵 Écran cuisine hors ligne",
+    body: `${orders} en attente · ${since}`,
+  };
+}
+
 /** Une commande programmée passe en cuisine (horloge ou « Lancer » du chef). */
 function isScheduledLaunch(before, after) {
   return before?.statut === "programmee" && after?.statut === "nouvelle";
@@ -74,6 +84,7 @@ module.exports = {
   buildAutoReleaseAlert,
   buildPreparingNotification,
   buildPickupReminderNotification,
+  buildKitchenOfflineAlert,
   isClientArrival,
   isScheduledLaunch,
 };

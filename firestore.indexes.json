@@ -216,6 +216,16 @@
   ],
   "fieldOverrides": [
     {
+      "collectionGroup": "kitchenIncidents",
+      "fieldPath": "ttlAt",
+      "ttl": true,
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" },
+        { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
       "collectionGroup": "events",
       "fieldPath": "ttlAt",
       "ttl": true,

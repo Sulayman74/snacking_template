@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const {
   buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, buildPreparingNotification,
-  buildPickupReminderNotification,
+  buildPickupReminderNotification, buildKitchenOfflineAlert,
   isClientArrival, isScheduledLaunch,
 } = require("../../functions/lib/kitchenAlerts.js");
 
@@ -72,5 +72,15 @@ describe("buildPickupReminderNotification", () => {
   it("rappelle où et avec quel code", () => {
     expect(buildPickupReminderNotification({ secretCode: "K7Q2" }, "x"))
       .toEqual({ title: "🍟 Votre commande vous attend", body: "Au comptoir · code K7Q2" });
+  });
+});
+
+describe("buildKitchenOfflineAlert (gérant)", () => {
+  it("dit combien de clients attendent et depuis quand l'écran est muet", () => {
+    expect(buildKitchenOfflineAlert(2, 14)).toEqual({
+      title: "📵 Écran cuisine hors ligne",
+      body: "2 commandes à cuisiner en attente · dernier signe il y a 14 min",
+    });
+    expect(buildKitchenOfflineAlert(1, null).body).toBe("1 commande à cuisiner en attente · écran pas ouvert aujourd'hui");
   });
 });

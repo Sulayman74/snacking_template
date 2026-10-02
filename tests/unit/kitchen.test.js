@@ -10,6 +10,7 @@ vi.mock("../../src/core/firebase.js", () => ({
   db: {},
   doc: vi.fn((db, col, id) => ({ col, id })),
   updateDoc: vi.fn().mockResolvedValue(),
+  setDoc: vi.fn().mockResolvedValue(),
   writeBatch: vi.fn(),
   getDoc: vi.fn(),
   increment: vi.fn((n) => ({ __inc: n })),
