@@ -213,10 +213,16 @@ service cloud.firestore {
         // autre snack. Le superadmin garde le plein accès.
         (
           isSnackAdmin(resource.data.snackId)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'paiement'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut', 'paiement', 'datePrete'])
           && (
             !request.resource.data.diff(resource.data).affectedKeys().hasAny(['paiement'])
             || request.resource.data.paiement.diff(resource.data.paiement).affectedKeys().hasOnly(['statut'])
+          )
+          // « Prête depuis X min » (écran cuisine) + rappel client (horloge) : l'heure
+          // ne peut être que celle du serveur, et seulement en passant « prête ».
+          && (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['datePrete'])
+            || (request.resource.data.datePrete == request.time && request.resource.data.statut == 'prete')
           )
         ) ||
         isSuperAdmin() ||

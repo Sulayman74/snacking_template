@@ -20,6 +20,7 @@ import {
   writeBatch,
   getDoc,
   increment,
+  serverTimestamp,
   functions,
   httpsCallable,
 } from "./core/firebase.js";
@@ -235,6 +236,7 @@ export function createTicketElement(id, commande) {
             </div>
             <div class="flex flex-col items-end shrink-0">
                 <div class="price-display-container">${priceDisplay}</div>
+                <span data-ready-age class="hidden" role="status"></span>
                 <div class="payment-badge-container">${paymentBadgeHtml}</div>
             </div>
         </div>
@@ -469,6 +471,7 @@ function startKitchenRadar() {
 
     // 🔴 Pastille de l'app = commandes en attente (se met à jour dans les deux sens).
     setAppBadgeCount(countPendingKitchenOrders(kitchenOrdersMap.values()));
+    renderReadyAges();
 
     refreshKitchenLoad(isFirstLoad);
     isFirstLoad = false;
@@ -498,7 +501,11 @@ function stopKitchenRadar() {
 // ============================================================================
 async function updateOrderStatus(orderId, newStatus) {
   try {
-    await updateDoc(doc(db, "commandes", orderId), { statut: newStatus });
+    // `datePrete` : base du « prête depuis X min » et du rappel client (horloge).
+    await updateDoc(doc(db, "commandes", orderId), {
+      statut: newStatus,
+      ...(newStatus === "prete" ? { datePrete: serverTimestamp() } : {}),
+    });
   } catch (error) {
     console.error("Erreur Statut :", error);
   }
@@ -641,6 +648,44 @@ function unwatchKitchenSnack() {
 function refreshKitchenClock() {
   renderKitchenPauseStatus();
   renderClosingSoon();
+  renderReadyAges();
+}
+
+// Seuils « prête depuis » : l'équipe sait quoi garder au chaud (frites ~5 min).
+const READY_WARN_MIN = 5;
+const READY_LATE_MIN = 10;
+
+/**
+ * Ancienneté d'une commande prête (fonction PURE).
+ * @returns {null|{minutes:number, level:"ok"|"warn"|"late"}} null sans horodatage.
+ */
+export function readyAgeInfo(datePrete, nowMs = Date.now()) {
+  const at = datePrete?.toMillis ? datePrete.toMillis() : (datePrete?.toDate ? datePrete.toDate().getTime() : null);
+  if (!Number.isFinite(at)) return null;
+  const minutes = Math.max(0, Math.floor((nowMs - at) / 60000));
+  const level = minutes >= READY_LATE_MIN ? "late" : minutes >= READY_WARN_MIN ? "warn" : "ok";
+  return { minutes, level };
+}
+
+const READY_AGE_CLASSES = {
+  ok: "bg-surface-2 text-text-muted border-line",
+  warn: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/40",
+  late: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/40 animate-pulse",
+};
+
+// Met à jour le badge « Prête depuis X min » des tickets de la colonne Prête.
+function renderReadyAges(nowMs = Date.now()) {
+  document.querySelectorAll("#orders-ready [data-ready-age]").forEach((el) => {
+    const id = el.closest("[id^='ticket-']")?.id.slice("ticket-".length);
+    const info = readyAgeInfo(kitchenOrdersMap.get(id)?.datePrete, nowMs);
+    if (!info) {
+      el.className = "hidden";
+      el.textContent = "";
+      return;
+    }
+    el.className = `mt-1 inline-flex items-center gap-1 text-xs font-black px-2 py-0.5 rounded-full border ${READY_AGE_CLASSES[info.level]}`;
+    el.textContent = info.minutes < 1 ? "Prête à l'instant" : `Prête depuis ${info.minutes} min`;
+  });
 }
 
 function kitchenOrderingState() {

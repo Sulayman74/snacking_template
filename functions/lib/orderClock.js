@@ -7,12 +7,17 @@
 // revérifie le statut attendu avant d'écrire).
 
 const { db, FieldValue, Timestamp } = require("./admin");
+const { getUserPushTargets, sendToTargets } = require("./pushTargets");
+const { getSnackOrigin } = require("./tenantOrigins");
+const { buildPickupReminderNotification } = require("./kitchenAlerts");
 
 /** Ancien parcours « Je suis à 5 min » : au-delà, la cuisine lance d'elle-même. */
 const LEGACY_RELEASE_MS = 20 * 60 * 1000;
 /** Commande prête jamais retirée, 3 h après l'heure de retrait annoncée : clôturée. */
 const STALE_READY_MS = 3 * 60 * 60 * 1000;
 const BATCH_SIZE = 100;
+/** Rappel « votre commande vous attend » : 5 min après « prête » ET après l'heure annoncée. */
+const REMINDER_DELAY_MS = 5 * 60 * 1000;
 
 /**
  * Passe une commande d'un statut à un autre si elle y est TOUJOURS (le chef ou
@@ -29,14 +34,55 @@ async function transition(ref, fromStatut, patch) {
 }
 
 // Commandes d'un statut dont le champ horaire `field` est passé de `olderThanMs`.
-async function dueOrders(statut, field, olderThanMs, nowMs) {
+async function dueOrders(statut, field, olderThanMs, nowMs, direction = "asc") {
   const cutoff = Timestamp.fromMillis(nowMs - olderThanMs);
   return db.collection("commandes")
     .where("statut", "==", statut)
     .where(field, "<=", cutoff)
-    .orderBy(field, "asc")
+    .orderBy(field, direction)
     .limit(BATCH_SIZE)
     .get();
+}
+
+/**
+ * Commande à emporter prête et pas encore récupérée : UN rappel push au client,
+ * 5 min après « prête » et 5 min après l'heure de retrait annoncée (un client sur
+ * créneau n'est pas relancé avant l'heure qu'il a choisie). Marque posée en
+ * transaction AVANT l'envoi : jamais deux rappels. Plus récentes d'abord : les
+ * commandes déjà rappelées (toujours « prêtes ») ne bloquent pas les nouvelles.
+ */
+async function remindUncollectedOrders(nowMs) {
+  const snap = await dueOrders("prete", "datePrete", REMINDER_DELAY_MS, nowMs, "desc");
+  let reminded = 0;
+  for (const doc of snap.docs) {
+    const order = doc.data();
+    if (order.mode === "delivery" || order.rappelEnvoyeAt) continue;
+    const promisedMs = order.eta?.readyAt?.toMillis?.();
+    if (Number.isFinite(promisedMs) && promisedMs + REMINDER_DELAY_MS > nowMs) continue;
+
+    const marked = await db.runTransaction(async (tx) => {
+      const snapNow = await tx.get(doc.ref);
+      const d = snapNow.exists ? snapNow.data() : null;
+      if (!d || d.statut !== "prete" || d.rappelEnvoyeAt) return false;
+      tx.update(doc.ref, { rappelEnvoyeAt: FieldValue.serverTimestamp() });
+      return true;
+    });
+    if (!marked) continue;
+
+    try {
+      const targets = await getUserPushTargets(order.userId, order.snackId, "client");
+      if (targets.length > 0) {
+        await sendToTargets(targets, {
+          notification: buildPickupReminderNotification(order, doc.id),
+          webpush: { fcm_options: { link: `${await getSnackOrigin(order.snackId)}/` } },
+        });
+      }
+    } catch (error) {
+      console.error(`⏱️ Rappel retrait ${doc.id} non envoyé :`, error);
+    }
+    reminded++;
+  }
+  return reminded;
 }
 
 /**
@@ -101,6 +147,7 @@ async function closeStaleReadyOrders(nowMs) {
 const TASKS = {
   launched: releaseScheduledOrders,
   released: releaseLegacyWaitingOrders,
+  reminded: remindUncollectedOrders,
   closed: closeStaleReadyOrders,
 };
 
@@ -122,4 +169,4 @@ async function runOrderClock({ nowMs = Date.now() } = {}) {
   return stats;
 }
 
-module.exports = { runOrderClock, LEGACY_RELEASE_MS, STALE_READY_MS };
+module.exports = { runOrderClock, LEGACY_RELEASE_MS, STALE_READY_MS, REMINDER_DELAY_MS };
