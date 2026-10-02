@@ -141,20 +141,16 @@ window.closeModal = (modalId) => {
 // ============================================================================
 // 🔄 ORCHESTRATEUR DE CYCLE DE VIE (Admin)
 // ============================================================================
+// L'écran cuisine n'est JAMAIS coupé en arrière-plan : une écoute Firestore au
+// repos ne coûte rien, et la couper faisait rater des commandes (tablette posée,
+// autre app ouverte). Au retour au premier plan, on s'assure qu'elle tourne :
+// les commandes arrivées entre-temps sonnent à la reprise.
+const isShiftStarted = () => document.getElementById("startup-overlay")?.classList.contains("hidden");
+
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    if (typeof window.stopKitchenRadar === "function") {
-      window.stopKitchenRadar();
-    }
-  } else {
-    // Reprise du radar cuisine uniquement si on est sur le bon onglet
-    if (window.currentAdminTab === "cuisine" && window.currentAdminSnackId && typeof window.startKitchenRadar === "function") {
-      // On vérifie aussi que l'overlay de démarrage est caché (shift démarré)
-      const overlay = document.getElementById("startup-overlay");
-      if (overlay && overlay.classList.contains("hidden")) {
-        window.startKitchenRadar();
-      }
-    }
+  if (document.hidden) return;
+  if (isShiftStarted() && window.currentAdminSnackId && typeof window.startKitchenRadar === "function") {
+    window.startKitchenRadar(); // idempotent
   }
 });
 
@@ -194,10 +190,10 @@ window.switchAdminTab = (tabName) => {
 
   if (activeView) activeView.classList.remove("hidden");
 
+  // Le radar cuisine continue d'écouter (et de sonner) sur les autres onglets.
   if (tabName === "cuisine" && window.currentAdminSnackId) {
     window.startKitchenRadar();
   } else {
-    window.stopKitchenRadar();
     // 🛒 Si on va sur le menu, on charge les produits depuis Firestore
     if (tabName === "menu") window.loadAdminProducts();
 
@@ -358,18 +354,28 @@ function refuseAccess(message) {
   document.getElementById("back-home-btn").classList.remove("hidden");
 }
 
-document.getElementById("start-shift-btn")?.addEventListener("click", () => {
+// Démarrage du service : le clic sert aussi à débloquer le son (règle des
+// navigateurs). Le service démarre TOUJOURS, même si le son échoue : sans radar,
+// on rate des commandes ; sans son, on les voit encore à l'écran.
+function unlockKitchenBell() {
   bell.volume = 0;
-  bell
-    .play()
-    .then(() => {
-      bell.pause();
-      bell.currentTime = 0;
-      bell.volume = 1;
-      document.getElementById("startup-overlay").classList.add("hidden");
-      window.startKitchenRadar();
-    })
-    .catch((e) => console.error("Erreur Audio:", e));
+  return bell.play().then(() => {
+    bell.pause();
+    bell.currentTime = 0;
+    bell.volume = 1;
+  });
+}
+
+document.getElementById("start-shift-btn")?.addEventListener("click", () => {
+  document.getElementById("startup-overlay").classList.add("hidden");
+  window.startKitchenRadar();
+  unlockKitchenBell().catch((e) => {
+    bell.volume = 1;
+    console.warn("Sonnerie non débloquée :", e);
+    window.showToast?.("🔇 Son désactivé : touchez l'écran pour activer la sonnerie.", "error");
+    // Premier contact avec l'écran = nouvelle tentative (geste utilisateur).
+    document.addEventListener("pointerdown", () => unlockKitchenBell().catch(() => {}), { once: true });
+  });
 });
 
 // ============================================================================
@@ -407,6 +413,7 @@ window.openStripeExpressDashboard = async () => {
 // 5. DÉCONNEXION
 // ============================================================================
 window.logoutAdmin = async () => {
+  window.stopKitchenRadar?.();
   await signOut(auth);
   window.location.href = "index.html";
 };

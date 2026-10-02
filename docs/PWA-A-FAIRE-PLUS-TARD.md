@@ -99,3 +99,53 @@ service worker unique (`src/sw.js`). Le SW lit déjà le format déclaratif (`sr
 5. Tests : `test:push` (canal webpush stubbé), test sur iPhone réel (non testable en CI).
 
 **Effort** : 3-5 j.
+
+---
+
+## 6. Écran cuisine — relance « Vu » et SMS au gérant
+
+**Contexte** : audit du 29/09/2026, option D du brainstorming KDS-1. Les options A (écoute active
+pendant tout le service, sonnerie sur toute commande « à cuisiner ») et B (push admin à l'arrivée du
+client) sont faites. Reste le cas où **personne ne regarde ni n'entend** : cuisine vide, tablette
+tombée en veille sans notification autorisée, rush.
+
+**Besoin** : aucune commande payée ratée, et savoir quand une commande a été vue (litige client).
+
+**Principe**
+1. Chaque ticket porte un accusé de réception : champ `vueAt` (+ `vueBy`) posé par un bouton « Vu »
+   sur le ticket, ou automatiquement quand le ticket a été affiché écran visible pendant X s.
+   Règles Firestore : l'admin du snack peut écrire `vueAt` (liste blanche admin à étendre).
+2. Escalade tant que `vueAt` est vide, pilotée par une tâche planifiée (`onSchedule` toutes les
+   minutes, requête `statut == "nouvelle" && vueAt == null && date < now - N`) :
+   - T+0 : sonnerie + push (déjà en place) ;
+   - T+2 min : nouveau push « Commande en attente depuis 2 min » (gratuit) ;
+   - T+5 min : **SMS au gérant** (payant, opt-in par snack).
+3. Idempotence : un marqueur par palier (`relance.push2At`, `relance.smsAt`) écrit en transaction,
+   pour ne jamais envoyer deux fois.
+
+**Prestataires SMS (France)** : Brevo, OVHcloud SMS, Twilio. Ordre de grandeur **0,05 à 0,08 € HT
+par SMS**. Clé d'API en Secret Manager (`defineSecret`), jamais dans le code ni en `VITE_*`.
+
+**Coût estimé** : 100 commandes/jour, 5 % non vues à T+5 min → ~150 SMS/mois ≈ **8 à 12 € par snack
+et par mois**. Tâche planifiée : ~43 000 exécutions/mois (dans les 2 M gratuits). Lectures Firestore :
+une requête indexée par minute, négligeable. À refacturer dans l'abonnement ou à réserver à une
+offre supérieure.
+
+**Pour**
+- Quasi impossible de rater une commande ; preuve horodatée qu'elle a été vue.
+- Palier push gratuit avant le SMS : le SMS reste rare.
+
+**Contre**
+- Un geste de plus en plein rush si le « Vu » est manuel (préférer l'accusé automatique à l'affichage).
+- Coût variable par snack ; numéro du gérant à collecter (RGPD : finalité, opt-out, mention légale).
+- Index composite à créer (`snackId`, `statut`, `vueAt`, `date`).
+
+**À faire**
+1. Trancher « Vu » manuel ou automatique (recommandé : automatique après 5 s écran visible, bouton en
+   secours).
+2. Champs `vueAt`/`vueBy`, règles, index ; affichage « vu à 12:04 » sur le ticket.
+3. Tâche planifiée d'escalade + push de relance (sans SMS) → mesurer le taux de commandes non vues.
+4. Seulement si ce taux le justifie : SMS opt-in par snack (numéro gérant dans la config admin).
+5. Tests : harnais d'escalade (émulateur, horloge simulée), idempotence des paliers.
+
+**Effort** : 1,5 j sans SMS ; +1 j avec SMS.

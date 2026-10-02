@@ -9,6 +9,7 @@
 //   P6. getStaffPushTargets                 → exclut un compte qui a perdu le rôle
 //   P7. sendToTargets                       → dédoublonne, supprime abonnement / champ legacy morts
 //   P8. transactionnel bout-en-bout          → notif « commande prête » part vers les bons appareils
+//   P9. arrivée du client (click & collect)  → push aux ADMINS du snack uniquement, lien admin
 // Lancé via `npm run test:push`.
 const path = require("node:path");
 const FUNC_DIR = path.join(__dirname, "..", "..", "functions");
@@ -121,6 +122,23 @@ async function main() {
     sent.length === 1 && JSON.stringify(sent[0].tokens) === JSON.stringify([tok("c1A")]) &&
       sent[0].webpush?.fcm_options?.link === "https://snacking-template.web.app/",
     JSON.stringify(sent[0]?.tokens));
+
+  // P9 — le client clique « Je suis à 5 min » : la cuisine (et elle seule) est alertée.
+  // (P7 a purgé les appareils admin « morts » : on en réenregistre un, bien vivant.)
+  await register({ data: { token: tok("adminA2"), snackId: "snackA", app: "admin" }, auth: auth("adminA") });
+  sent.length = 0;
+  const waiting = test.firestore.makeDocumentSnapshot({ statut: "en_attente_client", userId: "client1", snackId: "snackA", mode: "collect", clientNom: "Léa", secretCode: "K7Q2" }, "commandes/ORDER5678");
+  const arrived = test.firestore.makeDocumentSnapshot({ statut: "nouvelle", userId: "client1", snackId: "snackA", mode: "collect", clientNom: "Léa", secretCode: "K7Q2" }, "commandes/ORDER5678");
+  await wrapped({ data: test.makeChange(waiting, arrived), params: { orderId: "ORDER5678" } });
+  const adminTokensA = new Set((await P.getStaffPushTargets("snackA", "admin")).map((t) => t.token));
+  const p9 = sent[0];
+  ok("P9 arrivée client → admins snackA uniquement, texte cuisine, lien admin",
+    sent.length === 1 && p9.tokens.includes(tok("adminA2")) && p9.tokens.every((t) => adminTokensA.has(t)) &&
+      !p9.tokens.includes(tok("c1A")) &&
+      p9.notification?.title === "🏃 Client dans 5 min — lancez la cuisson" &&
+      p9.notification?.body === "Léa · code K7Q2" &&
+      /\/admin\.html$/.test(p9.webpush?.fcm_options?.link || ""),
+    JSON.stringify({ tokens: p9?.tokens, notification: p9?.notification, link: p9?.webpush?.fcm_options?.link }));
 
   const passed = results.filter(Boolean).length;
   console.log(`\n${passed}/${results.length} scénarios push OK`);
