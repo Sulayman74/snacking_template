@@ -1,0 +1,8 @@
+Polices hébergées (sous-ensemble latin, graisses 400/600), téléchargées depuis Google Fonts
+par scripts/fetch-fonts.mjs. Toutes sont publiées sous SIL Open Font License 1.1 :
+- Poppins
+- Inter
+- Montserrat
+- Space Grotesk
+- Outfit
+Texte de la licence : https://openfontlicense.org/open-font-license-official-text/

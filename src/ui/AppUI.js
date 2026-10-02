@@ -105,9 +105,10 @@ class AppUI {
         if (fonts?.key) {
             root.style.setProperty("--font-body", fonts.body);
             root.style.setProperty("--font-display", fonts.display || fonts.body);
-            // Charge le <link> au runtime si pas déjà injecté au build (changement admin à chaud).
-            // display=swap évite le FOIT (cf. SAAS_FONTS).
-            ensureFontLink(fonts.href);
+            // Famille déjà embarquée au build (polices hébergées, cf. vite.config.js →
+            // <html data-font-key>) : rien à charger. Sinon (changement admin à chaud sans
+            // rebuild) : repli sur Google Fonts, display=swap évite le FOIT.
+            if (fonts.key !== document.documentElement.dataset.fontKey) ensureFontLink(fonts.href);
         }
     }
 

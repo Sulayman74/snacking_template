@@ -58,3 +58,31 @@ export const SAAS_FONTS = {
 export function resolveFont(key) {
   return SAAS_FONTS[key] || SAAS_FONTS.system;
 }
+
+/**
+ * Règles @font-face d'une famille HÉBERGÉE (public/fonts/fonts.json, produit par
+ * scripts/fetch-fonts.mjs). `font-display: swap` : texte visible immédiatement.
+ * @param {{family: string, files: Record<string,string>, unicodeRange?: string}|null} entry
+ * @returns {string} CSS (chaîne vide si aucune entrée).
+ */
+export function fontFaceCss(entry) {
+  if (!entry?.family || !entry.files) return "";
+  const range = entry.unicodeRange ? `unicode-range:${entry.unicodeRange};` : "";
+  return Object.entries(entry.files)
+    .map(([weights, src]) =>
+      `@font-face{font-family:'${entry.family}';font-style:normal;font-weight:${weights};font-display:swap;src:url(${src}) format('woff2');${range}}`)
+    .join("");
+}
+
+/**
+ * Balises <link rel="preload"> des fichiers d'une famille hébergée (le navigateur
+ * télécharge la police dès le <head>, sans attendre le CSS). `crossorigin` est
+ * obligatoire pour les polices, même en même origine.
+ * @param {{files: Record<string,string>}|null} entry
+ * @returns {string}
+ */
+export function fontPreloadLinks(entry) {
+  return Object.values(entry?.files || {})
+    .map((src) => `<link rel="preload" as="font" type="font/woff2" crossorigin href="${src}">`)
+    .join("\n    ");
+}
