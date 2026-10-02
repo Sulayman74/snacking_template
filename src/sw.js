@@ -9,9 +9,10 @@
 
 import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
 import { registerRoute, NavigationRoute } from "workbox-routing";
-import { CacheFirst, StaleWhileRevalidate, NetworkOnly } from "workbox-strategies";
+import { CacheFirst, StaleWhileRevalidate, NetworkFirst, NetworkOnly } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
+import { RangeRequestsPlugin } from "workbox-range-requests";
 import { parsePushPayload, mustAlwaysShowNotification } from "./sw/push-payload.js";
 
 // --- Mise à jour : 'prompt' → skipWaiting seulement quand l'utilisateur clique
@@ -20,10 +21,60 @@ self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-// --- App-shell précaché + nettoyage des anciens caches.
+// --- App-shell CLIENT précaché (index.html, legal.html, leurs JS/CSS) + nettoyage.
+// Les surfaces admin / livreur / superadmin et la sonnerie cuisine ne sont PAS
+// précachées (cf. vite.config.js › globIgnores) : un client n'a pas à télécharger
+// ~140 Ko de back-office. Elles passent en cache à leur première ouverture (routes
+// ci-dessous) et restent utilisables hors-ligne ensuite.
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
-registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html")));
+
+// Pages des autres surfaces : réseau d'abord (mises à jour immédiates), cache si
+// hors-ligne. Enregistrée AVANT le fallback SPA, qui les exclut aussi (denylist).
+const STAFF_PAGES = /^\/(admin|livreur|superadmin)\.html$/;
+registerRoute(
+  ({ request, url }) => request.mode === "navigate" && url.origin === self.location.origin && STAFF_PAGES.test(url.pathname),
+  new NetworkFirst({
+    cacheName: "app-pages",
+    networkTimeoutSeconds: 3,
+    plugins: [new CacheableResponsePlugin({ statuses: [200] })],
+  })
+);
+registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html"), { denylist: [STAFF_PAGES] }));
+
+// JS/CSS non précachés (chunks des autres surfaces) : hashés et immuables → cache-first.
+registerRoute(
+  ({ request, url }) => url.origin === self.location.origin && url.pathname.startsWith("/assets/") && ["script", "style"].includes(request.destination),
+  new CacheFirst({
+    cacheName: "app-assets",
+    plugins: [
+      new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 }),
+      new CacheableResponsePlugin({ statuses: [200] }),
+    ],
+  })
+);
+
+// Sonnerie cuisine (admin, preload="auto") : mise en cache à la 1re ouverture de
+// l'écran cuisine → sonne aussi tablette hors-ligne. <audio> demande le fichier par
+// plages d'octets (Range → réponse 206 partielle, non cacheable) : on va chercher le
+// fichier ENTIER sur le réseau, et RangeRequestsPlugin découpe ensuite les plages
+// demandées à partir de la copie en cache.
+const fetchWholeFile = {
+  requestWillFetch: async ({ request }) =>
+    request.headers.has("range") ? new Request(request.url, { credentials: "same-origin" }) : request,
+};
+registerRoute(
+  ({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/sounds/"),
+  new CacheFirst({
+    cacheName: "app-media",
+    plugins: [
+      fetchWholeFile,
+      new RangeRequestsPlugin(),
+      new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 30 }),
+      new CacheableResponsePlugin({ statuses: [200] }),
+    ],
+  })
+);
 
 // --- Caches runtime (CLAUDE.md §8.3).
 // Polices & icônes CDN : immuables → cache-first (long TTL).

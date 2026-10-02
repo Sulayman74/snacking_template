@@ -60,6 +60,15 @@ npm run stripe:apple-pay-domains:apply    # enregistre les domaines manquants
 - **Paiement express** : sur iPhone (Safari) avec une carte dans Wallet, le bouton Apple Pay doit apparaître
   au-dessus du formulaire une fois le domaine enregistré (§ 3 bis). Sur Android/Chrome : Google Pay.
 
+## 📦 Ce que le service worker met en cache
+
+- **Précache (à la 1re visite)** : la coquille **client** seulement (`index.html`, `legal.html`, leurs JS/CSS).
+- **À la 1re ouverture** : les pages admin / livreur / superadmin, leurs chunks et la sonnerie cuisine
+  (`app-pages`, `app-assets`, `app-media`). Elles restent utilisables **hors-ligne ensuite** ; une tablette
+  jamais connectée à l'admin ne peut pas l'ouvrir hors-ligne (la connexion exige le réseau de toute façon).
+- **Runtime** : polices/icônes CDN (30 j), images Storage (7 j). Cloud Functions : jamais.
+- Vérifié par `npm run test:pwa` (contenu du précache, client et admin hors-ligne).
+
 ## 🧯 En cas d'incident : service worker cassé
 
 Symptôme : l'app ne charge plus / reste bloquée chez les utilisateurs déjà venus, même après un correctif.

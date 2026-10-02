@@ -159,8 +159,15 @@ export default defineConfig(({ command, mode }) => {
         srcDir: 'src',
         filename: 'sw.js',
         injectManifest: {
-          // + sonnerie de l'écran cuisine : disponible même tablette hors ligne.
-          globPatterns: ['**/*.{js,css,html}', 'sounds/*.mp3'],
+          globPatterns: ['**/*.{js,css,html}'],
+          // Précache = coquille CLIENT uniquement. Admin / livreur / superadmin (pages +
+          // chunks d'entrée) et la sonnerie cuisine sont servis par les caches runtime
+          // de src/sw.js à leur première ouverture : un client n'a pas à télécharger
+          // ~140 Ko de back-office, et la sonnerie reste disponible tablette hors-ligne.
+          globIgnores: [
+            'admin.html', 'livreur.html', 'superadmin.html',
+            'assets/admin-*.js', 'assets/livreur-*.js', 'assets/superadmin-*.js',
+          ],
         },
         manifest: {
           // id explicite = start_url (identité d'install inchangée, pas de doublon).
