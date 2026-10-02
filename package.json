@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint:theming": "node scripts/check-theming.mjs",
+    "icons:generate": "node scripts/generate-icons.mjs",
     "build:tacos": "SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 vite build",
     "build:pizza": "SNACK_ID=PsobiuoeUzNmHnwGtaRu vite build",
     "build:pizzeria": "SNACK_ID=4L9THuI6hIAqKjjZUn4s vite build",

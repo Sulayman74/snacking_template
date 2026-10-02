@@ -6,6 +6,7 @@ import { execSync } from 'child_process'
 import tailwindcss from '@tailwindcss/vite'
 import { resolveFont } from './src/theme-fonts.js'
 import { SAAS_THEMES } from './src/theme-palettes.js'
+import { manifestIcons, htmlIcons } from './scripts/lib/icons.mjs'
 
 const seoPath = resolve(__dirname, 'snacks-seo.json');
   let snacksSeo = {};
@@ -60,6 +61,10 @@ export default defineConfig(({ command, mode }) => {
   const currentSnackId = process.env.SNACK_ID || 'Ym1YiO4Ue5Fb5UXlxr06'
   const seoData = snacksSeo[currentSnackId] || snacksSeo["Ym1YiO4Ue5Fb5UXlxr06"];
   const iconUrl = seoData.iconUrl || seoData.logoUrl;
+  // 🖼️ Icônes PWA : jeu PNG généré par `npm run icons:generate` (public/icons/<id>/,
+  // any + maskable + apple-touch-icon) ; repli sur le logo webp distant s'il manque.
+  const iconsCfg = { publicDir: resolve(__dirname, 'public'), snackId: currentSnackId, fallbackUrl: iconUrl }
+  const headIcons = htmlIcons(iconsCfg)
   // 🎨 Couleur dérivée de colorPalette (SOURCE UNIQUE, partagée avec le runtime via
   // src/theme-palettes.js) → splash/meta/manifest cohérents avec l'UI, plus de désync.
   // Fallbacks rétro-compatibles : hex explicites de snacks-seo.json, puis défaut neutre.
@@ -128,6 +133,10 @@ export default defineConfig(({ command, mode }) => {
             .replace('{{HERO_PRELOAD}}', heroPreload)
             .replace('{{FONT_LINK}}', fontLink)
             .replace(/\{\{ICON_URL\}\}/g, iconUrl)
+            .replace(/\{\{ICON_192\}\}/g, headIcons.icon192)
+            .replace(/\{\{ICON_512\}\}/g, headIcons.icon512)
+            .replace(/\{\{ICON_TYPE\}\}/g, headIcons.type)
+            .replace(/\{\{APPLE_TOUCH_ICON\}\}/g, headIcons.appleTouchIcon)
             .replace(/\{\{APP_SHORT_NAME\}\}/g, seoData.title.split('|')[0].trim())
             .replace(/\{\{CANONICAL_URL\}\}/g, seoData.canonicalUrl || '')
         }
@@ -143,6 +152,9 @@ export default defineConfig(({ command, mode }) => {
         // 🛠️ SW écrit à la main (src/sw.js) : précache + caches runtime (CLAUDE.md
         // §8.3) + affichage des push FCM et clic. L'ancien SW généré (generateSW)
         // n'avait AUCUN handler push → notifications génériques / révoquées sur iOS.
+        // Les icônes du manifest ne sont PAS précachées (sinon chaque visiteur télécharge
+        // les 4 PNG dès la 1re visite) : le navigateur ne les charge qu'à l'installation.
+        includeManifestIcons: false,
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.js',
@@ -163,19 +175,7 @@ export default defineConfig(({ command, mode }) => {
           background_color: themeColor, // 👈 Dérivé de colorPalette : splash sans flash ni désync
           orientation: 'portrait-primary',
           display: 'standalone',
-          icons: [
-            {
-              src: iconUrl,
-              sizes: '192x192',
-              type: 'image/webp'
-            },
-            {
-              src: iconUrl,
-              sizes: '512x512',
-              type: 'image/webp',
-              purpose: 'any maskable'
-            }
-          ]
+          icons: manifestIcons(iconsCfg),
         }
       }),
       {
