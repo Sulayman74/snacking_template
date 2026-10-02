@@ -181,10 +181,15 @@ async function priceCartItems(cartItems, snackId) {
     );
     const paidCents = Math.round(Number(item.prix) * 100);
     const expectedCents = expectedUnitPriceCents(product, item, validatedSuppProducts);
-    require_(
-      Math.abs(expectedCents - paidCents) <= TOL,
-      `Prix manipulé pour « ${product.nom} » (${item.prix} € non autorisé).`
-    );
+    // Message neutre : le cas réel est un prix changé par le restaurateur pendant
+    // que le panier attendait (le client corrige son panier et repaie).
+    if (Math.abs(expectedCents - paidCents) > TOL) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Le prix de « ${product.nom} » a changé. Votre panier a été mis à jour : vérifiez-le avant de payer.`,
+        { reason: "price-changed", productId: item.productId }
+      );
+    }
 
     // Prix persisté = prix SERVEUR (pas l'arrondi client à ±1c).
     const ttcCents = expectedCents * item.quantity;
@@ -211,22 +216,24 @@ async function priceCartItems(cartItems, snackId) {
  * @param {Array<Object>} cartItems - Articles du panier (prix recalculés en base).
  * @param {"collect"|"delivery"} orderMode - Mode de la commande.
  * @param {Object|null} livraison - Adresse client {lat,lng,adresse} (mode delivery).
- * @param {{enforceOpeningHours?:boolean, now?:Date}} [options] - Horaires contrôlés si enforceOpeningHours.
+ * @param {{enforceOpeningHours?:boolean, beforePayment?:boolean, now?:Date}} [options] - Horaires contrôlés si
+ *   enforceOpeningHours ; pause cuisine contrôlée si beforePayment (createPaymentIntent).
  * @returns {Promise<{itemsCents:number, lines:Array, fraisCents:number, totalCents:number, livraisonData:(Object|null), distanceKm:(number|null)}>}
  * @throws {HttpsError} prix manipulé / out-of-range / minimum non atteint / pause service.
  */
 async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison, options = {}) {
-  const { enforceOpeningHours = false, now = new Date() } = options;
+  const { enforceOpeningHours = false, beforePayment = false, now = new Date() } = options;
   assertSnackAcceptsOrders(snackData, orderMode);
   // Horaires : contrôlés AVANT débit (createPaymentIntent) uniquement. À la
   // finalisation, un client qui a payé à 21:59:50 ne doit pas être remboursé
   // parce que finalizeOrder s'exécute à 22:00:02.
   if (enforceOpeningHours) assertSnackIsOpen(snackData, now);
 
-  // 🛡️ Garde Pause Service / Coup de Feu
-  if (snackData.servicePausedUntil) {
+  // 🛡️ Garde Pause Service / Coup de Feu — AVANT débit seulement : un client en
+  // train de payer quand le chef met la pause n'est pas remboursé pour autant.
+  if (beforePayment && snackData.servicePausedUntil) {
     const pausedUntilDate = snackData.servicePausedUntil.toDate ? snackData.servicePausedUntil.toDate() : new Date(snackData.servicePausedUntil);
-    if (pausedUntilDate > new Date()) {
+    if (pausedUntilDate > now) {
       throw new HttpsError("failed-precondition", "Le restaurant a temporairement suspendu la prise de commandes (cuisine en pause).");
     }
   }

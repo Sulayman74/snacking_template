@@ -3,6 +3,8 @@
  */
 import { store } from "../core/Store.js";
 import "../components/SnackCartList.js"; // Import du Web Component Lit
+import { syncCheckoutButton } from "./StatusUI.js";
+import { cartSyncMessage } from "./statusMessage.js";
 
 class CartUI {
     constructor() {
@@ -26,7 +28,13 @@ class CartUI {
 
         // Écoute les changements du Store pour mettre à jour les totaux et badges (UI périphérique)
         store.addEventListener("cart-updated", () => this.render());
+        // Menu modifié par le restaurateur : on dit au client ce qui a bougé.
+        store.addEventListener("cart-reconciled", (e) => {
+            const message = cartSyncMessage(e.detail);
+            if (message) window.showToast?.(message, "info");
+        });
         // Le mode/adresse de livraison change les frais → re-render du total.
+
         store.addEventListener("delivery-updated", () => this.updateTotal(store.state.cart));
         
         // Initialisation de l'affichage
@@ -38,7 +46,7 @@ class CartUI {
 
     render() {
         const { cart } = store.state;
-        this.renderItems(cart);
+        this.renderItems();
         this.updateBadges(cart);
         this.updateTotal(cart);
         
@@ -48,18 +56,11 @@ class CartUI {
         }
     }
 
-    renderItems(cart) {
+    renderItems() {
         // La liste des items est gérée par <snack-cart-list> de façon autonome.
-        // CartUI s'occupe juste d'activer/désactiver le bouton de validation.
-        if (this.checkoutBtn) {
-            if (cart.length === 0) {
-                this.checkoutBtn.disabled = true;
-                this.checkoutBtn.classList.add("opacity-50");
-            } else {
-                this.checkoutBtn.disabled = false;
-                this.checkoutBtn.classList.remove("opacity-50");
-            }
-        }
+        // CartUI s'occupe juste d'activer/désactiver le bouton de validation
+        // (panier vide, ou boutique fermée / en pause : cf. StatusUI).
+        syncCheckoutButton();
     }
 
     updateBadges(cart) {

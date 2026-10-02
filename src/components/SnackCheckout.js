@@ -2,7 +2,8 @@ import { html } from 'lit';
 import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
 import { buildOrderItemsPayload } from '../core/orderPayload.js';
-import { getOrderingState } from '../core/openingHours.js';
+import { getStorefrontStatus } from '../core/storefrontStatus.js';
+import { statusSentence } from '../ui/statusMessage.js';
 import { isValidPhone } from '../services/addressService.js';
 import { pickupUI } from '../pickup.js';
 import { upsellUI } from '../ui/UpsellUI.js';
@@ -109,36 +110,15 @@ export class SnackCheckout extends SnackElement {
     const delivery = store.state.delivery || { mode: "collect" };
     const isDelivery = delivery.mode === "delivery";
 
-    const featureOk = isDelivery ? cfg?.features?.enableDelivery : cfg?.features?.enableClickAndCollect;
-    if (!featureOk) {
-      return window.showToast(isDelivery ? t("toasts.checkout.deliveryDisabled") : t("toasts.checkout.clickCollectDisabled"), "error");
-    }
-
-    if (cfg?.features?.maintenanceMode) return window.showToast(t("toasts.checkout.maintenance"), "error");
+    // 🚦 Même état que la pastille du panier (fermé, pause, mode coupé, heure
+    // limite) : le client ne découvre rien ici qu'il n'ait déjà vu.
+    const status = getStorefrontStatus(cfg, new Date(), { mode: isDelivery ? "delivery" : "collect" });
+    if (!status.canOrder) return window.showToast(statusSentence(status), "error");
 
     // 🕒 Retrait « plus tard » : le créneau (revalidé par le serveur) remplace la
     // règle « ouvert maintenant » — on peut programmer avant l'ouverture.
     this._pickupRequest = isDelivery ? null : pickupUI.currentRequest();
-
-    // 🕐 Horaires + heure limite de commande (même règle que createPaymentIntent).
-    const ordering = getOrderingState(cfg?.hours, new Date(), cfg?.timezone, cfg?.lastOrderMinutesBeforeClose);
-    if (!this._pickupRequest && !ordering.accepting) {
-      const why = ordering.reason === "cutoff"
-        ? t("toasts.checkout.ordersClosed", { time: ordering.closeTime })
-        : t("toasts.checkout.closedNow");
-      const when = ordering.nextOpenDayOffset === 0 ? t("toasts.checkout.reopenToday", { time: ordering.nextOpenTime })
-        : ordering.nextOpenDayOffset === 1 ? t("toasts.checkout.reopenTomorrow", { time: ordering.nextOpenTime })
-        : "";
-      return window.showToast(`${why} ${when}`.trim(), "error");
-    }
-
-    if (cfg?.servicePausedUntil) {
-      const pausedUntil = cfg.servicePausedUntil.toDate ? cfg.servicePausedUntil.toDate() : new Date(cfg.servicePausedUntil);
-      if (pausedUntil > new Date()) {
-        const timeStr = pausedUntil.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-        return window.showToast(`Cuisine en pause jusqu'à ${timeStr} pour cause de forte affluence.`, "error");
-      }
-    }
+    if (!status.canOrderNow && !this._pickupRequest) return window.showToast(statusSentence(status), "error");
 
     if (isDelivery) {
       if (!delivery.address) {
@@ -313,6 +293,8 @@ export class SnackCheckout extends SnackElement {
       console.error(`❌ Erreur préparation paiement${error?.step ? ` (étape : ${error.step})` : ""} :`, error);
       const code = error?.code || "";
       const isBusiness = /failed-precondition|out-of-range|invalid-argument|resource-exhausted/.test(code);
+      // Prix changé côté restaurant : le panier se met au prix du menu courant.
+      if (error?.details?.reason === "price-changed") store.reconcileCart();
       window.showToast(isBusiness && error?.message ? error.message : t("toasts.checkout.secureConnectionError"), "error");
       this.closePaymentSheet();
     }

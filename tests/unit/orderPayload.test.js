@@ -77,7 +77,7 @@ describe("payload client → priceCartItems (serveur)", () => {
 
   it("REJETTE si le prix client omet un supplément déclaré", async () => {
     await expect(priceCartItems(buildOrderItemsPayload([cartItem({ prix: 13 })]), "snackA"))
-      .rejects.toThrow(/Prix manipulé/);
+      .rejects.toThrow(/prix de « .* » a changé/);
   });
 
   it("REJETTE un supplément d'un autre snack", async () => {
@@ -147,11 +147,11 @@ describe("priceCartItems — prix lié aux options déclarées", () => {
   });
 
   it("REJETTE « Mega » payée au prix « Senior »", async () => {
-    await expect(priceCartItems([pizza({ prix: 10 })], "snackA")).rejects.toThrow(/Prix manipulé/);
+    await expect(priceCartItems([pizza({ prix: 10 })], "snackA")).rejects.toThrow(/prix de « .* » a changé/);
   });
 
   it("REJETTE un menu payé au prix « seul »", async () => {
-    await expect(priceCartItems([pizza({ type: "menu", prix: 14 })], "snackA")).rejects.toThrow(/Prix manipulé/);
+    await expect(priceCartItems([pizza({ type: "menu", prix: 14 })], "snackA")).rejects.toThrow(/prix de « .* » a changé/);
   });
 
   it("REJETTE une taille inexistante ou absente sur un produit taillé", async () => {
@@ -252,5 +252,28 @@ describe("computeAuthoritativeOrder — coordonnées de livraison persistées (D
     const { livraisonData } = await run({ lat: 45, lng: 6, adresse: "x" });
     expect(livraisonData.complement).toBeNull();
     expect(livraisonData.telephone).toBeNull();
+  });
+});
+
+describe("computeAuthoritativeOrder — pause cuisine", () => {
+  const paused = { servicePausedUntil: new Date(Date.now() + 20 * 60000) };
+  const run = (beforePayment) =>
+    computeAuthoritativeOrder(paused, "snackA", buildOrderItemsPayload([cartItem()]), "collect", null, { beforePayment });
+
+  it("avant le paiement (createPaymentIntent) → refusé", async () => {
+    await expect(run(true)).rejects.toThrow(/cuisine en pause/);
+  });
+
+  it("client déjà débité quand le chef met la pause (finalizeOrder) → commande honorée, pas de remboursement", async () => {
+    await expect(run(false)).resolves.toMatchObject({ itemsCents: 2900 });
+  });
+});
+
+describe("priceCartItems — prix changé : message neutre et raison exploitable", () => {
+  it("code failed-precondition + reason price-changed (le client corrige son panier)", async () => {
+    const err = await priceCartItems([{ productId: "canette", nom: "Canette", prix: 1.5, quantity: 1 }], "snackA").catch((e) => e);
+    expect(err.code).toBe("failed-precondition");
+    expect(err.details).toMatchObject({ reason: "price-changed", productId: "canette" });
+    expect(err.message).toBe("Le prix de « Canette » a changé. Votre panier a été mis à jour : vérifiez-le avant de payer.");
   });
 });

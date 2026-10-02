@@ -26,12 +26,16 @@ import "./logger.js";
 import "./components/SnackMenuList.js";
 import "./components/SnackBestsellers.js";
 import "./components/SnackCheckout.js";
+import { startStatusClock } from "./ui/StatusUI.js";
 import { initI18n } from "./i18n/index.js";
 
 // ============================================================================
 // 🌍 INITIALISATION DE L'INTERNATIONALISATION
 // ============================================================================
 initI18n().catch((err) => console.error("🔥 Erreur initialisation i18n :", err));
+
+// 🚦 Ouvert / fermé / pause : l'heure avance, l'état de la boutique aussi.
+startStatusClock();
 
 // ============================================================================
 // 🔄 ORCHESTRATEUR DE CYCLE DE VIE (Client)

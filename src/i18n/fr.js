@@ -35,6 +35,26 @@ export default {
     complementPlaceholder: "Étage, code porte, bâtiment…",
     phoneLabel: "Téléphone (pour le livreur)"
   },
+  cartSync: {
+    removed: "{names} n'est plus disponible : retiré du panier.",
+    removedMany: "{names} ne sont plus disponibles : retirés du panier.",
+    repriced: "Le prix de {name} a changé : {price} €.",
+    repricedMany: "Les prix ont changé, votre panier a été mis à jour."
+  },
+  status: {
+    maintenance: "Commandes indisponibles pour le moment",
+    offline: "Commande en ligne indisponible",
+    collectDisabled: "Click & Collect indisponible pour le moment",
+    deliveryDisabled: "Livraison indisponible pour le moment",
+    paused: "Cuisine en pause jusqu'à {time}",
+    pausedDetail: "Forte affluence : les commandes reprennent à {time}.",
+    closingSoon: "Dernières commandes à {time}",
+    closed: "Fermé",
+    ordersClosed: "Commandes closes pour ce service",
+    reopenToday: "réouvre à {time}",
+    reopenTomorrow: "réouvre demain à {time}",
+    scheduleDetail: "Commandez maintenant pour un retrait dès {time}."
+  },
   pickup: {
     title: "Retrait au comptoir",
     asap: "Dès que possible · prête vers {time}",

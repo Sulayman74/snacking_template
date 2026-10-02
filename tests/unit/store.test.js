@@ -211,3 +211,60 @@ describe("Store — coordonnées de livraison (DLV-1)", () => {
     expect(store.state.delivery.contact.telephone).toHaveLength(25);
   });
 });
+
+describe("Store.reconcileCart — panier aligné sur le menu en direct (audit UX-7)", () => {
+  const menu = (over = {}) => [
+    { id: "burger", nom: "Burger", prix: 9.5, menuPriceAdd: 2.5, ...over.burger },
+    { id: "frites", nom: "Frites", prix: 3, ...over.frites },
+    { id: "cheddar", nom: "Cheddar", prix: 1, ...over.cheddar },
+  ];
+  const fill = () => {
+    store.addToCart({ id: "burger-menu", productId: "burger", nom: "Menu Burger", prix: 13, formule: "menu",
+      supplements: [{ productId: "cheddar", nom: "Cheddar", prix: 1 }] });
+    store.addToCart({ id: "frites-seul", productId: "frites", nom: "Frites", prix: 3, formule: "seul" });
+  };
+  const events = () => {
+    const got = [];
+    store.addEventListener("cart-reconciled", (e) => got.push(e.detail));
+    return got;
+  };
+
+  it("menu inchangé → panier intact, aucun message", () => {
+    fill();
+    const got = events();
+    store.setMenu(menu());
+    expect(store.state.cart.map((i) => i.prix)).toEqual([13, 3]);
+    expect(got).toHaveLength(0);
+  });
+
+  it("prix modifié (y compris d'un supplément) → recalculé, quantité gardée, message", () => {
+    fill();
+    store.updateQuantity("frites-seul", 1);
+    const got = events();
+    store.setMenu(menu({ cheddar: { prix: 1.5 }, frites: { prix: 3.5 } }));
+    expect(store.state.cart.map((i) => i.prix)).toEqual([13.5, 3.5]);
+    expect(store.state.cart[1].quantity).toBe(2);
+    expect(got[0].repriced).toEqual([{ nom: "Menu Burger", prix: 13.5 }, { nom: "Frites", prix: 3.5 }]);
+    expect(JSON.parse(localStorage.getItem("snackCart"))[0].prix).toBe(13.5);
+  });
+
+  it("article épuisé ou retiré → enlevé du panier, nom signalé", () => {
+    fill();
+    const got = events();
+    store.setMenu(menu({ frites: { isAvailable: false } }).filter((p) => p.id !== "cheddar"));
+    expect(store.state.cart).toHaveLength(0);
+    expect(got[0].removed).toEqual(["Menu Burger", "Frites"]);
+  });
+
+  it("menu lu depuis le cache local → on ne touche pas au panier", () => {
+    fill();
+    store.setMenu(menu({ frites: { isAvailable: false } }), { fromCache: true });
+    expect(store.state.cart).toHaveLength(2);
+  });
+
+  it("menu vide (chargement raté) → on ne vide pas le panier", () => {
+    fill();
+    store.setMenu([]);
+    expect(store.state.cart).toHaveLength(2);
+  });
+});

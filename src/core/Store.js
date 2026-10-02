@@ -96,9 +96,50 @@ export class Store extends EventTarget {
         return this.#state.pendingCheckout;
     }
 
-    setMenu(menu) {
+    /**
+     * @param {Array} menu
+     * @param {{fromCache?: boolean}} [opts] - menu lu depuis le cache local : on ne
+     *   corrige pas le panier sur une donnée peut-être périmée.
+     */
+    setMenu(menu, { fromCache = false } = {}) {
         this.#state.menu = menu;
         this.emit("menu-updated");
+        if (!fromCache) this.reconcileCart();
+    }
+
+    /**
+     * Aligne le panier sur le menu courant (prix changé, article épuisé ou retiré)
+     * pour que le paiement ne soit pas refusé par le recalcul serveur. Émet
+     * « cart-reconciled » ({removed, repriced}) quand quelque chose a changé.
+     * @returns {{removed: string[], repriced: Array<{nom: string, prix: number}>}}
+     */
+    reconcileCart() {
+        const result = { removed: [], repriced: [] };
+        const cart = this.#state.cart || [];
+        // Menu vide (chargement raté) : on ne vide pas le panier pour autant.
+        if (cart.length === 0 || !(this.#state.menu || []).length) return result;
+
+        const next = [];
+        for (const item of cart) {
+            const check = this.validateAgainstMenu(item);
+            if (!check.ok) {
+                result.removed.push(item.nom || "");
+                continue;
+            }
+            if (check.reason === "reprice") {
+                next.push({ ...item, prix: check.currentItem.prix, supplements: check.currentItem.supplements });
+                result.repriced.push({ nom: item.nom || "", prix: check.currentItem.prix });
+                continue;
+            }
+            next.push(item);
+        }
+        if (result.removed.length === 0 && result.repriced.length === 0) return result;
+
+        this.#state.cart = next;
+        this.#persistCart();
+        this.emit("cart-updated");
+        this.dispatchEvent(new CustomEvent("cart-reconciled", { detail: result }));
+        return result;
     }
 
     /** Remplace la liste des favoris (source : snapshot temps réel de users/{uid}). */

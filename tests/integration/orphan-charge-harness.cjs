@@ -73,7 +73,7 @@ async function main() {
     await createPI({ data: { snackId: SNACK, cartItems: [{ productId: PROD, nom: "Burger", prix: 5, quantity: 1 }], mode: "collect" }, auth });
     ok("O2 createPaymentIntent prix manipulé → REJET (aucune charge)", false, "aurait dû rejeter");
   } catch (e) {
-    ok("O2 createPaymentIntent prix manipulé → REJET (aucune charge)", /manipulé/i.test(e.message || ""), e.message);
+    ok("O2 createPaymentIntent prix manipulé → REJET (aucune charge)", /prix de « .* » a changé/.test(e.message || ""), e.message);
   }
 
   // O3 — livraison légitime → PI créé avec montant SERVEUR = articles(1000) + frais(350).
@@ -96,7 +96,7 @@ async function main() {
         auth,
       });
     } catch (e) {
-      rejected = /manipulé/i.test(e.message || "");
+      rejected = /prix de « .* » a changé/.test(e.message || "");
     }
     // La charge doit avoir été remboursée par le filet de secours.
     const after = await stripe.paymentIntents.retrieve(pi.id, { expand: ["latest_charge"] });

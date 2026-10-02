@@ -122,6 +122,6 @@ describe("Checkout", () => {
     const mount = vi.spyOn(el, "_mountStripeElement").mockResolvedValue();
     await el.processCheckout();
     expect(mount).not.toHaveBeenCalled();
-    expect(window.showToast).toHaveBeenCalledWith(expect.stringMatching(/fermé/), "error");
+    expect(window.showToast).toHaveBeenCalledWith("Fermé · réouvre demain à 11:00", "error");
   });
 });
