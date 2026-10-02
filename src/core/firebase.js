@@ -62,6 +62,7 @@ export { httpsCallable, getFunctions } from "firebase/functions";
 export {
   GoogleAuthProvider,
   EmailAuthProvider,
+  browserPopupRedirectResolver,
   linkWithCredential,
   createUserWithEmailAndPassword,
   onAuthStateChanged,

@@ -4,7 +4,7 @@ import fs from 'fs'
 import { resolve } from 'path'
 import { execSync } from 'child_process'
 import tailwindcss from '@tailwindcss/vite'
-import { resolveFont } from './src/theme-fonts.js'
+import { resolveFont, fontFaceCss, fontPreloadLinks } from './src/theme-fonts.js'
 import { SAAS_THEMES } from './src/theme-palettes.js'
 import { manifestIcons, htmlIcons } from './scripts/lib/icons.mjs'
 
@@ -45,6 +45,16 @@ function assertPublicEnv(env, { command, mode }) {
     }
   }
 }
+
+/** Polices hébergées (public/fonts/fonts.json) : {} si le script fetch-fonts n'a pas tourné. */
+function readHostedFonts() {
+  try {
+    return JSON.parse(fs.readFileSync(resolve(__dirname, 'public/fonts/fonts.json'), 'utf8'))
+  } catch {
+    return {}
+  }
+}
+const hostedFonts = readHostedFonts()
 
 /** Commit du build : CI (GITHUB_SHA) ou git local ; "dev" sinon. */
 function appVersion() {
@@ -89,12 +99,22 @@ export default defineConfig(({ command, mode }) => {
           // 🔤 Police du tenant (build-time, zéro FOUT). Si police système -> chaîne vide
           // (pas de preconnect mort). display=swap est déjà dans l'href (cf. SAAS_FONTS).
           const font = resolveFont(seoData.fontKey);
-          const fontLink = font.href
+          // 🔤 Police HÉBERGÉE (public/fonts, cf. scripts/fetch-fonts.mjs) : préchargée
+          // + @font-face inline → plus de chaîne HTML → CSS Google → woff2 qui bloquait le
+          // rendu (~0,9 s simulées sur mobile), plus de domaine tiers. Repli Google si la
+          // famille n'a pas été téléchargée. `data-font-key` sur <html> dit au runtime
+          // (AppUI.applyTheme) que cette famille est déjà là → pas de rechargement.
+          const hostedFont = hostedFonts[seoData.fontKey] || null;
+          const fontLink = hostedFont
+            ? `${fontPreloadLinks(hostedFont)}
+    <style>${fontFaceCss(hostedFont)}</style>`
+            : font.href
             ? `<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="${font.href}">
     <link rel="stylesheet" href="${font.href}">`
             : '';
+          const fontKeyAttr = hostedFont ? ` data-font-key="${seoData.fontKey}"` : '';
           // Police posée dès le 1er octet (avant le boot JS) -> le font-family est correct au
           // 1er paint, pas de bascule système->web font (FOUT). Le <link> (fontLink) charge le
           // fichier ; ces vars l'APPLIQUENT. Le runtime (applyTheme) ne surcharge que si Firestore
@@ -121,7 +141,7 @@ export default defineConfig(({ command, mode }) => {
             + `e.style.colorScheme=d?"dark":"light";}catch(_){}</script>`;
 
           return html
-            .replace('<html', `<html data-theme="${palette}"`) // override mesh par thème actif au 1er paint
+            .replace('<html', `<html data-theme="${palette}"${fontKeyAttr}`) // override mesh par thème actif au 1er paint
             .replace('<head>', `<head>\n    ${splashStyle}\n    ${antiFlashScript}`)
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)
             .replace(/\{\{SEO_DESC\}\}/g, seoData.desc)
@@ -167,6 +187,9 @@ export default defineConfig(({ command, mode }) => {
           globIgnores: [
             'admin.html', 'livreur.html', 'superadmin.html',
             'assets/admin-*.js', 'assets/livreur-*.js', 'assets/superadmin-*.js',
+            // Chargés à la demande seulement (scanner admin, carte fidélité) : 116 Ko gz que
+            // chaque visiteur téléchargeait pour rien à la 1re visite.
+            'assets/html5-qrcode-*.js', 'assets/qrcode-*.js',
           ],
         },
         manifest: {
@@ -216,7 +239,22 @@ export default defineConfig(({ command, mode }) => {
           superadmin: resolve(__dirname, 'superadmin.html'),
           legal: resolve(__dirname, 'legal.html'),
           livreur: resolve(__dirname, 'livreur.html')
-        }
+        },
+        output: {
+          // 📦 Chunks nommés et STABLES :
+          //  - firebase : le SDK (~200 Ko gz) dans son propre chunk → son hash ne change plus
+          //    à chaque modification du code applicatif, les habitués ne le retéléchargent pas
+          //    après chaque déploiement (avant : mélangé au code app dans « sw-update-*.js »).
+          //  - html5-qrcode (scanner admin) et qrcode (carte fidélité) : chargés à la demande,
+          //    nommés pour être EXCLUS du précache (cf. injectManifest.globIgnores).
+          manualChunks(id) {
+            if (!id.includes('node_modules/')) return undefined
+            if (/node_modules\/html5-qrcode\//.test(id)) return 'html5-qrcode'
+            if (/node_modules\/(qrcode|dijkstrajs|encode-utf8|pngjs)\//.test(id)) return 'qrcode'
+            if (/node_modules\/(@firebase|firebase|idb|tslib)\//.test(id)) return 'firebase'
+            return undefined
+          },
+        },
       }
     }
   }

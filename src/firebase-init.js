@@ -7,9 +7,11 @@ import { extractTenantIdentifier } from "./core/tenantResolver.js";
 
 import {
   GoogleAuthProvider,
+  browserLocalPersistence,
   connectAuthEmulator,
   createUserWithEmailAndPassword,
-  getAuth,
+  indexedDBLocalPersistence,
+  initializeAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -96,7 +98,14 @@ if (APPCHECK_SITE_KEY) {
   );
 }
 
-export const auth = getAuth(app);
+// initializeAuth SANS popupRedirectResolver : getAuth() en installe un par défaut, qui
+// charge gapi (apis.google.com, ~41 Ko, 3 requêtes + une iframe) dès le démarrage sur
+// toutes les pages, alors qu'il ne sert qu'au bouton « Continuer avec Google ». Le
+// résolveur est passé explicitement à signInWithPopup (src/auth.js). Persistance
+// identique à getAuth() (IndexedDB puis localStorage) : les sessions existantes restent.
+export const auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+});
 // Firebase Cloud Messaging n'est pas supporté partout (Safari iOS ancien,
 // environnements de test/SSR sans Notification/ServiceWorker API). Init défensive
 // pour ne PAS casser le chargement du module si l'API est absente. Les consommateurs

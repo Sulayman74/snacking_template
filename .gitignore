@@ -51,3 +51,6 @@ firebase-debug.*.log*
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Rapports Lighthouse locaux (npm run perf:lighthouse)
+.perf/

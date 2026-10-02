@@ -40,6 +40,7 @@ import {
   sendPasswordResetEmail,
   GoogleAuthProvider,
   EmailAuthProvider,
+  browserPopupRedirectResolver,
   linkWithCredential,
   signInWithPopup,
   signOut,
@@ -304,7 +305,8 @@ if (btnGoogleLogin) {
   btnGoogleLogin.addEventListener("click", async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
+      // Résolveur passé ICI (et non à l'init) : gapi n'est chargé qu'au clic (cf. firebase-init).
+      const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
       await ensureUserDoc(result.user);
 
       if (typeof window.showToast === "function") {

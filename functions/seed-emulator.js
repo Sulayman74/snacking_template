@@ -47,6 +47,10 @@ async function seed() {
     {
       nom: "Snack Robot (E2E)",
       colorPalette: "belly",
+      // Visuels RÉELS (Storage, lecture publique) : le harnais Lighthouse mesure ainsi
+      // le même LCP (image héros) qu'en prod, au lieu d'un chemin relatif en 404.
+      heroImg: "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/heroImg.webp?alt=media&token=a3de102d-b619-4a43-9601-cad75f7f82d2",
+      logoUrl: "https://firebasestorage.googleapis.com/v0/b/snacking-template.firebasestorage.app/o/logo.webp?alt=media&token=bebcee45-e63a-4c98-9384-5fb90ff2e592",
       enableOnlineOrder: true,
       enableClickAndCollect: true,
       enableDelivery: false,
