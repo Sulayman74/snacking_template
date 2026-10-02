@@ -501,7 +501,8 @@ function startOrderTracking(orderId) {
 
         // ⚪ STATUT : TERMINÉE
         else if (commande.statut === "terminee") {
-          window.showToast("Bon appétit ! À bientôt.", "success");
+          // Clôturée par l'horloge (jamais récupérée) : pas de « Bon appétit ».
+          if (!commande.nonRecuperee) window.showToast("Bon appétit ! À bientôt.", "success");
           forgetOrder(orderId);
 
           if (trackingBadge) trackingBadge.className = "hidden";

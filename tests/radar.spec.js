@@ -80,8 +80,9 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
     await expect(clientPage.locator('#tracking-title')).toContainText('Commande reçue');
 
     // VÉRIFICATION 2 (Admin) : Le ticket est dans la colonne grise
-    // Le ticket contient la bordure grise "border-gray-400"
-    const waitingTicket = adminPage.locator('#orders-waiting .border-gray-400').first();
+    // On vise LE ticket de cette commande (d'autres specs créent des commandes sur
+    // le même snack : « le premier ticket de la colonne » n'est pas forcément le nôtre).
+    const waitingTicket = adminPage.locator('#orders-waiting #ticket-e2e_order_1');
     await expect(waitingTicket).toBeVisible();
 
     // KDS-1 : le chef est parti sur l'onglet Menu (marquer un produit épuisé…).
@@ -96,9 +97,9 @@ test.describe('Communication Temps Réel : Radar de Cuisine', () => {
     await expect.poll(() => adminPage.evaluate(() => window.__bellPlays), { timeout: 10000 }).toBeGreaterThan(playsBefore);
     await expect(adminPage.getByText('à traiter en cuisine')).toBeVisible();
 
-    // Retour en cuisine : le ticket est déjà passé dans la colonne rouge (bordure "border-red-500")
+    // Retour en cuisine : le ticket est déjà passé dans la colonne « à cuisiner »
     await adminPage.locator('#tab-cuisine-desktop').click();
-    const cookingTicket = adminPage.locator('#orders-new .border-red-500').first();
+    const cookingTicket = adminPage.locator('#orders-new #ticket-e2e_order_1');
     await expect(cookingTicket).toBeVisible();
 
     // ORD-1 : le client ferme puis rouvre l'app pendant la cuisson → le suivi reprend tout seul.

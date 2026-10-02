@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { buildNewOrderAlert, buildClientArrivingAlert, isClientArrival } = require("../../functions/lib/kitchenAlerts.js");
+const { buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, isClientArrival } = require("../../functions/lib/kitchenAlerts.js");
 
 describe("buildNewOrderAlert", () => {
   it("client, total et mode lisibles (« À emporter », plus « Sur place »)", () => {
@@ -34,5 +34,12 @@ describe("isClientArrival", () => {
     expect(isClientArrival({ statut: "nouvelle" }, { statut: "prete" })).toBe(false);
     expect(isClientArrival({ statut: "en_attente_client" }, { statut: "annulee" })).toBe(false);
     expect(isClientArrival(undefined, { statut: "nouvelle" })).toBe(false);
+  });
+});
+
+describe("buildAutoReleaseAlert (horloge des commandes)", () => {
+  it("ne prétend pas que le client arrive : demande de lancer la commande", () => {
+    expect(buildAutoReleaseAlert({ clientNom: "Léa", secretCode: "K7Q2" }, "x"))
+      .toEqual({ title: "⏱️ Commande à lancer maintenant", body: "Léa · code K7Q2" });
   });
 });

@@ -7,7 +7,7 @@ const { getUserPushTargets, getStaffPushTargets, sendToTargets } = require("../l
 const { isFiniteNum, haversineKm, bucketForServer } = require("../lib/geo");
 const { getSnackOrigin } = require("../lib/tenantOrigins");
 const { getKitchenQueueCount } = require("../lib/kitchen");
-const { buildNewOrderAlert, buildClientArrivingAlert, isClientArrival } = require("../lib/kitchenAlerts");
+const { buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, isClientArrival } = require("../lib/kitchenAlerts");
 
 /** Push à tous les appareils admin du snack, pastille = commandes en attente. */
 async function alertKitchen(snackId, notification) {
@@ -62,7 +62,11 @@ exports.onOrderStatusChange = onDocumentUpdated(
     // déjà existant : aucune exécution de fonction supplémentaire.
     if (isClientArrival(oldData, newData)) {
       try {
-        const sent = await alertKitchen(newData.snackId, buildClientArrivingAlert(newData, orderId));
+        // Lancée par l'horloge (client sans nouvelles) ou par le client lui-même.
+        const alert = newData.lancementAuto
+          ? buildAutoReleaseAlert(newData, orderId)
+          : buildClientArrivingAlert(newData, orderId);
+        const sent = await alertKitchen(newData.snackId, alert);
         console.log(`🏃 Arrivée client ${orderId} signalée à ${sent} appareil(s) admin.`);
       } catch (error) {
         console.error("❌ Erreur alerte arrivée client :", error);

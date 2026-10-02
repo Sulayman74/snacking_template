@@ -353,9 +353,15 @@ export class SnackCheckout extends SnackElement {
     this.errorMessage = '';
 
     try {
+      // Reçu par e-mail envoyé par Stripe (gratuit) : confirmation hors de l'app,
+      // utile si les notifications sont refusées ou indisponibles (iPhone sans PWA).
+      const receiptEmail = (auth?.currentUser?.email || this.guestEmail || "").trim();
       const { error, paymentIntent } = await this.stripeInstance.confirmPayment({
         elements: this.stripeElements,
-        confirmParams: { return_url: window.location.origin + window.location.pathname },
+        confirmParams: {
+          return_url: window.location.origin + window.location.pathname,
+          ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
+        },
         redirect: "if_required",
       });
 

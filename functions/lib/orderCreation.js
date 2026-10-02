@@ -143,9 +143,11 @@ async function createOrderFromPaymentIntent({
     isGuest,
     secretCode: generateSecretCode(6),
     date: FieldValue.serverTimestamp(),
-    // Collect : on attend l'arrivée du client avant de cuisiner.
-    // Livraison : la cuisine démarre immédiatement (pas d'arrivée client).
-    statut: orderMode === "delivery" ? "nouvelle" : "en_attente_client",
+    // « Dès que possible » : la cuisine démarre AU PAIEMENT, en retrait comme en
+    // livraison. Le client n'a plus d'action à faire (l'ancien « Je suis à 5 min »
+    // laissait des commandes payées bloquées s'il ne cliquait pas — ORD-1).
+    statut: "nouvelle",
+    retrait: { mode: "asap" },
     // Lignes RECONSTRUITES serveur (nom/suppléments/prix en base, options
     // bornées) — jamais le payload client brut (cf. lib/pricing buildOrderLine).
     items: orderItems,

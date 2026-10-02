@@ -3,7 +3,7 @@
 // TEST, émulateur Firestore. Scénarios :
 //   S1 (delivery, sous-payé : articles seuls) → finalizeOrder REJETÉ
 //   S2 (delivery, payé articles+frais)        → ACCEPTÉ, total = articles+frais
-//   S3 (collect, payé articles)               → ACCEPTÉ (aucun frais exigé)
+//   S3 (collect, payé articles)               → ACCEPTÉ (aucun frais exigé), à cuisiner dès le paiement
 // Lancé via `firebase emulators:exec --only firestore`.
 const path = require("node:path");
 const fs = require("node:fs");
@@ -89,6 +89,8 @@ async function main() {
     const r = await finalize({ data: { ...baseData, paymentIntentId: pi3.id, totalCents: 1000, mode: "collect" }, auth });
     const cmd = (await db.collection("commandes").doc(r.orderId).get()).data();
     ok("S3 collect payé → ACCEPTÉ + total=10", !!r.orderId && Math.abs(cmd.total - 10) < 0.001, `total=${cmd?.total}`);
+    // Lot 2b : « dès que possible » = cuisine lancée AU PAIEMENT (plus d'attente du client).
+    ok("S3 collect payé → à cuisiner dès le paiement", cmd.statut === "nouvelle" && cmd.retrait?.mode === "asap", `statut=${cmd?.statut}`);
   } catch (e) { ok("S3 collect payé → ACCEPTÉ", false, e.message); }
 
   const passed = results.filter(Boolean).length;

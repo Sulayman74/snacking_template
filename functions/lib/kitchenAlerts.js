@@ -26,9 +26,17 @@ function buildClientArrivingAlert(order, orderId) {
   };
 }
 
+/** Lancée par l'horloge des commandes (le client n'a pas signalé son arrivée). */
+function buildAutoReleaseAlert(order, orderId) {
+  return {
+    title: "⏱️ Commande à lancer maintenant",
+    body: `${order?.clientNom || "Client"} · code ${pickupCode(order, orderId)}`,
+  };
+}
+
 /** Transition qui déclenche l'alerte « client dans 5 min ». */
 function isClientArrival(before, after) {
   return before?.statut === "en_attente_client" && after?.statut === "nouvelle";
 }
 
-module.exports = { buildNewOrderAlert, buildClientArrivingAlert, isClientArrival };
+module.exports = { buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, isClientArrival };

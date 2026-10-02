@@ -137,3 +137,18 @@ describe("Reprise du suivi", () => {
     expect(fb.onSnapshot).not.toHaveBeenCalled();
   });
 });
+
+describe("Clôture", () => {
+  it("récupérée : « Bon appétit » ; clôturée sans retrait : pas de message, commande oubliée", () => {
+    window.startOrderTracking("ORDER1234");
+    next(snap(order({ statut: "terminee" })));
+    expect(window.showToast).toHaveBeenCalledWith("Bon appétit ! À bientôt.", "success");
+
+    window.showToast.mockClear();
+    localStorage.setItem("activeOrderId", "ORDER1234");
+    window.startOrderTracking("ORDER1234");
+    next(snap(order({ statut: "terminee", nonRecuperee: true })));
+    expect(window.showToast).not.toHaveBeenCalled();
+    expect(localStorage.getItem("activeOrderId")).toBeNull();
+  });
+});
