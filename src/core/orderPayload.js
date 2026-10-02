@@ -3,7 +3,7 @@
  *
  * Module pur (sans Firebase/DOM) : le serveur (functions/lib/pricing.js) revalide
  * chaque prix unitaire contre la base, suppléments compris. Tout champ qui entre
- * dans `prix` doit donc être transmis, sinon le serveur rejette « Prix manipulé ».
+ * dans `prix` doit donc être transmis, sinon le serveur rejette le prix (« Le prix de … a changé »).
  */
 export function buildOrderItemsPayload(cart = []) {
   return cart.map((item) => ({

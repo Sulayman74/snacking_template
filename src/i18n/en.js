@@ -35,6 +35,26 @@ export default {
     complementPlaceholder: "Floor, door code, building…",
     phoneLabel: "Phone (for the driver)"
   },
+  cartSync: {
+    removed: "{names} is no longer available and was removed from your cart.",
+    removedMany: "{names} are no longer available and were removed from your cart.",
+    repriced: "The price of {name} changed: {price} €.",
+    repricedMany: "Prices changed, your cart has been updated."
+  },
+  status: {
+    maintenance: "Ordering unavailable right now",
+    offline: "Online ordering unavailable",
+    collectDisabled: "Click & Collect unavailable right now",
+    deliveryDisabled: "Delivery unavailable right now",
+    paused: "Kitchen paused until {time}",
+    pausedDetail: "Very busy: orders resume at {time}.",
+    closingSoon: "Last orders at {time}",
+    closed: "Closed",
+    ordersClosed: "Orders closed for this service",
+    reopenToday: "reopens at {time}",
+    reopenTomorrow: "reopens tomorrow at {time}",
+    scheduleDetail: "Order now for pickup from {time}."
+  },
   pickup: {
     title: "Counter pickup",
     asap: "As soon as possible · ready around {time}",

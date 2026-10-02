@@ -5,7 +5,7 @@
 // Les utilitaires Tailwind bg-primary / text-accent / border-accent / bg-primary-light
 // / text-on-primary sont générés par le bloc @theme dans styles.css.
 import { store } from "./core/Store.js";
-import { doc, getDoc } from "./core/firebase.js";
+import { doc, onSnapshot } from "./core/firebase.js";
 import { resolveFont } from "./theme-fonts.js";
 import { snackTimezone, normalizeLastOrderMinutes } from "./core/openingHours.js";
 // Palettes = source UNIQUE partagée avec le build (vite.config.js) → le splash/manifest
@@ -18,138 +18,166 @@ const numberOr = (v, fallback) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-window.loadSnackConfig = async (db, snackId) => {
-try {
-  // 🚀 Cache en mémoire : évite une lecture Firestore si le snack est déjà chargé
-  const currentConfig = store.state.config;
-  if (currentConfig?.identity?.id === snackId) {
-    return currentConfig;
-  }
+/** Document `snacks/{id}` → config client (pur, testable). */
+export function buildSnackConfig(snackId, data) {
+  // 🎯 RÉCUPÉRATION DU THÈME
+  // On cherche la palette choisie. Si elle n'existe pas, on met "ruby" par défaut.
+  const paletteKey = data.colorPalette || "sunflower";
+  const selectedTheme = SAAS_THEMES[paletteKey] || SAAS_THEMES["sunflower"];
 
-  const snackRef = doc(db, "snacks", snackId);
-  const snackSnap = await getDoc(snackRef);
+  // 🔤 RÉCUPÉRATION DE LA POLICE.
+  // key = null si ABSENT en Firestore -> applyTheme ne surcharge PAS la valeur déjà posée
+  // au build (snacks-seo.json). Si présent (même "system"), c'est un override explicite admin.
+  const fontKey = data.fontKey || null;
+  const selectedFont = resolveFont(fontKey); // resolveFont(null) -> police système
 
-  if (snackSnap.exists()) {
-    const data = snackSnap.data();
+  // 🪄 ON REMPLACE LA CONFIG "EN DUR" PAR LES DONNÉES FIRESTORE
+  const config = {
+    identity: {
+      id: snackId,
+      name: data.nom || "Snack Sans Nom",
+      description: data.description || "",
+      logoUrl: data.logoUrl || "./assets/logo.webp",
+      heroImg: data.heroImg || "./assets/logo.webp",
+      currency: data.currency || "€",
+    },
+    promoPhrase: data.promoPhrase || "",
+    contact: {
+      phone: data.phoneNumber || "",
+      email: data.email || "",
+      address: {
+        street: data.street || "",
+        zip: data.zipcode || "",
+        city: data.city || "",
+        googleMapsUrl: data.googleMapsUrl || "",
+      },
+      socials: {
+        instagram: data.instagram || "",
+        facebook: data.facebook || "",
+        tiktok: data.tiktok || "",
+      },
+    },
+    theme: {
+      templateId: data.templateId || "classic",
+      colorPalette: paletteKey,
+      fontFamily: data.fontFamily || "font-sans", // legacy conservé (Read-Old, CLAUDE.md §5.1)
+      fontKey,
+      // 🔤 Police résolue — injectée dans --font-body/--font-display par applyTheme
+      fonts: {
+        key: fontKey,
+        body: selectedFont.body,
+        display: selectedFont.display,
+        href: selectedFont.href,
+      },
+      // 🔥 LES COULEURS SONT MAINTENANT DES HEX — injectées dans CSS vars par applySaaSThemeToHTML
+      colors: {
+        primaryHex:   selectedTheme.primaryHex,
+        accentHex:    selectedTheme.accentHex,
+        lightHex:     selectedTheme.lightHex,
+        onPrimaryHex: selectedTheme.onPrimaryHex,
+      },
+    },
+   // 🚨 APPLICATION DU BOUCLIER SUR TOUS LES FEATURE FLAGS
+    features: {
+      enableOnlineOrder: data.enableOnlineOrder,
+      enableDelivery: data.enableDelivery,
+      enableClickAndCollect: data.enableClickAndCollect,
+      enableLoyaltyCard: data.enableLoyaltyCard,
+      maintenanceMode: data.maintenanceMode,
+      enablePushNotifs: data.enablePushNotifs,
+      enableSmartReview: data.enableSmartReview,
+      enableViralShare: data.enableViralShare,
+      enableUpsell: data.enableUpsell,
+      // 📊 Instrumentation funnel client (LOT 1). Défaut OFF : seul un tenant
+      // ayant data.enableAnalyticsEvents === true émet les events UI.
+      enableAnalyticsEvents: data.enableAnalyticsEvents,
+      // 🛒 Guest checkout (LOT 2). Défaut OFF : si false/absent, le barrage
+      // auth historique reste en place (comportement strictement inchangé).
+      enableGuestCheckout: data.enableGuestCheckout,
+    },
+    // 🔗 Lien plateforme tierce (UberEats/Deliveroo) — FALLBACK quand le snack
+    // n'a pas de flotte. La livraison native (ci-dessous) prime si activée.
+    deliveryUrl: data.deliveryUrl || "",
+    // 🚚 LIVRAISON NATIVE — réglages opérationnels (édités via AdminConfigUI).
+    // Défauts sûrs : si le snack n'a rien configuré, la livraison reste cohérente.
+    delivery: {
+      radiusKm: numberOr(data.delivery?.radiusKm, 5),         // rayon max de livraison
+      frais: numberOr(data.delivery?.frais, 2.5),             // frais fixes
+      minOrder: numberOr(data.delivery?.minOrder, 0),         // panier minimum
+      avgSpeedKmh: numberOr(data.delivery?.avgSpeedKmh, 22),  // vitesse moyenne (ETA Haversine)
+      prepBaseMin: numberOr(data.delivery?.prepBaseMin, 12),  // temps prépa de base
+      queueFactorMin: numberOr(data.delivery?.queueFactorMin, 3), // min ajoutées / commande en file
+    },
+    // 📍 Coordonnées resto (géocodées une fois). null si pas encore renseignées.
+    geo: {
+      lat: numberOr(data.restaurantLat, null),
+      lng: numberOr(data.restaurantLng, null),
+    },
+    hours: data.hours || [],
+    // ⏸️ Pause cuisine (Timestamp Firestore) posée depuis l'écran cuisine.
+    servicePausedUntil: data.servicePausedUntil || null,
+    // 🕐 Horaires évalués dans le fuseau du SNACK (pas celui du téléphone) +
+    // heure limite de commande réglée par le restaurateur.
+    timezone: snackTimezone(data),
+    lastOrderMinutesBeforeClose: normalizeLastOrderMinutes(data.lastOrderMinutesBeforeClose),
+    reviews: {
+      googleMapsReviewLink: data.googleReviewUrl || "",
+    },
+    loyalty: {
+      programName: data.loyaltyProgramName || "Club Fidélité",
+      cardDesign: {
+        backgroundGradient: data.cardGradient || "from-primary to-gray-900",
+      },
+    },
+  };
 
-    // 🎯 RÉCUPÉRATION DU THÈME
-    // On cherche la palette choisie. Si elle n'existe pas, on met "ruby" par défaut.
-    const paletteKey = data.colorPalette || "sunflower";
-    const selectedTheme = SAAS_THEMES[paletteKey] || SAAS_THEMES["sunflower"];
-
-    // 🔤 RÉCUPÉRATION DE LA POLICE.
-    // key = null si ABSENT en Firestore -> applyTheme ne surcharge PAS la valeur déjà posée
-    // au build (snacks-seo.json). Si présent (même "system"), c'est un override explicite admin.
-    const fontKey = data.fontKey || null;
-    const selectedFont = resolveFont(fontKey); // resolveFont(null) -> police système
-
-    // 🪄 ON REMPLACE LA CONFIG "EN DUR" PAR LES DONNÉES FIRESTORE
-    const config = {
-      identity: {
-        id: snackId,
-        name: data.nom || "Snack Sans Nom",
-        description: data.description || "",
-        logoUrl: data.logoUrl || "./assets/logo.webp",
-        heroImg: data.heroImg || "./assets/logo.webp",
-        currency: data.currency || "€",
-      },
-      promoPhrase: data.promoPhrase || "",
-      contact: {
-        phone: data.phoneNumber || "",
-        email: data.email || "",
-        address: {
-          street: data.street || "",
-          zip: data.zipcode || "",
-          city: data.city || "",
-          googleMapsUrl: data.googleMapsUrl || "",
-        },
-        socials: {
-          instagram: data.instagram || "",
-          facebook: data.facebook || "",
-          tiktok: data.tiktok || "",
-        },
-      },
-      theme: {
-        templateId: data.templateId || "classic",
-        colorPalette: paletteKey,
-        fontFamily: data.fontFamily || "font-sans", // legacy conservé (Read-Old, CLAUDE.md §5.1)
-        fontKey,
-        // 🔤 Police résolue — injectée dans --font-body/--font-display par applyTheme
-        fonts: {
-          key: fontKey,
-          body: selectedFont.body,
-          display: selectedFont.display,
-          href: selectedFont.href,
-        },
-        // 🔥 LES COULEURS SONT MAINTENANT DES HEX — injectées dans CSS vars par applySaaSThemeToHTML
-        colors: {
-          primaryHex:   selectedTheme.primaryHex,
-          accentHex:    selectedTheme.accentHex,
-          lightHex:     selectedTheme.lightHex,
-          onPrimaryHex: selectedTheme.onPrimaryHex,
-        },
-      },
-     // 🚨 APPLICATION DU BOUCLIER SUR TOUS LES FEATURE FLAGS
-      features: {
-        enableOnlineOrder: data.enableOnlineOrder,
-        enableDelivery: data.enableDelivery,
-        enableClickAndCollect: data.enableClickAndCollect,
-        enableLoyaltyCard: data.enableLoyaltyCard,
-        maintenanceMode: data.maintenanceMode,
-        enablePushNotifs: data.enablePushNotifs,
-        enableSmartReview: data.enableSmartReview,
-        enableViralShare: data.enableViralShare,
-        enableUpsell: data.enableUpsell,
-        // 📊 Instrumentation funnel client (LOT 1). Défaut OFF : seul un tenant
-        // ayant data.enableAnalyticsEvents === true émet les events UI.
-        enableAnalyticsEvents: data.enableAnalyticsEvents,
-        // 🛒 Guest checkout (LOT 2). Défaut OFF : si false/absent, le barrage
-        // auth historique reste en place (comportement strictement inchangé).
-        enableGuestCheckout: data.enableGuestCheckout,
-      },
-      // 🔗 Lien plateforme tierce (UberEats/Deliveroo) — FALLBACK quand le snack
-      // n'a pas de flotte. La livraison native (ci-dessous) prime si activée.
-      deliveryUrl: data.deliveryUrl || "",
-      // 🚚 LIVRAISON NATIVE — réglages opérationnels (édités via AdminConfigUI).
-      // Défauts sûrs : si le snack n'a rien configuré, la livraison reste cohérente.
-      delivery: {
-        radiusKm: numberOr(data.delivery?.radiusKm, 5),         // rayon max de livraison
-        frais: numberOr(data.delivery?.frais, 2.5),             // frais fixes
-        minOrder: numberOr(data.delivery?.minOrder, 0),         // panier minimum
-        avgSpeedKmh: numberOr(data.delivery?.avgSpeedKmh, 22),  // vitesse moyenne (ETA Haversine)
-        prepBaseMin: numberOr(data.delivery?.prepBaseMin, 12),  // temps prépa de base
-        queueFactorMin: numberOr(data.delivery?.queueFactorMin, 3), // min ajoutées / commande en file
-      },
-      // 📍 Coordonnées resto (géocodées une fois). null si pas encore renseignées.
-      geo: {
-        lat: numberOr(data.restaurantLat, null),
-        lng: numberOr(data.restaurantLng, null),
-      },
-      hours: data.hours || [],
-      // 🕐 Horaires évalués dans le fuseau du SNACK (pas celui du téléphone) +
-      // heure limite de commande réglée par le restaurateur.
-      timezone: snackTimezone(data),
-      lastOrderMinutesBeforeClose: normalizeLastOrderMinutes(data.lastOrderMinutesBeforeClose),
-      reviews: {
-        googleMapsReviewLink: data.googleReviewUrl || "",
-      },
-      loyalty: {
-        programName: data.loyaltyProgramName || "Club Fidélité",
-        cardDesign: {
-          backgroundGradient: data.cardGradient || "from-primary to-gray-900",
-        },
-      },
-    };
-
-    window.snackConfig = config;
-    store.setConfig(config);
-    console.log(`✅ SaaS : Configuration de "${data.nom}" chargée...`);
-    return config;
-  } else {
-    console.error("❌ Erreur : Snack ID inexistant dans Firestore.");
-    return null;
-  }
-} catch (error) {
-  console.error("🔥 Erreur critique chargement SaaS :", error);
+  return config;
 }
+
+// 📡 Config suivie EN DIRECT : pause cuisine, horaires, Click & Collect coupé par
+// le restaurateur apparaissent chez le client sans recharger la page.
+let unsubscribeConfig = null;
+let lastConfigJson = null;
+
+function publishConfig(config) {
+  const json = JSON.stringify(config);
+  if (json === lastConfigJson) return; // même contenu (cache puis serveur)
+  lastConfigJson = json;
+  window.snackConfig = config;
+  store.setConfig(config);
+}
+
+/**
+ * Résout avec la config au premier snapshot (null si le snack n'existe pas ou
+ * illisible), puis republie à chaque modification du document.
+ */
+window.loadSnackConfig = (db, snackId) => {
+  // 🚀 Déjà chargé et suivi : pas de seconde écoute
+  const currentConfig = store.state.config;
+  if (currentConfig?.identity?.id === snackId && unsubscribeConfig) {
+    return Promise.resolve(currentConfig);
+  }
+  unsubscribeConfig?.();
+  lastConfigJson = null;
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const settle = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+    unsubscribeConfig = onSnapshot(doc(db, "snacks", snackId), (snap) => {
+      if (!snap.exists()) {
+        console.error("❌ Erreur : Snack ID inexistant dans Firestore.");
+        return settle(null);
+      }
+      const config = buildSnackConfig(snackId, snap.data());
+      publishConfig(config);
+      settle(config);
+    }, (error) => {
+      console.error("🔥 Erreur critique chargement SaaS :", error);
+      settle(null);
+    });
+  });
 };

@@ -5,6 +5,8 @@
 import { store } from "../core/Store.js";
 import { escapeHTML, safeURL, showToast } from "../utils.js";
 import { getOrderingState, localClock } from "../core/openingHours.js";
+import { pauseStatus } from "../core/storefrontStatus.js";
+import { statusSentence } from "./statusMessage.js";
 
 /**
  * Garantit la présence d'un <link> de police web, sans doublon (idempotent).
@@ -30,6 +32,13 @@ class AppUI {
         // --- ÉCOUTEURS DU STORE (Flux réactif) ---
         store.addEventListener("config-updated", () => this.handleConfigUpdate());
         store.addEventListener("auth-updated", () => this.updateUI());
+        // L'heure avance : badge « Ouvert / Fermé » et bandeau pause à jour.
+        store.addEventListener("clock-tick", () => {
+            const cfg = store.state.config;
+            if (!cfg) return;
+            this.updateHoursAndStatus(cfg);
+            this.updatePromoBanner(cfg);
+        });
 
         // Initialisation statique robuste
         if (document.readyState === "loading") {
@@ -190,13 +199,11 @@ class AppUI {
         const fullMenu = document.getElementById("full-menu");
 
         if (banner && text) {
-            const pausedUntil = cfg.servicePausedUntil ? (cfg.servicePausedUntil.toDate ? cfg.servicePausedUntil.toDate() : new Date(cfg.servicePausedUntil)) : null;
-            const isPaused = pausedUntil && pausedUntil > new Date();
+            const paused = pauseStatus(cfg);
 
-            if (isPaused) {
-                const timeStr = pausedUntil.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-                text.innerText = `⏸️ Cuisine en pause jusqu'à ${timeStr} (forte affluence) — Reprise imminente !`;
-                banner.className = "fixed top-0 left-0 w-full bg-amber-600 text-white text-xs font-black text-center py-2 px-4 z-[60] shadow-md animate-fade-in";
+            if (paused) {
+                text.innerText = `⏸️ ${statusSentence(paused)}`;
+                banner.className = "fixed top-0 left-0 w-full bg-danger text-on-dark text-xs font-black text-center py-2 px-4 z-[60] shadow-md animate-fade-in";
                 banner.classList.remove("hidden");
                 if (navbar) navbar.style.top = "36px";
                 fullMenu?.classList.add("mt-10");

@@ -32,7 +32,7 @@ window.chargerMenuComplet = () => {
       tousLesProduits.push({ id: doc.id, ...doc.data() });
     });
 
-    store.setMenu(tousLesProduits);
+    store.setMenu(tousLesProduits, { fromCache: snapshot.metadata?.fromCache === true });
     announceReady();
   }, (err) => {
     console.error("Erreur temps réel menu :", err);

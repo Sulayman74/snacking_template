@@ -124,6 +124,7 @@ exports.createPaymentIntent = onCall(
       //    tout débit. Toute manipulation rejette ici, sans charge orpheline (F1).
       const { totalCents } = await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison, {
         enforceOpeningHours: !pickup,
+        beforePayment: true,
       });
       require_(totalCents >= 50, "Montant inférieur au minimum (0,50 €).");
 

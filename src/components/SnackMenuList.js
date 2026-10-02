@@ -4,6 +4,7 @@ import { store } from '../core/Store.js';
 import { StoreController } from '../store/StoreController.js';
 import { t } from '../i18n/index.js';
 import './SnackMenuItem.js';
+import './SnackStatusPill.js';
 
 export class SnackMenuList extends SnackElement {
   static properties = {
@@ -180,6 +181,7 @@ export class SnackMenuList extends SnackElement {
             `;
           })}
         </div>
+        <snack-status-pill context="menu" class="block container mx-auto px-4 pb-2"></snack-status-pill>
       </div>
 
       <div class="container mx-auto px-4 pt-6 pb-32 md:pb-12">

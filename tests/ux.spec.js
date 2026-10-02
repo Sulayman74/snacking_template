@@ -29,8 +29,11 @@ test.describe('Parcours d\'achat mobile (UX)', () => {
     const cta = page.locator('#modal-cta');
     await expect(cta).toContainText('Ajouter');
     await expect(cta).toBeInViewport();
-    const box = await cta.boundingBox();
-    expect(box.y + box.height).toBeLessThanOrEqual(664);
+    // La fiche monte depuis le bas (300 ms) : on mesure une fois arrivée.
+    await expect.poll(async () => {
+      const box = await cta.boundingBox();
+      return box.y + box.height;
+    }).toBeLessThanOrEqual(664);
   });
 
   test('UX-1 : un tap au centre de « Valider la commande » atteint le bouton', async ({ page }) => {
@@ -56,5 +59,41 @@ test.describe('Parcours d\'achat mobile (UX)', () => {
     await expect(page.locator('#boot-splash')).toHaveCount(0, { timeout: 3500 });
     expect(Date.now() - started).toBeLessThan(3500); // filet de sécurité du splash : 4 s
     await expect(page.locator('#modal-title')).toHaveText('Burger Robot', { timeout: 5000 });
+  });
+});
+
+test.describe('État de la boutique en direct (UX-5)', () => {
+  test('le chef met la cuisine en pause : le client le voit sans recharger, puis la reprise', async ({ page, browser }) => {
+    // Client : un article au panier, carte ouverte.
+    const id = await burgerId(page);
+    await page.evaluate((pid) => window.openProductModal(pid), id);
+    await page.locator('#modal-cta').click();
+    await page.evaluate(() => window.switchView('menu'));
+    const pill = page.locator('snack-status-pill[context="menu"] [role="status"]');
+    await expect(pill).toHaveCount(0); // ouvert : rien à signaler
+
+    // Chef : écran cuisine, pause 20 min.
+    const adminContext = await browser.newContext();
+    const admin = await adminContext.newPage();
+    try {
+      await admin.goto(`${APP}/admin.html`);
+      await admin.locator('#admin-email-input').fill('robot@test.com');
+      await admin.locator('#admin-password-input').fill('123456');
+      await admin.locator('#admin-login-btn').click();
+      await admin.locator('#start-shift-btn').click();
+      await expect(admin.locator('#startup-overlay')).toBeHidden({ timeout: 10000 });
+      await admin.evaluate(() => window.setKitchenServicePause(20));
+
+      await expect(pill).toContainText('Cuisine en pause jusqu', { timeout: 10000 });
+      await page.evaluate(() => window.openCartModal());
+      await expect(page.locator('snack-status-pill[context="cart"] [role="status"]')).toContainText('Cuisine en pause');
+      await expect(page.locator('#checkout-btn')).toBeDisabled();
+    } finally {
+      await admin.evaluate(() => window.resumeKitchenService());
+      await adminContext.close();
+    }
+
+    await expect(page.locator('#checkout-btn')).toBeEnabled({ timeout: 10000 });
+    await expect(page.locator('snack-status-pill[context="cart"] [role="status"]')).toHaveCount(0);
   });
 });
