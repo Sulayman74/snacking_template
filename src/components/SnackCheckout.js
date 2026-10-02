@@ -4,6 +4,7 @@ import { store } from '../core/Store.js';
 import { buildOrderItemsPayload } from '../core/orderPayload.js';
 import { getOrderingState } from '../core/openingHours.js';
 import { isValidPhone } from '../services/addressService.js';
+import { pickupUI } from '../pickup.js';
 import { upsellUI } from '../ui/UpsellUI.js';
 import { t } from "../i18n/index.js";
 import { auth, functions, httpsCallable, signInAnonymously } from '../core/firebase.js';
@@ -110,9 +111,13 @@ export class SnackCheckout extends SnackElement {
 
     if (cfg?.features?.maintenanceMode) return window.showToast(t("toasts.checkout.maintenance"), "error");
 
+    // 🕒 Retrait « plus tard » : le créneau (revalidé par le serveur) remplace la
+    // règle « ouvert maintenant » — on peut programmer avant l'ouverture.
+    this._pickupRequest = isDelivery ? null : pickupUI.currentRequest();
+
     // 🕐 Horaires + heure limite de commande (même règle que createPaymentIntent).
     const ordering = getOrderingState(cfg?.hours, new Date(), cfg?.timezone, cfg?.lastOrderMinutesBeforeClose);
-    if (!ordering.accepting) {
+    if (!this._pickupRequest && !ordering.accepting) {
       const why = ordering.reason === "cutoff"
         ? t("toasts.checkout.ordersClosed", { time: ordering.closeTime })
         : t("toasts.checkout.closedNow");
@@ -215,6 +220,7 @@ export class SnackCheckout extends SnackElement {
         cartItems: this._buildOrderItemsPayload(),
         mode,
         livraison,
+        ...(this._pickupRequest ? { retrait: this._pickupRequest } : {}),
         metadata: {
           ticket: ticketSummary.substring(0, 500),
           clientEmail: currentUser?.email || "",
@@ -353,9 +359,15 @@ export class SnackCheckout extends SnackElement {
     this.errorMessage = '';
 
     try {
+      // Reçu par e-mail envoyé par Stripe (gratuit) : confirmation hors de l'app,
+      // utile si les notifications sont refusées ou indisponibles (iPhone sans PWA).
+      const receiptEmail = (auth?.currentUser?.email || this.guestEmail || "").trim();
       const { error, paymentIntent } = await this.stripeInstance.confirmPayment({
         elements: this.stripeElements,
-        confirmParams: { return_url: window.location.origin + window.location.pathname },
+        confirmParams: {
+          return_url: window.location.origin + window.location.pathname,
+          ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
+        },
         redirect: "if_required",
       });
 
@@ -416,6 +428,7 @@ export class SnackCheckout extends SnackElement {
       }
 
       store.resetDelivery?.();
+      store.resetPickup?.();
 
       setTimeout(() => {
         window.openTrackingModal?.();

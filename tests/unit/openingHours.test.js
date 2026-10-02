@@ -101,6 +101,47 @@ describe.each([["front (src/core)", front], ["serveur (functions/lib)", server]]
     expect([30, 60, "45", 0, -5, 1.5, 999, "abc", null].map(H.normalizeLastOrderMinutes)).toEqual([30, 60, 45, 0, 0, 0, 0, 0, 0]);
   });
 
+  describe("créneaux de retrait « plus tard »", () => {
+    const labels = (slots) => slots.map((x) => x.label);
+    const open11to22 = week(day("11:00", "22:00"));
+
+    it("premier créneau = maintenant + préparation, arrondi au quart d'heure", () => {
+      const slots = H.getPickupSlots(open11to22, paris("2026-09-23T12:03:00"), "Europe/Paris", { prepMin: 12 });
+      expect(labels(slots).slice(0, 3)).toEqual(["12:15", "12:30", "12:45"]);
+      expect(slots.at(-1).label).toBe("22:00"); // jusqu'à la fermeture incluse
+      // atMs = vraie heure de Paris
+      expect(new Date(slots[0].atMs).toISOString()).toBe("2026-09-23T10:15:00.000Z");
+    });
+
+    it("avant l'ouverture : la préparation ne commence pas avant 11:00", () => {
+      expect(H.getPickupSlots(open11to22, paris("2026-09-23T09:30:00"), "Europe/Paris", { prepMin: 12 })[0].label).toBe("11:15");
+    });
+
+    it("pas de créneau pendant la coupure ; reprise après préparation", () => {
+      const hours = week(day("11:00", "22:00", { hasBreak: true, breakStart: "14:30", breakEnd: "18:00" }));
+      const l = labels(H.getPickupSlots(hours, paris("2026-09-23T14:00:00"), "Europe/Paris", { prepMin: 12 }));
+      expect(l.slice(0, 3)).toEqual(["14:15", "14:30", "18:15"]);
+    });
+
+    it("trop tard pour aujourd'hui et lendemain hors horizon de 12 h → aucun créneau", () => {
+      expect(H.getPickupSlots(open11to22, paris("2026-09-23T21:55:00"), "Europe/Paris", { prepMin: 12 })).toEqual([]);
+    });
+
+    it("horaires absents → aucun créneau (on ne devine pas)", () => {
+      expect(H.getPickupSlots(undefined, paris("2026-09-23T12:00:00"), "Europe/Paris")).toEqual([]);
+    });
+
+    it("isValidPickupSlot : sur la grille et dans le futur seulement", () => {
+      const now = paris("2026-09-23T12:03:00");
+      const at = (hhmm) => paris(`2026-09-23T${hhmm}:00`).getTime();
+      expect(H.isValidPickupSlot(open11to22, now, "Europe/Paris", at("12:30"), { prepMin: 12 })).toBe(true);
+      expect(H.isValidPickupSlot(open11to22, now, "Europe/Paris", at("12:20"), { prepMin: 12 })).toBe(false); // hors grille
+      expect(H.isValidPickupSlot(open11to22, now, "Europe/Paris", at("12:00"), { prepMin: 12 })).toBe(false); // passé
+      expect(H.isValidPickupSlot(open11to22, now, "Europe/Paris", at("23:00"), { prepMin: 12 })).toBe(false); // fermé
+      expect(H.isValidPickupSlot(open11to22, now, "Europe/Paris", NaN)).toBe(false);
+    });
+  });
+
   it("le fuseau change le verdict (21:30 Paris = ouvert, même instant à La Réunion = 23:30 fermé)", () => {
     const hours = week(day("11:00", "22:00"));
     const instant = paris("2026-09-23T21:30:00");

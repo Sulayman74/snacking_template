@@ -105,14 +105,10 @@ class DeliveryUI {
       </div>`;
   }
 
+  // L'heure de retrait (dès que possible / plus tard) est rendue par pickup.js
+  // (#pickup-section), y compris pour les snacks sans livraison.
   renderCollectBody() {
-    const d = this.cfg?.delivery || {};
-    const prep = etaPrepMin(d.prepBaseMin, 0, 0);
-    return `
-      <div class="flex items-center gap-2 mb-4 text-sm text-text-muted bg-surface border border-line rounded-xl p-3">
-        <i data-lucide="clock" class="text-primary"></i>
-        <span>Prêt en magasin dans <b class="text-text">${formatEta(prep)}</b> environ.</span>
-      </div>`;
+    return "";
   }
 
   renderDeliveryBody() {

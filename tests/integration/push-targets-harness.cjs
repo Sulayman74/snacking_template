@@ -10,6 +10,7 @@
 //   P7. sendToTargets                       → dédoublonne, supprime abonnement / champ legacy morts
 //   P8. transactionnel bout-en-bout          → notif « commande prête » part vers les bons appareils
 //   P9. arrivée du client (click & collect)  → push aux ADMINS du snack uniquement, lien admin
+//   P10. lancée par l'horloge (client muet)  → push cuisine « à lancer maintenant », pas « client dans 5 min »
 // Lancé via `npm run test:push`.
 const path = require("node:path");
 const FUNC_DIR = path.join(__dirname, "..", "..", "functions");
@@ -139,6 +140,15 @@ async function main() {
       p9.notification?.body === "Léa · code K7Q2" &&
       /\/admin\.html$/.test(p9.webpush?.fcm_options?.link || ""),
     JSON.stringify({ tokens: p9?.tokens, notification: p9?.notification, link: p9?.webpush?.fcm_options?.link }));
+
+  // P10 — l'horloge lance une ancienne commande restée en attente : texte adapté.
+  sent.length = 0;
+  const auto = test.firestore.makeDocumentSnapshot({ statut: "nouvelle", lancementAuto: "transition", userId: "client1", snackId: "snackA", mode: "collect", clientNom: "Léa", secretCode: "K7Q2" }, "commandes/ORDER9999");
+  const waitingAuto = test.firestore.makeDocumentSnapshot({ statut: "en_attente_client", userId: "client1", snackId: "snackA", mode: "collect", clientNom: "Léa", secretCode: "K7Q2" }, "commandes/ORDER9999");
+  await wrapped({ data: test.makeChange(waitingAuto, auto), params: { orderId: "ORDER9999" } });
+  ok("P10 lancée par l'horloge → « Commande à lancer maintenant »",
+    sent.length === 1 && sent[0].notification?.title === "⏱️ Commande à lancer maintenant" && sent[0].tokens.includes(tok("adminA2")),
+    JSON.stringify(sent[0]?.notification));
 
   const passed = results.filter(Boolean).length;
   console.log(`\n${passed}/${results.length} scénarios push OK`);

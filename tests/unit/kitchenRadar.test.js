@@ -38,6 +38,8 @@ let bell;
 describe("kitchenAlertFor (règle pure)", () => {
   it.each([
     ["added", undefined, "en_attente_client", false, "nouvelle"],
+    ["added", undefined, "programmee", false, "nouvelle"],             // créneau « plus tard » reçu
+    ["modified", "programmee", "nouvelle", false, "a-cuisiner"],        // l'horloge la lance
     ["added", undefined, "nouvelle", false, "a-cuisiner"],        // livraison payée
     ["modified", "en_attente_client", "nouvelle", false, "a-cuisiner"], // client dans 5 min
     ["modified", "nouvelle", "nouvelle", false, null],             // autre champ modifié
@@ -104,5 +106,41 @@ describe("radar cuisine (startKitchenRadar)", () => {
     window.startKitchenRadar();
     push(change("added", "o1", order("en_attente_client")), change("added", "o9", order("nouvelle")));
     expect(bell.play).not.toHaveBeenCalled();
+  });
+});
+
+describe("commande programmée (créneau « plus tard »)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <audio id="kitchen-bell"></audio>
+      <div id="orders-waiting"></div><div id="orders-new"></div><div id="orders-ready"></div>`;
+    bell = document.getElementById("kitchen-bell");
+    bell.play = vi.fn().mockResolvedValue();
+    window.currentAdminSnackId = "snackA";
+    window.currentAdminTab = "cuisine";
+    window.showToast = vi.fn();
+    window.startKitchenRadar();
+    push(); // chargement initial vide
+  });
+  afterEach(() => window.stopKitchenRadar());
+
+  const ts = (iso) => ({ toDate: () => new Date(iso) });
+  const scheduled = order("programmee", { retrait: { mode: "creneau", heure: ts("2026-09-23T10:30:00Z"), lancerA: ts("2026-09-23T10:18:00Z") } });
+
+  it("arrive dans « En attente » avec l'heure de retrait et de lancement, et sonne", () => {
+    push(change("added", "s1", scheduled));
+    const ticket = document.querySelector("#orders-waiting #ticket-s1");
+    expect(ticket).not.toBeNull();
+    expect(ticket.textContent).toContain("Retrait 12:30");
+    expect(ticket.textContent).toContain("lancement 12:18");
+    expect(ticket.textContent).toContain("Lancer maintenant");
+    expect(bell.play).toHaveBeenCalledTimes(1);
+  });
+
+  it("lancée par l'horloge : passe dans « à cuisiner » et sonne", () => {
+    push(change("added", "s1", scheduled));
+    push(change("modified", "s1", { ...scheduled, statut: "nouvelle", lancementAuto: "creneau" }));
+    expect(document.querySelector("#orders-new #ticket-s1")).not.toBeNull();
+    expect(bell.play).toHaveBeenCalledTimes(2);
   });
 });

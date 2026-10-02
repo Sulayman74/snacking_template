@@ -35,6 +35,17 @@ export default {
     complementPlaceholder: "Floor, door code, building…",
     phoneLabel: "Phone (for the driver)"
   },
+  pickup: {
+    title: "Counter pickup",
+    asap: "As soon as possible · ready around {time}",
+    asapUnavailable: "As soon as possible (unavailable)",
+    later: "Later",
+    chooseTime: "Pickup time",
+    openUntil: "Open · last order {time}",
+    closed: "Closed",
+    ordersClosed: "Online ordering closed for this service",
+    reopens: "reopens at {time}"
+  },
   menu: {
     searchPlaceholder: "Craving something?",
     emptySearch: "No products found",

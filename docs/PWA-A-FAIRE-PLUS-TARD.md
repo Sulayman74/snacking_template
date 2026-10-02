@@ -149,3 +149,31 @@ offre supérieure.
 5. Tests : harnais d'escalade (émulateur, horloge simulée), idempotence des paliers.
 
 **Effort** : 1,5 j sans SMS ; +1 j avec SMS.
+
+---
+
+## 7. Créneaux : capacité maximale et mode « Occupé » (lot 2d)
+
+**Contexte** : plan « étape 2 » du 01/10/2026. Les lots 2a (suivi et reçu), 2b (cuisson dès le paiement
+pour « Dès que possible ») et 2c (créneaux « plus tard » avec lancement automatique) couvrent le besoin
+de base. Ce lot sert à **lisser le coup de feu** quand un snack reçoit beaucoup de commandes en ligne.
+
+**Ce qui se fait sur le marché** : les solutions de click & collect pour snacks et pizzerias limitent
+le nombre de commandes par créneau de 15 min ; Uber Eats propose au restaurant un mode « Occupé »
+(+10 min) / « Très occupé » (+20 min) sur le délai de préparation.
+
+**Principe**
+1. Réglage restaurateur `capacity.maxOrdersPerSlot` (vide = illimité). Un créneau plein n'est plus
+   proposé au client ; « Dès que possible » se décale au premier créneau libre.
+2. Bouton « Occupé +10 min » sur l'écran cuisine (`prepExtraMin` temporaire, retour auto à la fin du
+   service) : allonge l'heure annoncée aux nouveaux clients, sans couper les commandes (la pause existe
+   déjà pour ça).
+3. Contrôle serveur au paiement : compter les commandes du créneau en transaction (sinon deux clients
+   prennent la dernière place en même temps).
+
+**Pour** : moins de retards en rush, heure annoncée fiable, aucune action requise en temps normal.
+**Contre** : un réglage de plus à expliquer ; risque de refuser des ventes si la capacité est mal
+réglée → valeur par défaut « illimité ».
+**Coût** : 1 agrégat `count()` Firestore par paiement (négligeable).
+**Effort** : ~1 j.
+**Déclencheur** : un snack qui se plaint de retards en rush, ou plus de ~40 commandes en ligne/jour.

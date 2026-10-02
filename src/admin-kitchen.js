@@ -154,8 +154,11 @@ export function createTicketElement(id, commande) {
     })
     .join("");
 
-  const isWaiting = commande.statut === "en_attente_client";
+  const isWaiting = isWaitingStatut(commande.statut);
   const isNew = commande.statut === "nouvelle";
+
+  // 🕒 Créneau « plus tard » : heure promise au client et heure de lancement.
+  const slotHtml = commande.retrait?.mode === "creneau" ? slotBanner(commande.retrait) : "";
 
   // 🚚 Bandeau livraison (mode delivery) : le staff voit l'adresse + distance.
   const isDelivery = commande.mode === "delivery";
@@ -190,7 +193,7 @@ export function createTicketElement(id, commande) {
   if (isWaiting) {
     ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-gray-400 opacity-80";
     textColor = "text-text-muted";
-    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-2.5 md:py-3 rounded-xl text-sm shadow-sm transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="flame"></i> Forcer Cuisson</button>`;
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-2.5 md:py-3 rounded-xl text-sm shadow-sm transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="flame"></i> ${commande.statut === "programmee" ? "Lancer maintenant" : "Forcer Cuisson"}</button>`;
   } else if (isNew) {
     ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-red-500";
     textColor = "text-red-700 dark:text-red-400";
@@ -235,7 +238,7 @@ export function createTicketElement(id, commande) {
                 <div class="payment-badge-container">${paymentBadgeHtml}</div>
             </div>
         </div>
-        ${deliveryHtml}
+        ${slotHtml}${deliveryHtml}
         <ul class="mb-5 text-text space-y-1">${itemsHtml}</ul>
         ${wheelPrizeHtml}
         <div class="action-button-container">${btnHtml}</div>
@@ -250,6 +253,23 @@ export function createTicketElement(id, commande) {
 // ============================================================================
 let unsubscribeKitchenRadar = null;
 
+function slotBanner(retrait) {
+  const fmt = (ts) => {
+    const d = ts?.toDate ? ts.toDate() : null;
+    return d ? d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: snackTimezone(kitchenSnack) }) : "--:--";
+  };
+  return `<div class="mb-3 flex items-center gap-2 bg-surface-2 border border-line rounded-xl p-3 text-sm">
+       <i data-lucide="clock" class="text-primary"></i>
+       <span class="font-black text-text">Retrait ${escapeHTML(fmt(retrait.heure))}</span>
+       <span class="text-text-muted">· lancement ${escapeHTML(fmt(retrait.lancerA))}</span>
+     </div>`;
+}
+
+// Colonne « En attente » : commandes programmées (créneau « plus tard ») et
+// anciennes commandes en attente du client (transition, cf. lib/orderClock).
+const WAITING_STATUSES = new Set(["programmee", "en_attente_client"]);
+const isWaitingStatut = (statut) => WAITING_STATUSES.has(statut);
+
 /**
  * Faut-il alerter la cuisine pour ce changement ? (fonction PURE)
  * - "nouvelle" : une commande arrive (click & collect en attente du client) ;
@@ -262,7 +282,7 @@ export function kitchenAlertFor(changeType, prev, next, isInitialLoad) {
   if (isInitialLoad || !next) return null;
   if (changeType === "added") {
     if (next.statut === "nouvelle") return "a-cuisiner";
-    if (next.statut === "en_attente_client") return "nouvelle";
+    if (isWaitingStatut(next.statut)) return "nouvelle";
     return null;
   }
   if (changeType === "modified" && next.statut === "nouvelle" && prev?.statut !== "nouvelle") return "a-cuisiner";
@@ -272,7 +292,7 @@ export function kitchenAlertFor(changeType, prev, next, isInitialLoad) {
 function updateTicketDOM(ticketDiv, commande, id) {
   const paymentStatus = commande.paiement?.statut || "en_attente";
   const isPaid = paymentStatus === "paye";
-  const isWaiting = commande.statut === "en_attente_client";
+  const isWaiting = isWaitingStatut(commande.statut);
   const isNew = commande.statut === "nouvelle";
 
   let ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-green-500";
@@ -282,7 +302,7 @@ function updateTicketDOM(ticketDiv, commande, id) {
   if (isWaiting) {
     ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-gray-400 opacity-80";
     textColor = "text-text-muted";
-    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-2.5 md:py-3 rounded-xl text-sm shadow-sm transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="flame"></i> Forcer Cuisson</button>`;
+    btnHtml = `<button type="button" data-action="update-order" data-id="${id}" data-status="nouvelle" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-2.5 md:py-3 rounded-xl text-sm shadow-sm transition active:scale-95 flex items-center justify-center gap-2"><i data-lucide="flame"></i> ${commande.statut === "programmee" ? "Lancer maintenant" : "Forcer Cuisson"}</button>`;
   } else if (isNew) {
     ticketColor = "bg-surface text-text border-l-6 md:border-l-8 border-red-500";
     textColor = "text-red-700 dark:text-red-400";
@@ -350,7 +370,7 @@ function startKitchenRadar() {
   const q = query(
     collection(db, "commandes"),
     where("snackId", "==", window.currentAdminSnackId),
-    where("statut", "in", ["en_attente_client", "nouvelle", "prete"]),
+    where("statut", "in", ["programmee", "en_attente_client", "nouvelle", "prete"]),
     orderBy("date", "asc"),
   );
 
@@ -377,7 +397,7 @@ function startKitchenRadar() {
         kitchenOrdersMap.set(id, commande);
         if (existingTicket) existingTicket.remove();
         const newTicket = createTicketElement(id, commande);
-        if (commande.statut === "en_attente_client" && waitingOrdersContainer)
+        if (isWaitingStatut(commande.statut) && waitingOrdersContainer)
           waitingOrdersContainer.appendChild(newTicket);
         if (commande.statut === "nouvelle" && newOrdersContainer)
           newOrdersContainer.appendChild(newTicket);
@@ -392,7 +412,7 @@ function startKitchenRadar() {
           // Si le statut a changé, on déplace le ticket vers la colonne correspondante
           const currentContainer = existingTicket.parentElement;
           let targetContainer = null;
-          if (commande.statut === "en_attente_client") targetContainer = waitingOrdersContainer;
+          if (isWaitingStatut(commande.statut)) targetContainer = waitingOrdersContainer;
           else if (commande.statut === "nouvelle") targetContainer = newOrdersContainer;
           else if (commande.statut === "prete") targetContainer = readyOrdersContainer;
 
@@ -402,7 +422,7 @@ function startKitchenRadar() {
         } else {
           // Fallback si le ticket n'existe pas encore (cas rare d'un patch simultané)
           const newTicket = createTicketElement(id, commande);
-          if (commande.statut === "en_attente_client" && waitingOrdersContainer)
+          if (isWaitingStatut(commande.statut) && waitingOrdersContainer)
             waitingOrdersContainer.appendChild(newTicket);
           if (commande.statut === "nouvelle" && newOrdersContainer)
             newOrdersContainer.appendChild(newTicket);

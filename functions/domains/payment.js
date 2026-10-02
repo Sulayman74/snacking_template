@@ -16,6 +16,7 @@ const {
   assertPaymentIntentOwnedBy,
 } = require("../lib/paymentGuards");
 const { PENDING_ORDERS, createOrderFromPaymentIntent } = require("../lib/orderCreation");
+const { resolvePickupRequest } = require("../lib/pickup");
 
 // Limite la profondeur des metadata acceptés par Stripe (clés/valeurs <=500 chars)
 function sanitizeStripeMetadata(metadata) {
@@ -63,7 +64,7 @@ exports.createPaymentIntent = onCall(
     // `amount` client, conservé seulement pour compat/traçabilité). On valide donc
     // le panier AVANT de débiter : prix manipulé / hors-zone / minimum → rejet sans
     // aucune charge. Le client recalculait déjà côté UI ; ici c'est l'autorité.
-    const { currency, description, metadata, snackId, cartItems, mode, livraison } = data;
+    const { currency, description, metadata, snackId, cartItems, mode, livraison, retrait } = data;
 
     require_(V.isDocId(snackId), "snackId invalide.");
     require_(V.isArray(cartItems) && cartItems.length > 0, "cartItems vide ou invalide.");
@@ -113,10 +114,16 @@ exports.createPaymentIntent = onCall(
         );
       }
 
+      // 🕒 Retrait « plus tard » : créneau revalidé contre les horaires du snack.
+      // Une commande programmée peut se passer avant l'ouverture ou après l'heure
+      // limite du service en cours : les horaires « maintenant » ne s'appliquent
+      // alors pas (le créneau, lui, est forcément dans une plage d'ouverture).
+      const pickup = resolvePickupRequest(retrait, snackData, orderMode);
+
       // 2. 🛡️ MONTANT AUTORITATIF — recalcul + validation panier/zone/minimum AVANT
       //    tout débit. Toute manipulation rejette ici, sans charge orpheline (F1).
       const { totalCents } = await computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison, {
-        enforceOpeningHours: true,
+        enforceOpeningHours: !pickup,
       });
       require_(totalCents >= 50, "Montant inférieur au minimum (0,50 €).");
 
@@ -193,6 +200,7 @@ exports.createPaymentIntent = onCall(
         cartItems,
         mode: orderMode,
         livraison: orderMode === "delivery" ? livraison : null,
+        retrait: pickup, // null = dès que possible ; relu par createOrderFromPaymentIntent
         createdAt: FieldValue.serverTimestamp(),
       });
 

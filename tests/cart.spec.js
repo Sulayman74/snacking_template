@@ -54,6 +54,11 @@ test.describe('Caisse Enregistreuse (Calcul du Panier)', () => {
     // 6. Le bouton de paiement doit être actif
     const checkoutBtn = page.locator('#checkout-btn');
     await expect(checkoutBtn).not.toBeDisabled();
+
+    // 7. Retrait : « Dès que possible » proposé et sélectionné par défaut (lot 2c).
+    const asap = page.locator('#pickup-section input[name="pickup-mode"][value="asap"]');
+    await expect(asap).toBeChecked();
+    await expect(page.locator('#pickup-section')).toContainText('Dès que possible');
   });
 
 });
