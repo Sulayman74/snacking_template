@@ -45,6 +45,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "mode", "order": "ASCENDING" },
         { "fieldPath": "eta.readyAt", "order": "ASCENDING" }
       ]
     },
@@ -53,6 +54,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "mode", "order": "ASCENDING" },
         { "fieldPath": "datePrete", "order": "DESCENDING" }
       ]
     },

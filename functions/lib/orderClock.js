@@ -35,10 +35,13 @@ async function transition(ref, fromStatut, patch) {
 }
 
 // Commandes d'un statut dont le champ horaire `field` est passé de `olderThanMs`.
-async function dueOrders(statut, field, olderThanMs, nowMs, direction = "asc") {
+// `mode` (optionnel) filtre DANS la requête : des commandes exclues ensuite dans la
+// boucle seraient relues chaque minute et occuperaient le lot de BATCH_SIZE.
+async function dueOrders(statut, field, olderThanMs, nowMs, { direction = "asc", mode } = {}) {
   const cutoff = Timestamp.fromMillis(nowMs - olderThanMs);
-  return db.collection("commandes")
-    .where("statut", "==", statut)
+  let q = db.collection("commandes").where("statut", "==", statut);
+  if (mode) q = q.where("mode", "==", mode);
+  return q
     .where(field, "<=", cutoff)
     .orderBy(field, direction)
     .limit(BATCH_SIZE)
@@ -53,11 +56,11 @@ async function dueOrders(statut, field, olderThanMs, nowMs, direction = "asc") {
  * commandes déjà rappelées (toujours « prêtes ») ne bloquent pas les nouvelles.
  */
 async function remindUncollectedOrders(nowMs) {
-  const snap = await dueOrders("prete", "datePrete", REMINDER_DELAY_MS, nowMs, "desc");
+  const snap = await dueOrders("prete", "datePrete", REMINDER_DELAY_MS, nowMs, { direction: "desc", mode: "collect" });
   let reminded = 0;
   for (const doc of snap.docs) {
     const order = doc.data();
-    if (order.mode === "delivery" || order.rappelEnvoyeAt) continue;
+    if (order.rappelEnvoyeAt) continue;
     const promisedMs = order.eta?.readyAt?.toMillis?.();
     if (Number.isFinite(promisedMs) && promisedMs + REMINDER_DELAY_MS > nowMs) continue;
 
@@ -131,10 +134,9 @@ async function releaseLegacyWaitingOrders(nowMs) {
  * l'heure de COMMANDE clôturerait à tort un créneau du soir commandé le matin.
  */
 async function closeStaleReadyOrders(nowMs) {
-  const snap = await dueOrders("prete", "eta.readyAt", STALE_READY_MS, nowMs);
+  const snap = await dueOrders("prete", "eta.readyAt", STALE_READY_MS, nowMs, { mode: "collect" });
   let closed = 0;
   for (const doc of snap.docs) {
-    if (doc.data().mode === "delivery") continue;
     const done = await transition(doc.ref, "prete", {
       statut: "terminee",
       nonRecuperee: true,

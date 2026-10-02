@@ -7,6 +7,8 @@
 //
 // setGlobalOptions pose la région PAR DÉFAUT (europe-west9). Les functions qui veulent
 // une autre région la précisent au cas par cas via onCall({ region: "europe-west1" }, …).
+// maxInstances : plafond de coût (boucle de trigger, rafale d'appels). 10 instances ×
+// 80 requêtes simultanées couvrent largement le trafic ; une function le relève au cas par cas.
 
 const admin = require("firebase-admin");
 // API MODULAIRE pour FieldValue/Timestamp : les accesseurs statiques namespaced
@@ -16,7 +18,7 @@ const { FieldValue, Timestamp } = require("firebase-admin/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 
 admin.initializeApp();
-setGlobalOptions({ region: "europe-west9" });
+setGlobalOptions({ region: "europe-west9", maxInstances: 10 });
 
 const db = admin.firestore();
 

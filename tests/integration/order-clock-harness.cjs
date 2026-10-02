@@ -17,6 +17,7 @@
 //   C15. créneau : prête en avance, heure choisie pas encore atteinte → pas de rappel
 //   C16. livraison prête depuis 6 min                               → pas de rappel (le livreur vient)
 //   C17. tours suivants                                             → jamais un second rappel
+//   C18. 101 livraisons prêtes anciennes + 1 à emporter             → la commande à emporter est clôturée
 //   K1. client attend 8 min, écran muet 15 min  → push au gérant (1 fois) + incident « alerte », pas de pause
 //   K2. client attend 30 min, écran muet 20 min → alerte + « pause simulée » journalisée, RIEN n'est coupé
 //   K3. client attend 20 min, écran vivant      → rien
@@ -118,6 +119,18 @@ async function main() {
   const third = await runOrderClock({ nowMs: NOW });
   const c8 = await get("c8_chef_was_faster");
   ok("C8 statut changé entre-temps → l'horloge ne l'écrase pas", c8.statut === "prete" && !c8.lancementAuto && third.released === 0);
+
+  // C18 — plus de livraisons « prêtes » anciennes qu'un lot (100) : elles sont filtrées
+  // par la requête, donc ne masquent pas une commande à emporter à clôturer.
+  const batch = db.batch();
+  for (let i = 0; i < 101; i++) {
+    batch.set(orders.doc(`c18_delivery_${i}`), { snackId: "snack_clock", statut: "prete", mode: "delivery", date: at(9 * 60 * MIN), eta: { readyAt: at((9 * 60 - i) * MIN) }, datePrete: at(9 * 60 * MIN) });
+  }
+  await batch.commit();
+  await seedOrder("c18_collect_stale", "prete", 4 * 60 * MIN);
+  const fourth = await runOrderClock({ nowMs: NOW });
+  ok("C18 101 livraisons prêtes anciennes → la commande à emporter est quand même clôturée",
+    (await get("c18_collect_stale")).statut === "terminee" && fourth.closed === 1 && fourth.reminded === 0 && fourth.errors === 0, JSON.stringify(fourth));
 
   // K — surveillance de l'écran cuisine (snacks dédiés, compteur de push remis à zéro).
   sentPush.length = 0;
