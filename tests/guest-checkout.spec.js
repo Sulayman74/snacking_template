@@ -73,6 +73,11 @@ test.describe('Flux Guest Checkout et Conversion', () => {
     // 6. Attendre que la modale de suivi/tracking s'ouvre
     await expect(page.locator('#order-tracking-modal')).toBeVisible({ timeout: 12000 });
 
+    // Lot 2b : « dès que possible » → en cuisine dès le paiement, reçu avec le code.
+    await expect(page.locator('#tracking-title')).toContainText('En cuisine', { timeout: 10000 });
+    await expect(page.locator('#tracking-subtitle')).toContainText('Code de retrait');
+    await expect(page.locator('#tracking-action-btn')).not.toHaveAttribute('data-action', 'notify-arrival');
+
     // S'assurer que le guest registration banner est visible
     const registrationBanner = page.locator('#guest-registration-banner');
     await expect(registrationBanner).toBeVisible();

@@ -35,6 +35,17 @@ export default {
     complementPlaceholder: "Étage, code porte, bâtiment…",
     phoneLabel: "Téléphone (pour le livreur)"
   },
+  pickup: {
+    title: "Retrait au comptoir",
+    asap: "Dès que possible · prête vers {time}",
+    asapUnavailable: "Dès que possible (indisponible)",
+    later: "Plus tard",
+    chooseTime: "Heure de retrait",
+    openUntil: "Ouvert · dernière commande {time}",
+    closed: "Fermé",
+    ordersClosed: "Commandes closes pour ce service",
+    reopens: "réouvre à {time}"
+  },
   menu: {
     searchPlaceholder: "Un p'tit creux ?",
     emptySearch: "Aucun produit trouvé",

@@ -40,7 +40,8 @@
     "test:orphan": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/orphan-charge-harness.cjs\"",
     "test:pwa": "npm run build:tacos && playwright test -c playwright.pwa.config.js",
     "test:push": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/push-targets-harness.cjs\"",
-    "test:recovery": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/order-recovery-harness.cjs\""
+    "test:recovery": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/order-recovery-harness.cjs\"",
+    "test:clock": "firebase emulators:exec --only firestore --project snacking-template \"node tests/integration/order-clock-harness.cjs\""
   },
   "repository": {
     "type": "git",
