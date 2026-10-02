@@ -8,7 +8,8 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { runOrderClock } = require("../lib/orderClock");
 
 exports.orderClock = onSchedule(
-  { schedule: "every 1 minutes", region: "europe-west1", timeoutSeconds: 50 },
+  // maxInstances 1 : jamais deux tours en parallèle.
+  { schedule: "every 1 minutes", region: "europe-west1", timeoutSeconds: 50, maxInstances: 1 },
   async () => {
     const stats = await runOrderClock();
     const acted = Object.entries(stats).some(([k, v]) => k !== "errors" && v > 0);
