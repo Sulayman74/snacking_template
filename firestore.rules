@@ -304,6 +304,28 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // 💓 SIGNE DE VIE DE L'ÉCRAN CUISINE (un doc par snack). Document séparé du doc
+    // snack : chaque battement serait sinon relu par tous les clients connectés.
+    // L'écran n'écrit QUE `lastSeenAt`, à l'heure du serveur ; les marques
+    // d'alerte sont posées par l'horloge des commandes (Admin SDK).
+    match /kitchenStatus/{snackId} {
+      allow read: if isSnackAdmin(snackId) || isSuperAdmin();
+      allow create: if isSnackAdmin(snackId)
+                    && request.resource.data.keys().hasOnly(['lastSeenAt'])
+                    && request.resource.data.lastSeenAt == request.time;
+      allow update: if isSnackAdmin(snackId)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeenAt'])
+                    && request.resource.data.lastSeenAt == request.time;
+      allow delete: if false;
+    }
+
+    // 📒 JOURNAL D'OBSERVATION DE L'ÉCRAN CUISINE (alertes, pauses « qui auraient
+    // eu lieu ») : écrit par l'horloge des commandes uniquement, lu par l'admin.
+    match /kitchenIncidents/{incidentId} {
+      allow read: if isSnackAdmin(resource.data.snackId) || isSuperAdmin();
+      allow write: if false;
+    }
+
     // 🛑 LE VIDEUR : Rejette tout ce qui n'est pas explicitement autorisé au-dessus
     match /{document=**} {
       allow read, write: if false;

@@ -16,6 +16,7 @@ import {
   orderBy,
   onSnapshot,
   updateDoc,
+  setDoc,
   doc,
   writeBatch,
   getDoc,
@@ -622,6 +623,23 @@ async function handleRefundOrder(orderId) {
 // ============================================================================
 // ⏸️ PAUSE DE SERVICE CUISINE (COUP DE FEU)
 // ============================================================================
+// 💓 Signe de vie de l'écran cuisine (lu par l'horloge des commandes) : si un
+// client attend une commande et que l'écran ne bat plus, le gérant est prévenu.
+const HEARTBEAT_MS = 2 * 60 * 1000;
+let heartbeatTimer = null;
+
+function kitchenHeartbeat() {
+  const snackId = window.currentAdminSnackId;
+  if (!snackId) return;
+  setDoc(doc(db, "kitchenStatus", snackId), { lastSeenAt: serverTimestamp() }, { merge: true })
+    .catch((e) => console.warn("Signe de vie cuisine non écrit :", e?.message));
+}
+
+// Retour au premier plan : battement immédiat (l'OS a pu suspendre le minuteur).
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && heartbeatTimer) kitchenHeartbeat();
+});
+
 function watchKitchenSnack() {
   unwatchKitchenSnack();
   const snackId = window.currentAdminSnackId;
@@ -636,6 +654,8 @@ function watchKitchenSnack() {
   );
   // Le temps passe sans écriture Firestore : on réévalue horaires/pause toutes les 30 s.
   kitchenClockTimer = setInterval(refreshKitchenClock, 30_000);
+  kitchenHeartbeat();
+  heartbeatTimer = setInterval(kitchenHeartbeat, HEARTBEAT_MS);
 }
 
 function unwatchKitchenSnack() {
@@ -643,6 +663,8 @@ function unwatchKitchenSnack() {
   unsubscribeKitchenSnack = null;
   if (kitchenClockTimer) clearInterval(kitchenClockTimer);
   kitchenClockTimer = null;
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = null;
 }
 
 function refreshKitchenClock() {

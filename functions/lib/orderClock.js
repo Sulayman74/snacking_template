@@ -10,6 +10,7 @@ const { db, FieldValue, Timestamp } = require("./admin");
 const { getUserPushTargets, sendToTargets } = require("./pushTargets");
 const { getSnackOrigin } = require("./tenantOrigins");
 const { buildPickupReminderNotification } = require("./kitchenAlerts");
+const { watchKitchens } = require("./kitchenWatch");
 
 /** Ancien parcours « Je suis à 5 min » : au-delà, la cuisine lance d'elle-même. */
 const LEGACY_RELEASE_MS = 20 * 60 * 1000;
@@ -149,6 +150,7 @@ const TASKS = {
   released: releaseLegacyWaitingOrders,
   reminded: remindUncollectedOrders,
   closed: closeStaleReadyOrders,
+  kitchenIncidents: watchKitchens,
 };
 
 /**

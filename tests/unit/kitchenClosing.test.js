@@ -8,6 +8,8 @@ vi.mock("../../src/core/firebase.js", () => ({
   db: {},
   doc: vi.fn((db, col, id) => ({ col, id })),
   updateDoc: vi.fn().mockResolvedValue(),
+  setDoc: vi.fn().mockResolvedValue(),
+  serverTimestamp: vi.fn(() => "__serverTime__"),
   writeBatch: vi.fn(),
   getDoc: vi.fn(),
   increment: vi.fn(),
@@ -85,5 +87,37 @@ describe("écran cuisine — fin de service", () => {
     await window.stopOrdersUntilReopening();
     expect(fb.updateDoc).not.toHaveBeenCalled();
     expect(window.showToast).toHaveBeenCalledWith(expect.stringMatching(/horaires/), "error");
+  });
+});
+
+describe("écran cuisine — signe de vie (lot 2f)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    document.body.innerHTML = '<div id="orders-waiting"></div><div id="orders-new"></div><div id="orders-ready"></div>';
+    window.currentAdminSnackId = "snackA";
+    fb.setDoc.mockClear();
+  });
+  afterEach(() => {
+    window.stopKitchenRadar();
+    vi.useRealTimers();
+  });
+
+  const beats = () => fb.setDoc.mock.calls.filter(([ref]) => ref?.col === "kitchenStatus");
+
+  it("bat au démarrage du service puis toutes les 2 min, à l'heure du serveur", () => {
+    window.startKitchenRadar();
+    expect(beats()).toHaveLength(1);
+    expect(beats()[0][0]).toMatchObject({ col: "kitchenStatus", id: "snackA" });
+    expect(beats()[0][1]).toEqual({ lastSeenAt: "__serverTime__" });
+    expect(beats()[0][2]).toEqual({ merge: true });
+    vi.advanceTimersByTime(2 * 60 * 1000);
+    expect(beats()).toHaveLength(2);
+  });
+
+  it("s'arrête à la fin du service", () => {
+    window.startKitchenRadar();
+    window.stopKitchenRadar();
+    vi.advanceTimersByTime(10 * 60 * 1000);
+    expect(beats()).toHaveLength(1);
   });
 });

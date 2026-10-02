@@ -17,6 +17,12 @@
 //   C15. créneau : prête en avance, heure choisie pas encore atteinte → pas de rappel
 //   C16. livraison prête depuis 6 min                               → pas de rappel (le livreur vient)
 //   C17. tours suivants                                             → jamais un second rappel
+//   K1. client attend 8 min, écran muet 15 min  → push au gérant (1 fois) + incident « alerte », pas de pause
+//   K2. client attend 30 min, écran muet 20 min → alerte + « pause simulée » journalisée, RIEN n'est coupé
+//   K3. client attend 20 min, écran vivant      → rien
+//   K4. commande de 2 min, écran jamais ouvert  → rien (délai de grâce)
+//   K5. tour suivant                            → aucun doublon (push ni incident)
+//   K6. l'écran revient puis retombe en panne   → nouvelle alerte
 // Lancé via `npm run test:clock`.
 const path = require("node:path");
 const FUNC_DIR = path.join(__dirname, "..", "..", "functions");
@@ -112,6 +118,44 @@ async function main() {
   const third = await runOrderClock({ nowMs: NOW });
   const c8 = await get("c8_chef_was_faster");
   ok("C8 statut changé entre-temps → l'horloge ne l'écrase pas", c8.statut === "prete" && !c8.lancementAuto && third.released === 0);
+
+  // K — surveillance de l'écran cuisine (snacks dédiés, compteur de push remis à zéro).
+  sentPush.length = 0;
+  const seedKitchen = async (snackId, ordersAgoMin, lastSeenAgoMin) => {
+    await db.collection("users").doc(`admin_${snackId}`).set({ role: "admin", snackId, fcmToken: `tok_${snackId}_${"x".repeat(40)}` });
+    await db.collection("snacks").doc(snackId).set({ nom: snackId, delivery: { prepBaseMin: 12 } });
+    for (const [i, ago] of ordersAgoMin.entries()) await seedOrder(`${snackId}_o${i}`, "nouvelle", ago * MIN, { snackId });
+    if (lastSeenAgoMin !== null) await db.collection("kitchenStatus").doc(snackId).set({ lastSeenAt: at(lastSeenAgoMin * MIN) });
+  };
+  await seedKitchen("kw1", [8, 6], 15);
+  await seedKitchen("kw2", [30], 20);
+  await seedKitchen("kw3", [20], 1);
+  await seedKitchen("kw4", [2], null);
+  const incidentsOf = async (snackId) => (await db.collection("kitchenIncidents").where("snackId", "==", snackId).get()).docs.map((d) => d.data().type).sort();
+  const pushTo = (snackId) => sentPush.filter((m) => m.tokens.some((t) => t.startsWith(`tok_${snackId}_`)));
+
+  const k1 = await runOrderClock({ nowMs: NOW });
+  ok("K1 client attend + écran muet → push gérant, incident alerte, pas de pause",
+    pushTo("kw1").length === 1 && pushTo("kw1")[0].notification?.body === "2 commandes à cuisiner en attente · dernier signe il y a 15 min" &&
+      JSON.stringify(await incidentsOf("kw1")) === JSON.stringify(["alerte_hors_ligne"]),
+    JSON.stringify(pushTo("kw1")[0]?.notification));
+  ok("K2 attente longue → alerte + pause SIMULÉE, rien de coupé",
+    pushTo("kw2").length === 1 &&
+      JSON.stringify(await incidentsOf("kw2")) === JSON.stringify(["alerte_hors_ligne", "pause_simulee"]) &&
+      !(await db.collection("snacks").doc("kw2").get()).data().servicePausedUntil,
+    JSON.stringify(await incidentsOf("kw2")));
+  ok("K3 écran vivant → rien", pushTo("kw3").length === 0 && (await incidentsOf("kw3")).length === 0);
+  ok("K4 commande trop récente, écran jamais ouvert → rien", pushTo("kw4").length === 0 && (await incidentsOf("kw4")).length === 0);
+  ok("K tour : aucune erreur", k1.errors === 0, JSON.stringify(k1));
+
+  await runOrderClock({ nowMs: NOW });
+  ok("K5 tour suivant → aucun doublon",
+    pushTo("kw1").length === 1 && pushTo("kw2").length === 1 && (await incidentsOf("kw1")).length === 1 && (await incidentsOf("kw2")).length === 2);
+
+  // K6 — l'écran a rebattu (nouvelle valeur), puis retombe en panne : nouvelle alerte.
+  await db.collection("kitchenStatus").doc("kw1").set({ lastSeenAt: at(11 * MIN) }, { merge: true });
+  await runOrderClock({ nowMs: NOW });
+  ok("K6 nouvelle panne → nouvelle alerte", pushTo("kw1").length === 2 && (await incidentsOf("kw1")).length === 2);
 
   // C9 — la tâche planifiée réellement exportée (wrapper firebase-functions-test).
   const test = require("firebase-functions-test")();
