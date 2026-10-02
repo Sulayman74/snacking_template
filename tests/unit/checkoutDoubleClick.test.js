@@ -43,6 +43,21 @@ describe("<snack-checkout> — anti double-clic", () => {
     expect(inner).toHaveBeenCalledTimes(2);
   });
 
+  it("processCheckout : bouton « Valider » occupé pendant la préparation (audit UX-2)", async () => {
+    document.body.innerHTML = '<button id="checkout-btn"></button>';
+    const btn = document.getElementById("checkout-btn");
+    let release, busyDuring;
+    vi.spyOn(el, "_processCheckout").mockImplementation(() => new Promise((r) => {
+      busyDuring = btn.getAttribute("aria-busy");
+      release = r;
+    }));
+    const run = el.processCheckout();
+    expect(busyDuring).toBe("true");
+    release();
+    await run;
+    expect(btn.hasAttribute("aria-busy")).toBe(false);
+  });
+
   it("submitStripePayment : deux clics concurrents → un seul confirmPayment", async () => {
     let release;
     const confirmPayment = vi.fn(() => new Promise((r) => { release = r; }));

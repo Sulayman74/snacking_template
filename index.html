@@ -359,11 +359,6 @@
       </div>
     </div>
 
-    <div id="snackbar" class="fixed bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-on-dark px-6 py-4 rounded-full shadow-2xl z-[200] transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 w-max max-w-[90vw]">
-      <i data-lucide="circle-check" id="snackbar-icon" class="text-green-400 text-2xl"></i>
-      <span id="snackbar-message" class="font-medium text-sm md:text-base">Message ici</span>
-    </div>
-
     <div id="client-card-modal" class="fixed inset-0 z-100 hidden transition-opacity duration-300 opacity-0">
       <!-- backdrop : clic = fermeture -->
       <div data-action="close-client-card" class="absolute inset-0 bg-gray-900/90 backdrop-blur-md"></div>
@@ -455,10 +450,10 @@
       </div>
     </div>
 
-    <div id="pwa-install-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-on-dark p-4 rounded-2xl shadow-2xl z-[150] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700">
+    <div id="pwa-install-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900 text-on-dark p-4 rounded-2xl shadow-2xl z-[65] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-gray-700">
       <div class="flex items-center gap-3"><img id="pwa-banner-icon" src="{{ICON_URL}}" class="w-12 h-12 rounded-xl" alt="Icon" /><div><p class="font-bold text-sm">Garde-nous dans ta poche !</p><p id="pwa-install-hint" class="text-xs text-gray-300">Installe l'app pour tes points 🎁</p></div></div>
       <button id="pwa-install-btn" data-i18n="pwa.install" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg">Installer</button>
-      <button id="pwa-close-btn" class="absolute -top-2 -right-2 bg-gray-700 text-on-dark w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md"><i data-lucide="x"></i></button>
+      <button id="pwa-close-btn" aria-label="Fermer" class="absolute -top-4 -right-4 w-11 h-11 flex items-center justify-center"><span class="bg-gray-700 text-on-dark w-7 h-7 rounded-full flex items-center justify-center text-xs shadow-md"><i data-lucide="x" class="pointer-events-none"></i></span></button>
     </div>
 
     <!-- 🔄 BANDEAU MISE À JOUR (pattern "prompt") — affiché par src/pwa.js sur onNeedRefresh -->
@@ -476,13 +471,13 @@
       <button data-action="close-product-modal" class="absolute top-4 right-4 bg-surface/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-lg z-[90] text-text hover:bg-surface-2 transition active:scale-95 cursor-pointer"><i data-lucide="x" class="text-xl pointer-events-none"></i></button>
       <div class="relative flex flex-col md:flex-row">
         <div class="h-54 md:h-auto md:w-2/5 relative"><img id="modal-img" alt="item" src="" class="w-full h-full object-cover rounded-t-3xl md:rounded-t-none md:rounded-l-3xl" /></div>
-        <div class="p-3 md:p-8 pb-24 md:pb-8 flex-1 flex flex-col">
+        <div class="p-3 md:p-8 pb-0 md:pb-8 flex-1 flex flex-col">
           <h3 id="modal-title" class="text-3xl font-black text-text tracking-tight mb-4"></h3>
           <p id="modal-desc" class="text-text-muted text-lg mb-6 flex-grow"></p>
           <button id="modal-share-btn" class="hidden w-full py-3 my-2 text-text rounded-full bg-accent/20 font-bold hover:bg-surface-3 transition-all justify-center items-center"><i data-lucide="share-2" class="mr-1"></i> <span data-i18n="product.share">Partager à un pote</span></button>
           <div id="modal-allergens-container" class="mb-3 p-4 bg-surface-2 border border-dashed border-blue-200 rounded-xl hidden"><h4 class="font-bold text-xs text-text-muted uppercase tracking-widest mb-2"><i data-lucide="info" class="mr-1"></i> Infos & Allergènes</h4><p id="modal-allergens" class="text-text text-sm font-medium"></p></div>
           <div id="modal-options-container" class="mb-1 hidden"></div>
-          <div class="mt-auto flex items-center gap-3">
+          <div id="modal-cta-bar" class="mt-auto sticky bottom-0 z-10 -mx-3 px-3 pt-3 pb-[calc(0.75rem_+_env(safe-area-inset-bottom))] bg-surface border-t border-line md:static md:mx-0 md:px-0 md:pb-0 md:border-0 flex items-center gap-3">
             <button type="button" id="modal-fav-btn" aria-pressed="false" aria-label="Ajouter aux favoris" class="hidden shrink-0 w-14 h-14 rounded-xl border-2 border-line text-text-muted hover:border-red-200 hover:text-red-500 transition-all flex items-center justify-center text-xl"><i data-lucide="heart" aria-hidden="true"></i></button>
             <button type="button" id="modal-cta" class="flex-1"></button>
           </div>
@@ -494,7 +489,7 @@
     <div id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" inert class="fixed bottom-0 left-0 w-full bg-surface rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[85vh]">
       <div class="flex justify-between items-center p-6 border-b"><h2 id="cart-title" data-i18n="cart.title" class="text-xl font-bold text-text">Mon Panier 🛒</h2><button data-action="close-cart" class="w-8 h-8 bg-surface-2 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-3 transition"><i data-lucide="x"></i></button></div>
       <div id="cart-items-container" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
-      <div class="p-6 bg-surface-2 rounded-t-3xl border-t border-line pb-safe"><div id="cart-wheel-prize"></div><div id="delivery-section" class="empty:hidden"></div><div id="pickup-section" class="empty:hidden"></div><div id="cart-progress-bar" class="mb-4 empty:hidden"></div><div class="flex justify-between items-center mb-4"><span class="text-text-muted font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-text">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" data-i18n="cart.checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center cursor-pointer hover:opacity-90 active:scale-95">Valider ma commande</button></div>
+      <div class="p-6 bg-surface-2 rounded-t-3xl border-t border-line pb-safe"><div id="cart-wheel-prize"></div><div id="delivery-section" class="empty:hidden"></div><div id="pickup-section" class="empty:hidden"></div><div id="cart-progress-bar" class="mb-4 empty:hidden"></div><div class="flex justify-between items-center mb-4"><span class="text-text-muted font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-text">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" data-i18n="cart.checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center cursor-pointer hover:opacity-90 active:scale-95 aria-busy:opacity-70 aria-busy:cursor-wait aria-busy:animate-pulse">Valider ma commande</button></div>
     </div>
 
 <snack-checkout id="snack-checkout"></snack-checkout>
@@ -506,12 +501,13 @@
      role="dialog" aria-modal="true" aria-labelledby="upsell-title"
      class="fixed inset-0 z-[110] hidden items-end justify-center bg-black/60 opacity-0 transition-opacity duration-300 backdrop-blur-sm">
 
-  <div class="absolute inset-0" data-upsell-action="cancel"></div>
+  <div class="absolute inset-0" data-upsell-action="skip"></div>
 
   <div id="upsell-sheet-content"
        class="relative w-full max-w-lg translate-y-full transform rounded-t-3xl bg-surface p-6 shadow-2xl transition-transform duration-300 flex flex-col max-h-[92vh]">
 
     <div class="mx-auto mb-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-surface-3"></div>
+    <button data-upsell-action="cancel" aria-label="Retour au panier" class="absolute top-2 right-2 w-11 h-11 flex items-center justify-center rounded-full text-text-muted hover:bg-surface-2"><i data-lucide="x" class="pointer-events-none"></i></button>
 
     <div class="overflow-y-auto pr-1 custom-scrollbar">
       <div class="mb-5 text-center">
@@ -528,7 +524,7 @@
         <i data-lucide="arrow-right" class="mr-2"></i> Continuer vers le paiement
       </button>
 
-      <button data-upsell-action="cancel" class="w-full py-2 text-sm font-bold text-text-muted hover:text-text">
+      <button data-upsell-action="skip" class="w-full py-3 text-sm font-bold text-text-muted hover:text-text">
         Non merci
       </button>
     </div>

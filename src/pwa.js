@@ -41,6 +41,7 @@ setupA2HS({
   btnId: "pwa-install-btn",
   closeId: "pwa-close-btn",
   hintId: "pwa-install-hint",
+  waitForEvent: "snack:order-placed",
 });
 
 // ============================================================================

@@ -11,7 +11,11 @@
 
 import { needsInstallForPush } from "./core/platform.js";
 
-export function setupA2HS({ bannerId, btnId, closeId, hintId } = {}) {
+//
+// `waitForEvent` (client) : le bandeau n'apparaît qu'après cet événement (la
+// première commande), puis aux visites suivantes. Avant, il masquait « Ajouter ».
+
+export function setupA2HS({ bannerId, btnId, closeId, hintId, waitForEvent } = {}) {
   const banner = document.getElementById(bannerId);
   if (!banner) return;
 
@@ -31,7 +35,21 @@ export function setupA2HS({ bannerId, btnId, closeId, hintId } = {}) {
   // Déjà rejetée récemment → on ne câble rien et on n'affiche pas.
   if (isSnoozed()) return;
 
-  const show = () => banner.classList.remove("translate-y-32", "opacity-0", "pointer-events-none");
+  const readyKey = `a2hs_ready_${bannerId}`;
+  let ready = !waitForEvent;
+  if (waitForEvent) {
+    try { ready = localStorage.getItem(readyKey) === "1"; } catch { /* mode privé */ }
+  }
+  let wanted = false;
+  const reveal = () => banner.classList.remove("translate-y-32", "opacity-0", "pointer-events-none");
+  const show = () => { wanted = true; if (ready) reveal(); };
+  if (!ready) {
+    window.addEventListener(waitForEvent, () => {
+      ready = true;
+      try { localStorage.setItem(readyKey, "1"); } catch { /* mode privé */ }
+      if (wanted) setTimeout(reveal, 1500);
+    }, { once: true });
+  }
   const hide = () => banner.classList.add("translate-y-32", "opacity-0", "pointer-events-none");
 
   let deferred = null;

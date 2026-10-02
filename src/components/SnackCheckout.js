@@ -13,6 +13,7 @@ import { ensureUserDoc } from '../auth.js';
 // ⏱️ Délai max par étape du chargement du paiement : au-delà, on affiche une
 // erreur au lieu de laisser le squelette tourner indéfiniment.
 const STEP_TIMEOUT_MS = 20000;
+const KITCHEN_LOAD_TIMEOUT_MS = 1500;
 
 function withTimeout(promise, ms, step) {
   let timer;
@@ -85,10 +86,14 @@ export class SnackCheckout extends SnackElement {
   async processCheckout() {
     if (this._checkoutInFlight) return;
     this._checkoutInFlight = true;
+    // Indicateur : auth invité + charge cuisine peuvent prendre 1 à 2 s.
+    const btn = document.getElementById("checkout-btn");
+    btn?.setAttribute("aria-busy", "true");
     try {
       await this._processCheckout();
     } finally {
       this._checkoutInFlight = false;
+      btn?.removeAttribute("aria-busy");
     }
   }
 
@@ -178,11 +183,15 @@ export class SnackCheckout extends SnackElement {
     }
 
     // Upsell
-    if (cfg?.features?.enableUpsell) {
+    if (cfg?.features?.enableUpsell && upsellUI.shouldOffer()) {
       let rushMode = false;
       try {
+        // Jamais plus de 1,5 s d'attente : sans réponse, upsell normal.
         const getKitchenLoad = httpsCallable(functions, "getKitchenLoad");
-        const res = await getKitchenLoad({ snackId: cfg.identity?.id });
+        const res = await Promise.race([
+          getKitchenLoad({ snackId: cfg.identity?.id }),
+          new Promise((resolve) => setTimeout(() => resolve(null), KITCHEN_LOAD_TIMEOUT_MS)),
+        ]);
         rushMode = res?.data?.rushMode === true;
       } catch (e) {}
       const upsellChoice = await upsellUI.show({ rushMode });
@@ -425,6 +434,7 @@ export class SnackCheckout extends SnackElement {
       if (window.snackConfig?.features?.enableClickAndCollect || window.snackConfig?.features?.enableDelivery) {
         localStorage.setItem("activeOrderId", orderId);
         window.startOrderTracking?.(orderId);
+        window.dispatchEvent(new CustomEvent("snack:order-placed", { detail: { orderId } }));
       }
 
       store.resetDelivery?.();

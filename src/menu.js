@@ -17,6 +17,15 @@ window.chargerMenuComplet = () => {
 
   const q = query(collection(db, "produits"), where("snackId", "==", snackId));
 
+  // Premier résultat (ou échec) : retire le splash et débloque les liens directs
+  // « ?action=product » (index.html, pwa.js), qui attendent cet événement.
+  let announced = false;
+  const announceReady = () => {
+    if (announced) return;
+    announced = true;
+    window.dispatchEvent(new CustomEvent("snack:menu:ready"));
+  };
+
   const unsub = onSnapshot(q, (snapshot) => {
     let tousLesProduits = [];
     snapshot.forEach((doc) => {
@@ -24,9 +33,10 @@ window.chargerMenuComplet = () => {
     });
 
     store.setMenu(tousLesProduits);
-
+    announceReady();
   }, (err) => {
     console.error("Erreur temps réel menu :", err);
+    announceReady();
   });
 
   window.__menuUnsub = unsub;
