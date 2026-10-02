@@ -10,7 +10,7 @@ const { db, FieldValue, Timestamp } = require("./admin");
 
 /** Ancien parcours « Je suis à 5 min » : au-delà, la cuisine lance d'elle-même. */
 const LEGACY_RELEASE_MS = 20 * 60 * 1000;
-/** Commande prête jamais retirée : clôturée pour libérer l'écran cuisine. */
+/** Commande prête jamais retirée, 3 h après l'heure de retrait annoncée : clôturée. */
 const STALE_READY_MS = 3 * 60 * 60 * 1000;
 const BATCH_SIZE = 100;
 
@@ -28,14 +28,34 @@ async function transition(ref, fromStatut, patch) {
   });
 }
 
-async function staleOrders(statut, olderThanMs, nowMs) {
+// Commandes d'un statut dont le champ horaire `field` est passé de `olderThanMs`.
+async function dueOrders(statut, field, olderThanMs, nowMs) {
   const cutoff = Timestamp.fromMillis(nowMs - olderThanMs);
   return db.collection("commandes")
     .where("statut", "==", statut)
-    .where("date", "<=", cutoff)
-    .orderBy("date", "asc")
+    .where(field, "<=", cutoff)
+    .orderBy(field, "asc")
     .limit(BATCH_SIZE)
     .get();
+}
+
+/**
+ * Créneau « plus tard » : la commande programmée part en cuisine à l'heure du
+ * créneau moins le temps de préparation (`retrait.lancerA`). Sonnerie + push
+ * cuisine, push « en préparation » au client (functions/domains/notifications).
+ */
+async function releaseScheduledOrders(nowMs) {
+  const snap = await dueOrders("programmee", "retrait.lancerA", 0, nowMs);
+  let launched = 0;
+  for (const doc of snap.docs) {
+    const done = await transition(doc.ref, "programmee", {
+      statut: "nouvelle",
+      lancementAuto: "creneau",
+      dateLancement: FieldValue.serverTimestamp(),
+    });
+    if (done) launched++;
+  }
+  return launched;
 }
 
 /**
@@ -43,7 +63,7 @@ async function staleOrders(statut, olderThanMs, nowMs) {
  * client » (il n'a pas cliqué) → lancées en cuisine (sonnerie + push cuisine).
  */
 async function releaseLegacyWaitingOrders(nowMs) {
-  const snap = await staleOrders("en_attente_client", LEGACY_RELEASE_MS, nowMs);
+  const snap = await dueOrders("en_attente_client", "date", LEGACY_RELEASE_MS, nowMs);
   let released = 0;
   for (const doc of snap.docs) {
     const done = await transition(doc.ref, "en_attente_client", {
@@ -57,12 +77,14 @@ async function releaseLegacyWaitingOrders(nowMs) {
 }
 
 /**
- * Commandes à emporter prêtes depuis des heures : jamais récupérées. Clôturées
+ * Commandes à emporter prêtes, 3 h après l'heure de retrait annoncée
+ * (`eta.readyAt` = créneau choisi ou estimation) : jamais récupérées. Clôturées
  * (marquées pour la compta) pour ne pas encombrer l'écran cuisine. Les livraisons
- * ne sont pas concernées (un livreur peut encore être en route).
+ * ne sont pas concernées (un livreur peut encore être en route). Se baser sur
+ * l'heure de COMMANDE clôturerait à tort un créneau du soir commandé le matin.
  */
 async function closeStaleReadyOrders(nowMs) {
-  const snap = await staleOrders("prete", STALE_READY_MS, nowMs);
+  const snap = await dueOrders("prete", "eta.readyAt", STALE_READY_MS, nowMs);
   let closed = 0;
   for (const doc of snap.docs) {
     if (doc.data().mode === "delivery") continue;
@@ -76,7 +98,11 @@ async function closeStaleReadyOrders(nowMs) {
   return closed;
 }
 
-const TASKS = { released: releaseLegacyWaitingOrders, closed: closeStaleReadyOrders };
+const TASKS = {
+  launched: releaseScheduledOrders,
+  released: releaseLegacyWaitingOrders,
+  closed: closeStaleReadyOrders,
+};
 
 /**
  * Un tour d'horloge. `nowMs` injectable pour les tests.

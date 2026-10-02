@@ -34,9 +34,37 @@ function buildAutoReleaseAlert(order, orderId) {
   };
 }
 
+/**
+ * Push CLIENT quand sa commande programmée passe en cuisine. Heure affichée dans
+ * le fuseau du snack (les Functions tournent en UTC).
+ */
+function buildPreparingNotification(order, orderId, timeZone = "Europe/Paris") {
+  const readyAt = order?.eta?.readyAt?.toDate?.() || null;
+  let when = "";
+  if (readyAt && !Number.isNaN(readyAt.getTime())) {
+    when = ` · prête vers ${readyAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone })}`;
+  }
+  return {
+    title: "👨‍🍳 Votre commande est en préparation",
+    body: `Code ${pickupCode(order, orderId)}${when}`,
+  };
+}
+
+/** Une commande programmée passe en cuisine (horloge ou « Lancer » du chef). */
+function isScheduledLaunch(before, after) {
+  return before?.statut === "programmee" && after?.statut === "nouvelle";
+}
+
 /** Transition qui déclenche l'alerte « client dans 5 min ». */
 function isClientArrival(before, after) {
   return before?.statut === "en_attente_client" && after?.statut === "nouvelle";
 }
 
-module.exports = { buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, isClientArrival };
+module.exports = {
+  buildNewOrderAlert,
+  buildClientArrivingAlert,
+  buildAutoReleaseAlert,
+  buildPreparingNotification,
+  isClientArrival,
+  isScheduledLaunch,
+};

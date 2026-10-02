@@ -36,6 +36,22 @@
       "collectionGroup": "commandes",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "retrait.lancerA", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commandes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "eta.readyAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commandes",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "snackId", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
@@ -190,5 +206,26 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "events",
+      "fieldPath": "ttlAt",
+      "ttl": true,
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" },
+        { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "pushSubscriptions",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" },
+        { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" }
+      ]
+    }
+  ]
 }

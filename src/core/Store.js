@@ -38,6 +38,8 @@ export class Store extends EventTarget {
         pendingCheckout: false,
         // 🌍 LOCALISATION — Langue active de l'application (fr | en).
         locale: localStorage.getItem("snack_locale") || "fr",
+        // 🕒 RETRAIT — « dès que possible » ou créneau « plus tard » (click & collect).
+        pickup: { mode: "asap", atMs: null },
     };
 
     #favoritesIndex = {};
@@ -283,6 +285,20 @@ export class Store extends EventTarget {
         const d = this.#state.delivery;
         if (d.mode !== "delivery" || !d.quote?.inRange) return 0;
         return Number(d.quote.frais) || 0;
+    }
+
+    // --- RETRAIT (dès que possible / plus tard) ---
+
+    /** @param {{mode: "asap"|"slot", atMs?: number|null}} pickup */
+    setPickup({ mode, atMs = null } = {}) {
+        const slot = mode === "slot" && Number.isFinite(atMs);
+        this.#state.pickup = { mode: slot ? "slot" : "asap", atMs: slot ? atMs : null };
+        this.emit("pickup-updated");
+    }
+
+    resetPickup() {
+        this.#state.pickup = { mode: "asap", atMs: null };
+        this.emit("pickup-updated");
     }
 
     // --- UPSELLING ---

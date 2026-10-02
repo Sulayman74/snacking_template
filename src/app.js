@@ -11,6 +11,7 @@ import "./cart.js";
 import "./favorites.js";
 import "./reorder.js";
 import "./delivery.js";
+import "./pickup.js";
 import "./product-modal.js";
 import "./tracking.js";
 import "./pwa.js";

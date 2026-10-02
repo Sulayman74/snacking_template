@@ -7,7 +7,12 @@ const { getUserPushTargets, getStaffPushTargets, sendToTargets } = require("../l
 const { isFiniteNum, haversineKm, bucketForServer } = require("../lib/geo");
 const { getSnackOrigin } = require("../lib/tenantOrigins");
 const { getKitchenQueueCount } = require("../lib/kitchen");
-const { buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, isClientArrival } = require("../lib/kitchenAlerts");
+const {
+  buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, buildPreparingNotification,
+  isClientArrival, isScheduledLaunch,
+} = require("../lib/kitchenAlerts");
+const { db } = require("../lib/admin");
+const { snackTimezone } = require("../lib/openingHours");
 
 /** Push à tous les appareils admin du snack, pastille = commandes en attente. */
 async function alertKitchen(snackId, notification) {
@@ -72,6 +77,26 @@ exports.onOrderStatusChange = onDocumentUpdated(
         console.error("❌ Erreur alerte arrivée client :", error);
       }
       return; // aucun push client pour ce statut
+    }
+
+    // 🕒 Commande programmée qui passe en cuisine : la cuisine est alertée si
+    // c'est l'horloge qui la lance (le chef qui clique « Lancer » le sait déjà) ;
+    // le client apprend que sa commande est en préparation.
+    if (isScheduledLaunch(oldData, newData)) {
+      try {
+        if (newData.lancementAuto) await alertKitchen(newData.snackId, buildAutoReleaseAlert(newData, orderId));
+        const targets = await getUserPushTargets(newData.userId, newData.snackId, "client");
+        if (targets.length > 0) {
+          const snapSnack = await db.collection("snacks").doc(newData.snackId).get();
+          await sendToTargets(targets, {
+            notification: buildPreparingNotification(newData, orderId, snackTimezone(snapSnack.data())),
+            webpush: { fcm_options: { link: `${await getSnackOrigin(newData.snackId)}/` } },
+          });
+        }
+      } catch (error) {
+        console.error("❌ Erreur notifications lancement créneau :", error);
+      }
+      return;
     }
 
     const shortId = orderId.slice(-4).toUpperCase();

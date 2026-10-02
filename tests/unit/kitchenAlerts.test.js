@@ -3,7 +3,10 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, isClientArrival } = require("../../functions/lib/kitchenAlerts.js");
+const {
+  buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, buildPreparingNotification,
+  isClientArrival, isScheduledLaunch,
+} = require("../../functions/lib/kitchenAlerts.js");
 
 describe("buildNewOrderAlert", () => {
   it("client, total et mode lisibles (« À emporter », plus « Sur place »)", () => {
@@ -41,5 +44,25 @@ describe("buildAutoReleaseAlert (horloge des commandes)", () => {
   it("ne prétend pas que le client arrive : demande de lancer la commande", () => {
     expect(buildAutoReleaseAlert({ clientNom: "Léa", secretCode: "K7Q2" }, "x"))
       .toEqual({ title: "⏱️ Commande à lancer maintenant", body: "Léa · code K7Q2" });
+  });
+});
+
+describe("buildPreparingNotification (créneau lancé en cuisine)", () => {
+  const order = { secretCode: "K7Q2", eta: { readyAt: { toDate: () => new Date("2026-09-23T10:30:00Z") } } };
+  it("heure affichée dans le fuseau du snack (Functions en UTC)", () => {
+    expect(buildPreparingNotification(order, "x", "Europe/Paris"))
+      .toEqual({ title: "👨‍🍳 Votre commande est en préparation", body: "Code K7Q2 · prête vers 12:30" });
+    expect(buildPreparingNotification(order, "x", "Indian/Reunion").body).toBe("Code K7Q2 · prête vers 14:30");
+  });
+  it("sans heure : seulement le code", () => {
+    expect(buildPreparingNotification({ secretCode: "K7Q2" }, "x").body).toBe("Code K7Q2");
+  });
+});
+
+describe("isScheduledLaunch", () => {
+  it("programmée → à cuisiner uniquement", () => {
+    expect(isScheduledLaunch({ statut: "programmee" }, { statut: "nouvelle" })).toBe(true);
+    expect(isScheduledLaunch({ statut: "en_attente_client" }, { statut: "nouvelle" })).toBe(false);
+    expect(isScheduledLaunch({ statut: "programmee" }, { statut: "terminee" })).toBe(false);
   });
 });

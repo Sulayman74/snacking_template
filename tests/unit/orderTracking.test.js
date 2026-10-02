@@ -152,3 +152,15 @@ describe("Clôture", () => {
     expect(localStorage.getItem("activeOrderId")).toBeNull();
   });
 });
+
+describe("Commande programmée", () => {
+  it("affiche l'heure de retrait choisie, le reçu, et un badge « Retrait à … »", () => {
+    window.snackConfig.timezone = "Europe/Paris";
+    window.startOrderTracking("ORDER1234");
+    next(snap(order({ statut: "programmee", retrait: { mode: "creneau", heure: { toDate: () => new Date("2026-09-23T10:30:00Z") } } })));
+    expect(document.getElementById("tracking-title").textContent).toBe("Retrait à 12:30");
+    expect(document.getElementById("badge-text").textContent).toBe("Retrait à 12:30");
+    expect(subtitle().textContent).toContain("K7Q2");
+    expect(badge().className).toMatch(/^flex /);
+  });
+});

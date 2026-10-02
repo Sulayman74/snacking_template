@@ -83,19 +83,15 @@ const formatHHMM = (minutes) => {
  *   minutesToOpen:(number|null), nextOpenTime:(string|null), nextOpenDayOffset:(number|null)}}
  *   minutesToOpen/nextOpenTime : PROCHAINE ouverture après le créneau en cours (ou maintenant si fermé).
  */
-export function getOpeningState(hours, date = new Date(), timeZone = DEFAULT_TIMEZONE) {
-  const unknown = {
-    configured: false, open: true, minutesToClose: null, closeTime: null,
-    minutesToOpen: null, nextOpenTime: null, nextOpenDayOffset: null,
-  };
-  if (!Array.isArray(hours) || hours.length !== 7) return unknown;
+// Frise des plages d'ouverture, en minutes relatives à aujourd'hui 00:00 (heure
+// du snack) : la veille (débordement après minuit) jusqu'à J+7, plages contiguës
+// fusionnées (ex. 18h→24h + 0h→2h). null si horaires absents / mal formés.
+function openingTimeline(hours, date, timeZone) {
+  if (!Array.isArray(hours) || hours.length !== 7) return null;
   const perDay = hours.map(dayIntervals);
-  if (perDay.some((d) => d === null)) return unknown;
+  if (perDay.some((d) => d === null)) return null;
 
   const { dayIndex, minutes: now } = localClock(date, timeZone);
-
-  // Frise relative à aujourd'hui 00:00 (heure du snack) : la veille (débordement
-  // après minuit) jusqu'à J+7, créneaux contigus fusionnés (ex. 18h→24h + 0h→2h).
   const slots = [];
   for (let off = -1; off <= 7; off++) {
     const di = (((dayIndex + off) % 7) + 7) % 7;
@@ -108,6 +104,17 @@ export function getOpeningState(hours, date = new Date(), timeZone = DEFAULT_TIM
     if (last && s <= last[1]) last[1] = Math.max(last[1], e);
     else merged.push([s, e]);
   }
+  return { merged, now };
+}
+
+export function getOpeningState(hours, date = new Date(), timeZone = DEFAULT_TIMEZONE) {
+  const unknown = {
+    configured: false, open: true, minutesToClose: null, closeTime: null,
+    minutesToOpen: null, nextOpenTime: null, nextOpenDayOffset: null,
+  };
+  const timeline = openingTimeline(hours, date, timeZone);
+  if (!timeline) return unknown;
+  const { merged, now } = timeline;
 
   const current = merged.find(([s, e]) => s <= now && now < e);
   const next = merged.find(([s]) => s > now);
@@ -149,4 +156,45 @@ export function getOrderingState(hours, date = new Date(), timeZone = DEFAULT_TI
     minutesToCutoff,
     cutoffTime: state.open && state.configured ? formatHHMM(parseHHMM(state.closeTime) - cutoff) : null,
   };
+}
+
+// ============================================================================
+// 🕒 CRÉNEAUX DE RETRAIT « PLUS TARD »
+// ============================================================================
+export const SLOT_MINUTES = 15;
+// Horizon proposé : le service en cours et le suivant, pas la semaine.
+const SLOT_HORIZON_MIN = 12 * 60;
+
+/**
+ * Créneaux de retrait proposables maintenant (pas de 15 min, heure du snack).
+ * Un créneau t est valable si : il tombe dans une plage d'ouverture (t ≤ fin),
+ * la cuisine a le temps de préparer (t ≥ maintenant + préparation) et la
+ * préparation ne commence pas avant l'ouverture (t ≥ début de plage + préparation).
+ * Horaires non configurés → aucun créneau (on ne devine pas).
+ * @returns {Array<{atMs:number, label:string}>}
+ */
+export function getPickupSlots(hours, date = new Date(), timeZone = DEFAULT_TIMEZONE, { prepMin = 12, maxSlots = 48 } = {}) {
+  const timeline = openingTimeline(hours, date, timeZone);
+  if (!timeline) return [];
+  const { merged, now } = timeline;
+  const prep = Math.max(1, Math.round(Number(prepMin) || 12));
+  const baseMs = Math.floor(date.getTime() / 60000) * 60000; // minute pleine de « now »
+  const slots = [];
+  for (const [start, end] of merged) {
+    if (start > now + SLOT_HORIZON_MIN) break;
+    if (end <= now) continue;
+    const earliest = Math.max(now + prep, start + prep);
+    let t = Math.ceil(earliest / SLOT_MINUTES) * SLOT_MINUTES;
+    for (; t <= end && t <= now + SLOT_HORIZON_MIN; t += SLOT_MINUTES) {
+      slots.push({ atMs: baseMs + (t - now) * 60000, label: formatHHMM(t) });
+      if (slots.length >= maxSlots) return slots;
+    }
+  }
+  return slots;
+}
+
+/** Le créneau demandé fait-il partie des créneaux proposables ? (±1 min de dérive) */
+export function isValidPickupSlot(hours, date, timeZone, atMs, opts) {
+  if (!Number.isFinite(atMs)) return false;
+  return getPickupSlots(hours, date, timeZone, opts).some((s) => Math.abs(s.atMs - atMs) <= 60000);
 }

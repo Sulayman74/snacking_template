@@ -69,6 +69,13 @@ async function createOrderFromPaymentIntent({
     return { orderId, created: false };
   }
 
+  // 🕒 Créneau « plus tard » validé au paiement (createPaymentIntent) : relu dans le
+  // panier en attente, jamais dans le payload client. Absent = « dès que possible ».
+  const pendingSnap = await db.collection(PENDING_ORDERS).doc(orderId).get();
+  const plannedPickup = pendingSnap.exists ? pendingSnap.data().retrait || null : null;
+  const scheduled = plannedPickup?.mode === "creneau"
+    && Number.isFinite(plannedPickup.heureMs) && Number.isFinite(plannedPickup.lancerAMs);
+
   // 🛡️ MONTANT AUTORITATIF + VALIDATION — recalcul serveur (prix/zone/minimum)
   // via le helper partagé avec createPaymentIntent (DRY). Le client est DÉJÀ
   // débité (PI succeeded) : si la commande est jugée invalide ICI (cas résiduel,
@@ -109,7 +116,8 @@ async function createOrderFromPaymentIntent({
     deliveryMin,
     totalMin,
     computedAt: Timestamp.now(),
-    readyAt: Timestamp.fromMillis(Date.now() + totalMin * 60000),
+    // Créneau : l'heure promise au client est celle qu'il a choisie.
+    readyAt: Timestamp.fromMillis(scheduled ? plannedPickup.heureMs : Date.now() + totalMin * 60000),
   };
 
   // 💶 SOCLE COMPTA (LOT A) — montants financiers persistés depuis des sources
@@ -146,8 +154,16 @@ async function createOrderFromPaymentIntent({
     // « Dès que possible » : la cuisine démarre AU PAIEMENT, en retrait comme en
     // livraison. Le client n'a plus d'action à faire (l'ancien « Je suis à 5 min »
     // laissait des commandes payées bloquées s'il ne cliquait pas — ORD-1).
-    statut: "nouvelle",
-    retrait: { mode: "asap" },
+    // Créneau « plus tard » : « programmée », lancée par l'horloge des commandes à
+    // l'heure du créneau moins le temps de préparation (lib/orderClock).
+    statut: scheduled ? "programmee" : "nouvelle",
+    retrait: scheduled
+      ? {
+        mode: "creneau",
+        heure: Timestamp.fromMillis(plannedPickup.heureMs),
+        lancerA: Timestamp.fromMillis(plannedPickup.lancerAMs),
+      }
+      : { mode: "asap" },
     // Lignes RECONSTRUITES serveur (nom/suppléments/prix en base, options
     // bornées) — jamais le payload client brut (cf. lib/pricing buildOrderLine).
     items: orderItems,

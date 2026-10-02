@@ -9,6 +9,9 @@
 //   C7. second tour d'horloge                                     → aucune action (idempotent)
 //   C8. commande passée « prête » par le chef entre-temps         → l'horloge ne l'écrase pas
 //   C9. la tâche planifiée exportée tourne sans erreur
+//   C10. commande programmée dont l'heure de lancement est passée → « à cuisiner » (marquée « creneau »)
+//   C11. commande programmée pour plus tard                       → intacte
+//   C12. créneau du soir commandé le matin, prête depuis 1 h        → PAS clôturée (référence = heure de retrait)
 // Lancé via `npm run test:clock`.
 const path = require("node:path");
 const FUNC_DIR = path.join(__dirname, "..", "..", "functions");
@@ -29,8 +32,9 @@ const MIN = 60 * 1000;
 const NOW = Date.now();
 const orders = db.collection("commandes");
 const at = (agoMs) => Timestamp.fromMillis(NOW - agoMs);
+// Par défaut l'heure de retrait annoncée = l'heure de commande (cas « dès que possible »).
 const seedOrder = (id, statut, agoMs, extra = {}) =>
-  orders.doc(id).set({ snackId: "snack_clock", statut, date: at(agoMs), mode: "collect", clientNom: "Léa", secretCode: "K7Q2", ...extra });
+  orders.doc(id).set({ snackId: "snack_clock", statut, date: at(agoMs), eta: { readyAt: at(agoMs) }, mode: "collect", clientNom: "Léa", secretCode: "K7Q2", ...extra });
 const get = async (id) => (await orders.doc(id).get()).data();
 
 async function main() {
@@ -41,6 +45,10 @@ async function main() {
     seedOrder("c4_delivery_stale", "prete", 4 * 60 * MIN, { mode: "delivery" }),
     seedOrder("c5_ready_recent", "prete", 60 * MIN),
     seedOrder("c6_cooking_old", "nouvelle", 4 * 60 * MIN),
+    seedOrder("c10_scheduled_due", "programmee", 60 * MIN, { retrait: { mode: "creneau", heure: at(-10 * MIN), lancerA: at(2 * MIN) } }),
+    seedOrder("c11_scheduled_later", "programmee", 60 * MIN, { retrait: { mode: "creneau", heure: at(-3 * 60 * MIN), lancerA: at(-170 * MIN) } }),
+    // Commandée il y a 10 h pour un retrait il y a 1 h, toujours pas venue chercher.
+    seedOrder("c12_evening_slot", "prete", 10 * 60 * MIN, { eta: { readyAt: at(60 * MIN) } }),
   ]);
 
   const first = await runOrderClock({ nowMs: NOW });
@@ -53,10 +61,16 @@ async function main() {
   ok("C4 livraison prête depuis 4 h → intacte", (await get("c4_delivery_stale")).statut === "prete");
   ok("C5 prête depuis 1 h → intacte", (await get("c5_ready_recent")).statut === "prete");
   ok("C6 à cuisiner depuis 4 h → intacte", (await get("c6_cooking_old")).statut === "nouvelle");
-  ok("Premier tour : 1 lancée, 1 close, aucune erreur", first.released === 1 && first.closed === 1 && first.errors === 0, JSON.stringify(first));
+  const c10 = await get("c10_scheduled_due");
+  ok("C10 programmée, lancement dépassé → à cuisiner", c10.statut === "nouvelle" && c10.lancementAuto === "creneau" && !!c10.dateLancement);
+  ok("C11 programmée pour plus tard → intacte", (await get("c11_scheduled_later")).statut === "programmee");
+  ok("C12 créneau du soir prêt depuis 1 h → pas clôturé", (await get("c12_evening_slot")).statut === "prete");
+  ok("Premier tour : 1 programmée lancée, 1 en attente lancée, 1 close, aucune erreur",
+    first.launched === 1 && first.released === 1 && first.closed === 1 && first.errors === 0, JSON.stringify(first));
 
   const second = await runOrderClock({ nowMs: NOW });
-  ok("C7 second tour → aucune action (idempotent)", second.released === 0 && second.closed === 0 && second.errors === 0, JSON.stringify(second));
+  ok("C7 second tour → aucune action (idempotent)",
+    second.launched === 0 && second.released === 0 && second.closed === 0 && second.errors === 0, JSON.stringify(second));
 
   // C8 — le chef a marqué « prête » une commande en attente (ancien parcours) juste avant
   // le tour d'horloge : la transaction revérifie le statut et ne la relance pas.

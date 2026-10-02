@@ -289,8 +289,38 @@ function startOrderTracking(orderId) {
           }
         }
 
-        // ⚪ STATUT 1 : EN ATTENTE DU CLIENT
-        if (commande.statut === "en_attente_client") {
+        // 🕒 STATUT : PROGRAMMÉE (créneau « plus tard ») — l'horloge des commandes
+        // la lance en cuisine à l'heure du créneau moins la préparation.
+        if (commande.statut === "programmee") {
+          const at = commande.retrait?.heure?.toDate ? commande.retrait.heure.toDate() : null;
+          const hh = at ? at.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: window.snackConfig?.timezone || "Europe/Paris" }) : "";
+          if (trackingBadge) trackingBadge.className = badgeClass("waiting");
+          if (badgeText) badgeText.textContent = hh ? `Retrait à ${hh}` : "Commande programmée";
+          if (iconContainer) {
+            iconContainer.className =
+              "w-24 h-24 bg-surface-2 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+          }
+          window.swapIcon?.(icon, "clock", "text-5xl text-text-muted transition-transform duration-500");
+          if (title) {
+            title.textContent = hh ? `Retrait à ${hh}` : "Commande programmée";
+            title.className = "text-3xl font-black text-text tracking-tight";
+          }
+          if (subtitle) {
+            subtitle.innerHTML = `Commande confirmée. On lance la cuisson à temps pour qu'elle soit prête à l'heure.${receiptHTML(commande)}`;
+          }
+          if (actionBtn) {
+            actionBtn.textContent = "Parfait !";
+            actionBtn.className =
+              "w-full bg-primary text-on-primary font-black py-4 rounded-xl text-lg shadow-lg hover:opacity-90 transition active:scale-95";
+            actionBtn.setAttribute("aria-label", "Fermer la fenêtre de suivi de commande");
+            actionBtn.removeAttribute("onclick");
+            actionBtn.setAttribute("data-action", "close-tracking-modal");
+            actionBtn.removeAttribute("data-id");
+          }
+          renderNotifPrompt();
+        }
+        // ⚪ STATUT 1 : EN ATTENTE DU CLIENT (ancien parcours, transition)
+        else if (commande.statut === "en_attente_client") {
           if (trackingBadge) {
             trackingBadge.className = badgeClass("waiting");
           }
