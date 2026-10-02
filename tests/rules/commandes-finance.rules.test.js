@@ -6,7 +6,7 @@ import {
   assertFails,
   assertSucceeds,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, setDoc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { readFileSync } from "node:fs";
 import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
 
@@ -101,5 +101,22 @@ describe("commandes — liste blanche admin (statut + paiement.statut)", () => {
     });
     const db = testEnv.authenticatedContext("admin_B").firestore();
     await assertFails(updateDoc(doc(db, "commandes", "cmd1"), { statut: "prete" }));
+  });
+});
+
+describe("commandes — horodatage « prête » (lot 2e)", () => {
+  it("AUTORISE l'admin à passer « prête » avec l'heure du serveur", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertSucceeds(updateDoc(doc(db, "commandes", "cmd1"), { statut: "prete", datePrete: serverTimestamp() }));
+  });
+
+  it("REFUSE une heure choisie par le client (rappel / « prête depuis » faussés)", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertFails(updateDoc(doc(db, "commandes", "cmd1"), { statut: "prete", datePrete: Timestamp.fromMillis(Date.now() - 3600000) }));
+  });
+
+  it("REFUSE de poser datePrete sans passer « prête »", async () => {
+    const db = testEnv.authenticatedContext("admin_A").firestore();
+    await assertFails(updateDoc(doc(db, "commandes", "cmd1"), { datePrete: serverTimestamp() }));
   });
 });

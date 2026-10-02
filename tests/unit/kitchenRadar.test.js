@@ -26,7 +26,7 @@ vi.mock("../../src/core/firebase.js", () => ({
 }));
 
 const fb = await import("../../src/core/firebase.js");
-const { kitchenAlertFor } = await import("../../src/admin-kitchen.js");
+const { kitchenAlertFor, readyAgeInfo } = await import("../../src/admin-kitchen.js");
 
 const order = (statut, over = {}) => ({ statut, snackId: "snackA", clientNom: "Léa", items: [], total: 12, ...over });
 const change = (type, id, data, { own = false } = {}) => ({
@@ -142,5 +142,34 @@ describe("commande programmée (créneau « plus tard »)", () => {
     push(change("modified", "s1", { ...scheduled, statut: "nouvelle", lancementAuto: "creneau" }));
     expect(document.querySelector("#orders-new #ticket-s1")).not.toBeNull();
     expect(bell.play).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("« Prête depuis X min » (lot 2e)", () => {
+  const ts = (ms) => ({ toMillis: () => ms });
+  const NOW = Date.parse("2026-09-23T10:30:00Z");
+
+  it.each([
+    [0, "ok"], [4, "ok"], [5, "warn"], [9, "warn"], [10, "late"], [42, "late"],
+  ])("%i min → %s", (min, level) => {
+    expect(readyAgeInfo(ts(NOW - min * 60000), NOW)).toEqual({ minutes: min, level });
+  });
+
+  it("sans horodatage (commande ancienne) → rien", () => {
+    expect(readyAgeInfo(undefined, NOW)).toBeNull();
+  });
+
+  it("le ticket de la colonne Prête affiche l'ancienneté, en orange après 5 min", () => {
+    document.body.innerHTML = `
+      <audio id="kitchen-bell"></audio>
+      <div id="orders-waiting"></div><div id="orders-new"></div><div id="orders-ready"></div>`;
+    document.getElementById("kitchen-bell").play = vi.fn().mockResolvedValue();
+    window.currentAdminSnackId = "snackA";
+    window.startKitchenRadar();
+    push(change("added", "r1", order("prete", { datePrete: ts(Date.now() - 7 * 60000) })));
+    const badge = document.querySelector("#orders-ready #ticket-r1 [data-ready-age]");
+    expect(badge.textContent).toBe("Prête depuis 7 min");
+    expect(badge.className).toContain("amber");
+    window.stopKitchenRadar();
   });
 });

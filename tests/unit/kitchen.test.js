@@ -13,6 +13,7 @@ vi.mock("../../src/core/firebase.js", () => ({
   writeBatch: vi.fn(),
   getDoc: vi.fn(),
   increment: vi.fn((n) => ({ __inc: n })),
+  serverTimestamp: vi.fn(() => "__serverTime__"),
   collection: vi.fn(),
   query: vi.fn(),
   where: vi.fn(),
@@ -163,10 +164,15 @@ describe("window.updateOrderStatus", () => {
     fb.updateDoc.mockResolvedValue();
   });
 
-  it("écrit le nouveau statut sur la bonne commande", async () => {
+  it("écrit le nouveau statut sur la bonne commande ; « prête » horodatée par le serveur", async () => {
     await window.updateOrderStatus("cmd1", "prete");
     expect(fb.doc).toHaveBeenCalledWith(fb.db, "commandes", "cmd1");
-    expect(fb.updateDoc.mock.calls[0][1]).toEqual({ statut: "prete" });
+    expect(fb.updateDoc.mock.calls[0][1]).toEqual({ statut: "prete", datePrete: "__serverTime__" });
+  });
+
+  it("autre statut : pas de datePrete", async () => {
+    await window.updateOrderStatus("cmd1", "terminee");
+    expect(fb.updateDoc.mock.calls[0][1]).toEqual({ statut: "terminee" });
   });
 
   it("erreur Firestore → catchée (pas de throw)", async () => {

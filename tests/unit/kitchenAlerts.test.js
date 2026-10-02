@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const {
   buildNewOrderAlert, buildClientArrivingAlert, buildAutoReleaseAlert, buildPreparingNotification,
+  buildPickupReminderNotification,
   isClientArrival, isScheduledLaunch,
 } = require("../../functions/lib/kitchenAlerts.js");
 
@@ -64,5 +65,12 @@ describe("isScheduledLaunch", () => {
     expect(isScheduledLaunch({ statut: "programmee" }, { statut: "nouvelle" })).toBe(true);
     expect(isScheduledLaunch({ statut: "en_attente_client" }, { statut: "nouvelle" })).toBe(false);
     expect(isScheduledLaunch({ statut: "programmee" }, { statut: "terminee" })).toBe(false);
+  });
+});
+
+describe("buildPickupReminderNotification", () => {
+  it("rappelle où et avec quel code", () => {
+    expect(buildPickupReminderNotification({ secretCode: "K7Q2" }, "x"))
+      .toEqual({ title: "🍟 Votre commande vous attend", body: "Au comptoir · code K7Q2" });
   });
 });

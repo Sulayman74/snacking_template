@@ -12,6 +12,11 @@
 //   C10. commande programmée dont l'heure de lancement est passée → « à cuisiner » (marquée « creneau »)
 //   C11. commande programmée pour plus tard                       → intacte
 //   C12. créneau du soir commandé le matin, prête depuis 1 h        → PAS clôturée (référence = heure de retrait)
+//   C13. prête depuis 6 min, heure annoncée passée                  → UN rappel push au client (+ marque)
+//   C14. prête depuis 2 min                                         → pas encore de rappel
+//   C15. créneau : prête en avance, heure choisie pas encore atteinte → pas de rappel
+//   C16. livraison prête depuis 6 min                               → pas de rappel (le livreur vient)
+//   C17. tours suivants                                             → jamais un second rappel
 // Lancé via `npm run test:clock`.
 const path = require("node:path");
 const FUNC_DIR = path.join(__dirname, "..", "..", "functions");
@@ -25,6 +30,12 @@ const { runOrderClock } = funcRequire("./lib/orderClock");
 const { Timestamp } = funcRequire("firebase-admin/firestore");
 
 const db = admin.firestore();
+// FCM simulé : on compte les envois, rien ne part réellement.
+const sentPush = [];
+funcRequire("firebase-admin/messaging").getMessaging().sendEachForMulticast = async (msg) => {
+  sentPush.push(msg);
+  return { responses: msg.tokens.map(() => ({ success: true })), successCount: msg.tokens.length, failureCount: 0 };
+};
 const results = [];
 const ok = (name, cond, detail) => { results.push(!!cond); console.log(`${cond ? "✅" : "❌"} ${name}${detail ? ` — ${detail}` : ""}`); };
 
@@ -38,6 +49,17 @@ const seedOrder = (id, statut, agoMs, extra = {}) =>
 const get = async (id) => (await orders.doc(id).get()).data();
 
 async function main() {
+  // Client avec un appareil push (jeton « legacy » sur son profil).
+  await db.collection("users").doc("client_clock").set({ role: "client", fcmToken: `tok_clock_${"x".repeat(40)}` });
+  const readyFor = (id, readyAgoMs, promisedAgoMs, extra = {}) => seedOrder(id, "prete", 30 * MIN, {
+    userId: "client_clock", datePrete: at(readyAgoMs), eta: { readyAt: at(promisedAgoMs) }, ...extra,
+  });
+  await Promise.all([
+    readyFor("c13_remind", 6 * MIN, 10 * MIN),
+    readyFor("c14_too_soon", 2 * MIN, 10 * MIN),
+    readyFor("c15_slot_early", 6 * MIN, -10 * MIN),
+    readyFor("c16_delivery", 6 * MIN, 10 * MIN, { mode: "delivery" }),
+  ]);
   await Promise.all([
     seedOrder("c1_waiting_old", "en_attente_client", 25 * MIN),
     seedOrder("c2_waiting_recent", "en_attente_client", 5 * MIN),
@@ -65,12 +87,23 @@ async function main() {
   ok("C10 programmée, lancement dépassé → à cuisiner", c10.statut === "nouvelle" && c10.lancementAuto === "creneau" && !!c10.dateLancement);
   ok("C11 programmée pour plus tard → intacte", (await get("c11_scheduled_later")).statut === "programmee");
   ok("C12 créneau du soir prêt depuis 1 h → pas clôturé", (await get("c12_evening_slot")).statut === "prete");
-  ok("Premier tour : 1 programmée lancée, 1 en attente lancée, 1 close, aucune erreur",
-    first.launched === 1 && first.released === 1 && first.closed === 1 && first.errors === 0, JSON.stringify(first));
+  ok("Premier tour : 1 programmée lancée, 1 en attente lancée, 1 rappel, 1 close, aucune erreur",
+    first.launched === 1 && first.released === 1 && first.reminded === 1 && first.closed === 1 && first.errors === 0, JSON.stringify(first));
+
+  const c13 = await get("c13_remind");
+  ok("C13 prête depuis 6 min → un rappel au client, marqué",
+    !!c13.rappelEnvoyeAt && sentPush.length === 1 &&
+      sentPush[0].notification?.title === "🍟 Votre commande vous attend" &&
+      sentPush[0].notification?.body === "Au comptoir · code K7Q2",
+    JSON.stringify(sentPush[0]?.notification));
+  ok("C14 prête depuis 2 min → pas encore", !(await get("c14_too_soon")).rappelEnvoyeAt);
+  ok("C15 créneau pas encore atteint → pas de rappel", !(await get("c15_slot_early")).rappelEnvoyeAt);
+  ok("C16 livraison → pas de rappel", !(await get("c16_delivery")).rappelEnvoyeAt);
 
   const second = await runOrderClock({ nowMs: NOW });
   ok("C7 second tour → aucune action (idempotent)",
-    second.launched === 0 && second.released === 0 && second.closed === 0 && second.errors === 0, JSON.stringify(second));
+    second.launched === 0 && second.released === 0 && second.reminded === 0 && second.closed === 0 && second.errors === 0, JSON.stringify(second));
+  ok("C17 jamais un second rappel", sentPush.length === 1, `push envoyés=${sentPush.length}`);
 
   // C8 — le chef a marqué « prête » une commande en attente (ancien parcours) juste avant
   // le tour d'horloge : la transaction revérifie le statut et ne la relance pas.

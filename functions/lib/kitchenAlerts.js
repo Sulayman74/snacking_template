@@ -50,6 +50,14 @@ function buildPreparingNotification(order, orderId, timeZone = "Europe/Paris") {
   };
 }
 
+/** Rappel CLIENT : commande prête, pas encore récupérée. */
+function buildPickupReminderNotification(order, orderId) {
+  return {
+    title: "🍟 Votre commande vous attend",
+    body: `Au comptoir · code ${pickupCode(order, orderId)}`,
+  };
+}
+
 /** Une commande programmée passe en cuisine (horloge ou « Lancer » du chef). */
 function isScheduledLaunch(before, after) {
   return before?.statut === "programmee" && after?.statut === "nouvelle";
@@ -65,6 +73,7 @@ module.exports = {
   buildClientArrivingAlert,
   buildAutoReleaseAlert,
   buildPreparingNotification,
+  buildPickupReminderNotification,
   isClientArrival,
   isScheduledLaunch,
 };

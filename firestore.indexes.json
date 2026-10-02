@@ -52,6 +52,14 @@
       "collectionGroup": "commandes",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "datePrete", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commandes",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "snackId", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
