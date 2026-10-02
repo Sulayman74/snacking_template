@@ -101,6 +101,18 @@ Récap des points à brancher (≈ 6 étapes) :
    }
    ```
 
+   Options facultatives pour les icônes : `iconMaskableScale` (0-1, défaut 0.7 — mettre 1 si le
+   visuel est déjà conçu pour Android « maskable ») et `iconBackground` (`#rrggbb`, fond forcé des
+   marges ; par défaut la couleur de bord du logo, ou `theme_color` si le logo est transparent).
+
+2 bis. **Icônes PWA** — génère puis commite le jeu PNG (favicons, Android any/maskable, iOS) :
+   ```bash
+   npm run icons:generate -- --snack=MON_NOUVEAU_SNACK_ID          # depuis iconUrl / logoUrl
+   npm run icons:generate -- --snack=MON_NOUVEAU_SNACK_ID --from=./logo.png   # ou un fichier local
+   ```
+   Sortie : `public/icons/MON_NOUVEAU_SNACK_ID/`. Sans ce jeu, le build retombe sur le logo webp
+   (fonctionne, mais rendu moins propre sur Android). À relancer quand le logo change.
+
 3. **`package.json`** — ajoute les scripts build/deploy du tenant :
    ```jsonc
    "build:monresto":  "SNACK_ID=MON_NOUVEAU_SNACK_ID vite build",

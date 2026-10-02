@@ -53,6 +53,7 @@
     "lightHex": "#C8D8E9",
     "accentHex": "#B88A44",
     "fontKey": "outfit",
-    "shadowClass": "shadow-blue-900/40"
+    "shadowClass": "shadow-blue-900/40",
+    "iconMaskableScale": 1
   }
 }
