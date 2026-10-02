@@ -7,6 +7,10 @@
 
 const DEFAULT_UPSELL_CATEGORIES = /(drinks?|boissons?|sides?|accompagnements?|desserts?|glaces?|cafes?|coffee)/i;
 const COOKING_CATEGORIES = /(sides?|accompagnements?|frites?|cuisson)/i;
+const DRINK_CATEGORIES = /(drinks?|boissons?)/i;
+const HOT_DRINK = /(chaud|cafe|coffee)/i;
+// Boisson fraîche (celle d'un menu) : le café reste proposable après un menu.
+const isColdDrink = (cat) => DRINK_CATEGORIES.test(cat) && !HOT_DRINK.test(cat);
 
 /**
  * Calcule et ordonne les suggestions d'upsell pour le panier courant.
@@ -41,6 +45,14 @@ export function calculateUpsellScoring(cart = [], menu = [], options = {}) {
         )
     );
 
+    // Le client a déjà sa boisson fraîche (menu ou canette seule) : on ne lui en
+    // repropose pas.
+    const categoryOf = new Map(menu.map((p) => [p?.id, typeof p?.categorieId === "string" ? p.categorieId : ""]));
+    const hasDrink = (Array.isArray(cart) ? cart : []).some((item) =>
+        item?.formule === "menu" || item?.boisson ||
+        isColdDrink(categoryOf.get(item?.productId || (typeof item?.id === "string" ? item.id.split("-")[0] : item?.id)) || "")
+    );
+
     // 2. Filtrage dur d'éligibilité
     const eligible = menu.filter((product) => {
         if (!product || product.isAvailable === false) return false;
@@ -49,6 +61,7 @@ export function calculateUpsellScoring(cart = [], menu = [], options = {}) {
         // Restriction de catégorie éligible à l'upsell
         const cat = typeof product.categorieId === "string" ? product.categorieId : "";
         if (categoryFilter && !categoryFilter.test(cat)) return false;
+        if (hasDrink && isColdDrink(cat)) return false;
 
         // Rush mode : exclusion des produits de cuisson
         if (isRushMode) {
@@ -106,8 +119,20 @@ export function calculateUpsellScoring(cart = [], menu = [], options = {}) {
         return { product, score };
     });
 
-    // 4. Tri décroissant et sélection des Top N
+    // 4. Tri décroissant ; une suggestion par catégorie d'abord (boisson, dessert,
+    // accompagnement plutôt que trois boissons), puis complément au score.
     scored.sort((a, b) => b.score - a.score);
+    const picked = [];
+    const seenCats = new Set();
+    for (const entry of scored) {
+        const cat = entry.product.categorieId || "";
+        if (seenCats.has(cat)) continue;
+        seenCats.add(cat);
+        picked.push(entry);
+    }
+    for (const entry of scored) {
+        if (!picked.includes(entry)) picked.push(entry);
+    }
 
-    return scored.slice(0, maxItems).map((entry) => entry.product);
+    return picked.slice(0, maxItems).map((entry) => entry.product);
 }

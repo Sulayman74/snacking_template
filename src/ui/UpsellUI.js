@@ -5,6 +5,8 @@
  *   - Source des suggestions : store.getUpsellSuggestions()
  *   - Action "Ajouter"      : store.addToCart()
  *   - Décision finale       : Promise<"continue"|"cancel">
+ *     « Non merci » et le fond → "continue" (on va payer) ; croix/Échap → "cancel"
+ *     (retour panier). Proposé une seule fois par session.
  *
  * Pattern Promise (cf. ModalManager.confirmAction) : show() ouvre la sheet,
  * cleanup() la ferme et résout. Permet `await upsellUI.show()` dans le checkout.
@@ -29,6 +31,12 @@ class UpsellUI {
 
         this.boundKeydown = (e) => this.#handleKeydown(e);
         this.lastFocused = null;
+        this.offered = false;
+    }
+
+    /** Vaut-il la peine de préparer l'upsell (appel charge cuisine compris) ? */
+    shouldOffer() {
+        return !this.offered && store.getUpsellSuggestions(3).length > 0;
     }
 
     /**
@@ -47,8 +55,10 @@ class UpsellUI {
                 return resolve("continue");
             }
 
+            if (this.offered) return resolve("continue");
             const suggestions = store.getUpsellSuggestions(3, { rushMode });
             if (suggestions.length === 0) return resolve("continue");
+            this.offered = true;
 
             this.#renderSuggestions(suggestions);
             this.#open();
@@ -69,7 +79,8 @@ class UpsellUI {
                 const trigger = e.target.closest("[data-upsell-action]");
                 if (!trigger) return;
                 const action = trigger.getAttribute("data-upsell-action");
-                if (action === "continue" || action === "cancel") cleanup(action);
+                if (action === "continue" || action === "skip") cleanup("continue");
+                else if (action === "cancel") cleanup("cancel");
             };
 
             this.sheet.addEventListener("click", onSheetClick);

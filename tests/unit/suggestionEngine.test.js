@@ -73,3 +73,39 @@ describe("Moteur de Suggestion (calculateUpsellScoring)", () => {
     expect(suggestions).toHaveLength(2);
   });
 });
+
+describe("Upsell — pas de boisson en double, catégories variées (audit UX-2)", () => {
+  const menu = [
+    { id: "burger", categorieId: "burgers", prix: 9.5 },
+    { id: "coca", categorieId: "boissons", prix: 2 },
+    { id: "fanta", categorieId: "boissons", prix: 2 },
+    { id: "ice_tea", categorieId: "boissons", prix: 2 },
+    { id: "cafe", categorieId: "boisson-chaude", prix: 1.5 },
+    { id: "frites", categorieId: "accompagnements", prix: 3 },
+    { id: "tiramisu", categorieId: "dessert", prix: 4 },
+  ];
+  const ids = (cart, opts = {}) => calculateUpsellScoring(cart, menu, { currentHour: 12, weatherCondition: "hot", ...opts }).map((p) => p.id);
+
+  it("menu (boisson incluse) au panier → aucune boisson fraîche, le café reste proposable", () => {
+    const got = ids([{ productId: "burger", formule: "menu", boisson: "Coca" }], { maxItems: 10 });
+    expect(got.filter((id) => ["coca", "fanta", "ice_tea"].includes(id))).toHaveLength(0);
+    expect(got).toContain("cafe");
+  });
+
+  it("boisson seule au panier → pas d'autre boisson fraîche", () => {
+    const got = ids([{ productId: "coca" }], { maxItems: 10 });
+    expect(got.filter((id) => ["fanta", "ice_tea"].includes(id))).toHaveLength(0);
+  });
+
+  it("burger seul → une suggestion par catégorie, pas trois boissons", () => {
+    const got = ids([{ productId: "burger", formule: "seul" }]);
+    expect(got).toHaveLength(3);
+    const cats = got.map((id) => menu.find((p) => p.id === id).categorieId);
+    expect(new Set(cats).size).toBe(3);
+  });
+
+  it("une seule catégorie disponible → on complète quand même jusqu'au maximum", () => {
+    const onlyDrinks = menu.filter((p) => p.categorieId === "boissons");
+    expect(calculateUpsellScoring([], onlyDrinks, { maxItems: 3 })).toHaveLength(3);
+  });
+});
