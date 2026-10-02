@@ -33,6 +33,9 @@ test('le précache ne contient que la coquille client', () => {
   expect(urls.some((u) => /^assets\/styles-.*\.css$/.test(u))).toBe(true);
   const staff = urls.filter((u) => /^(admin|livreur|superadmin)\.html$|^assets\/(admin|livreur|superadmin)-|^sounds\/|firebase-messaging-sw/.test(u));
   expect(staff, 'fichiers back-office précachés pour les clients').toEqual([]);
+  const lazyOnly = urls.filter((u) => /^assets\/(html5-qrcode|qrcode)-/.test(u));
+  expect(lazyOnly, 'chunks chargés à la demande précachés pour rien').toEqual([]);
+  expect(urls.some((u) => /^assets\/firebase-.*\.js$/.test(u)), 'SDK Firebase dans son chunk stable').toBe(true);
 });
 
 test('client hors-ligne dès la 1re visite : page et scripts servis par le SW', async ({ browser }) => {

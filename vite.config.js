@@ -187,6 +187,9 @@ export default defineConfig(({ command, mode }) => {
           globIgnores: [
             'admin.html', 'livreur.html', 'superadmin.html',
             'assets/admin-*.js', 'assets/livreur-*.js', 'assets/superadmin-*.js',
+            // Chargés à la demande seulement (scanner admin, carte fidélité) : 116 Ko gz que
+            // chaque visiteur téléchargeait pour rien à la 1re visite.
+            'assets/html5-qrcode-*.js', 'assets/qrcode-*.js',
           ],
         },
         manifest: {
@@ -236,7 +239,22 @@ export default defineConfig(({ command, mode }) => {
           superadmin: resolve(__dirname, 'superadmin.html'),
           legal: resolve(__dirname, 'legal.html'),
           livreur: resolve(__dirname, 'livreur.html')
-        }
+        },
+        output: {
+          // 📦 Chunks nommés et STABLES :
+          //  - firebase : le SDK (~200 Ko gz) dans son propre chunk → son hash ne change plus
+          //    à chaque modification du code applicatif, les habitués ne le retéléchargent pas
+          //    après chaque déploiement (avant : mélangé au code app dans « sw-update-*.js »).
+          //  - html5-qrcode (scanner admin) et qrcode (carte fidélité) : chargés à la demande,
+          //    nommés pour être EXCLUS du précache (cf. injectManifest.globIgnores).
+          manualChunks(id) {
+            if (!id.includes('node_modules/')) return undefined
+            if (/node_modules\/html5-qrcode\//.test(id)) return 'html5-qrcode'
+            if (/node_modules\/(qrcode|dijkstrajs|encode-utf8|pngjs)\//.test(id)) return 'qrcode'
+            if (/node_modules\/(@firebase|firebase|idb|tslib)\//.test(id)) return 'firebase'
+            return undefined
+          },
+        },
       }
     }
   }
