@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint:theming": "node scripts/check-theming.mjs",
+    "typecheck:functions": "tsc -p functions/jsconfig.json",
     "icons:generate": "node scripts/generate-icons.mjs",
     "perf:build": "VITE_E2E_TESTING=true SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 vite build --outDir .perf/dist",
     "perf:lighthouse": "npm run perf:build && firebase emulators:exec --only auth,firestore,functions,storage --project snacking-template \"node scripts/perf-lighthouse.mjs\"",
@@ -70,6 +71,7 @@
     "madge": "^8.0.0",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.8",
@@ -89,6 +91,7 @@
     "idb-keyval": "^6.3.0",
     "lit": "^3.3.3",
     "lucide": "^1.18.0",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "valibot": "^1.5.0"
   }
 }

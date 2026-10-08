@@ -1,7 +1,19 @@
 // ============================================================================
-// 🖼️ MÉDIA — optimisation d'images (Sharp)
+// 🖼️ MÉDIA — codebase « media » : optimisation d'images (Sharp)
+// ----------------------------------------------------------------------------
+// Codebase Firebase SÉPARÉ (firebase.json → functions[] : source "functions-media",
+// codebase "media"). sharp (~16 Mo de binaires libvips) n'est installé et chargé
+// QUE par cette function : les ~50 autres (checkout, webhooks, schedules…) du
+// codebase « default » (./functions) n'en portent plus le poids au cold start.
+// Aucune dépendance vers ./functions : ce dossier est empaqueté SEUL au déploiement.
+//
+// Déploiement : `firebase deploy --only functions` (tous les codebases) ou
+// `firebase deploy --only functions:media`. Cf. docs/FUNCTIONS-CODEBASES.md.
+// Règle d'or inchangée : ne jamais renommer `optimizeImage` (renommer = delete+create).
 // ============================================================================
 
+const admin = require("firebase-admin");
+const { setGlobalOptions } = require("firebase-functions/v2");
 const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const { getStorage } = require("firebase-admin/storage");
 const logger = require("firebase-functions/logger");
@@ -9,6 +21,11 @@ const path = require("path");
 const os = require("os");
 const fs = require("fs");
 const sharp = require("sharp");
+
+admin.initializeApp();
+// Mêmes options globales que functions/lib/admin.js : la function garde sa région
+// (europe-west9) et son plafond → le déploiement la met à jour EN PLACE.
+setGlobalOptions({ region: "europe-west9", maxInstances: 10 });
 
 exports.optimizeImage = onObjectFinalized(
   { memory: "512MiB" },

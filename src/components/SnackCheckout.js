@@ -2,6 +2,8 @@ import { html } from 'lit';
 import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
 import { buildOrderItemsPayload } from '../core/orderPayload.js';
+// Schémas de commande PARTAGÉS avec les Cloud Functions (une seule source, mêmes messages).
+import { CreatePaymentIntentInputSchema, validateOrderInput } from '../../functions/shared/orderSchemas.mjs';
 import { getStorefrontStatus } from '../core/storefrontStatus.js';
 import { statusSentence } from '../ui/statusMessage.js';
 import { isValidPhone } from '../services/addressService.js';
@@ -200,8 +202,7 @@ export class SnackCheckout extends SnackElement {
       const ticketSummary = store.state.cart.map((item) => `${item.quantity}x ${item.nom}`).join(", ");
       const { mode, livraison } = this._getDeliveryPayload();
 
-      console.info("[checkout] 2/4 createPaymentIntent");
-      const response = await withTimeout(createPaymentIntent({
+      const payload = {
         snackId: cfg.identity.id || "Ym1YiO4Ue5Fb5UXlxr06",
         amount: Math.round(this.totalAmount * 100),
         currency: "eur",
@@ -214,7 +215,19 @@ export class SnackCheckout extends SnackElement {
           ticket: ticketSummary.substring(0, 500),
           clientEmail: currentUser?.email || "",
         },
-      }), STEP_TIMEOUT_MS, "createPaymentIntent");
+      };
+      // 🛡️ Même schéma que le serveur (functions/shared/orderSchemas.mjs) : un payload
+      // que createPaymentIntent rejetterait est bloqué ICI, avant tout aller-retour et
+      // avant Stripe, avec le message exact de la Cloud Function (code invalid-argument
+      // → affiché tel quel par le catch). Volontairement PAS d'équivalent devant
+      // finalizeOrder : une fois le paiement capturé, le serveur reste seul juge.
+      const check = validateOrderInput(CreatePaymentIntentInputSchema, payload);
+      if (!check.ok) {
+        throw Object.assign(new Error(check.message), { code: "invalid-argument", step: "validation" });
+      }
+
+      console.info("[checkout] 2/4 createPaymentIntent");
+      const response = await withTimeout(createPaymentIntent(payload), STEP_TIMEOUT_MS, "createPaymentIntent");
 
       const clientSecret = response.data?.clientSecret;
       if (!clientSecret) throw new Error(t('payment.invalidResponse'));

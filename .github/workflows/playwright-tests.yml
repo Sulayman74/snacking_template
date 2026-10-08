@@ -52,6 +52,11 @@ jobs:
       - name: 📦 Dépendances (functions, pour le seed)
         run: npm ci --prefix functions
 
+      # L'émulateur Functions charge AUSSI le codebase « media » (functions-media/,
+      # optimizeImage + sharp) : ses dépendances doivent être installées.
+      - name: 📦 Dépendances (functions-media, codebase media)
+        run: npm ci --prefix functions-media
+
       - name: 🔧 Firebase CLI
         run: npm install -g firebase-tools
 

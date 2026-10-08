@@ -98,6 +98,7 @@ async function getStaffPushTargets(snackId, role) {
   ]);
   const staffUids = new Set(staffSnap.docs.map((d) => d.id));
   // Un abonnement dont le compte a perdu le rôle (ex. livreur retiré) ne reçoit plus rien.
+  /** @type {Array<{token: string, uid: string, subRef?: object, legacy?: boolean}>} */
   const targets = subsSnap.docs.filter((d) => staffUids.has(d.data().uid)).map(fromSubscription);
 
   // Legacy : membres sans aucun abonnement (app pas encore mise à jour).

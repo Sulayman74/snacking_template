@@ -5,7 +5,9 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getStripe, STRIPE_SECRET_KEY } = require("../lib/stripe");
 const { db, FieldValue } = require("../lib/admin");
-const { V, require_, assertLivraisonInput } = require("../lib/validation");
+const { V, require_, parseInput } = require("../lib/validation");
+// Schémas de commande PARTAGÉS avec le client (ESM, chargé par require() natif — Node ≥ 22.12).
+const { CreatePaymentIntentInputSchema, FinalizeOrderInputSchema } = require("../shared/orderSchemas.mjs");
 const { enforceRateLimit, callerKey } = require("../lib/rateLimit");
 const { assertCallerIsSnackAdmin } = require("../lib/auth");
 const { computeAuthoritativeOrder } = require("../lib/pricing");
@@ -37,7 +39,15 @@ function sanitizeStripeMetadata(metadata) {
 // ============================================================================
 
 exports.createPaymentIntent = onCall(
-  { region: "europe-west1", secrets: [STRIPE_SECRET_KEY] },
+  {
+    region: "europe-west1",
+    secrets: [STRIPE_SECRET_KEY],
+    // 🔥 Dès que de VRAIS clients commandent : ajouter `minInstances: 1` pour garder
+    // une instance chaude (1er appel du tunnel de paiement ; sinon cold start ~1-2 s
+    // au clic « Payer » après une période creuse). Une seule instance sert TOUS les
+    // restaurants (multi-tenant) : coût fixe ≈ 3 $/mois même sans trafic, d'où
+    // l'option laissée désactivée tant que le projet est en démo.
+  },
   async (request) => {
     const stripe = getStripe();
 
@@ -55,50 +65,19 @@ exports.createPaymentIntent = onCall(
       windowMs: 60_000,
     });
 
-    // 🛡️ Validation stricte des entrées
+    // 🛡️ Validation stricte des entrées — schéma PARTAGÉ avec le client
+    // (functions/shared/orderSchemas.mjs : mêmes règles, mêmes messages, une seule
+    // source). Forme + items + adresse de livraison si mode === "delivery" ;
+    // collect par défaut (legacy inchangé).
     const data = request.data;
-    require_(V.isPlainObject(data), "Payload invalide.");
+    const { orderMode } = parseInput(CreatePaymentIntentInputSchema, data);
 
     // 🛡️ ANTI CHARGE ORPHELINE (F1) — le montant du PaymentIntent est désormais
     // RECALCULÉ côté serveur depuis le panier + la config livraison (jamais le
     // `amount` client, conservé seulement pour compat/traçabilité). On valide donc
     // le panier AVANT de débiter : prix manipulé / hors-zone / minimum → rejet sans
     // aucune charge. Le client recalculait déjà côté UI ; ici c'est l'autorité.
-    const { currency, description, metadata, snackId, cartItems, mode, livraison, retrait } = data;
-
-    require_(V.isDocId(snackId), "snackId invalide.");
-    require_(V.isArray(cartItems) && cartItems.length > 0, "cartItems vide ou invalide.");
-    require_(cartItems.length <= 100, "Panier trop volumineux.");
-    require_(
-      currency === undefined || (V.isString(currency) && /^[a-z]{3}$/i.test(currency)),
-      "Devise invalide."
-    );
-    require_(
-      description === undefined ||
-        (V.isString(description) && description.length <= 1000),
-      "Description invalide."
-    );
-    require_(
-      metadata === undefined || V.isPlainObject(metadata),
-      "Metadata invalides."
-    );
-
-    // Validation détaillée de chaque item (même contrat que finalizeOrder).
-    for (const item of cartItems) {
-      require_(V.isPlainObject(item), "Item de panier invalide.");
-      require_(V.isNonEmptyString(item.nom, 200), "Nom d'item invalide.");
-      require_(
-        typeof item.prix === "number" && item.prix >= 0 && item.prix < 10_000,
-        "Prix d'item invalide."
-      );
-      require_(V.isPositiveInt(item.quantity, 100), "Quantité d'item invalide.");
-    }
-
-    // 🚚 Mode + adresse de livraison (collect par défaut → legacy inchangé).
-    const orderMode = mode === "delivery" ? "delivery" : "collect";
-    if (orderMode === "delivery") {
-      assertLivraisonInput(livraison);
-    }
+    const { description, metadata, snackId, cartItems, livraison, retrait } = data;
 
     try {
       // 1. Récupération du Snack (Tenant) + config Stripe Connect.
@@ -150,6 +129,7 @@ exports.createPaymentIntent = onCall(
       }
 
       // 3. Préparation des paramètres du PaymentIntent (montant = total serveur).
+      /** @type {import("stripe").Stripe.PaymentIntentCreateParams} */
       const params = {
         amount: totalCents,
         // 🛡️ Devise IMPOSÉE serveur : le montant est calculé en centimes d'euro.
@@ -239,9 +219,10 @@ exports.finalizeOrder = onCall(
       windowMs: 60_000,
     });
 
-    // 🛡️ Validation stricte
+    // 🛡️ Validation stricte — schéma PARTAGÉ avec le client (cf. createPaymentIntent) :
+    // forme du payload + items + adresse de livraison si mode === "delivery".
     const data = request.data;
-    require_(V.isPlainObject(data), "Payload invalide.");
+    const { orderMode } = parseInput(FinalizeOrderInputSchema, data);
 
     const {
       paymentIntentId,
@@ -251,43 +232,8 @@ exports.finalizeOrder = onCall(
       clientNom,
       totalCents,
       referrerId,
-      mode,
       livraison,
     } = data;
-
-    require_(V.isNonEmptyString(paymentIntentId, 200), "paymentIntentId invalide.");
-    require_(V.isDocId(snackId), "snackId invalide.");
-    require_(V.isArray(cartItems) && cartItems.length > 0, "cartItems vide ou invalide.");
-    require_(cartItems.length <= 100, "Panier trop volumineux.");
-    require_(V.isEmail(clientEmail), "clientEmail invalide.");
-    require_(
-      clientNom === undefined ||
-        clientNom === null ||
-        (V.isString(clientNom) && clientNom.length <= 100),
-      "clientNom invalide."
-    );
-    require_(V.isPositiveInt(totalCents, 1_000_000), "totalCents invalide.");
-    require_(
-      referrerId === undefined || referrerId === null || V.isDocId(referrerId),
-      "referrerId invalide."
-    );
-
-    // 🚚 Mode + adresse de livraison (collect par défaut → legacy inchangé).
-    const orderMode = mode === "delivery" ? "delivery" : "collect";
-    if (orderMode === "delivery") {
-      assertLivraisonInput(livraison);
-    }
-
-    // Validation détaillée de chaque item du panier
-    for (const item of cartItems) {
-      require_(V.isPlainObject(item), "Item de panier invalide.");
-      require_(V.isNonEmptyString(item.nom, 200), "Nom d'item invalide.");
-      require_(
-        typeof item.prix === "number" && item.prix >= 0 && item.prix < 10_000,
-        "Prix d'item invalide."
-      );
-      require_(V.isPositiveInt(item.quantity, 100), "Quantité d'item invalide.");
-    }
 
     // 2. Vérifier le PaymentIntent côté Stripe (le client ne peut pas falsifier ça)
     let paymentIntent;
