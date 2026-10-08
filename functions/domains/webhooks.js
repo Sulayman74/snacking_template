@@ -45,7 +45,8 @@ exports.stripeWebhook = onRequest({ region: "europe-west9", secrets: [STRIPE_SEC
         event = stripe.webhooks.constructEvent(request.rawBody, sig, endpointSecret);
     } catch (err) {
         console.error(`⚠️ Webhook signature verification failed.`, err.message);
-        return response.status(400).send(`Webhook Error: ${err.message}`);
+        response.status(400).send(`Webhook Error: ${err.message}`);
+        return;
     }
 
     // 🛡️ Idempotence — Stripe garantit une livraison "at-least-once" (retries).
@@ -58,10 +59,12 @@ exports.stripeWebhook = onRequest({ region: "europe-west9", secrets: [STRIPE_SEC
         });
     } catch (e) {
         if (e.code === 6 || e.code === "already-exists") {
-            return response.json({ received: true, duplicate: true });
+            response.json({ received: true, duplicate: true });
+            return;
         }
         console.error("❌ Erreur garde idempotence Webhook :", e);
-        return response.status(500).send("Internal Server Error");
+        response.status(500).send("Internal Server Error");
+        return;
     }
 
     try {

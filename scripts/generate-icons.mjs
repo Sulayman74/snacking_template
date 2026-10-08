@@ -14,7 +14,7 @@
  * Avec `--apps` : variantes maskable des 3 apps internes (admin / livreur / superadmin)
  * à partir de public/<app>-icon-512.png → public/<app>-icon-maskable-{192,512}.png.
  *
- * Usage (racine du repo, Node 24, `npm ci --prefix functions` fait — sharp y vit) :
+ * Usage (racine du repo, Node 24, `npm ci --prefix functions-media` fait — sharp y vit) :
  *   npm run icons:generate                        # tous les snacks de snacks-seo.json
  *   npm run icons:generate -- --snack=<id>        # un seul
  *   npm run icons:generate -- --snack=<id> --from=./logo.png   # depuis un fichier local
@@ -33,9 +33,10 @@ import {
 // PNG sans perte, compression maximale (≈ ÷3 par rapport au défaut ; icônes = fichiers froids).
 const PNG = { compressionLevel: 9, effort: 10 };
 
-// sharp est une dépendance des Cloud Functions (redimensionnement des photos) :
-// on la réutilise plutôt que d'alourdir la racine d'un binaire natif.
-const sharp = createRequire(join(process.cwd(), "functions", "index.js"))("sharp");
+// sharp est une dépendance du codebase Cloud Functions « media » (functions-media/,
+// redimensionnement des photos produits) : on la réutilise plutôt que d'alourdir
+// la racine d'un binaire natif.
+const sharp = createRequire(join(process.cwd(), "functions-media", "index.js"))("sharp");
 
 const args = process.argv.slice(2);
 const opt = (name) => args.find((a) => a.startsWith(`--${name}=`))?.split("=").slice(1).join("=");

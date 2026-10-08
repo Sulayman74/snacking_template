@@ -4,6 +4,16 @@
  * Module pur (sans Firebase/DOM) : le serveur (functions/lib/pricing.js) revalide
  * chaque prix unitaire contre la base, suppléments compris. Tout champ qui entre
  * dans `prix` doit donc être transmis, sinon le serveur rejette le prix (« Le prix de … a changé »).
+ *
+ * La FORME produite est celle de CartItemSchema (functions/shared/orderSchemas.mjs) :
+ * SnackCheckout la vérifie avant l'appel, le serveur la revalide à la réception.
+ */
+
+/** @typedef {import("../../functions/shared/orderSchemas.mjs").CartItemInput} CartItemInput */
+
+/**
+ * @param {Array<Record<string, any>>} [cart] Lignes du panier (store.state.cart).
+ * @returns {CartItemInput[]}
  */
 export function buildOrderItemsPayload(cart = []) {
   return cart.map((item) => ({

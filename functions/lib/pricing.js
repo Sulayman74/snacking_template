@@ -218,7 +218,7 @@ async function priceCartItems(cartItems, snackId) {
  * @param {Object|null} livraison - Adresse client {lat,lng,adresse} (mode delivery).
  * @param {{enforceOpeningHours?:boolean, beforePayment?:boolean, now?:Date}} [options] - Horaires contrôlés si
  *   enforceOpeningHours ; pause cuisine contrôlée si beforePayment (createPaymentIntent).
- * @returns {Promise<{itemsCents:number, lines:Array, fraisCents:number, totalCents:number, livraisonData:(Object|null), distanceKm:(number|null)}>}
+ * @returns {Promise<{itemsCents:number, lines:Array, orderItems:Array, fraisCents:number, totalCents:number, livraisonData:(Object|null), distanceKm:(number|null)}>}
  * @throws {HttpsError} prix manipulé / out-of-range / minimum non atteint / pause service.
  */
 async function computeAuthoritativeOrder(snackData, snackId, cartItems, orderMode, livraison, options = {}) {

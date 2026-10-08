@@ -6,6 +6,7 @@
 // ./lib/*.js. Ce fichier ne fait que ré-exporter — AUCUNE logique ici.
 // Règle d'or : ne jamais renommer une clé d'export (renommer = delete+create =
 // changement d'URL/coupure). Même nom → Firebase « updating only ».
+// Codebase « media » (sharp, optimizeImage) : ../functions-media — cf. docs/FUNCTIONS-CODEBASES.md.
 // ============================================================================
 
 // Side-effect AVANT tout : admin.initializeApp() + setGlobalOptions() une seule
@@ -22,7 +23,7 @@ module.exports = {
   ...require("./domains/notifications"),
   ...require("./domains/marketing"),
   ...require("./domains/admin-mgmt"),
-  ...require("./domains/media"),
+  // optimizeImage (sharp) vit dans le codebase « media » : ../functions-media/index.js
   ...require("./domains/football"),
   ...require("./domains/growth"),
   ...require("./domains/order-aggregations"),

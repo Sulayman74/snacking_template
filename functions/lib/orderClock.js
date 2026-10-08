@@ -23,6 +23,9 @@ const REMINDER_DELAY_MS = 5 * 60 * 1000;
 /**
  * Passe une commande d'un statut à un autre si elle y est TOUJOURS (le chef ou
  * le client a pu agir entre la requête et l'écriture).
+ * @param {import("firebase-admin/firestore").DocumentReference} ref
+ * @param {string} fromStatut
+ * @param {object} patch
  * @returns {Promise<boolean>} true si la commande a été modifiée.
  */
 async function transition(ref, fromStatut, patch) {
@@ -34,9 +37,16 @@ async function transition(ref, fromStatut, patch) {
   });
 }
 
-// Commandes d'un statut dont le champ horaire `field` est passé de `olderThanMs`.
-// `mode` (optionnel) filtre DANS la requête : des commandes exclues ensuite dans la
-// boucle seraient relues chaque minute et occuperaient le lot de BATCH_SIZE.
+/**
+ * Commandes d'un statut dont le champ horaire `field` est passé de `olderThanMs`.
+ * `mode` (optionnel) filtre DANS la requête : des commandes exclues ensuite dans la
+ * boucle seraient relues chaque minute et occuperaient le lot de BATCH_SIZE.
+ * @param {string} statut
+ * @param {string} field
+ * @param {number} olderThanMs
+ * @param {number} nowMs
+ * @param {{ direction?: "asc"|"desc", mode?: string }} [opts]
+ */
 async function dueOrders(statut, field, olderThanMs, nowMs, { direction = "asc", mode } = {}) {
   const cutoff = Timestamp.fromMillis(nowMs - olderThanMs);
   let q = db.collection("commandes").where("statut", "==", statut);

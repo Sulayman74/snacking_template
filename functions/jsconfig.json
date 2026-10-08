@@ -1,0 +1,19 @@
+{
+  "// 1": "Typage PROGRESSIF des Cloud Functions : TypeScript vérifie le JS tel quel (JSDoc + inférence),",
+  "// 2": "sans compilation ni migration. `npm run typecheck:functions` (racine). strict désactivé :",
+  "// 3": "on attrape les erreurs de forme (propriété inexistante, mauvais argument), pas les `any`.",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": false,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": ["index.js", "domains/**/*.js", "lib/**/*.js", "shared/**/*.mjs"],
+  "exclude": ["node_modules"]
+}

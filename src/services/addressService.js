@@ -70,10 +70,6 @@ export async function reverseGeocode({ lat, lng }, { fetchImpl = fetch, signal }
   return parseAddressFeatures(await resp.json())[0] || null;
 }
 
-// Même règle que le serveur (functions/lib/validation.js → V.isPhone).
-export function isValidPhone(value) {
-  if (typeof value !== "string" || value.length > 25) return false;
-  if (!/^\+?[0-9(][0-9 .()-]*$/.test(value.trim())) return false;
-  const digits = value.replace(/\D/g, "").length;
-  return digits >= 6 && digits <= 15;
-}
+// Même règle que le serveur : définition UNIQUE dans functions/shared/orderSchemas.mjs
+// (V.isPhone côté Cloud Functions pointe sur la même fonction).
+export { isPhone as isValidPhone } from "../../functions/shared/orderSchemas.mjs";

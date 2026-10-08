@@ -79,11 +79,6 @@ const formatHHMM = (minutes) => {
   return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 };
 
-/**
- * @returns {{configured:boolean, open:boolean, minutesToClose:(number|null), closeTime:(string|null),
- *   minutesToOpen:(number|null), nextOpenTime:(string|null), nextOpenDayOffset:(number|null)}}
- *   minutesToOpen/nextOpenTime : PROCHAINE ouverture après le créneau en cours (ou maintenant si fermé).
- */
 // Frise des plages d'ouverture, en minutes relatives à aujourd'hui 00:00 (heure
 // du snack) : la veille (débordement après minuit) jusqu'à J+7, plages contiguës
 // fusionnées (ex. 18h→24h + 0h→2h). null si horaires absents / mal formés.
@@ -108,6 +103,11 @@ function openingTimeline(hours, date, timeZone) {
   return { merged, now };
 }
 
+/**
+ * @returns {{configured:boolean, open:boolean, minutesToClose:(number|null), closeTime:(string|null),
+ *   minutesToOpen:(number|null), nextOpenTime:(string|null), nextOpenDayOffset:(number|null)}}
+ *   minutesToOpen/nextOpenTime : PROCHAINE ouverture après le créneau en cours (ou maintenant si fermé).
+ */
 function getOpeningState(hours, date = new Date(), timeZone = DEFAULT_TIMEZONE) {
   const unknown = {
     configured: false, open: true, minutesToClose: null, closeTime: null,

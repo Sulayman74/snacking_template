@@ -140,7 +140,7 @@ exports.spinLoyaltyWheel = onCall({ region: "europe-west1" }, async (request) =>
     .where("eligibleForWheel", "==", true)
     .get();
   const pool = prizesSnap.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() }))
+    .map((doc) => /** @type {Record<string, any>} */ ({ id: doc.id, ...doc.data() }))
     .filter((p) => p.isAvailable !== false)
     .map((p) => ({ id: p.id, nom: p.nom || "Lot", image: p.image || null }));
   if (pool.length === 0) {

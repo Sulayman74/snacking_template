@@ -39,8 +39,10 @@ function getStripe() {
     if (!key) {
         throw new Error("STRIPE_SECRET_KEY non configurée (secret absent : cf. docs/STRIPE-GO-LIVE.md).");
     }
-    const Stripe = require("stripe");
-    return Stripe(key, { apiVersion: STRIPE_API_VERSION });
+    // module.exports === Stripe === .Stripe === .default ; la forme nommée est celle
+    // que déclarent les types du SDK (export class Stripe / export default).
+    const { Stripe } = require("stripe");
+    return new Stripe(key, { apiVersion: STRIPE_API_VERSION });
 }
 
 /**

@@ -28,7 +28,12 @@ function toCookSinceMs(order) {
   return millis(order.dateLancement) ?? millis(order.date);
 }
 
-/** Pose une marque de panne si elle n'y est pas déjà (transaction : jamais deux fois). */
+/**
+ * Pose une marque de panne si elle n'y est pas déjà (transaction : jamais deux fois).
+ * @param {import("firebase-admin/firestore").DocumentReference} ref
+ * @param {string} field
+ * @param {string} incidentKey
+ */
 async function markOnce(ref, field, incidentKey) {
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);

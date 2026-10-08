@@ -31,9 +31,9 @@ const EVENT_TYPES = new Set([
 
 /**
  * Émet un événement analytique (write-time). Ne jette jamais.
- * @param {object} evt
- * @param {string} evt.snackId - clé de partition multi-tenant (obligatoire).
- * @param {string} evt.type - cf. EVENT_TYPES (obligatoire).
+ * @param {object} [evt] - sans snackId/type valides, l'événement est ignoré (no-op).
+ * @param {string} [evt.snackId] - clé de partition multi-tenant (obligatoire).
+ * @param {string} [evt.type] - cf. EVENT_TYPES (obligatoire).
  * @param {string|null} [evt.uid] - auteur (uid Firebase) ou null si inconnu.
  * @param {object} [evt.props] - payload contextuel minimal et SANS PII
  *   (productId, amountCents, orderId, campaignId, qty…).

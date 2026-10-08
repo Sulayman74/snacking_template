@@ -12,6 +12,8 @@ Tu es un Senior Software Architect expert en SaaS Multi-Tenant. Ce projet utilis
 - **Stripe :** La création de session et la validation se font EXCLUSIVEMENT dans `functions/index.js` via `onCall`.
 - **Firestore :** Utilise `snackId` comme clé de partitionnement pour toutes les collections (commandes, snacks, users).
 - **Validation :** Toujours utiliser le helper `V` dans les Cloud Functions pour valider les entrées.
+- **Schémas partagés :** les payloads de commande (`createPaymentIntent`, `finalizeOrder`) sont décrits UNE fois dans `functions/shared/orderSchemas.mjs` (valibot) : le client (`SnackCheckout`) vérifie avant l'appel, le serveur revalide via `parseInput`. Toute nouvelle règle de forme sur ces payloads va dans ce fichier, pas dans `payment.js`.
+- **Deux codebases Functions :** `functions/` (default, tout le métier) et `functions-media/` (media : `optimizeImage` + sharp, isolé pour le cold start). Déployer avec `firebase deploy --only functions` (les deux). Cf. `docs/FUNCTIONS-CODEBASES.md`.
 
 ## 🧪 Règle d'Or : Non-Régression
 - Avant de modifier un fichier dans `/src/core` ou `/src/ui/AppUI.js`, vérifie l'impact sur tous les snacks (Tacos, Pizza).
@@ -26,3 +28,4 @@ Tu es un Senior Software Architect expert en SaaS Multi-Tenant. Ce projet utilis
 - Build Tacos : `npm run build:tacos`
 - Build Pizza : `npm run build:pizza`
 - Déploiement : `npm run deploy:all`
+- Typage JSDoc des functions (checkJs, sans migration TS) : `npm run typecheck:functions`
