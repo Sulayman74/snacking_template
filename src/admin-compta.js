@@ -200,12 +200,14 @@ window.setComptaDateRange = (range) => {
     document.querySelectorAll('[onclick^="setComptaDateRange"]').forEach((b) => {
         const m = (b.getAttribute("onclick") || "").match(/setComptaDateRange\('([^']+)'\)/);
         const active = m && m[1] === range;
-        b.classList.toggle("bg-blue-100", active);
-        b.classList.toggle("text-blue-700", active);
-        b.classList.toggle("hover:bg-blue-200", active);
-        b.classList.toggle("bg-gray-100", !active);
-        b.classList.toggle("text-gray-700", !active);
-        b.classList.toggle("hover:bg-gray-200", !active);
+        b.classList.toggle("bg-blue-600", active);
+        b.classList.toggle("text-white", active);
+        b.classList.toggle("shadow-sm", active);
+        b.classList.toggle("bg-surface-2", !active);
+        b.classList.toggle("text-text", !active);
+        b.classList.toggle("hover:bg-surface-3", !active);
+        b.classList.toggle("border", !active);
+        b.classList.toggle("border-line", !active);
     });
 
     loadComptaDashboard();

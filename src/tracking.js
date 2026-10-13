@@ -162,7 +162,7 @@ function renderNotifPrompt() {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className =
-    "w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 border-2 border-blue-100 hover:border-blue-300 active:scale-95";
+    "w-full bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 font-bold py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 border-2 border-blue-100 dark:border-blue-800 hover:border-blue-300 dark:hover:border-blue-700 active:scale-95";
   btn.innerHTML =
     '<i data-lucide="bell"></i><span>M\'avertir quand c\'est prêt</span>';
 
@@ -361,7 +361,7 @@ function startOrderTracking(orderId) {
 
           if (iconContainer) {
             iconContainer.className =
-              "w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+              "w-24 h-24 bg-yellow-100 dark:bg-yellow-950/50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           }
           window.swapIcon?.(icon, "flame", "text-5xl text-yellow-500 transition-transform duration-500 animate-pulse");
           if (title) {
@@ -398,13 +398,13 @@ function startOrderTracking(orderId) {
 
           if (iconContainer) {
             iconContainer.className =
-              "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
+              "w-24 h-24 bg-green-100 dark:bg-green-950/50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
           }
-          window.swapIcon?.(icon, "check", "text-5xl text-green-600 transition-transform duration-500");
+          window.swapIcon?.(icon, "check", "text-5xl text-green-600 dark:text-green-400 transition-transform duration-500");
           
           if (title) {
             title.textContent = "C'est prêt !";
-            title.className = "text-4xl font-black text-green-600 tracking-tight";
+            title.className = "text-4xl font-black text-green-600 dark:text-green-400 tracking-tight";
           }
           
           // 🎟️ AFFICHAGE DU CODE SECRET ET NOM CLIENT
@@ -461,9 +461,9 @@ function startOrderTracking(orderId) {
           if (badgeText) badgeText.textContent = "EN LIVRAISON";
           if (iconContainer) {
             iconContainer.className =
-              "w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+              "w-24 h-24 bg-blue-100 dark:bg-blue-950/50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           }
-          window.swapIcon?.(icon, "bike", "text-5xl text-blue-600 transition-transform duration-500 animate-pulse");
+          window.swapIcon?.(icon, "bike", "text-5xl text-blue-600 dark:text-blue-400 transition-transform duration-500 animate-pulse");
           if (title) {
             title.textContent = "En livraison !";
             title.className = "text-3xl font-black text-text tracking-tight";
@@ -473,7 +473,7 @@ function startOrderTracking(orderId) {
             const dest = commande.livraison;
             let distLine = "Votre livreur a récupéré la commande, il arrive !";
             if (isLatLng(driverPos) && isLatLng(dest)) {
-              distLine = `Votre livreur est à <b class="text-blue-600">${formatDistance(haversineKm(driverPos, dest))}</b> de chez vous.`;
+              distLine = `Votre livreur est à <b class="text-blue-600 dark:text-blue-400">${formatDistance(haversineKm(driverPos, dest))}</b> de chez vous.`;
             }
             const driverName = window.escapeHTML(commande.livreur?.nom || "Votre livreur");
             subtitle.innerHTML = `<span class="block text-text-muted">${distLine}</span><span class="block mt-2 text-sm text-text-muted"><i data-lucide="user" class="mr-1"></i>${driverName}</span>`;

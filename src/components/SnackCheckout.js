@@ -194,7 +194,7 @@ export class SnackCheckout extends SnackElement {
       if (!this.stripeInstance) this.stripeInstance = Stripe(this.stripePublicKey);
 
       const paymentContainer = this.querySelector("#payment-element");
-      paymentContainer.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-circle" class="animate-spin text-3xl text-gray-400"></i></div>';
+      paymentContainer.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-circle" class="animate-spin text-3xl text-text-muted"></i></div>';
       window.lucide?.createIcons({ root: paymentContainer });
 
       const createPaymentIntent = httpsCallable(functions, "createPaymentIntent");
@@ -526,7 +526,7 @@ export class SnackCheckout extends SnackElement {
           <div class="overflow-y-auto pr-1 custom-scrollbar">
             <div class="mb-6 text-center">
               <h3 class="text-xl font-black text-text">${t('payment.secureTitle')}</h3>
-              <p class="text-lg font-bold text-red-600">${t('payment.total')} ${this.totalAmount.toFixed(2)} €</p>
+              <p class="text-lg font-bold text-primary">${t('payment.total')} ${this.totalAmount.toFixed(2)} €</p>
             </div>
 
             <!-- Conteneurs Stripe en light DOM (cf. _stripeHost), projetés ici. -->

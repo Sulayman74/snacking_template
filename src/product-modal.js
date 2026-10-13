@@ -285,7 +285,7 @@ class ProductModalUI {
       html += `<fieldset class="mb-4">
         <legend class="text-lg font-black text-text mb-2 flex justify-between items-center">
             <span>Sauces (${max} max)</span>
-            <span class="text-[10px] font-black bg-gray-900 text-on-dark px-2 py-1 rounded-full uppercase tracking-widest">
+            <span class="text-[10px] font-black bg-surface-3 text-text px-2 py-1 rounded-full uppercase tracking-widest border border-line">
                 <span id="sauce-counter-ui">0</span> / ${max}
             </span>
         </legend>
@@ -311,7 +311,7 @@ class ProductModalUI {
       html += `<fieldset class="mb-4">
         <legend class="text-lg font-black text-text mb-2 flex justify-between items-center">
             <span>Crudités</span>
-            <span class="text-[10px] font-black bg-gray-900 text-on-dark px-2 py-1 rounded-full uppercase tracking-widest">À retirer</span>
+            <span class="text-[10px] font-black bg-surface-3 text-text px-2 py-1 rounded-full uppercase tracking-widest border border-line">À retirer</span>
         </legend>
         <div class="grid grid-cols-2 gap-3">
             ${this.currentProduct.crudites.map(c => {
@@ -382,7 +382,7 @@ class ProductModalUI {
     if (isOrderingEnabled) {
       const prix = this.getCalculatedPrice();
       btn.innerHTML = `<span>Ajouter - ${prix.toFixed(2)} ${escapeHTML(devise)}</span>`;
-      btn.className = "w-full py-4 rounded-xl font-bold text-on-dark bg-gray-900 hover:bg-primary hover:scale-105 transition-all flex justify-center items-center gap-2";
+      btn.className = "w-full py-4 rounded-xl font-black text-on-primary bg-primary hover:brightness-110 active:scale-95 shadow-lg shadow-primary/25 transition-all flex justify-center items-center gap-2";
       btn.onclick = () => window.confirmAddToCart();
     } else {
       btn.textContent = "Fermer";
