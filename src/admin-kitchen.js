@@ -63,20 +63,38 @@ async function refreshKitchenLoad(force = false) {
 function renderKitchenLoadBadge(load) {
   const badge = document.getElementById("kitchen-load-badge");
   const dot = document.getElementById("kitchen-load-dot");
+  const ping = document.getElementById("kitchen-load-ping");
   const text = document.getElementById("kitchen-load-text");
-  if (!badge || !dot || !text) return;
+  const avgEl = document.getElementById("kitchen-avg-time");
+  const queueEl = document.getElementById("kitchen-queue-count");
+  const rushPill = document.getElementById("kitchen-rush-pill");
+  const island = document.getElementById("kitchen-unified-island");
+
+  if (!badge) return;
 
   const rush = load?.rushMode === true;
   const queue = Number(load?.queue) || 0;
   const avg = Number(load?.avgPrepMin) || 0;
 
-  text.innerText = `Charge : ${queue} · ~${avg} min · ${rush ? "RUSH" : "OK"}`;
-  // Couleurs sémantiques (statut), cohérentes avec les compteurs cuisine existants
-  // (bg-red-600 / bg-green-600) — pas une couleur de marque.
-  badge.classList.remove("hidden", "bg-red-100", "text-red-700", "bg-green-100", "text-green-700");
-  badge.classList.add("flex", rush ? "bg-red-100" : "bg-green-100", rush ? "text-red-700" : "text-green-700");
-  dot.classList.remove("bg-red-600", "bg-green-600");
-  dot.classList.add(rush ? "bg-red-600" : "bg-green-600");
+  if (avgEl) avgEl.innerText = `~${avg} min`;
+  if (queueEl) queueEl.innerText = `· ${queue} cmd${queue > 1 ? "s" : ""}`;
+  if (rushPill) rushPill.classList.toggle("hidden", !rush);
+
+  if (dot) {
+    dot.className = `relative inline-flex rounded-full h-2.5 w-2.5 transition-colors duration-300 ${rush ? "bg-rose-500" : "bg-emerald-500"}`;
+  }
+  if (ping) {
+    ping.className = `animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 transition-colors duration-300 ${rush ? "bg-rose-400" : "bg-emerald-400"}`;
+  }
+  if (island) {
+    island.classList.toggle("border-rose-500/40", rush);
+    island.classList.toggle("shadow-rose-500/10", rush);
+  }
+
+  // Compatibilité legacy
+  if (text) {
+    text.innerText = `Charge : ${queue} · ~${avg} min · ${rush ? "RUSH" : "OK"}`;
+  }
 }
 
 // ============================================================================
@@ -794,9 +812,21 @@ function renderKitchenPauseStatus() {
   }
 
   if (triggerBtn) {
-    triggerBtn.classList.toggle("bg-amber-100", isPaused);
-    triggerBtn.classList.toggle("text-amber-800", isPaused);
-    triggerBtn.classList.toggle("border-amber-300", isPaused);
+    const pauseLabel = document.getElementById("btn-kitchen-pause-label");
+    triggerBtn.classList.toggle("bg-amber-500/20", isPaused);
+    triggerBtn.classList.toggle("text-amber-700", isPaused);
+    triggerBtn.classList.toggle("dark:text-amber-400", isPaused);
+    triggerBtn.classList.toggle("border-amber-500/40", isPaused);
+    if (pauseLabel) {
+      pauseLabel.innerText = isPaused ? "En pause" : "Pause";
+    }
+
+    if (isPaused) {
+      const dot = document.getElementById("kitchen-load-dot");
+      const ping = document.getElementById("kitchen-load-ping");
+      if (dot) dot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500";
+      if (ping) ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-amber-400";
+    }
   }
 }
 

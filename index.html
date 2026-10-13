@@ -485,10 +485,32 @@
     </div>
 
     <div id="cart-backdrop" data-action="close-cart" class="fixed inset-0 bg-gray-900/60 z-90 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm"></div>
-    <div id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" inert class="fixed bottom-0 left-0 w-full bg-surface rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[85vh]">
-      <div class="flex justify-between items-center p-6 border-b"><h2 id="cart-title" data-i18n="cart.title" class="text-xl font-bold text-text">Mon Panier 🛒</h2><button data-action="close-cart" class="w-8 h-8 bg-surface-2 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-3 transition"><i data-lucide="x"></i></button></div>
-      <div id="cart-items-container" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
-      <div class="p-6 bg-surface-2 rounded-t-3xl border-t border-line pb-safe"><div id="cart-wheel-prize"></div><snack-status-pill context="cart" class="block mb-4 empty:hidden"></snack-status-pill><div id="delivery-section" class="empty:hidden"></div><div id="pickup-section" class="empty:hidden"></div><div id="cart-progress-bar" class="mb-4 empty:hidden"></div><div class="flex justify-between items-center mb-4"><span class="text-text-muted font-medium">Total à payer</span><span id="cart-total-price" class="text-2xl font-bold text-text">0,00 €</span></div><button id="checkout-btn" data-action="process-checkout" data-i18n="cart.checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center cursor-pointer hover:opacity-90 active:scale-95 aria-busy:opacity-70 aria-busy:cursor-wait aria-busy:animate-pulse">Valider ma commande</button></div>
+    <div id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" inert class="fixed bottom-0 inset-x-0 mx-auto max-w-2xl w-full bg-surface rounded-t-3xl z-100 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[92dvh] md:max-h-[85vh]">
+      <div class="flex justify-between items-center px-5 py-4 md:px-6 md:py-5 border-b border-line shrink-0">
+        <h2 id="cart-title" data-i18n="cart.title" class="text-xl font-bold text-text">Mon Panier 🛒</h2>
+        <button data-action="close-cart" aria-label="Fermer le panier" class="w-9 h-9 bg-surface-2 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-3 hover:text-text transition cursor-pointer">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <!-- Corps du panier défilable (articles + options de retrait/livraison réunies) -->
+      <div id="cart-modal-body" class="px-5 py-4 md:px-6 md:py-6 overflow-y-auto flex-1 space-y-5 overscroll-contain">
+        <div id="cart-wheel-prize"></div>
+        <snack-status-pill context="cart" class="block empty:hidden"></snack-status-pill>
+        <div id="cart-items-container" class="space-y-4"></div>
+        <div id="cart-progress-bar" class="empty:hidden"></div>
+        <div id="delivery-section" class="empty:hidden pt-4 border-t border-line"></div>
+        <div id="pickup-section" class="empty:hidden pt-4 border-t border-line"></div>
+      </div>
+
+      <!-- Footer fixe ancré en bas (Total et CTA, épuré sans faux effet de sheet) -->
+      <div class="px-5 py-4 md:px-6 md:py-5 bg-surface border-t border-line pb-safe shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-text-muted font-medium text-sm md:text-base">Total à payer</span>
+          <span id="cart-total-price" class="text-2xl font-black text-text">0,00 €</span>
+        </div>
+        <button id="checkout-btn" data-action="process-checkout" data-i18n="cart.checkout" class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex justify-center items-center cursor-pointer hover:opacity-90 active:scale-95 aria-busy:opacity-70 aria-busy:cursor-wait aria-busy:animate-pulse">Valider ma commande</button>
+      </div>
     </div>
 
 <snack-checkout id="snack-checkout"></snack-checkout>

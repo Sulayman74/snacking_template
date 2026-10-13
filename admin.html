@@ -211,21 +211,46 @@
 
     <div class="flex-1 overflow-y-auto pb-2 md:pb-0"> 
         
-        <!-- 🔥 Badge de charge cuisine & Pause de service -->
-        <div class="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-            <div id="kitchen-load-badge"
-                 class="hidden items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow"
-                 role="status" aria-live="polite">
-                <span id="kitchen-load-dot" class="w-2.5 h-2.5 rounded-full inline-block"></span>
-                <span id="kitchen-load-text">Charge : —</span>
+        <!-- 🎛️ Capsule Unifiée Cuisine : Statut de charge & Pause de service unifiés -->
+        <div class="sticky top-2 z-30 flex justify-center px-4 pointer-events-none mb-3">
+            <div id="kitchen-unified-island"
+                 class="pointer-events-auto bg-surface/95 dark:bg-surface-2/95 backdrop-blur-md border border-line shadow-lg hover:shadow-xl transition-all duration-300 rounded-full pl-3.5 pr-1.5 py-1.5 flex items-center gap-2.5 sm:gap-3 max-w-full">
+                
+                <!-- Section Métrique & Statut de Charge -->
+                <div id="kitchen-load-badge" class="flex items-center gap-2" role="status" aria-live="polite">
+                    <!-- Voyant lumineux LED d'état avec halo -->
+                    <span class="relative flex h-2.5 w-2.5 shrink-0">
+                        <span id="kitchen-load-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400"></span>
+                        <span id="kitchen-load-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+
+                    <!-- Métrique clé : Temps moyen & Compteur de file -->
+                    <div class="flex items-baseline gap-1.5 whitespace-nowrap">
+                        <span class="text-[11px] text-text-muted font-bold uppercase tracking-wider hidden sm:inline">Attente :</span>
+                        <span id="kitchen-avg-time" class="text-xs sm:text-sm font-black text-text tabular-nums tracking-tight">~-- min</span>
+                        <span id="kitchen-queue-count" class="text-[11px] sm:text-xs font-semibold text-text-muted">· 0 cmd</span>
+                        <span id="kitchen-rush-pill" class="hidden text-[10px] font-black uppercase px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">Rush</span>
+                    </div>
+                    <!-- Élément masqué pour compatibilité legacy -->
+                    <span id="kitchen-load-text" class="sr-only">Charge : —</span>
+                </div>
+
+                <!-- Séparateur vertical fin -->
+                <div class="h-4 w-px bg-line shrink-0"></div>
+
+                <!-- Action rapide : Bouton Pause / Reprendre intégré -->
+                <button type="button"
+                        onclick="window.openKitchenPauseModal()"
+                        id="btn-kitchen-pause-trigger"
+                        class="bg-surface-2 hover:bg-surface-3 text-text text-xs font-bold px-3 py-1.5 rounded-full border border-line/60 shadow-xs flex items-center gap-1.5 transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap">
+                    <i data-lucide="pause-circle" class="text-amber-500 text-sm"></i>
+                    <span id="btn-kitchen-pause-label">Pause</span>
+                </button>
             </div>
-            <button type="button" onclick="window.openKitchenPauseModal()" id="btn-kitchen-pause-trigger" class="bg-surface hover:bg-surface-3 text-text text-xs font-black uppercase px-3 py-1.5 rounded-full border border-line shadow flex items-center gap-1.5 transition active:scale-95">
-                <i data-lucide="pause-circle" class="text-amber-600 dark:text-amber-400"></i> Pause Commandes
-            </button>
         </div>
 
         <!-- ⏸️ Bandeau Pause Active en Cuisine -->
-        <div id="kitchen-pause-banner" class="hidden mx-4 md:mx-6 mt-12 mb-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-fade-in">
+        <div id="kitchen-pause-banner" class="hidden mx-4 md:mx-6 mt-1 mb-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-fade-in">
             <div class="flex items-center gap-3">
                 <span class="text-2xl animate-pulse">⏸️</span>
                 <div>
@@ -239,7 +264,7 @@
         </div>
 
         <!-- 🔔 Bandeau « arrêt des commandes en ligne dans ≤ 15 min » (horaires + heure limite) -->
-        <div id="kitchen-closing-banner" class="hidden mx-4 md:mx-6 mt-12 mb-2 bg-surface border-2 border-amber-500 text-text px-5 py-3 rounded-2xl shadow-lg flex-col sm:flex-row gap-3 sm:items-center justify-between animate-fade-in">
+        <div id="kitchen-closing-banner" class="hidden mx-4 md:mx-6 mt-1 mb-3 bg-surface border-2 border-amber-500 text-text px-5 py-3 rounded-2xl shadow-lg flex-col sm:flex-row gap-3 sm:items-center justify-between animate-fade-in">
             <div class="flex items-center gap-3">
                 <span class="text-2xl">⏰</span>
                 <div>

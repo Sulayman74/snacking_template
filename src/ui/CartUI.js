@@ -51,8 +51,9 @@ class CartUI {
         this.updateTotal(cart);
         
         // Render lucide icons again
-        if (window.lucide && this.desktopCtaBtn) {
-            window.lucide.createIcons({ root: this.desktopCtaBtn });
+        if (window.lucide) {
+            if (this.desktopCtaBtn) window.lucide.createIcons({ root: this.desktopCtaBtn });
+            if (this.cartModal) window.lucide.createIcons({ root: this.cartModal });
         }
     }
 

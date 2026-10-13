@@ -10,9 +10,26 @@ const readSavedPhone = () => {
  * 🗄️ Store — Source de Vérité Unique (Flux Unidirectionnel)
  * Gère l'état de l'application de manière privée et émet des événements lors des changements.
  */
+const readSavedCart = () => {
+    try {
+        if (typeof localStorage !== "undefined" && localStorage && typeof localStorage.getItem === "function") {
+            return JSON.parse(localStorage.getItem("snackCart")) || [];
+        }
+    } catch {}
+    return [];
+};
+const readSavedLocale = () => {
+    try {
+        if (typeof localStorage !== "undefined" && localStorage && typeof localStorage.getItem === "function") {
+            return localStorage.getItem("snack_locale") || "fr";
+        }
+    } catch {}
+    return "fr";
+};
+
 export class Store extends EventTarget {
     #state = {
-        cart: JSON.parse(localStorage.getItem("snackCart")) || [],
+        cart: readSavedCart(),
         config: null,
         menu: [],
         user: null,
@@ -37,7 +54,7 @@ export class Store extends EventTarget {
         // en localStorage (l'intention ne survit pas à un reload, c'est voulu).
         pendingCheckout: false,
         // 🌍 LOCALISATION — Langue active de l'application (fr | en).
-        locale: localStorage.getItem("snack_locale") || "fr",
+        locale: readSavedLocale(),
         // 🕒 RETRAIT — « dès que possible » ou créneau « plus tard » (click & collect).
         pickup: { mode: "asap", atMs: null },
     };
@@ -379,7 +396,11 @@ export class Store extends EventTarget {
     // --- HELPERS ---
 
     #persistCart() {
-        localStorage.setItem("snackCart", JSON.stringify(this.#state.cart));
+        try {
+            if (typeof localStorage !== "undefined" && localStorage && typeof localStorage.setItem === "function") {
+                localStorage.setItem("snackCart", JSON.stringify(this.#state.cart));
+            }
+        } catch {}
     }
 
     /**

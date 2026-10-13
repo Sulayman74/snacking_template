@@ -13,7 +13,7 @@ const installable = () => window.dispatchEvent(Object.assign(new Event("beforein
 describe("setupA2HS", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    localStorage.clear();
+    try { (window.localStorage || globalThis.localStorage)?.clear?.(); } catch {}
     document.body.innerHTML = `
       <div id="banner" class="translate-y-32 opacity-0 pointer-events-none">
         <p id="hint"></p><button id="install"></button><button id="close"></button>
