@@ -39,10 +39,16 @@ const PATTERNS = {
   "bg-white": /bg-white/g,
   "text-red-[0-9]": /text-red-[0-9]/g,
   "bg-red-[0-9]": /bg-red-[0-9]/g,
+  // 🖋️ Primary en PREMIER PLAN sur une surface : invisible en mode sombre avec un primary
+  // foncé (navy Belly). Utiliser text-primary-ink / border-primary-ink (src/styles.css).
+  // Seule exception tolérée (comptée dans la baseline) : le badge panier `bg-white text-primary`.
+  "text-primary (brut)": /(?:^|[\s"'`])text-primary(?![-\w\/])/g,
+  "style color primary": /(?<![\w-])color:\s*var\(--color-primary\)/g,
+  "style border primary": /border-color:\s*var\(--color-primary\)/g,
 };
 
 /** Plafond figé au commit du sweep. Ne doit que DÉCROÎTRE. */
-const BASELINE = 77;
+const BASELINE = 78; // 77 couleurs en dur + 1 `text-primary` brut toléré (badge panier bg-white)
 
 let total = 0;
 const breakdown = {};

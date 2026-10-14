@@ -28,6 +28,16 @@
   --color-primary-light: var(--theme-primary-light, #f5f7f4); /* NEUTRE par défaut : si le flash survient avant l'injection
                                      vite/runtime, il est gris neutre, pas rose ruby */
   --color-on-primary: var(--theme-on-primary, #ffffff);
+  /* 🖋️ Primary « encre » : le primary quand il sert de TEXTE / ICÔNE / BORDURE sur une
+     surface NEUTRE (bg-surface, bg-surface-2, fond de page). En clair = le primary. En
+     sombre (bloc .dark plus bas), sa luminosité est relevée pour rester lisible : un
+     primary foncé (navy Belly, violet midnight) disparaissait sur une carte sombre.
+     Garder --color-primary pour un FOND (bg-primary + text-on-primary) ou pour du primary
+     posé sur un fond de MARQUE (icône active de la barre .glass-nav, badge bg-white).
+     Utilitaires générés : text-primary-ink, border-primary-ink, bg-primary-ink/10…
+     ⚠️ Pas dans les composants shadow DOM (snack-*) : leurs surfaces restent claires en
+     sombre (:host reçoit les valeurs claires de @theme), le primary brut y est lisible. */
+  --color-primary-ink: var(--theme-primary-ink, var(--theme-primary, #dc2626));
   /* 🎨 Neutres SÉMANTIQUES (CLAUDE.md theming). Couleurs NON liées à la palette : fixes
      et intentionnelles, mais centralisées (plus de gris ni de rouges dispersés). Tailwind v4
      génère bg-surface, text-text, text-text-muted, text-danger, text-on-dark, etc.
@@ -82,6 +92,11 @@ body {
   --color-surface-3: #2d323b;   /* fills marqués / grabbers en sombre */
   --color-line: #2d323b;        /* bordures en sombre */
   --bg-base: #0f1115;           /* base du mesh + fond de page en sombre */
+  /* 🖋️ Primary-encre lisible : même teinte et même chroma, luminosité OKLCH relevée à
+     0,72 minimum (≥ 5,6:1 sur ces surfaces pour les 6 palettes ; un primary déjà clair,
+     ex. sunflower, ne bouge pas). Syntaxe couleur relative : Safari 16.4+, Chrome 119+,
+     Firefox 128+ ; ailleurs la déclaration est ignorée → primary tel quel, comme avant. */
+  --theme-primary-ink: oklch(from var(--theme-primary, #dc2626) max(l, 0.72) c h);
   color-scheme: dark;           /* accorde scrollbars / inputs natifs / form controls */
 }
 
@@ -235,7 +250,7 @@ html.dark body {
   transform: translateX(-50%) translateY(-100%);
 }
 #ptr-icon {
-  color: var(--color-primary);
+  color: var(--color-primary-ink); /* sur le fond de page : lisible en sombre */
 }
 
 /* Effet visuel quand l'app est offline */
