@@ -280,7 +280,7 @@ function slotBanner(retrait) {
     return d ? d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: snackTimezone(kitchenSnack) }) : "--:--";
   };
   return `<div class="mb-3 flex items-center gap-2 bg-surface-2 border border-line rounded-xl p-3 text-sm">
-       <i data-lucide="clock" class="text-primary"></i>
+       <i data-lucide="clock" class="text-primary-ink"></i>
        <span class="font-black text-text">Retrait ${escapeHTML(fmt(retrait.heure))}</span>
        <span class="text-text-muted">· lancement ${escapeHTML(fmt(retrait.lancerA))}</span>
      </div>`;

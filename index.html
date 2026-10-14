@@ -102,11 +102,11 @@
             </button>
           </div>
           <div class="hidden md:flex items-center gap-4">
-            <a href="#" data-action="switch-menu" data-i18n="navbar.menu" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">La Carte</a>
-            <a href="#" data-action="switch-favorites" id="nav-favorites-link" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md"><i data-lucide="heart" aria-hidden="true" class="text-accent mr-1"></i><span data-i18n="navbar.favorites">Mes Favoris</span></a>
-            <a href="#loyalty" id="nav-loyalty-link" data-i18n="navbar.loyalty" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md">Fidélité</a>
-            <button type="button" id="nav-loyalty-card-btn" data-action="open-client-card" aria-label="Ma carte de fidélité" title="Ma carte de fidélité" class="hidden text-on-dark hover:text-primary font-medium transition drop-shadow-md"><i data-lucide="qr-code" aria-hidden="true" class="text-accent mr-1"></i><span data-i18n="navbar.myCard">Ma carte</span></button>
-            <a href="#infos" data-i18n="navbar.infos" class="text-on-dark hover:text-primary font-medium transition drop-shadow-md">Infos</a>
+            <a href="#" data-action="switch-menu" data-i18n="navbar.menu" class="text-on-dark hover:text-primary-ink font-medium transition drop-shadow-md">La Carte</a>
+            <a href="#" data-action="switch-favorites" id="nav-favorites-link" class="hidden text-on-dark hover:text-primary-ink font-medium transition drop-shadow-md"><i data-lucide="heart" aria-hidden="true" class="text-accent mr-1"></i><span data-i18n="navbar.favorites">Mes Favoris</span></a>
+            <a href="#loyalty" id="nav-loyalty-link" data-i18n="navbar.loyalty" class="hidden text-on-dark hover:text-primary-ink font-medium transition drop-shadow-md">Fidélité</a>
+            <button type="button" id="nav-loyalty-card-btn" data-action="open-client-card" aria-label="Ma carte de fidélité" title="Ma carte de fidélité" class="hidden text-on-dark hover:text-primary-ink font-medium transition drop-shadow-md"><i data-lucide="qr-code" aria-hidden="true" class="text-accent mr-1"></i><span data-i18n="navbar.myCard">Ma carte</span></button>
+            <a href="#infos" data-i18n="navbar.infos" class="text-on-dark hover:text-primary-ink font-medium transition drop-shadow-md">Infos</a>
             <button type="button" data-action="cycle-theme" data-i18n-title="navbar.theme" aria-label="Thème système — changer de thème" title="Thème système" class="text-on-dark/80 hover:text-on-dark hover:bg-on-dark/10 w-9 h-9 flex items-center justify-center rounded-full text-lg transition drop-shadow-md"><i data-lucide="contrast" aria-hidden="true"></i></button>
             <button type="button" data-action="toggle-lang" id="lang-btn" class="text-on-dark/80 hover:text-on-dark hover:bg-on-dark/10 w-9 h-9 flex items-center justify-center rounded-full text-sm font-bold transition drop-shadow-md">EN</button>
             <a href="/admin.html" id="nav-admin-btn" class="hidden text-danger hover:text-danger/80 font-bold transition drop-shadow-md"><i data-lucide="settings"></i> <span data-i18n="navbar.admin">Admin</span></a>
@@ -187,19 +187,19 @@
       <section id="loyalty" class="py-5 hidden bg-surface">
         <div class="container mx-auto px-4">
           <h2 class="text-4xl text-center font-black text-text mb-4 tracking-tight" data-i18n="loyalty.title">Bons plans</h2>
-          <div id="loyalty-card" class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-text border shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]" style="border-color: var(--color-primary)">
+          <div id="loyalty-card" class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-text border border-primary-ink shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]">
             <div id="loyalty-blur" class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full blur-[80px] opacity-30 pointer-events-none" style="background-color: var(--color-accent);"></div>
             <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
               <div class="text-center md:text-left flex-1">
                 <h3 class="text-4xl font-bold mb-4 tracking-tight" id="loyalty-title" data-i18n="loyalty.clubTitle">Club Fidélité</h3>
                 <p class="mb-8 text-lg opacity-90 font-light" id="loyalty-desc" data-i18n="loyalty.clubDesc">Gagnez des points à chaque commande !</p>
                 <div class="flex gap-4 justify-center md:justify-start">
-                  <button type="button" id="loyalty-main-btn" data-action="toggle-auth-modal" data-i18n="auth.login" class="bg-surface px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 active:scale-95" style="color: var(--color-primary);">Connexion</button>
+                  <button type="button" id="loyalty-main-btn" data-action="toggle-auth-modal" data-i18n="auth.login" class="bg-surface text-primary-ink px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 active:scale-95">Connexion</button>
                 </div>
               </div>
               <div class="relative text-8xl md:text-9xl">
                 <i data-lucide="gift" style="color: var(--color-accent);" class="absolute inset-0 blur-2xl opacity-40"></i>
-                <i data-lucide="gift" class="relative animate-bounce text-primary opacity-60 drop-shadow-2xl"></i>
+                <i data-lucide="gift" class="relative animate-bounce text-primary-ink opacity-60 drop-shadow-2xl"></i>
               </div>
             </div>
           </div>
@@ -232,10 +232,10 @@
           <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-4 bg-surface p-6 md:p-10 rounded-3xl shadow-xl">
             <input type="hidden" name="source_avis" id="source-avis" value="contact_direct" />
             <div>
-              <input type="text" name="contact" id="contact-field" required data-i18n-placeholder="contact.fieldPlaceholder" placeholder="Email ou Téléphone" class="w-full text-text px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-primary outline-none transition" />
+              <input type="text" name="contact" id="contact-field" required data-i18n-placeholder="contact.fieldPlaceholder" placeholder="Email ou Téléphone" class="w-full text-text px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-primary-ink outline-none transition" />
             </div>
             <div>
-              <textarea name="message" id="message-field" rows="4" required data-i18n-placeholder="contact.messagePlaceholder" placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-primary outline-none transition text-text"></textarea>
+              <textarea name="message" id="message-field" rows="4" required data-i18n-placeholder="contact.messagePlaceholder" placeholder="Votre message" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line focus:border-primary-ink outline-none transition text-text"></textarea>
             </div>
             <button type="submit" id="btn-submit-form" data-i18n="contact.submit" class="w-full py-4 rounded-xl font-bold text-on-primary shadow-lg bg-primary hover:bg-accent transition transform hover:-translate-y-1">Envoyer le message</button>
           </form>
@@ -348,12 +348,12 @@
             <input type="password" id="auth-password" required autocomplete="current-password" aria-label="Mot de passe" data-i18n-placeholder="auth.password" class="w-full px-5 py-4 rounded-xl bg-surface-2 border border-line outline-none transition text-text pr-12" placeholder="Mot de passe" />
             <button type="button" id="toggle-password" aria-label="Afficher ou masquer le mot de passe" class="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"><i data-lucide="eye" id="eye-icon"></i></button>
           </div>
-          <div class="text-right"><button type="button" data-action="reset-password" data-i18n="auth.forgotShort" class="text-sm text-text-muted hover:text-primary transition">Oublié ?</button></div>
+          <div class="text-right"><button type="button" data-action="reset-password" data-i18n="auth.forgotShort" class="text-sm text-text-muted hover:text-primary-ink transition">Oublié ?</button></div>
           <button type="submit" id="auth-submit-btn" data-i18n="auth.login" class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 mt-2">Se connecter</button>
         </form>
         <div class="mt-8 text-center text-sm bg-surface-2 p-4 rounded-xl">
           <span id="auth-switch-text" data-i18n="auth.switchTextLogin" class="text-text-muted">Pas encore de compte ?</span>
-          <button data-action="switch-auth-mode" type="button" id="auth-switch-btn" data-i18n="auth.register" class="text-primary font-bold ml-1">S'inscrire</button>
+          <button data-action="switch-auth-mode" type="button" id="auth-switch-btn" data-i18n="auth.register" class="text-primary-ink font-bold ml-1">S'inscrire</button>
         </div>
       </div>
     </div>
@@ -458,7 +458,7 @@
     <!-- 🔄 BANDEAU MISE À JOUR (pattern "prompt") — affiché par src/pwa.js sur onNeedRefresh -->
     <div id="pwa-update-banner" class="fixed pointer-events-none bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-900/80 backdrop-blur-lg text-on-dark p-4 rounded-2xl shadow-2xl z-[95] transition-all duration-500 translate-y-32 opacity-0 flex items-center justify-between border border-white/10">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0"><i data-lucide="refresh-cw" class="text-primary text-lg"></i></div>
+        <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0"><i data-lucide="refresh-cw" class="text-primary-ink text-lg"></i></div>
         <div><p class="font-bold text-sm">Nouvelle version dispo ✨</p><p class="text-xs text-gray-300">Rafraîchis pour les dernières améliorations.</p></div>
       </div>
       <button id="pwa-refresh-btn" data-i18n="pwa.refresh" class="bg-primary hover:bg-accent text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition transform hover:scale-105 shadow-lg shrink-0">Rafraîchir</button>
@@ -563,7 +563,7 @@
     </div>
     <div class="flex-1 min-w-0">
       <p class="upsell-item-name font-bold text-text truncate"></p>
-      <p class="upsell-item-price text-sm font-black text-primary"></p>
+      <p class="upsell-item-price text-sm font-black text-primary-ink"></p>
     </div>
     <button class="upsell-add-btn shrink-0 rounded-full bg-primary text-on-primary px-4 py-2 text-sm font-black shadow-md transition active:scale-95 hover:opacity-90"
             aria-label="Ajouter au panier">
@@ -677,7 +677,7 @@
       <div class="bg-accent rounded-3xl overflow-hidden shadow-sm border border-line flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] cursor-pointer" role="listitem">
         <div class="relative h-48 overflow-hidden bg-surface-2">
           <img class="menu-item-image w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
-          <div class="menu-item-placeholder absolute inset-0 flex flex-col items-center justify-center text-primary transition-opacity duration-300 hidden">
+          <div class="menu-item-placeholder absolute inset-0 flex flex-col items-center justify-center text-primary-ink transition-opacity duration-300 hidden">
             <i data-lucide="pizza" class="text-4xl mb-2 opacity-20"></i>
             <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Photo en préparation... 👨‍🍳</span>
           </div>

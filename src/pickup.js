@@ -103,7 +103,7 @@ class PickupUI {
     }
 
     const option = (value, checked, disabled, title, extra = "") => `
-      <label class="flex items-start gap-3 p-3 rounded-xl border-2 ${checked ? "border-primary bg-primary/5" : "border-line"} ${disabled ? "opacity-50" : "cursor-pointer"}">
+      <label class="flex items-start gap-3 p-3 rounded-xl border-2 ${checked ? "border-primary-ink bg-primary/5" : "border-line"} ${disabled ? "opacity-50" : "cursor-pointer"}">
         <input type="radio" name="pickup-mode" value="${value}" class="mt-1 accent-primary" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}>
         <span class="flex-1 min-w-0"><span class="block font-bold text-text text-sm">${title}</span>${extra}</span>
       </label>`;

@@ -103,7 +103,7 @@ function receiptHTML(commande) {
   let where = "";
   if (commande.mode === "delivery") {
     if (commande.livraison?.adresse) {
-      where = `<p class="flex items-start gap-2 text-sm text-text"><i data-lucide="map-pin" class="text-primary mt-0.5 shrink-0"></i><span>${esc(commande.livraison.adresse)}</span></p>`;
+      where = `<p class="flex items-start gap-2 text-sm text-text"><i data-lucide="map-pin" class="text-primary-ink mt-0.5 shrink-0"></i><span>${esc(commande.livraison.adresse)}</span></p>`;
     }
   } else {
     const cfg = window.snackConfig || {};
@@ -116,8 +116,8 @@ function receiptHTML(commande) {
     if (address || (safeMaps && safeMaps !== "#")) {
       where = `
         <div class="flex items-center justify-between gap-3">
-          <p class="flex items-start gap-2 text-sm text-text min-w-0"><i data-lucide="map-pin" class="text-primary mt-0.5 shrink-0"></i><span class="break-words">${esc(address || cfg.identity?.name || "")}</span></p>
-          ${safeMaps && safeMaps !== "#" ? `<a href="${safeMaps}" target="_blank" rel="noopener" class="shrink-0 text-sm font-bold text-primary underline">Itinéraire</a>` : ""}
+          <p class="flex items-start gap-2 text-sm text-text min-w-0"><i data-lucide="map-pin" class="text-primary-ink mt-0.5 shrink-0"></i><span class="break-words">${esc(address || cfg.identity?.name || "")}</span></p>
+          ${safeMaps && safeMaps !== "#" ? `<a href="${safeMaps}" target="_blank" rel="noopener" class="shrink-0 text-sm font-bold text-primary-ink underline">Itinéraire</a>` : ""}
         </div>`;
     }
   }
@@ -372,7 +372,7 @@ function startOrderTracking(orderId) {
             const eta = etaText(commande);
             subtitle.innerHTML = `Le chef prépare votre commande.${
               eta
-                ? `<span class="flex items-center justify-center gap-2 mt-3 text-primary font-bold"><i data-lucide="clock"></i> ${eta}</span>`
+                ? `<span class="flex items-center justify-center gap-2 mt-3 text-primary-ink font-bold"><i data-lucide="clock"></i> ${eta}</span>`
                 : ""
             }${receiptHTML(commande)}`;
           }

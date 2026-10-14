@@ -156,10 +156,10 @@ class DeliveryUI {
     const addrLine = `
       <div class="flex items-start justify-between gap-2 mb-3">
         <div class="flex items-start gap-2 min-w-0">
-          <i data-lucide="map-pin" class="text-primary mt-1"></i>
+          <i data-lucide="map-pin" class="text-primary-ink mt-1"></i>
           <p class="text-sm text-text font-medium break-words">${escapeText(addr.adresse || t("delivery.gpsPosition"))}</p>
         </div>
-        <button type="button" data-delivery-action="reset-address" class="shrink-0 text-xs text-primary font-bold underline">Changer</button>
+        <button type="button" data-delivery-action="reset-address" class="shrink-0 text-xs text-primary-ink font-bold underline">Changer</button>
       </div>
       <div class="grid gap-2 mb-3">
         <label class="grid gap-1 text-xs font-bold text-text-muted">
@@ -191,7 +191,7 @@ class DeliveryUI {
 
     const etaRow = `
       <div class="flex items-center justify-between text-sm py-1.5">
-        <span class="text-text-muted"><i data-lucide="clock" class="mr-1.5 text-primary"></i>Livraison estimée</span>
+        <span class="text-text-muted"><i data-lucide="clock" class="mr-1.5 text-primary-ink"></i>Livraison estimée</span>
         <span class="font-bold text-text">${formatEta(quote.totalMin)}${restoKnown ? ` · ${formatDistance(quote.distanceKm)}` : ""}</span>
       </div>`;
 
@@ -200,7 +200,7 @@ class DeliveryUI {
         <span class="text-text-muted">Sous-total</span><span class="text-text">${subtotal.toFixed(2)} €</span>
       </div>
       <div class="flex items-center justify-between text-sm py-1.5">
-        <span class="text-text-muted"><i data-lucide="bike" class="mr-1.5 text-primary"></i>Frais de livraison</span>
+        <span class="text-text-muted"><i data-lucide="bike" class="mr-1.5 text-primary-ink"></i>Frais de livraison</span>
         <span class="text-text">${Number(quote.frais).toFixed(2)} €</span>
       </div>`;
 
