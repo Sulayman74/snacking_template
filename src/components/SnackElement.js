@@ -38,7 +38,16 @@ export class SnackElement extends LitElement {
 
   _syncDarkMode() {
     if (typeof document === 'undefined' || !document.documentElement) return;
-    const isDark = document.documentElement.classList.contains('dark');
+    let isDark = document.documentElement.classList.contains('dark');
+    let isLight = document.documentElement.classList.contains('light');
+    if (!isDark && !isLight && typeof window !== 'undefined' && window.matchMedia) {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        isDark = true;
+      } else {
+        isLight = true;
+      }
+    }
     this.classList.toggle('dark', isDark);
+    this.classList.toggle('light', isLight);
   }
 }

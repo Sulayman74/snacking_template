@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { html, css } from 'lit';
 import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
 import { StoreController } from '../store/StoreController.js';
@@ -7,6 +7,26 @@ import './SnackMenuItem.js';
 import './SnackStatusPill.js';
 
 export class SnackMenuList extends SnackElement {
+  static styles = [
+    SnackElement.styles,
+    css`
+      .category-title {
+        color: var(--color-primary, var(--theme-primary, #dc2626));
+      }
+      :host(.dark) .category-title {
+        color: #ffffff !important;
+      }
+      .category-divider {
+        background-color: var(--color-primary, var(--theme-primary, #dc2626));
+        opacity: 0.35;
+      }
+      :host(.dark) .category-divider {
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        opacity: 1;
+      }
+    `
+  ];
+
   static properties = {
     searchQuery: { type: String },
     activeCatId: { type: String }
@@ -202,8 +222,8 @@ export class SnackMenuList extends SnackElement {
           return html`
             <section class="menu-section mb-10 pt-4 scroll-mt-32" id="cat-${catId}" data-cat-id="${catId}">
               <div class="flex items-center gap-3 mb-6">
-                <h2 class="text-2xl font-black text-text dark:text-gray-100 uppercase tracking-tight">${this.getCategoryName(catId)}</h2>
-                <div class="flex-1 h-px bg-line/80 dark:bg-line"></div>
+                <h2 class="category-title text-2xl font-black uppercase tracking-tight">${this.getCategoryName(catId)}</h2>
+                <div class="category-divider flex-1 h-px"></div>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" role="list">
                 ${catProduits.map(p => html`<snack-menu-item .product="${p}" class="block"></snack-menu-item>`)}
