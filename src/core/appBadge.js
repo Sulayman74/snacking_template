@@ -19,6 +19,20 @@ export function setAppBadgeCount(count) {
 }
 
 /**
+ * Retire immédiatement la pastille de l'icône de l'app et réinitialise le compteur du SW.
+ */
+export function clearAppBadge() {
+  if (typeof navigator !== "undefined" && "clearAppBadge" in navigator) {
+    navigator.clearAppBadge()?.catch?.(() => {});
+  }
+  if (typeof navigator !== "undefined" && navigator.serviceWorker?.controller) {
+    try {
+      navigator.serviceWorker.controller.postMessage({ type: "CLEAR_BADGE" });
+    } catch {}
+  }
+}
+
+/**
  * Nombre de commandes en attente parmi des commandes (Map id → commande ou tableau).
  * @param {Iterable<{statut?: string}>} orders
  * @returns {number}

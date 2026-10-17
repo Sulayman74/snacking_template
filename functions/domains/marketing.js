@@ -181,6 +181,9 @@ exports.processPushCampaigns = onSchedule(
             ...(isMatchPush && campagne.dayKey ? { tag: `match-${campagne.dayKey}` } : {}),
           },
           webpush: {
+            notification: {
+              badge: "/favicon.ico",
+            },
             fcm_options: {
               link: campagne.actionUrl
                 ? `${baseUrl}${campagne.actionUrl}`

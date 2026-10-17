@@ -1,6 +1,6 @@
 // 🔴 Tests unitaires — pastille de l'app (src/core/appBadge.js).
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { setAppBadgeCount, countPendingKitchenOrders, PENDING_KITCHEN_STATUSES } from "../../src/core/appBadge.js";
+import { setAppBadgeCount, clearAppBadge, countPendingKitchenOrders, PENDING_KITCHEN_STATUSES } from "../../src/core/appBadge.js";
 
 describe("appBadge", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -16,16 +16,29 @@ describe("appBadge", () => {
 
   it("affiche le nombre, retire la pastille à 0", () => {
     const setAppBadge = vi.fn(() => Promise.resolve());
-    const clearAppBadge = vi.fn(() => Promise.resolve());
-    vi.stubGlobal("navigator", { setAppBadge, clearAppBadge });
+    const clearAppBadgeFn = vi.fn(() => Promise.resolve());
+    vi.stubGlobal("navigator", { setAppBadge, clearAppBadge: clearAppBadgeFn });
     setAppBadgeCount(4);
     setAppBadgeCount(0);
     expect(setAppBadge).toHaveBeenCalledWith(4);
-    expect(clearAppBadge).toHaveBeenCalledTimes(1);
+    expect(clearAppBadgeFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("clearAppBadge retire la pastille et notifie le service worker si actif", () => {
+    const clearAppBadgeFn = vi.fn(() => Promise.resolve());
+    const postMessage = vi.fn();
+    vi.stubGlobal("navigator", {
+      clearAppBadge: clearAppBadgeFn,
+      serviceWorker: { controller: { postMessage } },
+    });
+    clearAppBadge();
+    expect(clearAppBadgeFn).toHaveBeenCalledTimes(1);
+    expect(postMessage).toHaveBeenCalledWith({ type: "CLEAR_BADGE" });
   });
 
   it("navigateur sans Badging API → no-op", () => {
     vi.stubGlobal("navigator", {});
     expect(() => setAppBadgeCount(2)).not.toThrow();
+    expect(() => clearAppBadge()).not.toThrow();
   });
 });

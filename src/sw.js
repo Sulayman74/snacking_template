@@ -103,30 +103,110 @@ registerRoute(
 registerRoute(({ url }) => url.hostname.includes("cloudfunctions.net"), new NetworkOnly());
 
 // ============================================================================
-// 🔔 PUSH
+// 🔔 PUSH & BADGES (App Badging API & Notifications)
 // ============================================================================
+
+const BADGE_DB_NAME = "snack_pwa_badge_db";
+const BADGE_STORE = "badge";
+const BADGE_KEY = "unread_count";
+
+function openBadgeDb() {
+  return new Promise((resolve) => {
+    try {
+      if (typeof indexedDB === "undefined") return resolve(null);
+      const req = indexedDB.open(BADGE_DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        try { req.result.createObjectStore(BADGE_STORE); } catch {}
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+async function getStoredBadgeCount() {
+  try {
+    const db = await openBadgeDb();
+    if (!db) return 0;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction(BADGE_STORE, "readonly");
+        const store = tx.objectStore(BADGE_STORE);
+        const req = store.get(BADGE_KEY);
+        req.onsuccess = () => resolve(Number.isFinite(req.result) ? Number(req.result) : 0);
+        req.onerror = () => resolve(0);
+      } catch {
+        resolve(0);
+      }
+    });
+  } catch {
+    return 0;
+  }
+}
+
+async function setStoredBadgeCount(count) {
+  try {
+    const db = await openBadgeDb();
+    if (!db) return;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction(BADGE_STORE, "readwrite");
+        const store = tx.objectStore(BADGE_STORE);
+        store.put(count, BADGE_KEY);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      } catch {
+        resolve();
+      }
+    });
+  } catch {}
+}
 
 async function setBadge(count) {
   if (!("setAppBadge" in self.navigator)) return;
   try {
-    if (count === null) await self.navigator.setAppBadge(); // pastille sans nombre
-    else if (count === 0) await self.navigator.clearAppBadge();
-    else await self.navigator.setAppBadge(count);
+    const n = Number(count);
+    if (Number.isFinite(n) && n > 0) {
+      // 🍎 iOS Safari exige un entier strictement positif (> 0).
+      // Un appel sans argument ou à 0 n'affiche rien sur iOS.
+      await self.navigator.setAppBadge(Math.floor(n));
+    } else {
+      await self.navigator.clearAppBadge();
+    }
   } catch {
     /* badge non autorisé (ex. app non installée) : sans conséquence */
   }
 }
 
-// 🔴 Badge = nombre de notifications encore affichées (non lues) quand le serveur
-// n'impose pas de compte. Avant : setAppBadge() sans nombre, qu'iOS n'affiche pas →
-// deux campagnes non lues et aucune pastille. Le compte serveur (cuisine : commandes
-// en attente, data.badge) reste prioritaire quand il est présent.
-async function syncBadgeWithNotifications() {
+// 🔴 Synchronisation du badge de l'app.
+// - delta > 0 : nouveau push reçu (ex. +1).
+// - delta < 0 : notification lue/fermée (ex. -1).
+// - delta === 0 : recalcul neutre.
+async function syncBadgeWithNotifications(delta = 0) {
   try {
-    const shown = await self.registration.getNotifications();
-    await setBadge(shown.length);
+    let count = 0;
+    let hasNativeList = false;
+
+    try {
+      const shown = await self.registration.getNotifications();
+      if (Array.isArray(shown) && shown.length > 0) {
+        count = shown.length;
+        hasNativeList = true;
+      }
+    } catch {}
+
+    // Sur iOS Safari (getNotifications renvoie toujours []), on utilise le compteur persisté en IndexedDB
+    if (!hasNativeList) {
+      const prev = await getStoredBadgeCount();
+      count = Math.max(0, prev + delta);
+    }
+
+    await setStoredBadgeCount(count);
+    await setBadge(count);
   } catch {
-    /* getNotifications indisponible : on ne touche pas au badge */
+    /* getNotifications / IndexedDB indisponible : on ne touche pas au badge */
   }
 }
 
@@ -138,7 +218,10 @@ async function handlePush(event) {
     payload = { notification: { body: event.data ? event.data.text() : "" } };
   }
   const msg = parsePushPayload(payload, self.location.origin);
-  if (msg.badgeCount !== null) await setBadge(msg.badgeCount);
+  if (msg.badgeCount !== null) {
+    await setStoredBadgeCount(msg.badgeCount);
+    await setBadge(msg.badgeCount);
+  }
 
   // App au premier plan : comme l'ancien SDK FCM, on affiche un toast dans la page
   // plutôt qu'une notification système. Sauf Safari, qui l'exige toujours.
@@ -146,17 +229,21 @@ async function handlePush(event) {
   const focused = windows.find((c) => c.focused);
   if (focused) {
     focused.postMessage({ type: "PUSH_FOREGROUND", title: msg.title, body: msg.body, url: msg.url });
-    if (!mustAlwaysShowNotification(self.navigator.userAgent)) return;
+    if (!mustAlwaysShowNotification(self.navigator.userAgent)) {
+      if (msg.badgeCount === null) await syncBadgeWithNotifications(1);
+      return;
+    }
   }
 
   await self.registration.showNotification(msg.title, {
     body: msg.body,
     icon: msg.icon,
     image: msg.image,
+    badge: msg.badgeIcon || "/favicon.ico",
     data: { url: msg.url, campaignId: msg.campaignId, snackId: msg.snackId },
     ...(msg.tag ? { tag: msg.tag } : {}),
   });
-  if (msg.badgeCount === null) await syncBadgeWithNotifications();
+  if (msg.badgeCount === null) await syncBadgeWithNotifications(1);
 }
 
 self.addEventListener("push", (event) => {
@@ -169,9 +256,8 @@ self.addEventListener("push", (event) => {
 
 async function handleNotificationClick(event) {
   const { url = `${self.location.origin}/`, campaignId } = event.notification.data || {};
-  // La notification cliquée est fermée (cf. listener) : le badge retombe au nombre
-  // de celles qui restent non lues, et disparaît quand il n'en reste plus.
-  await syncBadgeWithNotifications();
+  // La notification cliquée est fermée (cf. listener) : on décrémente le badge (-1)
+  await syncBadgeWithNotifications(-1);
 
   // 📊 Tracking best-effort du clic campagne (stats.clics côté serveur).
   if (campaignId) {
@@ -206,7 +292,19 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(handleNotificationClick(event));
 });
 
-// Notification balayée sans être ouverte : elle n'est plus « non lue » → badge à jour.
+// Notification balayée sans être ouverte : elle n'est plus « non lue » → décrémentation du badge (-1)
 self.addEventListener("notificationclose", (event) => {
-  event.waitUntil(syncBadgeWithNotifications());
+  event.waitUntil(syncBadgeWithNotifications(-1));
+});
+
+// Réinitialisation du badge depuis l'application au premier plan
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "CLEAR_BADGE") {
+    event.waitUntil(
+      Promise.all([
+        setStoredBadgeCount(0),
+        setBadge(0),
+      ])
+    );
+  }
 });

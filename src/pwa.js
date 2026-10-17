@@ -11,12 +11,24 @@ import { setupA2HS } from "./a2hs.js";
 import { auth } from "./core/firebase.js";
 import { t } from "./i18n/index.js";
 
+import { clearAppBadge } from "./core/appBadge.js";
+
 // ============================================================================
 // ⚙️ SERVICE WORKER — STRATÉGIE "PROMPT" (mise à jour non-intrusive)
 // ============================================================================
 // Enregistrement + bandeau de mise à jour mutualisés dans sw-update.js.
 // Aucun reload automatique : l'utilisateur décide via #pwa-update-banner.
 setupSWUpdatePrompt({ context: "Client" });
+
+// 🔴 Remise à zéro automatique du badge dès l'ouverture de l'app ou retour au premier plan
+clearAppBadge();
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      clearAppBadge();
+    }
+  });
+}
 
 // ============================================================================
 // 🌐 DÉTECTION CONNEXION (ONLINE / OFFLINE)
