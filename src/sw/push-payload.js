@@ -49,7 +49,7 @@ export function iconForUrl(url) {
  * @param {unknown} payload - JSON du message (ou null si illisible).
  * @param {string} origin
  * @returns {{ title: string, body: string, url: string, icon?: string, image?: string,
- *            badgeCount: number|null, campaignId: string, snackId: string }}
+ *            badgeCount: number|null, campaignId: string, snackId: string, tag?: string }}
  */
 export function parsePushPayload(payload, origin) {
   const p = payload && typeof payload === "object" ? payload : {};
@@ -76,6 +76,9 @@ export function parsePushPayload(payload, origin) {
     badgeCount,
     campaignId: typeof data.campaignId === "string" ? data.campaignId : "",
     snackId: typeof data.snackId === "string" ? data.snackId : "",
+    // Regroupement système : même tag → la nouvelle notification remplace l'ancienne
+    // (campagnes « soir de match » : un tag par soirée).
+    tag: typeof data.tag === "string" && data.tag ? data.tag.slice(0, 64) : undefined,
   };
 }
 

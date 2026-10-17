@@ -19,6 +19,7 @@ const {
   breakerTripped,
   isGovernanceEnabled,
 } = require("../lib/pushGovernance");
+const { canSendMatchPush, recordMatchPush, MATCH_PUSH_SOURCE } = require("../lib/matchPush");
 
 // ============================================================================
 // 🚀 FONCTION 3 : LE ROBOT MARKETING PUSH (CRON JOB)
@@ -92,6 +93,19 @@ exports.processPushCampaigns = onSchedule(
 
         const campagne = doc.data();
 
+        // ⚽ Second verrou de cadence « soir de match » (lib/matchPush) : le cron du
+        // matin a déjà filtré, mais l'historique peut avoir bougé depuis (autre
+        // campagne partie, cache football rafraîchi). Au-delà de la cadence → annulée.
+        const isMatchPush = campagne.source === MATCH_PUSH_SOURCE;
+        if (isMatchPush) {
+          const verdict = canSendMatchPush(snackData, Date.now());
+          if (!verdict.allowed) {
+            await doc.ref.update({ statut: "annulee_cadence", raisonAnnulation: verdict.reason });
+            console.log(`⚽ Campagne ${doc.id} annulée (cadence soir de match : ${verdict.reason}).`);
+            continue;
+          }
+        }
+
         // 🎯 1. Clients joignables = appareils abonnés au push de CE snack. (Les
         // fiches client n'ont pas de snackId : l'ancienne requête users.snackId ne
         // touchait que l'équipe.) Segment + opt-out lus sur la fiche user.
@@ -162,6 +176,9 @@ exports.processPushCampaigns = onSchedule(
             // Tracking des clics : le SW renvoie campaignId/snackId à trackPushClick.
             campaignId: doc.id,
             snackId: campagne.snackId || "",
+            // Soir de match : un tag par soirée → le système REMPLACE la notification
+            // précédente au lieu d'empiler si deux pushs se suivent malgré tout.
+            ...(isMatchPush && campagne.dayKey ? { tag: `match-${campagne.dayKey}` } : {}),
           },
           webpush: {
             fcm_options: {
@@ -207,6 +224,14 @@ exports.processPushCampaigns = onSchedule(
           "stats.tokensInvalidated": totalTokensInvalidated,
           "stats.breakerTripped": breakerHit,
         });
+
+        // ⚽ Journal de cadence du restaurant (élagué à 7 jours) : base des verrous
+        // « espacement minimal » et « plafond hebdo » de lib/matchPush.
+        if (isMatchPush && totalSuccess > 0) {
+          await db.collection("snacks").doc(campagne.snackId).update({
+            matchPushLog: recordMatchPush(snackData, Date.now()),
+          });
+        }
 
         // 📊 Event `push_sent` (1 par campagne, write-time) → attribution/ROI.
         await emitEvent({

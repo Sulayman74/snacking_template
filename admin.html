@@ -173,6 +173,10 @@
                 <i data-lucide="life-buoy" class="text-blue-400 text-xl w-8 text-center shrink-0"></i>
                 <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Support / FAQ</span>
             </button>
+            <button onclick="window.openAdminScanner()" type="button" class="w-full flex items-center px-6 py-4 text-amber-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition">
+                <i data-lucide="qr-code" class="text-amber-400 text-xl w-8 text-center shrink-0 animate-pulse"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Scan Fidélité</span>
+            </button>
         </nav>
 
         <div class="p-4 border-t border-gray-800 bg-gray-900 shrink-0">
@@ -196,7 +200,11 @@
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <h1 class="text-xl font-black uppercase tracking-widest">Admin <span class="text-red-500">Fusion</span></h1>
             </div>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1.5">
+              <button onclick="window.openAdminScanner()" type="button" title="Scanner Carte Fidélité Comptoir" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-sm">
+                <i data-lucide="qr-code" class="text-sm"></i>
+                <span class="text-xs">Scan</span>
+              </button>
               <button data-action="cycle-theme" type="button" title="Changer de thème" aria-label="Changer de thème" class="text-gray-400 hover:text-white transition p-2">
                 <i data-lucide="contrast" class="text-lg"></i>
               </button>
@@ -245,6 +253,19 @@
                         class="bg-surface-2 hover:bg-surface-3 text-text text-xs font-bold px-3 py-1.5 rounded-full border border-line/60 shadow-xs flex items-center gap-1.5 transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap">
                     <i data-lucide="pause-circle" class="text-amber-500 text-sm"></i>
                     <span id="btn-kitchen-pause-label">Pause</span>
+                </button>
+
+                <!-- Séparateur vertical fin -->
+                <div class="h-4 w-px bg-line shrink-0"></div>
+
+                <!-- 📸 Action rapide Comptoir : Scanner Carte Fidélité client sur place -->
+                <button type="button"
+                        onclick="window.openAdminScanner()"
+                        id="btn-kitchen-scan-trigger"
+                        title="Scanner la carte fidélité d'un client au comptoir"
+                        class="bg-linear-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs font-black px-3.5 py-1.5 rounded-full shadow-xs flex items-center gap-1.5 transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap">
+                    <i data-lucide="qr-code" class="text-xs"></i>
+                    <span>Scan Comptoir</span>
                 </button>
             </div>
         </div>
@@ -1211,6 +1232,36 @@
         <button type="button" onclick="window.closeKitchenPauseModal()" class="w-full bg-surface-2 hover:bg-surface-3 text-text font-bold py-3.5 rounded-2xl transition border border-line">
           Fermer
         </button>
+      </div>
+    </div>
+
+    <!-- 📸 MODALE SCANNER FIDÉLITÉ (ADMIN CUISINE / COMPTOIR) -->
+    <div id="admin-scanner-modal" class="fixed inset-0 bg-gray-900/95 z-[250] hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
+      <div class="w-full max-w-lg h-[85vh] md:h-auto bg-surface rounded-3xl overflow-hidden shadow-2xl relative flex flex-col border border-line">
+        <div class="p-5 bg-gray-900 text-white flex justify-between items-center z-10 shadow-md shrink-0">
+          <h3 class="font-bold text-lg flex items-center"><i data-lucide="qr-code" class="text-red-500 mr-2 animate-pulse"></i>Scanner Carte Client</h3>
+          <button data-action="close-admin-scanner" onclick="window.closeAdminScanner()" class="text-gray-300 hover:text-white bg-gray-800 w-10 h-10 flex items-center justify-center rounded-full transition hover:bg-red-600 active:scale-95 cursor-pointer"><i data-lucide="x" class="pointer-events-none"></i></button>
+        </div>
+        <div class="relative w-full flex-1 bg-black flex items-center justify-center overflow-hidden min-h-[45vh]">
+          <div id="reader" class="w-full h-full absolute inset-0 [&>video]:object-cover"></div>
+          <div class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
+            <div class="w-[80%] max-w-[320px] aspect-square border-4 border-red-500 rounded-3xl shadow-[0_0_0_4000px_rgba(0,0,0,0.7)] relative">
+              <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-2xl -mt-1 -ml-1"></div>
+              <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-2xl -mt-1 -mr-1"></div>
+              <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-2xl -mb-1 -ml-1"></div>
+              <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-2xl -mb-1 -mr-1"></div>
+            </div>
+          </div>
+        </div>
+        <div class="p-5 bg-surface text-center z-10 shrink-0 border-t border-line text-text">
+          <p class="text-text font-black text-lg mb-1 tracking-tight">Visez le QR Code de la carte client</p>
+          <p class="text-xs text-text-muted font-medium mb-3">Crédite automatiquement le point au client ou propose son menu offert.</p>
+          <!-- Saisie manuelle de secours si absence de caméra sur le terminal comptoir -->
+          <form id="admin-manual-scan-form" onsubmit="window.handleManualLoyaltySubmit(event)" class="flex gap-2 max-w-sm mx-auto">
+            <input type="text" id="admin-manual-uid-input" placeholder="Ou saisie UID client manuelle..." class="flex-1 px-3.5 py-2 text-xs bg-surface-2 border border-line rounded-xl text-text outline-none focus:ring-2 focus:ring-primary font-mono" />
+            <button type="submit" class="bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer active:scale-95">Valider</button>
+          </form>
+        </div>
       </div>
     </div>
 

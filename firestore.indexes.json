@@ -214,6 +214,15 @@
         { "fieldPath": "source", "order": "ASCENDING" },
         { "fieldPath": "matchId", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "campagnes_push",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "snackId", "order": "ASCENDING" },
+        { "fieldPath": "source", "order": "ASCENDING" },
+        { "fieldPath": "dayKey", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

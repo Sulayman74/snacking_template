@@ -7,9 +7,11 @@
 //
 // Architecture : les envois 1:1 (panier abandonné, win-back) gèrent leur propre
 // FCM + lastMarketingPushAt (pas de doc campagnes_push, qui est réservé aux
-// broadcasts admin). Le push soir de match crée un doc campagnes_push et délègue
-// l'envoi au cron existant processPushCampaigns (DRY : opt-out + breaker + cleanup
-// déjà en place dans ce pipeline).
+// broadcasts admin) et passent par le Gendarme. Le push soir de match est un
+// BROADCAST : il crée un doc campagnes_push et délègue l'envoi au cron existant
+// processPushCampaigns (opt-out + quiet hours + breaker). Le Gendarme 1:1 ne s'y
+// applique pas ; sa cadence est gérée par lib/matchPush (une campagne par soirée,
+// espacement minimal, plafond hebdo).
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const logger = require("firebase-functions/logger");
@@ -18,6 +20,7 @@ const { emitEvent } = require("../lib/events");
 const { chunkArray } = require("../lib/util");
 const { canSendMarketingPush } = require("../lib/pushGovernance");
 const { getUserPushTargets, getClientPushTargetsBySnack, sendToTargets } = require("../lib/pushTargets");
+const { planMatchDayPush, MATCH_PUSH_SOURCE } = require("../lib/matchPush");
 
 // ============================================================================
 // 🛒 PANIER ABANDONNÉ (Priorité 1 — Intention forte)
@@ -152,10 +155,12 @@ exports.processAbandonedCarts = onSchedule(
 // ============================================================================
 // ⚽ PUSH SOIR DE MATCH (Priorité 2 — Achat d'impulsion)
 // ============================================================================
-// Cron quotidien à 9h. Vérifie les matchs du jour via le cache Firestore
-// (alimenté par getUpcomingFootballEvents). Pour chaque match intéressant,
-// crée un doc campagnes_push avec dateEnvoiPrevue = H-2 du match. Le pipeline
-// existant (processPushCampaigns) s'occupe de l'envoi + opt-out + breaker.
+// Cron quotidien à 9h. Lit les matchs du jour dans le cache Firestore (alimenté
+// par getUpcomingFootballEvents) et crée, par restaurant, UNE SEULE campagne
+// campagnes_push pour la soirée (message groupé si plusieurs matchs), envoi H-2 du
+// premier coup d'envoi. Regroupement, cadence (espacement + plafond hebdo) et
+// contenu : lib/matchPush.js (pur, testé). Le pipeline processPushCampaigns
+// s'occupe de l'envoi + opt-out + breaker, et revérifie la cadence au moment T.
 exports.processMatchDayPush = onSchedule(
   { schedule: "0 9 * * *", region: "europe-west1", timeZone: "Europe/Paris" },
   async (_event) => {
@@ -170,22 +175,7 @@ exports.processMatchDayPush = onSchedule(
       const matches = Array.isArray(cached.matches) ? cached.matches : [];
       if (matches.length === 0) return;
 
-      // 2. Filtrer les matchs d'AUJOURD'HUI
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-
-      const todayMatches = matches.filter((m) => {
-        const d = new Date(m.utcDate);
-        return d >= todayStart && d <= todayEnd && m.status !== "FINISHED";
-      });
-
-      if (todayMatches.length === 0) {
-        logger.info("[match-push] aucun match aujourd'hui.");
-        return;
-      }
-
-      // 3. Pour chaque snack actif, créer une campagne push H-2 par match
+      // 2. Pour chaque snack actif : un plan (ou une raison de ne rien faire)
       const snacksSnap = await db
         .collection("snacks")
         .where("maintenanceMode", "!=", true)
@@ -194,52 +184,58 @@ exports.processMatchDayPush = onSchedule(
       if (snacksSnap.empty) return;
 
       let created = 0;
+      /** @type {Record<string, number>} */
+      const skipped = {};
+      const nowMs = Date.now();
 
       for (const snackDoc of snacksSnap.docs) {
         const snackId = snackDoc.id;
+        const snackData = snackDoc.data() || {};
 
-        for (const match of todayMatches) {
-          const matchDate = new Date(match.utcDate);
-          // Push prévu H-2 (2 heures avant le coup d'envoi)
-          const pushDate = new Date(matchDate.getTime() - 2 * 60 * 60 * 1000);
-
-          // Si H-2 est déjà passé, on ne crée pas la campagne (trop tard)
-          if (pushDate <= now) continue;
-
-          // Anti-doublon : vérifier qu'on n'a pas déjà créé une campagne pour ce match+snack
-          const existingSnap = await db
-            .collection("campagnes_push")
-            .where("snackId", "==", snackId)
-            .where("source", "==", "match_auto")
-            .where("matchId", "==", match.id)
-            .get();
-
-          if (!existingSnap.empty) continue; // déjà planifiée
-
-          const home = match.homeTeam?.name || "Équipe A";
-          const away = match.awayTeam?.name || "Équipe B";
-
-          await db.collection("campagnes_push").add({
-            snackId,
-            titre: `⚽ ${home} vs ${away} ce soir !`,
-            message: `Commande ton menu avant le coup d'envoi, prêt pile pour le match 🍕`,
-            cible: "all",
-            actionUrl: null,
-            imageUrl: null,
-            statut: "en_attente",
-            dateEnvoiPrevue: Timestamp.fromDate(pushDate),
-            dateCreation: FieldValue.serverTimestamp(),
-            source: "match_auto",
-            matchId: match.id,
-            stats: { envoye: 0, clics: 0 },
-          });
-
-          created++;
+        const { plan, reason } = planMatchDayPush({ matches, snackData, nowMs });
+        if (!plan) {
+          skipped[reason] = (skipped[reason] || 0) + 1;
+          continue;
         }
+
+        // Anti-doublon : UNE campagne par snack et par soirée (dayKey = jour dans le
+        // fuseau du snack), quel que soit le nombre de matchs ou de runs du cron.
+        const existingSnap = await db
+          .collection("campagnes_push")
+          .where("snackId", "==", snackId)
+          .where("source", "==", MATCH_PUSH_SOURCE)
+          .where("dayKey", "==", plan.dayKey)
+          .limit(1)
+          .get();
+
+        if (!existingSnap.empty) {
+          skipped["already-planned"] = (skipped["already-planned"] || 0) + 1;
+          continue;
+        }
+
+        await db.collection("campagnes_push").add({
+          snackId,
+          titre: plan.titre,
+          message: plan.message,
+          cible: "all",
+          actionUrl: null,
+          imageUrl: null,
+          statut: "en_attente",
+          dateEnvoiPrevue: Timestamp.fromMillis(plan.pushAtMs),
+          dateCreation: FieldValue.serverTimestamp(),
+          source: MATCH_PUSH_SOURCE,
+          dayKey: plan.dayKey,
+          matchIds: plan.matchIds,
+          matchCount: plan.matchCount,
+          matchId: plan.matchIds[0], // compat : ancien anti-doublon par match
+          stats: { envoye: 0, clics: 0 },
+        });
+
+        created++;
       }
 
-      if (created > 0) {
-        logger.info(`⚽ ${created} campagne(s) soir de match planifiée(s).`);
+      if (created > 0 || Object.keys(skipped).length > 0) {
+        logger.info(`⚽ Soir de match : ${created} campagne(s) planifiée(s), ignorés : ${JSON.stringify(skipped)}.`);
       }
     } catch (err) {
       logger.error("❌ [match-push] erreur critique :", err);

@@ -33,43 +33,8 @@ const FOOTBALL_CACHE_DOC = "football_matches";
 const FOOTBALL_CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
 const FOOTBALL_HORIZON_DAYS = 7;
 
-const FOOTBALL_FILTERS = {
-  FL1: { keywords: ["lyon", "marseille", "paris"] },
-  PL:  { keywords: ["manchester city", "manchester united", "arsenal"] },
-  PD:  { keywords: ["real madrid", "barcelona", "atletico"] },
-  CL:  { keywords: null }, // tous
-  WC:  { keywords: ["france"], stages: ["QUARTER_FINALS", "SEMI_FINALS", "FINAL"] },
-  EC:  { keywords: ["france"], stages: ["QUARTER_FINALS", "SEMI_FINALS", "FINAL"] },
-};
-const FOOTBALL_COMPETITIONS = Object.keys(FOOTBALL_FILTERS).join(",");
-
-function normalizeName(s) {
-  // Strip accents + lower : "Atlético" → "atletico", "France" → "france"
-  return (s || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-}
-
-function isMatchInteresting(match) {
-  const filter = FOOTBALL_FILTERS[match.competition?.code];
-  if (!filter) return false;
-
-  // CL : tous
-  if (filter.keywords === null && !filter.stages) return true;
-
-  const home = normalizeName(match.homeTeam?.name);
-  const away = normalizeName(match.awayTeam?.name);
-  const teamMatch = filter.keywords?.some((kw) => {
-    const k = normalizeName(kw);
-    return home.includes(k) || away.includes(k);
-  });
-
-  // WC/EC : OR entre équipe (France) et stage (quarts/demi/finale)
-  if (filter.stages) {
-    const stageMatch = filter.stages.includes(match.stage);
-    return Boolean(teamMatch || stageMatch);
-  }
-
-  return Boolean(teamMatch);
-}
+// Filtres + normalisation : lib/football.js (pur, partagé avec lib/matchPush.js).
+const { FOOTBALL_COMPETITIONS, isMatchInteresting } = require("../lib/football");
 
 exports.getUpcomingFootballEvents = onCall(
   { region: "europe-west1", secrets: ["FOOTBALL_DATA_TOKEN"] },

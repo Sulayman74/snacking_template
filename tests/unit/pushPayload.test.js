@@ -6,6 +6,15 @@ import { parsePushPayload, toSameOriginUrl, iconForUrl, mustAlwaysShowNotificati
 
 const O = "https://o-bois-pizza.web.app";
 
+describe("tag de regroupement (soir de match)", () => {
+  it("data.tag → tag de notification (borné à 64), absent sinon", () => {
+    expect(parsePushPayload({ notification: { title: "A" }, data: { tag: "match-2026-10-14" } }, O).tag).toBe("match-2026-10-14");
+    expect(parsePushPayload({ notification: { title: "A" }, data: { tag: "x".repeat(80) } }, O).tag).toHaveLength(64);
+    expect(parsePushPayload({ notification: { title: "A" }, data: {} }, O).tag).toBeUndefined();
+    expect(parsePushPayload({ notification: { title: "A" }, data: { tag: 42 } }, O).tag).toBeUndefined();
+  });
+});
+
 describe("toSameOriginUrl", () => {
   it("URL relative → absolue sur le site", () => {
     expect(toSameOriginUrl("?action=product&id=1", O)).toBe(`${O}/?action=product&id=1`);

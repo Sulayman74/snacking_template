@@ -48,7 +48,7 @@ const PATTERNS = {
 };
 
 /** Plafond figé au commit du sweep. Ne doit que DÉCROÎTRE. */
-const BASELINE = 78; // 77 couleurs en dur + 1 `text-primary` brut toléré (badge panier bg-white)
+const BASELINE = 76; // 75 couleurs en dur + 1 `text-primary` brut toléré (badge panier bg-white)
 
 let total = 0;
 const breakdown = {};

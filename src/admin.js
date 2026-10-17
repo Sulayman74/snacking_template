@@ -117,6 +117,12 @@ document.addEventListener("click", (event) => {
       window.closeModal(modalId);
       break;
     }
+    case "open-admin-scanner":
+      window.openAdminScanner?.();
+      break;
+    case "close-admin-scanner":
+      window.closeAdminScanner?.();
+      break;
   }
 });
 

@@ -152,6 +152,10 @@ document.addEventListener("click", async (event) => {
       window.openClientCard();
       break;
 
+    case "flip-loyalty-card":
+      window.toggleCardFlip?.();
+      break;
+
     case "notify-arrival":
       window.notifyArrival(id);
       break;

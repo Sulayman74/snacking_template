@@ -30,6 +30,7 @@ import {
   FileText, FileUp, Filter, Headset, IdCard, LifeBuoy, Lightbulb, List, Send, Play, CirclePlus, LogIn,
   Rocket, Tag, ToggleRight, Landmark, UserPlus,
   PauseCircle, CirclePause, Pause, PlusCircle, XCircle, Sparkles,
+  RotateCw, ScanLine,
 } from "lucide";
 
 /** Sous-ensemble d'icônes embarqué (clé PascalCase ; createIcons mappe data-lucide kebab -> Pascal). */
@@ -47,6 +48,7 @@ const ICONS = {
   FileText, FileUp, Filter, Headset, IdCard, LifeBuoy, Lightbulb, List, Send, Play, CirclePlus, LogIn,
   Rocket, Tag, ToggleRight, Landmark, UserPlus,
   PauseCircle, CirclePause, Pause, PlusCircle, XCircle, Sparkles,
+  RotateCw, ScanLine,
 };
 
 /**

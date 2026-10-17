@@ -41,9 +41,53 @@ async function renderLoyaltyQr(imgEl, data) {
   }
 }
 
+/**
+ * Bascule la carte de fidélité entre recto CB (puce + statut) et verso (QR scannable en caisse).
+ * @param {boolean} [forceState] - Si booléen, force l'affichage du verso (true) ou recto (false).
+ */
+export function toggleCardFlip(forceState) {
+  const inner = document.getElementById("cb-card-inner");
+  if (!inner) return;
+
+  const willBeFlipped =
+    typeof forceState === "boolean"
+      ? forceState
+      : !inner.classList.contains("is-flipped");
+
+  inner.classList.toggle("is-flipped", willBeFlipped);
+
+  const card = document.getElementById("cb-loyalty-card");
+  if (card) {
+    card.setAttribute("aria-pressed", willBeFlipped ? "true" : "false");
+  }
+
+  const hint = document.getElementById("cb-flip-hint");
+  if (hint) {
+    hint.innerText = willBeFlipped
+      ? "Toucher pour retourner au recto"
+      : "Toucher la carte pour afficher le QR code";
+  }
+
+  if (typeof window.triggerVibration === "function") {
+    window.triggerVibration("light");
+  }
+}
+
+// ⌨️ A11y : bascule au clavier (Entrée / Espace) quand la carte a le focus
+document.addEventListener("keydown", (e) => {
+  const card = document.getElementById("cb-loyalty-card");
+  if (document.activeElement === card && (e.key === "Enter" || e.key === " ")) {
+    e.preventDefault();
+    toggleCardFlip();
+  }
+});
+
 function openClientCard() {
   const user = auth?.currentUser;
   if (!user) return;
+
+  // 0. Réinitialise la rotation : on présente toujours le recto CB au client
+  toggleCardFlip(false);
 
   const cfg = window.snackConfig;
 
@@ -62,14 +106,23 @@ function openClientCard() {
       cardBg.className = `absolute inset-0 z-0 bg-linear-to-br ${cfg.loyalty.cardDesign.backgroundGradient}`;
   }
 
-  // 2. Identité du client et QR Code
+  // 2. Identité du client, numéro de carte et QR Code
   const userEmail = document.getElementById("card-user-email");
+  const cardNumber = document.getElementById("card-number-display");
   const qrImg = document.getElementById("card-qr-img");
   if (userEmail) userEmail.innerText = user.email;
+  if (cardNumber && user.uid) {
+    const raw = user.uid.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    const last4 = raw.slice(-4).padStart(4, "7");
+    cardNumber.innerText = `•••• •••• •••• ${last4}`;
+  }
   // 🔒 QR généré LOCALEMENT (F5) — auparavant via api.qrserver.com, ce qui envoyait
   // l'uid du client à un tiers. La lib `qrcode` est importée dynamiquement (hors
   // bundle principal : la carte fidélité est ouverte à la demande, cf. perf §8.2).
   if (qrImg) renderLoyaltyQr(qrImg, user.uid);
+
+  // Re-render des icônes Lucide de la carte (ondes, puce, scan, rotate)
+  window.lucide?.createIcons?.();
 
   // 3. Affichage de la modale avec animation
   const modal = document.getElementById("client-card-modal");
@@ -313,6 +366,7 @@ async function shareReferralLink() {
 
 window.openClientCard = openClientCard;
 window.closeClientCard = closeClientCard;
+window.toggleCardFlip = toggleCardFlip;
 window.requestNotif = requestNotif;
 window.toggleMarketingOptOut = toggleMarketingOptOut;
 window.syncFcmToken = syncFcmToken;

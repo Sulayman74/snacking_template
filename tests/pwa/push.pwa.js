@@ -71,3 +71,24 @@ test('push avec app au premier plan → toast dans la page, pas de notification 
   expect(await notifications()).toEqual([]);
   await context.close();
 });
+
+test('deux pushs avec le même tag (soir de match) → une seule notification, la dernière', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const { push, notifications } = await setup(context, page);
+  const other = await context.newPage();
+  await other.goto('about:blank');
+  await other.bringToFront();
+  // Le SW ne montre une notification que si l'app n'a PAS le focus : on attend que
+  // le changement d'onglet soit effectif (sinon : toast en page, 0 notification → flaky).
+  await expect.poll(() => page.evaluate(() => document.hasFocus())).toBe(false);
+
+  await push({ notification: { title: '⚽ LASK Linz vs Liverpool FC ce soir !', body: 'Commande ton menu' }, data: { tag: 'match-2026-10-14', campaignId: 'c1' } });
+  await expect.poll(notifications).toHaveLength(1);
+  await push({ notification: { title: '⚽ Soirée Champions League : 7 matchs ce soir !', body: 'Man City – PSG…' }, data: { tag: 'match-2026-10-14', campaignId: 'c2' } });
+
+  await expect.poll(notifications).toEqual([
+    expect.objectContaining({ title: '⚽ Soirée Champions League : 7 matchs ce soir !', data: expect.objectContaining({ campaignId: 'c2' }) }),
+  ]);
+  await context.close();
+});

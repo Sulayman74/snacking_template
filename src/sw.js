@@ -117,6 +117,19 @@ async function setBadge(count) {
   }
 }
 
+// 🔴 Badge = nombre de notifications encore affichées (non lues) quand le serveur
+// n'impose pas de compte. Avant : setAppBadge() sans nombre, qu'iOS n'affiche pas →
+// deux campagnes non lues et aucune pastille. Le compte serveur (cuisine : commandes
+// en attente, data.badge) reste prioritaire quand il est présent.
+async function syncBadgeWithNotifications() {
+  try {
+    const shown = await self.registration.getNotifications();
+    await setBadge(shown.length);
+  } catch {
+    /* getNotifications indisponible : on ne touche pas au badge */
+  }
+}
+
 async function handlePush(event) {
   let payload = null;
   try {
@@ -125,7 +138,7 @@ async function handlePush(event) {
     payload = { notification: { body: event.data ? event.data.text() : "" } };
   }
   const msg = parsePushPayload(payload, self.location.origin);
-  await setBadge(msg.badgeCount);
+  if (msg.badgeCount !== null) await setBadge(msg.badgeCount);
 
   // App au premier plan : comme l'ancien SDK FCM, on affiche un toast dans la page
   // plutôt qu'une notification système. Sauf Safari, qui l'exige toujours.
@@ -141,7 +154,9 @@ async function handlePush(event) {
     icon: msg.icon,
     image: msg.image,
     data: { url: msg.url, campaignId: msg.campaignId, snackId: msg.snackId },
+    ...(msg.tag ? { tag: msg.tag } : {}),
   });
+  if (msg.badgeCount === null) await syncBadgeWithNotifications();
 }
 
 self.addEventListener("push", (event) => {
@@ -154,7 +169,9 @@ self.addEventListener("push", (event) => {
 
 async function handleNotificationClick(event) {
   const { url = `${self.location.origin}/`, campaignId } = event.notification.data || {};
-  if ("clearAppBadge" in self.navigator) self.navigator.clearAppBadge().catch(() => {});
+  // La notification cliquée est fermée (cf. listener) : le badge retombe au nombre
+  // de celles qui restent non lues, et disparaît quand il n'en reste plus.
+  await syncBadgeWithNotifications();
 
   // 📊 Tracking best-effort du clic campagne (stats.clics côté serveur).
   if (campaignId) {
@@ -187,4 +204,9 @@ async function handleNotificationClick(event) {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(handleNotificationClick(event));
+});
+
+// Notification balayée sans être ouverte : elle n'est plus « non lue » → badge à jour.
+self.addEventListener("notificationclose", (event) => {
+  event.waitUntil(syncBadgeWithNotifications());
 });

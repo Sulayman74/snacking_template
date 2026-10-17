@@ -13,9 +13,15 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 let html5Qrcode = null;
 let Html5QrcodeCls = null;
 
-window.openAdminScanner = async () => {
+const openAdminScanner = async () => {
+  if (typeof document === "undefined") return;
   const modal = document.getElementById("admin-scanner-modal");
+  if (!modal) {
+    if (typeof window !== "undefined") window.showToast?.("Module scanner indisponible sur cette vue", "error");
+    return;
+  }
   modal.classList.remove("hidden");
+  if (typeof window !== "undefined") window.lucide?.createIcons?.();
 
   // On laisse la modale s'afficher correctement (taille 0x0)
   await new Promise((resolve) => setTimeout(resolve, 150));
@@ -25,7 +31,7 @@ window.openAdminScanner = async () => {
     // unpkg (F5) : supprime le script CDN tiers sans SRI. Import dynamique → code
     // splitting (la caméra n'est chargée que par l'admin qui scanne, cf. perf §8.2).
     if (!Html5QrcodeCls) {
-      window.showToast("Chargement de la caméra...", "info");
+      if (typeof window !== "undefined") window.showToast?.("Chargement de la caméra...", "info");
       ({ Html5Qrcode: Html5QrcodeCls } = await import("html5-qrcode"));
     }
 
@@ -39,12 +45,14 @@ window.openAdminScanner = async () => {
     );
   } catch (err) {
     console.error("Scanner erreur :", err);
-    window.showToast("Erreur d'accès à la caméra", "error");
+    if (typeof window !== "undefined") window.showToast?.("Erreur d'accès à la caméra (saisie manuelle disponible)", "warning");
   }
 };
 
-window.closeAdminScanner = async () => {
-  document.getElementById("admin-scanner-modal").classList.add("hidden");
+const closeAdminScanner = async () => {
+  if (typeof document === "undefined") return;
+  const modal = document.getElementById("admin-scanner-modal");
+  if (modal) modal.classList.add("hidden");
 
   if (html5Qrcode) {
     try {
@@ -58,8 +66,39 @@ window.closeAdminScanner = async () => {
   }
 };
 
+const handleManualLoyaltySubmit = async (event) => {
+  if (event) event.preventDefault();
+  if (typeof document === "undefined") return;
+  const input = document.getElementById("admin-manual-uid-input");
+  const val = input?.value?.trim();
+  if (!val) {
+    if (typeof window !== "undefined") window.showToast?.("Veuillez saisir un code client", "warning");
+    return;
+  }
+  if (input) input.value = "";
+  await onScanSuccess(val);
+};
+
+if (typeof window !== "undefined") {
+  window.openAdminScanner = openAdminScanner;
+  window.closeAdminScanner = closeAdminScanner;
+  window.handleManualLoyaltySubmit = handleManualLoyaltySubmit;
+}
+
+if (typeof document !== "undefined") {
+  // ⌨️ Fermeture du scanner au clavier avec Échap
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const modal = document.getElementById("admin-scanner-modal");
+      if (modal && !modal.classList.contains("hidden")) {
+        closeAdminScanner();
+      }
+    }
+  });
+}
+
 async function onScanSuccess(decodedText) {
-  const adminSnackId = window.snackConfig?.identity?.id;
+  const adminSnackId = window.currentAdminSnackId || window.snackConfig?.identity?.id;
   console.log(`📸 Scan réussi ! UID du client : ${decodedText}`);
 
   window.closeAdminScanner();

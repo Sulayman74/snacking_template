@@ -228,8 +228,20 @@ async function createOrderFromPaymentIntent({
     const userDoc = await userRef.get();
 
     // Première commande de l'utilisateur (lastOrderDate inexistant) ?
-    // NB: .exists est une PROPRIÉTÉ dans l'Admin SDK (pas une méthode).
-    if (referrerId && referrerId !== uid && (!userDoc.exists || !userDoc.data().lastOrderDate)) {
+    // 🛡️ SÉCURITÉ CYBER / ANTI-FARMING :
+    // - Pas d'auto-parrainage (referrerId !== uid).
+    // - Pas de parrainage sur compte invité/anonyme (ferme l'exploit de throwaway scripts).
+    // - Panier minimum de 5,00 € (500 cents) pour valider le parrainage.
+    const isAnonymousGuest = isGuest === true || userDoc.data()?.isAnonymous === true;
+    const meetsReferralMin = expectedTotalCents >= 500;
+
+    if (
+      referrerId &&
+      referrerId !== uid &&
+      !isAnonymousGuest &&
+      meetsReferralMin &&
+      (!userDoc.exists || !userDoc.data().lastOrderDate)
+    ) {
       const referrerRef = db.collection("users").doc(referrerId);
       const referrerDoc = await referrerRef.get();
 
@@ -281,14 +293,22 @@ async function createOrderFromPaymentIntent({
   // Anti-doublon F3 : le cooldown unifié (loyaltyLastCredit) peut SKIP ce crédit si
   // un point vient d'être gagné (ex. scan boutique juste avant) — skip silencieux,
   // jamais d'erreur sur une commande déjà payée.
+  // 🛡️ SÉCURITÉ CYBER : Seuil minimum de panier (loyalty.minOrderCents) optionnel
+  // pour contrer le farming de micro-commandes (ex: sauces à 0.30€).
   try {
-    const clientRef = db.collection("users").doc(uid);
-    const cooldownMs = resolveLoyaltyCooldownMs(snackData);
-    const res = await db.runTransaction((tx) => creditLoyaltyPoints(tx, clientRef, snackId, 1, cooldownMs));
-    if (res.skipped) {
-      console.log(`createOrder fidélité ignorée (anti-doublon F3) pour ${uid} / ${snackId}.`);
-    } else if (res.reward) {
-      await sendRewardPush(uid, snackId);
+    const minOrderCents = Number(snackData?.loyalty?.minOrderCents);
+    const hasMinSpend = Number.isFinite(minOrderCents) && minOrderCents > 0;
+    if (hasMinSpend && expectedTotalCents < minOrderCents) {
+      console.log(`createOrder fidélité ignorée : total ${expectedTotalCents}c < seuil ${minOrderCents}c.`);
+    } else {
+      const clientRef = db.collection("users").doc(uid);
+      const cooldownMs = resolveLoyaltyCooldownMs(snackData);
+      const res = await db.runTransaction((tx) => creditLoyaltyPoints(tx, clientRef, snackId, 1, cooldownMs));
+      if (res.skipped) {
+        console.log(`createOrder fidélité ignorée (anti-doublon F3) pour ${uid} / ${snackId}.`);
+      } else if (res.reward) {
+        await sendRewardPush(uid, snackId);
+      }
     }
   } catch (loyErr) {
     console.error("createOrder crédit fidélité échoué :", loyErr);
