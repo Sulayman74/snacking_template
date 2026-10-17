@@ -121,8 +121,8 @@ exports.createPaymentIntent = onCall(
             const commissionRate = typeof snackData.commissionRate === 'number' ? snackData.commissionRate : 0.08;
             const minFeeCents = typeof snackData.minFeeCents === 'number' ? snackData.minFeeCents : 50;
             applicationFeeAmount = Math.max(minFeeCents, Math.round(totalCents * commissionRate));
-          } else if (plan === "pro") {
-            // Offre Pro : Loyer SaaS fixe mensuel (ex: 79 €/mois) -> 0 % de commission transactionnelle
+          } else if (plan === "pro" || plan === "franchise") {
+            // Offre Pro (89 €) & Franchise (149 €) : Loyer SaaS fixe mensuel -> 0 % de commission transactionnelle
             applicationFeeAmount = 0;
           }
         }

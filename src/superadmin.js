@@ -26,6 +26,7 @@ import {
     where,
     getAggregateFromServer,
     sum,
+    count,
     httpsCallable,
     onAuthStateChanged,
     signOut,
@@ -37,12 +38,16 @@ setupSWUpdatePrompt({ context: 'SuperAdmin' });
 
 // Variables Globales
 let allSnacks = [];
+const snackMonthlyCa = new Map();
+
 // 💰 PRICING — Source de vérité unique (DRY) pour les tarifs SaaS.
-// Starter : loyer léger + commission transactionnelle (petits/moyens restos).
-// Pro     : loyer fixe sans commission (gros restos, seuil anti-churn).
+// Starter   : 0 €/mois + 8% (1er mois offert) -> Risque zéro pour le restaurateur
+// Pro       : 89 €/mois fixe · 0% commission  -> Idéal dès ~1 100 € de CA (seuil rentabilité)
+// Franchise : 149 €/mois fixe · 0% commission -> Multi-restaurants / VIP
 const PRICING = {
-    starter: { label: 'Starter', prix: 29, commissionRate: 0.08, minFeeCents: 50, description: '29 €/mois + 8%' },
-    pro:     { label: 'Pro',     prix: 79, commissionRate: 0,    minFeeCents: 0,  description: '79 €/mois · 0%' },
+    starter:   { label: 'Starter',   prix: 0,   commissionRate: 0.08, minFeeCents: 50, description: '0 €/mois + 8% (1er mois offert)' },
+    pro:       { label: 'Pro',       prix: 89,  commissionRate: 0,    minFeeCents: 0,  description: '89 €/mois · 0% commission' },
+    franchise: { label: 'Franchise', prix: 149, commissionRate: 0,    minFeeCents: 0,  description: '149 €/mois · 0% (Multi-sites)' },
 };
 const getPlanPrix = (plan) => (PRICING[plan] || PRICING.starter).prix;
 
@@ -100,7 +105,6 @@ async function loadDashboardData() {
 
         snacksSnapshot.forEach((doc) => {
             const data = doc.data();
-            // Sécurité : On s'assure de garder l'ID du document
             allSnacks.push({ id: doc.id, ...data });
 
             if (data.maintenanceMode === true) {
@@ -110,20 +114,42 @@ async function loadDashboardData() {
             }
         });
 
-        // 💰 MRR : somme des tarifs individuels (prixAbonnement) ou tarif de base
+        // 💰 Calcul du CA et nombre de commandes du mois en cours par agrégation Firestore
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        let totalOrdersMonth = 0;
+        snackMonthlyCa.clear();
+
+        await Promise.all(allSnacks.map(async (snack) => {
+            try {
+                const snap = await getAggregateFromServer(
+                    query(collection(db, "commandes"), where("snackId", "==", snack.id), where("date", ">=", monthStart)),
+                    { ca: sum("total"), count: count() }
+                );
+                const ca = Number(snap.data().ca) || 0;
+                const cnt = Number(snap.data().count) || 0;
+                snackMonthlyCa.set(snack.id, ca);
+                totalOrdersMonth += cnt;
+            } catch (e) {
+                snackMonthlyCa.set(snack.id, 0);
+            }
+        }));
+
+        // 💰 MRR : somme des abonnements récurrents actifs
         const mrr = allSnacks
             .filter(s => !s.maintenanceMode)
-            .reduce((sum, s) => sum + (s.prixAbonnement || getPlanPrix(s.pricingPlan)), 0);
+            .reduce((sum, s) => sum + (typeof s.prixAbonnement === 'number' ? s.prixAbonnement : getPlanPrix(s.pricingPlan)), 0);
 
         // Mise à jour de l'UI
         document.getElementById("kpi-total-snacks").innerText = allSnacks.length;
         document.getElementById("kpi-maintenance").innerText = snacksEnMaintenance;
         document.getElementById("kpi-mrr").innerText = `${mrr.toFixed(2)} €`;
-        document.getElementById("kpi-orders").innerText = "Bientôt"; // On fera une requête globale sur les commandes plus tard
+        document.getElementById("kpi-orders").innerText = totalOrdersMonth.toString();
 
-        console.log(`✅ ${allSnacks.length} locataires chargés.`);
+        console.log(`✅ ${allSnacks.length} locataires chargés (${totalOrdersMonth} commandes ce mois).`);
         
-        renderSnacksTable(); // <- On créera cette fonction juste après !
+        renderUpsellAlertsBanner();
+        renderSnacksTable();
 
     } catch (error) {
         console.error("Erreur lors du chargement des locataires :", error);
@@ -159,6 +185,24 @@ function renderSnacksTable() {
         if (snack.enableViralShare)      featuresHtml += `<i data-lucide="share-2" title="Partage Viral" class="text-teal-500 mx-1"></i>`;
         if (snack.enableUpsell)          featuresHtml += `<i data-lucide="shopping-cart" title="Upsell" class="text-emerald-500 mx-1"></i>`;
 
+        const plan = snack.pricingPlan || "starter";
+        const caSnack = snackMonthlyCa.get(snack.id) || 0;
+        const commSnack = caSnack * 0.08;
+        const isUpsellEligible = (plan === "starter" && commSnack > 89);
+
+        let planBadge = `<span class="bg-blue-500/10 text-blue-700 dark:text-blue-400 font-black px-2 py-0.5 rounded-md text-[10px]">STARTER (8%)</span>`;
+        if (plan === "pro") {
+            planBadge = `<span class="bg-purple-500/10 text-purple-700 dark:text-purple-400 font-black px-2 py-0.5 rounded-md text-[10px]">PRO (89€ · 0%)</span>`;
+        } else if (plan === "franchise") {
+            planBadge = `<span class="bg-amber-500/10 text-amber-700 dark:text-amber-400 font-black px-2 py-0.5 rounded-md text-[10px]">FRANCHISE (149€)</span>`;
+        }
+
+        const upsellBtn = isUpsellEligible
+            ? `<button data-action="upsell-pitch" data-snack-id="${safeId}" class="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-600 hover:text-white px-3 py-2 rounded-lg font-bold text-xs transition animate-pulse" title="Proposer le passage en Pro 0% (Économie client: +${(commSnack - 89).toFixed(0)}€/m)">
+                <i data-lucide="sparkles" class="text-xs"></i> Upsell Pro (+${(commSnack - 89).toFixed(0)}€)
+               </button>`
+            : '';
+
         const mrrClient = (parseFloat(snack.prixAbonnement) || getPlanPrix(snack.pricingPlan)).toFixed(0);
         const powerBtnClass = snack.maintenanceMode
             ? "text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
@@ -175,12 +219,14 @@ function renderSnacksTable() {
                     <div class="text-xs text-text-muted mt-1 flex items-center gap-2 flex-wrap">
                         <span class="font-mono bg-surface-2 px-1.5 py-0.5 rounded">${safeId}</span>
                         <span class="bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 font-black px-2 py-0.5 rounded-md">${mrrClient} €/mois</span>
+                        ${planBadge}
                         ${stripeBadge}
                     </div>
                 </td>
                 <td class="p-4 text-center">${statusBadge}</td>
                 <td class="p-4 text-center text-lg">${featuresHtml || '<span class="text-text-muted text-xs">—</span>'}</td>
                 <td class="p-4 text-right space-x-1 whitespace-nowrap">
+                    ${upsellBtn}
                     <a href="index.html?s=${encodeURIComponent(snack.id)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-white font-bold text-sm bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-600 px-3 py-2 rounded-lg transition">
                         <i data-lucide="external-link" class="text-xs"></i> Voir
                     </a>
@@ -279,6 +325,10 @@ document.addEventListener("click", (e) => {
         window.toggleMaintenance(snackId, isOn);
     } else if (action === "sub-link") {
         window.openSubLinkModal(snackId);
+    } else if (action === "upsell-pitch") {
+        window.openUpsellPitchModal(snackId);
+    } else if (action === "quick-pro-switch") {
+        window.quickSwitchToPro(snackId);
     }
 });
 
@@ -291,6 +341,191 @@ window.toggleMaintenance = async (snackId, currentStatus) => {
         loadDashboardData();
     }
 };
+
+// ============================================================================
+// 🔔 3.6 ALERTE PROACTIVE UPSELL & RAPPORT DE BASCULE AVEC DONNÉES
+// ============================================================================
+function renderUpsellAlertsBanner() {
+    const container = document.getElementById("upsell-alerts-container");
+    if (!container) return;
+
+    // Repère les snacks sous Starter dont la commission à 8% dépasse 89 € (seuil de rentabilité)
+    const upsellCandidates = allSnacks.filter(s => {
+        const plan = s.pricingPlan || "starter";
+        if (plan !== "starter") return false;
+        const ca = snackMonthlyCa.get(s.id) || 0;
+        return (ca * 0.08) > 89;
+    });
+
+    if (upsellCandidates.length === 0) {
+        container.classList.add("hidden");
+        container.innerHTML = "";
+        return;
+    }
+
+    const cardsHtml = upsellCandidates.map(s => {
+        const ca = snackMonthlyCa.get(s.id) || 0;
+        const comm = ca * 0.08;
+        const eco = comm - 89;
+        const safeId = escapeHTML(s.id);
+        const safeNom = escapeHTML(s.nom || s.id);
+
+        return `
+            <div class="bg-surface border-2 border-amber-500/30 rounded-2xl p-5 shadow-md flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <h4 class="font-black text-text text-base truncate">${safeNom}</h4>
+                        <span class="bg-amber-500/15 text-amber-700 dark:text-amber-400 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Starter 8%</span>
+                    </div>
+                    <div class="space-y-1.5 text-xs text-text-muted mb-4">
+                        <div class="flex justify-between">
+                            <span>CA généré ce mois :</span>
+                            <strong class="text-text">${ca.toFixed(2)} €</strong>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Commission 8% payée :</span>
+                            <strong class="text-indigo-600 dark:text-indigo-400">${comm.toFixed(2)} €</strong>
+                        </div>
+                        <div class="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold pt-1.5 border-t border-line">
+                            <span>Gain client avec Forfait Pro :</span>
+                            <span>+${eco.toFixed(0)} € / mois</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button data-action="upsell-pitch" data-snack-id="${safeId}" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Données à lui montrer
+                    </button>
+                    <button data-action="quick-pro-switch" data-snack-id="${safeId}" class="bg-surface-2 hover:bg-indigo-600 hover:text-white text-text font-bold text-xs py-2.5 px-3 rounded-xl transition border border-line" title="Basculer directement en Pro (89€ · 0%)">
+                        <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    container.innerHTML = `
+        <div class="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-indigo-500/15 border-2 border-amber-500/40 rounded-3xl p-6 shadow-xl">
+            <div class="flex items-center justify-between flex-wrap gap-4 mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-2xl shadow-inner animate-pulse">
+                        🔔
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-black text-text">${upsellCandidates.length} Restaurant(s) Prêt(s) pour le Forfait Pro (0% Commission)</h3>
+                            <span class="bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Opportunité Upsell</span>
+                        </div>
+                        <p class="text-xs text-text-muted mt-0.5">Ces restaurants sous formule Starter génèrent plus de 89 € de commission. Proposez-leur le Forfait Pro pour les fidéliser et leur faire économiser de l'argent !</p>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                ${cardsHtml}
+            </div>
+        </div>
+    `;
+
+    container.classList.remove("hidden");
+    if (window.lucide) window.lucide.createIcons();
+}
+
+window.openUpsellPitchModal = (snackId) => {
+    const modal = document.getElementById("modal-upsell-pitch");
+    if (!modal) return;
+    const snack = allSnacks.find(s => s.id === snackId);
+    if (!snack) return;
+
+    const ca = snackMonthlyCa.get(snackId) || 0;
+    const uberCost = ca * 0.30;
+    const starterCost = ca * 0.08;
+    const proCost = 89;
+    const monthlySaving = Math.max(0, starterCost - proCost);
+    const annualSavingVsUber = (uberCost - proCost) * 12;
+
+    document.getElementById("upsell-modal-title").textContent = `Proposition Forfait Pro (0% Commission) — ${snack.nom || snackId}`;
+    document.getElementById("upsell-modal-subtitle").textContent = `Calculé en direct pour ${snack.nom || snackId} (${snack.id}) sur les commandes de ce mois`;
+
+    document.getElementById("upsell-ca-val").textContent = `${ca.toFixed(2)} €`;
+    document.getElementById("upsell-uber-val").textContent = `${uberCost.toFixed(2)} €`;
+    document.getElementById("upsell-starter-val").textContent = `${starterCost.toFixed(2)} €`;
+    document.getElementById("upsell-saving-monthly").textContent = `+${monthlySaving.toFixed(2)} € / mois dans sa poche`;
+    document.getElementById("upsell-saving-annual").textContent = `Soit +${annualSavingVsUber.toFixed(0)} € économisés par an par rapport à Uber Eats`;
+
+    const pitchMessage = `Bonjour ${snack.nom || "l'équipe"},\n\nFélicitations pour vos superbes résultats ce mois-ci sur votre application Click & Collect avec ${ca.toFixed(0)} € de commandes encaissées ! 🚀\n\n📈 Bilan comparatif de vos ventes :\n• Sur Uber Eats, ces commandes vous auraient coûté ${uberCost.toFixed(0)} € de commissions (30%).\n• Avec notre formule Starter (8%), vous n'avez payé que ${starterCost.toFixed(0)} € (déjà ${(uberCost - starterCost).toFixed(0)} € d'économisés !).\n\n💡 Notre recommandation pour votre restaurant :\nVu votre volume, il est désormais beaucoup plus rentable pour vous de passer à notre Forfait Pro à 89 € / mois fixe (0 % de commission) !\n\nEn passant au Forfait Pro :\n✅ 0 % de commission : vous conservez 100 % de votre chiffre d'affaires.\n✅ Vous gardez +${monthlySaving.toFixed(0)} € de plus chaque mois dans votre poche (soit +${(monthlySaving * 12).toFixed(0)} € / an de bénéfice net supplémentaire).\n\nSouhaitez-vous que j'active votre passage au Forfait Pro dès aujourd'hui ?`;
+
+    const pitchTextarea = document.getElementById("upsell-pitch-text");
+    if (pitchTextarea) pitchTextarea.value = pitchMessage;
+
+    const whatsappBtn = document.getElementById("btn-share-whatsapp");
+    if (whatsappBtn) {
+        whatsappBtn.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(pitchMessage)}`;
+    }
+
+    modal.dataset.snackId = snackId;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.quickSwitchToPro = async (snackId) => {
+    const snack = allSnacks.find(s => s.id === snackId);
+    const nom = snack?.nom || snackId;
+    if (!confirm(`Basculer ${nom} vers le Forfait Pro (89 € / mois · 0% commission) ?`)) return;
+
+    try {
+        await updateDoc(doc(db, "snacks", snackId), {
+            pricingPlan: "pro",
+            prixAbonnement: 89,
+            commissionRate: 0,
+        });
+        showSAToast(`✅ ${nom} basculé en Forfait Pro (89 € · 0%) !`);
+        loadDashboardData();
+    } catch (err) {
+        console.error("Erreur quick switch:", err);
+        showSAToast("❌ Erreur lors de la bascule.", "error");
+    }
+};
+
+document.getElementById("btn-close-upsell-modal")?.addEventListener("click", () => {
+    const modal = document.getElementById("modal-upsell-pitch");
+    modal?.classList.replace("flex", "hidden");
+});
+
+document.getElementById("btn-copy-pitch-text")?.addEventListener("click", () => {
+    const textarea = document.getElementById("upsell-pitch-text");
+    if (textarea?.value && navigator.clipboard) {
+        navigator.clipboard.writeText(textarea.value).then(() => {
+            showSAToast("✅ Message argumentaire copié ! Prêt à être envoyé.");
+        });
+    }
+});
+
+document.getElementById("btn-apply-pro-switch")?.addEventListener("click", async () => {
+    const modal = document.getElementById("modal-upsell-pitch");
+    const snackId = modal?.dataset?.snackId;
+    if (!snackId) return;
+
+    const snack = allSnacks.find(s => s.id === snackId);
+    const nom = snack?.nom || snackId;
+
+    if (!confirm(`Confirmer la bascule de ${nom} vers le Forfait Pro (89 €/mois · 0% commission) ?`)) return;
+
+    try {
+        await updateDoc(doc(db, "snacks", snackId), {
+            pricingPlan: "pro",
+            prixAbonnement: 89,
+            commissionRate: 0,
+        });
+
+        modal.classList.replace("flex", "hidden");
+        showSAToast(`✅ ${nom} est désormais sur le Forfait Pro (89 € · 0%) !`);
+        loadDashboardData();
+    } catch (err) {
+        console.error("Erreur switch pro:", err);
+        showSAToast("❌ Erreur lors de la bascule.", "error");
+    }
+});
 
 // ============================================================================
 // ⚙️ 4. CONFIGURATION PAR CLIENT — Feature Flags
@@ -355,6 +590,12 @@ window.openConfigModal = (snackId) => {
     modal.classList.remove("hidden");
     modal.classList.add("flex");
 };
+
+document.getElementById("cfg-pricingPlan")?.addEventListener("change", (e) => {
+    const plan = e.target.value;
+    const prixInput = document.getElementById("cfg-prixAbonnement");
+    if (prixInput) prixInput.value = getPlanPrix(plan);
+});
 
 document.getElementById("btn-close-config-modal").addEventListener("click", () => {
     document.getElementById("modal-config-snack").classList.replace("flex", "hidden");
@@ -646,15 +887,15 @@ async function loadBillingData() {
         const ageMonths = monthsSince(snack.createdAt);
         const isFree = ageMonths !== null && ageMonths < trialMonths;
         const defaultSub = getPlanPrix(plan);
-        const subscription = snack.maintenanceMode ? 0 : (parseFloat(snack.prixAbonnement) || defaultSub);
-        const commission = (isFree || plan === "pro") ? 0 : Math.round(ca * 0.08 * 100) / 100;
+        const subscription = snack.maintenanceMode ? 0 : (typeof snack.prixAbonnement === 'number' ? snack.prixAbonnement : defaultSub);
+        const commission = (isFree || plan === "pro" || plan === "franchise") ? 0 : Math.round(ca * 0.08 * 100) / 100;
 
         // 🧠 ALGORITHME CONSEIL ANTI-CHURN (OPTIMISATION TARIF)
         let recommendationHtml = '';
-        if (plan === "starter" && ca > 650) {
-            const eco = Math.round((ca * 0.08 + 29) - 79);
-            recommendationHtml = `<span class="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-bold px-2 py-1 rounded-md text-xs shadow-xs inline-flex items-center gap-1"><i data-lucide="sparkles" class="w-3 h-3"></i> Proposer PRO (Éco client: +${eco}€/m)</span>`;
-        } else if (plan === "pro" && ca < 400 && ca > 0) {
+        if (plan === "starter" && ca * 0.08 > 89) {
+            const eco = Math.round(ca * 0.08 - 89);
+            recommendationHtml = `<button data-action="upsell-pitch" data-snack-id="${escapeHTML(snack.id)}" class="bg-indigo-500/10 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-400 font-bold px-2.5 py-1 rounded-md text-xs shadow-xs inline-flex items-center gap-1 transition cursor-pointer"><i data-lucide="sparkles" class="w-3 h-3"></i> Proposer PRO (+${eco}€/m)</button>`;
+        } else if (plan === "pro" && ca < 500 && ca > 0) {
             recommendationHtml = `<span class="bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold px-2 py-1 rounded-md text-xs shadow-xs">💡 Proposer STARTER</span>`;
         } else {
             recommendationHtml = `<span class="bg-green-500/10 text-green-700 dark:text-green-400 font-bold px-2 py-1 rounded-md text-xs shadow-xs">✅ Plan Optimal</span>`;
@@ -674,9 +915,11 @@ async function loadBillingData() {
 
     rows.sort((a, b) => b.total - a.total);
     tbody.innerHTML = rows.map(r => {
-        const planBadge = r.plan === "pro"
-            ? `<span class="bg-purple-500/10 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">PRO (79€)</span>`
-            : `<span class="bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">STARTER (29€+8%)</span>`;
+        const planBadge = r.plan === "franchise"
+            ? `<span class="bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">FRANCHISE (149€)</span>`
+            : r.plan === "pro"
+                ? `<span class="bg-purple-500/10 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">PRO (89€)</span>`
+                : `<span class="bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">STARTER (0€+8%)</span>`;
 
         const ageBadge = r.ageMonths === null
             ? `<span class="text-text-muted">—</span>`

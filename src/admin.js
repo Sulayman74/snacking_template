@@ -163,11 +163,51 @@ document.addEventListener("visibilitychange", () => {
 // ============================================================================
 // 3. ONGLETS ET NAVIGATION
 // ============================================================================
-window.switchAdminTab = (tabName) => {
-  window.currentAdminTab = tabName;
-  const tabs = ["cuisine", "menu", "marketing", "config", "compta", "support", "livreurs"];
-
+// 🎛️ NAVIGATION ADMIN (5 ONGLETS PRINCIPAUX)
+// ============================================================================
+window.switchConfigSubTab = (subTab = "general") => {
+  const tabs = ["general", "livreurs", "support"];
   tabs.forEach((t) => {
+    const btn = document.getElementById(`subtab-config-${t}`);
+    const subview = document.getElementById(`config-subview-${t}`);
+    if (btn) {
+      if (t === subTab) {
+        btn.className =
+          "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 sm:gap-2 bg-blue-600 text-white shadow-sm shrink-0";
+      } else {
+        btn.className =
+          "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 sm:gap-2 text-text-muted hover:text-text hover:bg-surface-2 shrink-0";
+      }
+    }
+    if (subview) {
+      if (t === subTab) {
+        subview.classList.remove("hidden");
+      } else {
+        subview.classList.add("hidden");
+      }
+    }
+  });
+
+  if (subTab === "livreurs") {
+    window.loadDriversView?.();
+  }
+  window.lucide?.createIcons?.();
+};
+
+window.switchAdminTab = (tabName, subTab = null) => {
+  // 🔄 Redirection fluide : livreurs et support sont désormais intégrés dans Réglages
+  if (tabName === "livreurs") {
+    tabName = "config";
+    subTab = "livreurs";
+  } else if (tabName === "support") {
+    tabName = "config";
+    subTab = "support";
+  }
+
+  window.currentAdminTab = tabName;
+  const primaryTabs = ["cuisine", "menu", "marketing", "compta", "config"];
+
+  primaryTabs.forEach((t) => {
     const btnDesktop = document.getElementById(`tab-${t}-desktop`);
     const btnMobile = document.getElementById(`tab-${t}-mobile`);
     const view = document.getElementById(`view-${t}`);
@@ -178,10 +218,16 @@ window.switchAdminTab = (tabName) => {
     }
     if (btnMobile) {
       btnMobile.className =
-        "flex flex-col items-center gap-1 p-2 text-text-muted hover:text-text w-16";
+        "flex flex-col items-center justify-center gap-0.5 py-1 text-text-muted hover:text-text transition-colors";
     }
     if (view) view.classList.add("hidden");
   });
+
+  // Nettoyage éventuel des anciens boutons desktop s'ils subsistent
+  const oldDesktopLivreurs = document.getElementById("tab-livreurs-desktop");
+  const oldDesktopSupport = document.getElementById("tab-support-desktop");
+  if (oldDesktopLivreurs) oldDesktopLivreurs.className = "w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition";
+  if (oldDesktopSupport) oldDesktopSupport.className = "w-full flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-gray-800 rounded-r-2xl font-bold transition";
 
   const activeBtnDesktop = document.getElementById(`tab-${tabName}-desktop`);
   const activeBtnMobile = document.getElementById(`tab-${tabName}-mobile`);
@@ -192,7 +238,7 @@ window.switchAdminTab = (tabName) => {
       "w-full flex items-center px-6 py-4 text-white bg-gray-800 rounded-r-2xl font-bold border-l-4 border-red-500 transition";
   if (activeBtnMobile)
     activeBtnMobile.className =
-      "flex flex-col items-center gap-1 p-2 text-red-600 w-16";
+      "flex flex-col items-center justify-center gap-0.5 py-1 text-red-600 dark:text-red-400 font-bold transition-colors";
 
   if (activeView) activeView.classList.remove("hidden");
 
@@ -215,14 +261,15 @@ window.switchAdminTab = (tabName) => {
       }
     }
 
-    if (tabName === "config") window.loadConfigView();
+    if (tabName === "config") {
+      window.switchConfigSubTab(subTab || "general");
+      window.loadConfigView();
+    }
 
     if (tabName === "compta") {
       window.loadComptaDashboard();
       window.loadUpsellStats?.();
     }
-
-    if (tabName === "livreurs") window.loadDriversView?.();
   }
 };
 

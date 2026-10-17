@@ -176,20 +176,20 @@ describe("AdminStore.getPushEligibility", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it("aucun push ce mois → canSend, remaining 2", () => {
+  it("aucun push ce mois → canSend true, count 0", () => {
     const e = store.getPushEligibility();
     expect(e.canSend).toBe(true);
-    expect(e.remaining).toBe(2);
+    expect(e.count).toBe(0);
   });
-  it("2 pushs ce mois → quota atteint", () => {
+  it("comptabilise les pushs du mois sans bloquer", () => {
     store.setPushHistory([
       { dateCreation: new Date("2026-06-01") },
       { dateCreation: new Date("2026-06-10") },
     ]);
     const e = store.getPushEligibility();
-    expect(e.canSend).toBe(false);
+    expect(e.canSend).toBe(true);
     expect(e.count).toBe(2);
-    expect(e.message).toMatch(/quota/i);
+    expect(e.message).toMatch(/recommandation/i);
   });
   it("pushs d'un autre mois ignorés", () => {
     store.setPushHistory([{ dateCreation: new Date("2026-05-20") }]);
@@ -208,7 +208,7 @@ describe("AdminStore.getFlashOfferEligibility (charge cuisine)", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it("cuisine OK + quota libre → canSendFlash", () => {
+  it("cuisine OK → canSendFlash", () => {
     store.setKitchenLoad({ queue: 1, avgPrepMin: 12, rushMode: false });
     const e = store.getFlashOfferEligibility();
     expect(e.canSendFlash).toBe(true);
@@ -221,28 +221,6 @@ describe("AdminStore.getFlashOfferEligibility (charge cuisine)", () => {
     const e = store.getFlashOfferEligibility();
     expect(e.canSendFlash).toBe(false);
     expect(e.rushMode).toBe(true);
-    expect(e.message).toMatch(/cuisine/i);
-  });
-
-  it("quota mensuel atteint (cuisine OK) → refusé, message quota", () => {
-    store.setKitchenLoad({ queue: 0, avgPrepMin: 12, rushMode: false });
-    store.setPushHistory([
-      { dateCreation: new Date("2026-06-01") },
-      { dateCreation: new Date("2026-06-10") },
-    ]);
-    const e = store.getFlashOfferEligibility();
-    expect(e.canSendFlash).toBe(false);
-    expect(e.message).toMatch(/quota/i);
-  });
-
-  it("rush ET quota atteint → refusé (rush prioritaire dans le message)", () => {
-    store.setKitchenLoad({ queue: 9, avgPrepMin: 40, rushMode: true });
-    store.setPushHistory([
-      { dateCreation: new Date("2026-06-01") },
-      { dateCreation: new Date("2026-06-10") },
-    ]);
-    const e = store.getFlashOfferEligibility();
-    expect(e.canSendFlash).toBe(false);
     expect(e.message).toMatch(/cuisine/i);
   });
 
@@ -340,13 +318,9 @@ describe("AdminStore.schedulePush", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it("quota atteint → throw", async () => {
-    store.setConfig({ identity: { id: "s1" } });
-    store.setPushHistory([
-      { dateCreation: new Date("2026-06-01") },
-      { dateCreation: new Date("2026-06-02") },
-    ]);
-    await expect(store.schedulePush({}, {}, {})).rejects.toThrow(/quota/i);
+  it("snackId manquant → throw", async () => {
+    store.setConfig({ identity: { id: "" } });
+    await expect(store.schedulePush({}, { functions: {}, httpsCallable: vi.fn() }, {})).rejects.toThrow(/snack non identifié/i);
   });
   it("OK → appelle la CF schedulePushCampaign avec snackId + champs", async () => {
     store.setConfig({ identity: { id: "s1" } });

@@ -349,8 +349,8 @@ exports.schedulePushCampaign = onCall({ region: "europe-west1" }, async (request
   let envoiDate = new Date(dateEnvoiPrevue);
   if (Number.isNaN(envoiDate.getTime())) envoiDate = new Date();
 
-  // 🛡️ QUOTA SERVEUR — 2 campagnes / mois calendaire / snack (autorité serveur,
-  // miroir de getPushEligibility côté client mais NON contournable).
+  // 🛡️ GARDE SERVEUR — limite de sécurité anti-abus (50 campagnes / mois calendaire / snack).
+  // Les pushs manuels sont libres et conseillés à 1-2 / semaine.
   const now = new Date();
   const monthStart = Timestamp.fromDate(
     new Date(now.getFullYear(), now.getMonth(), 1)
@@ -361,9 +361,9 @@ exports.schedulePushCampaign = onCall({ region: "europe-west1" }, async (request
     .where("dateCreation", ">=", monthStart)
     .count()
     .get();
-  const MONTHLY_LIMIT = 2;
+  const MONTHLY_LIMIT = 50;
   if (monthlyAgg.data().count >= MONTHLY_LIMIT) {
-    throw new HttpsError("resource-exhausted", "Quota mensuel de campagnes atteint (2/2).");
+    throw new HttpsError("resource-exhausted", "Limite de sécurité mensuelle de campagnes atteinte (50/50).");
   }
 
   const ref = await db.collection("campagnes_push").add({

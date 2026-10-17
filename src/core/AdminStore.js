@@ -265,14 +265,12 @@ export class AdminStore extends EventTarget {
         });
 
         const count = monthlyPushes.length;
-        const limit = 2;
         
         return {
-            canSend: count < limit,
+            canSend: true,
             count,
-            limit,
-            remaining: limit - count,
-            message: count >= limit ? "Quota mensuel atteint (2/2). Attendez le mois prochain pour ne pas fatiguer vos clients." : ""
+            limit: null,
+            message: "Recommandation : 1 à 2 notifications manuelles par semaine max pour préserver l'engagement. Le Smart Advisor s'occupe déjà des notifications automatiques."
         };
     }
 
@@ -300,12 +298,10 @@ export class AdminStore extends EventTarget {
      * @returns {{canSendFlash:boolean, rushMode:boolean, message:string}}
      */
     getFlashOfferEligibility() {
-        const push = this.getPushEligibility();
         const rushMode = this.#state.kitchenLoad?.rushMode === true;
         let message = "";
         if (rushMode) message = "Cuisine en charge — offre flash indisponible. Réessayez quand le rush retombe.";
-        else if (!push.canSend) message = push.message;
-        return { canSendFlash: push.canSend && !rushMode, rushMode, message };
+        return { canSendFlash: !rushMode, rushMode, message };
     }
 
     /**
@@ -500,10 +496,6 @@ export class AdminStore extends EventTarget {
     }
 
     async schedulePush(db, fs, pushData) {
-        // Pré-check UX (le quota est de toute façon RÉ-ENFORCÉ côté serveur).
-        const eligibility = this.getPushEligibility();
-        if (!eligibility.canSend) throw new Error(eligibility.message);
-
         if (!fs?.httpsCallable || !fs?.functions) throw new Error("Fonctions Firebase indisponibles.");
         const snackId = this.#state.config?.identity?.id || window.currentAdminSnackId;
         if (!snackId) throw new Error("Snack non identifié. Recharge l'onglet Configuration.");

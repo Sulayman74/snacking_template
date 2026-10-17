@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SnackSaaS Pro — Votre Propre Application Restaurant sans Commission</title>
+  <meta name="description" content="L'alternative n°1 à Uber Eats et Deliveroo : votre site de commande Click & Collect et votre application mobile PWA 100% à votre nom. 0% de commission, données clients propriétaires et marketing push automatisé.">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://snack-saas-pro.web.app/">
+  
+  <!-- Open Graph / Meta Réseaux -->
+  <meta property="og:title" content="SnackSaaS Pro — L'App Propriétaire de votre Restaurant">
+  <meta property="og:description" content="Arrêtez de donner 30% de commission. Lancez votre propre application mobile en 48h sans passer par l'App Store.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://snack-saas-pro.web.app/">
+  <meta property="og:image" content="https://snack-saas-pro.web.app/code-crafters-logo.jpg">
+
+  <!-- Favicon & Apple Touch Icon (Code Crafters - Option 3 Blason Hexagonal) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+  <link rel="icon" type="image/jpeg" href="/code-crafters-logo.jpg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon-192.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  <!-- Theme Color & Anti-FOUC Theme Preload -->
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function() {
+      try {
+        const saved = localStorage.getItem('theme');
+        const theme = saved || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Schema.org Structured Data (JSON-LD) for SEO -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "SnackSaaS Pro",
+        "operatingSystem": "All (PWA, Web, iOS, Android)",
+        "applicationCategory": "BusinessApplication",
+        "description": "Plateforme de Click & Collect et application PWA propriétaire pour les restaurateurs indépendants et snacks, alternative sans commission 30%.",
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Formule Starter",
+            "price": "0",
+            "priceCurrency": "EUR",
+            "description": "8% de commission sur ventes avec 1er mois 100% offert"
+          },
+          {
+            "@type": "Offer",
+            "name": "Formule Pro",
+            "price": "89",
+            "priceCurrency": "EUR",
+            "description": "89€/mois fixe, 0% de commission à vie"
+          },
+          {
+            "@type": "Offer",
+            "name": "Formule Franchise",
+            "price": "149",
+            "priceCurrency": "EUR",
+            "description": "149€/mois multi-sites, 0% commission"
+          }
+        ]
+      },
+      {
+        "@type": "LocalBusiness",
+        "name": "SnackSaaS Pro",
+        "telephone": "+33617462208",
+        "url": "https://snack-saas-pro.web.app",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Annecy",
+          "addressCountry": "FR"
+        },
+        "priceRange": "€€"
+      }
+    ]
+  }
+  </script>
+  
+  <link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+
+  <!-- 📏 Barre de progression de lecture au scroll -->
+  <div id="scroll-progress" class="scroll-progress-bar" aria-hidden="true"></div>
+
+  <!-- 🧭 Navbar Flottante Glassmorphism -->
+  <div class="navbar-wrap">
+    <header class="navbar">
+      <a href="#" class="brand" aria-label="Accueil SnackSaaS Pro par Code Crafters">
+        <div class="brand-icon" style="width: 40px; height: 40px; overflow: hidden; padding: 0; background: transparent; border-radius: 10px; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
+          <img src="/code-crafters-logo.jpg" alt="Logo Code Crafters - Blason Hexagonal" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block;">
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <span class="brand-name" style="line-height: 1.15;">Snack<span class="gradient-text">SaaS</span> Pro</span>
+          <span style="font-size: 0.68rem; font-weight: 700; color: #F97316; letter-spacing: 0.06em; text-transform: uppercase;">Code Crafters</span>
+        </div>
+      </a>
+
+      <nav aria-label="Navigation principale">
+        <ul class="nav-links">
+          <li><a href="#comparatif" class="nav-link">Comparatif</a></li>
+          <li><a href="#simulateur" class="nav-link">Simulateur</a></li>
+          <li><a href="#showcase" class="nav-link">Démo Live</a></li>
+          <li><a href="#features" class="nav-link">Fonctionnalités</a></li>
+          <li><a href="#pricing" class="nav-link">Tarifs</a></li>
+          <li><a href="#faq" class="nav-link">FAQ</a></li>
+          <li class="mobile-drawer-cta">
+            <a href="#showcase" class="btn btn-secondary btn-sm nav-link" style="width: 100%; justify-content: center;">📱 Tester la Démo Live</a>
+          </li>
+          <li class="mobile-drawer-cta">
+            <a href="#contact" class="btn btn-primary btn-sm nav-link" style="width: 100%; justify-content: center;">🚀 Démo Personnalisée 48h</a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Passer en mode clair" title="Basculer le thème (Sombre / Clair)">
+          <span class="theme-icon icon-moon">🌙</span>
+          <span class="theme-icon icon-sun">☀️</span>
+        </button>
+        <a href="#showcase" class="btn btn-secondary btn-sm">Voir la démo</a>
+        <a href="#pricing" class="btn btn-primary btn-sm">Voir les tarifs</a>
+      </div>
+
+      <button class="mobile-menu-toggle" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
+    </header>
+  </div>
+
+  <!-- Fond flouté pour le menu tiroir mobile -->
+  <div id="mobile-menu-backdrop" class="mobile-menu-backdrop" aria-hidden="true"></div>
+
+  <main>
+    <!-- 🚀 HERO SECTION -->
+    <section class="hero" id="hero">
+      <div class="container hero-grid">
+        <div class="hero-content reveal-left">
+          <div class="pill pill-glow">
+            <span>🔥</span> L'alternative n°1 à Uber Eats & Deliveroo · 0 % de commission
+          </div>
+          <h1 class="hero-title">
+            Arrêtez de donner 30 % à Uber Eats. Offrez à vos clients <span class="gradient-text">VOTRE propre application</span>.
+          </h1>
+          <p class="hero-desc">
+            Le site de commande Click & Collect ET l'application mobile installable 100 % à votre nom. <strong>Zéro commission sur vos ventes</strong>, vos données clients vous appartiennent, et votre cuisine tourne à <strong>votre propre rythme</strong>.
+          </p>
+          <div class="hero-ctas">
+            <a href="#simulateur" class="btn btn-primary">
+              <span>Calculer mes économies</span>
+              <span>→</span>
+            </a>
+            <a href="#showcase" class="btn btn-secondary">
+              <span>Tester la démo live</span>
+            </a>
+          </div>
+          <div class="hero-proof reveal-stagger">
+            <div class="proof-item">
+              <strong>0 %</strong>
+              <span>Commission</span>
+            </div>
+            <div class="proof-item">
+              <strong>+38 %</strong>
+              <span>Réachat clients</span>
+            </div>
+            <div class="proof-item">
+              <strong>48h</strong>
+              <span>Mise en ligne</span>
+            </div>
+            <div class="proof-item">
+              <strong>100 %</strong>
+              <span>Vos données</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 📱 Mockup 3D Réaliste Smartphone -->
+        <div class="hero-visual reveal-right">
+          <div class="floating-badge badge-1">
+            <span>⚽</span>
+            <div>
+              <p style="font-weight: 800; font-size: 0.85rem;">Push Soir de Match envoyé</p>
+              <p style="font-size: 0.75rem; color: #9CA3AF;">18 commandes générées en 15 min</p>
+            </div>
+          </div>
+
+          <div class="floating-badge badge-2">
+            <span>💳</span>
+            <div>
+              <p style="font-weight: 800; font-size: 0.85rem;">Carte Fidélité 3D scannée</p>
+              <p style="font-size: 0.75rem; color: #10B981;">+1 point crédité au comptoir</p>
+            </div>
+          </div>
+
+          <div class="phone-mockup">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="mockup-app-header">
+                <span class="mockup-app-title">O'Tacos Fusion</span>
+                <span style="font-size: 0.75rem; color: #10B981; font-weight: 700;">● Ouvert</span>
+              </div>
+
+              <!-- Carte CB 3D virtuelle -->
+              <div class="mockup-card-cb">
+                <div class="mockup-cb-chip"></div>
+                <div class="mockup-cb-number">•••• •••• •••• 8842</div>
+                <div class="mockup-cb-footer">
+                  <span>KARIM B.</span>
+                  <span style="color: #FDE68A;">8 / 10 POINTS</span>
+                </div>
+              </div>
+
+              <div style="font-size: 0.8rem; font-weight: 800; color: #FFFFFF; margin-top: 4px;">Top Commandes Click & Collect</div>
+
+              <div class="mockup-order-item">
+                <div>
+                  <div style="font-weight: 700; font-size: 0.82rem; color: white;">Tacos 2 Viandes</div>
+                  <div style="font-size: 0.7rem; color: #9CA3AF;">Sauce fromagère maison + Frites</div>
+                </div>
+                <span style="font-weight: 800; font-size: 0.85rem; color: #F97316;">9,50 €</span>
+              </div>
+
+              <div class="mockup-order-item">
+                <div>
+                  <div style="font-weight: 700; font-size: 0.82rem; color: white;">Smash Burger Double</div>
+                  <div style="font-size: 0.7rem; color: #9CA3AF;">Cheddar affiné + Oignons caramélisés</div>
+                </div>
+                <span style="font-weight: 800; font-size: 0.85rem; color: #F97316;">11,90 €</span>
+              </div>
+
+              <div style="margin-top: auto; padding: 12px; background: #F97316; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.85rem;">
+                Commander en 1 tap (Apple Pay)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 🥊 SECTION COMPARATIF : Le Grand Choc -->
+    <section class="section" id="comparatif">
+      <div class="container">
+        <div class="section-header reveal-on-scroll">
+          <div class="pill">Le Grand Choc</div>
+          <h2 class="section-title">
+            Plateforme Mutualisée vs <span class="gradient-text">Votre Propre Application</span>
+          </h2>
+          <p class="text-lead">
+            Pourquoi continuer à enrichir des intermédiaires quand vous pouvez fidéliser vos clients sous votre propre marque ?
+          </p>
+        </div>
+
+        <div class="comparison-card reveal-on-scroll">
+          <div class="table-scroll-hint">
+            <span>👆 Glissez le tableau pour tout comparer</span>
+            <span style="font-size: 1.1rem;">⇄</span>
+          </div>
+          <div class="table-responsive">
+            <table class="compare-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">Critère Stratégique</th>
+                  <th class="col-uber" style="width: 37%;">🔴 Plateformes Tierces (ex. Uber Eats / Deliveroo)</th>
+                  <th class="col-our" style="width: 38%;">🟢 Votre Solution Dédiée (SnackSaaS Pro)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Visibilité & Marque</strong></td>
+                  <td class="col-uber">Noyé parmi 500 concurrents. En bas de votre menu, la plateforme suggère : <em>« Vous aimerez aussi chez votre rival »</em> !</td>
+                  <td class="col-our"><strong>100 % à votre nom et logo</strong>. Votre icône s'installe sur l'écran d'accueil du smartphone. Zéro concurrent, zéro pub tierce.</td>
+                </tr>
+                <tr>
+                  <td><strong>Commissions sur Ventes</strong></td>
+                  <td class="col-uber"><strong>30 % à 35 % de commission</strong> prélevée sur chaque commande. Vous devez gonfler vos prix de 20 % pour survivre.</td>
+                  <td class="col-our"><strong>0 % de commission</strong> (Forfait Pro à 89 €) ou <strong>8 % sans abonnement</strong> (Starter avec 1er mois offert). Vous gardez 100% de votre marge.</td>
+                </tr>
+                <tr>
+                  <td><strong>Propriété des Données</strong></td>
+                  <td class="col-uber"><strong>Zéro donnée</strong>. Numéros et emails masqués. Si vous quittez la plateforme, vous repartez à zéro sans aucun client.</td>
+                  <td class="col-our"><strong>100 % propriétaire</strong>. Noms, vrais numéros de portable et historiques vous appartiennent pour relancer vos clients à volonté.</td>
+                </tr>
+                <tr>
+                  <td><strong>Algorithme & Rythme</strong></td>
+                  <td class="col-uber"><strong>Esclave d'un algorithme opaque</strong>. Si vous refusez une commande en plein coup de feu, vous êtes déclassé au fond de l'app.</td>
+                  <td class="col-our"><strong>Votre rythme</strong>. Bouton « Pause Rush » en 1 tap sur votre tablette cuisine sans aucune pénalité. Vos règles de jeu.</td>
+                </tr>
+                <tr>
+                  <td><strong>Marketing & Relance</strong></td>
+                  <td class="col-uber">Publicités payantes obligatoires à l'intérieur de l'app pour espérer réapparaître en tête de liste.</td>
+                  <td class="col-our"><strong>Pushs gratuits et automatisés</strong> : Soirs de match de foot, relance paniers abandonnés, programme fidélité gamifié.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="legal-notice">
+            * Mentions informatives et comparatives basées sur les conditions tarifaires publiques constatées sur le marché de la livraison (Art. L. 122-1 du Code de la consommation). Les marques citées appartiennent à leurs propriétaires respectifs.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 💰 SIMULATEUR DE RENTABILITÉ EN DIRECT (3 MODÈLES COMPARÉS) -->
+    <section class="section" id="simulateur">
+      <div class="container">
+        <div class="section-header reveal-on-scroll">
+          <div class="pill">Simulateur Interactif</div>
+          <h2 class="section-title">
+            Comparez en direct : <span class="gradient-text">Uber Eats vs Starter (8%) vs Forfait Pro (89 €)</span>
+          </h2>
+          <p class="text-lead">
+            Déplacez le curseur selon vos ventes mensuelles actuelles en livraison / à emporter pour visualiser immédiatement vos gains et trouver votre formule optimale.
+          </p>
+        </div>
+
+        <div class="calculator-box reveal-on-scroll">
+          <div class="slider-container">
+            <div class="slider-val-box">
+              <span style="font-weight: 700; color: var(--text-muted);">Vos ventes mensuelles en ligne :</span>
+              <span id="ca-display" class="slider-number">10 000 €</span>
+            </div>
+            <input type="range" id="ca-slider" class="custom-range" min="1000" max="30000" step="500" value="10000">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); font-weight: 600;">
+              <span>1 000 €</span>
+              <span>15 000 €</span>
+              <span>30 000 €</span>
+            </div>
+
+            <!-- Conseil automatique selon le volume -->
+            <div id="simulator-advice-box" class="simulator-advice-box">
+              <!-- Dynamique via main.js -->
+            </div>
+          </div>
+
+          <!-- Grille des 3 colonnes comparées en direct -->
+          <div class="calc-results-3col reveal-stagger">
+            <!-- 1. Uber Eats / Deliveroo (30%) -->
+            <div class="calc-tier-card tier-uber">
+              <div class="tier-badge-danger">🔴 30 % COMMISSION</div>
+              <span class="tier-label">Uber Eats / Deliveroo</span>
+              <div class="tier-amount" id="uber-fees-display">3 000 €</div>
+              <span class="tier-period">perdus chaque mois</span>
+              <p class="tier-note">Données clients confisquées, algorithme opaque.</p>
+            </div>
+
+            <!-- 2. SnackSaaS Starter (8%) -->
+            <div class="calc-tier-card tier-starter" id="tier-starter-card">
+              <div class="tier-badge-amber">🟡 8 % · 1ER MOIS OFFERT</div>
+              <span class="tier-label">SnackSaaS Starter</span>
+              <div class="tier-amount" id="starter-fees-display">800 €</div>
+              <span class="tier-period">0 € d'abonnement fixe</span>
+              <p class="tier-note" id="starter-savings-display">Économie : +2 200 € / mois vs Uber</p>
+            </div>
+
+            <!-- 3. SnackSaaS Pro (89€ Fixe) -->
+            <div class="calc-tier-card tier-pro highlight-card" id="tier-pro-card">
+              <div class="tier-badge-emerald">🟢 0 % COMMISSION</div>
+              <span class="tier-label">SnackSaaS Pro (Fixe)</span>
+              <div class="tier-amount" id="pro-fees-display">89 €</div>
+              <span class="tier-period">loyer fixe / mois</span>
+              <p class="tier-note" id="pro-savings-display">Économie : +2 911 € / mois vs Uber</p>
+            </div>
+          </div>
+
+          <!-- Synthèse Trésorerie Sauvegardée -->
+          <div class="calculator-summary-banner">
+            <div>
+              <span class="summary-pill">Trésorerie Sauvegardée</span>
+              <h3 class="summary-title">Vous conservez <span class="gradient-text" id="net-savings-display">+2 911 €</span> de plus chaque mois</h3>
+              <p class="summary-sub">Soit <strong id="annual-savings-display" style="color: #10B981;">34 932 €</strong> réinjectés dans votre trésorerie chaque année avec le Forfait Pro !</p>
+            </div>
+            <a href="#pricing" class="btn btn-primary">Passer au 0 % Commission →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 📱 SHOWCASE INTERACTIF O'TACOS FUSION -->
+    <section class="section" id="showcase">
+      <div class="container">
+        <div class="section-header reveal-on-scroll">
+          <div class="pill">Application Réelle en Ligne</div>
+          <h2 class="section-title">
+            Testez Notre Démo Partenaire : <span class="gradient-text">O'Tacos Fusion</span>
+          </h2>
+          <p class="text-lead">
+            Ne nous croyez pas sur parole : explorez en direct l'application réelle de notre enseigne partenaire O'Tacos Fusion sur votre smartphone ou votre navigateur.
+          </p>
+        </div>
+
+        <div class="showcase-tabs">
+          <button class="tab-btn active" data-showcase-tab="menu">🌮 Menu & Customisation</button>
+          <button class="tab-btn" data-showcase-tab="fidelite">💳 Carte Fidélité 3D</button>
+          <button class="tab-btn" data-showcase-tab="paiement">⚡ Paiement Express</button>
+          <button class="tab-btn" data-showcase-tab="pwa">📱 Application PWA</button>
+        </div>
+
+        <div class="showcase-display reveal-on-scroll">
+          <div class="showcase-info">
+            <span id="showcase-cat" style="color: #F97316; font-weight: 800; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Expérience Commande Client</span>
+            <h3 id="showcase-title">Menu Digital & Customisation Tacos</h3>
+            <p id="showcase-desc" style="color: #9CA3AF; line-height: 1.7; margin-bottom: 24px;">
+              Menu interactif avec customisation poussée : choix de la taille (M, L, XL, XXL), sélection des viandes halal marinées, sauces signatures, sauces fromagères et suppléments gourmands calculés en temps réel.
+            </p>
+            <div id="showcase-tags" class="showcase-tags">
+              <span class="tag">Customisation Multilevel</span>
+              <span class="tag">Viandes Halal</span>
+              <span class="tag">Suppléments Dynamiques</span>
+              <span class="tag">Calcul Prix Direct</span>
+            </div>
+            <a id="showcase-link" href="https://snacking-template.web.app" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+              Tester O'Tacos Fusion en direct ↗
+            </a>
+          </div>
+
+          <div id="showcase-frame" class="showcase-preview-frame">
+            <div class="preview-overlay">
+              <div style="font-size: 3rem; margin-bottom: 12px;">🌮</div>
+              <h4 style="font-size: 1.25rem; color: #FFFFFF; margin-bottom: 8px;">O'Tacos Fusion · Application Live</h4>
+              <p style="font-size: 0.9rem; color: #9CA3AF; max-width: 320px; margin: 0 auto 18px;">
+                Application PWA réelle en production. Testez le parcours d'achat complet, la fidélité 3D et le paiement express.
+              </p>
+              <a href="https://snacking-template.web.app" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 0.85rem; padding: 10px 20px;">
+                Ouvrir l'application en direct ↗
+              </a>
+              <div style="margin-top: 14px;">
+                <span style="font-size: 0.8rem; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.4); padding: 4px 12px; border-radius: 9999px; color: #34D399; font-weight: 700;">
+                  ● En ligne & 100% certifié
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🔒 Note de Confidentialité RGPD & Partenaires -->
+        <div style="margin-top: 32px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px 24px; display: flex; align-items: center; gap: 16px;">
+          <span style="font-size: 1.8rem;">🔒</span>
+          <p style="margin: 0; font-size: 0.85rem; color: #9CA3AF; line-height: 1.6;">
+            <strong style="color: #FFFFFF;">Engagement de Confidentialité & Secret des Affaires :</strong> Conformément à nos accords de non-divulgation (NDA) et à la réglementation RGPD, seule l'application de notre enseigne partenaire officielle <strong>O'Tacos Fusion</strong> est présentée publiquement en démonstration. Les identités, menus, chiffres d'affaires et applications de nos autres restaurants partenaires restent strictement confidentiels et protégés.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⚡ BENTO GRID FEATURES -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-header reveal-on-scroll">
+          <div class="pill">L'Arsenal Complet</div>
+          <h2 class="section-title">
+            Tout ce dont votre snack a besoin pour <span class="gradient-text">exploser ses ventes</span>
+          </h2>
+          <p class="text-lead">
+            Une suite d'outils interconnectés : de la commande client sur canapé jusqu'à l'écran tactile de vos cuisiniers.
+          </p>
+        </div>
+
+        <div class="bento-grid reveal-stagger">
+          <!-- Carte 1 : PWA 2-en-1 -->
+          <div class="bento-card col-span-2">
+            <div>
+              <div class="bento-icon">📲</div>
+              <h4>Application PWA 2-en-1 (Web + Mobile Installable)</h4>
+              <p>
+                Zéro passage par l'App Store ou le Google Play Store. Un simple scan de QR code sur vos boîtes ou vos flyers installe directement l'application sur le smartphone du client. Zéro mot de passe Apple ID oublié, chargement instantané en moins d'une seconde, même en 4G saturée.
+              </p>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+              <span class="tag">⚡ Score PageSpeed 100/100</span>
+              <span class="tag">🍏 Compatible iOS & Android</span>
+              <span class="tag">📶 Mode Offline PWA</span>
+            </div>
+          </div>
+
+          <!-- Carte 2 : Push Marketing Soir de Match -->
+          <div class="bento-card">
+            <div>
+              <div class="bento-icon">⚽</div>
+              <h4>Push Marketing « Soir de Match »</h4>
+              <p>
+                Le système détecte automatiquement les affiches football (Ligue des Champions, Ligue 1) et déclenche à H-2 du match une notification ciblée avec pastille rouge sur l'écran d'accueil de vos clients.
+              </p>
+            </div>
+            <span class="tag" style="margin-top: 18px; align-self: flex-start;">+42 % de ventes les soirs de match</span>
+          </div>
+
+          <!-- Carte 3 : Carte Bancaire Fidélité 3D -->
+          <div class="bento-card">
+            <div>
+              <div class="bento-icon">💳</div>
+              <h4>Carte de Fidélité CB 3D Flip</h4>
+              <p>
+                Fini les tampons carton perdus. Une carte bancaire virtuelle animée en 3D avec puce dorée au recto et QR code au verso, scannable directement en caisse pour capter les clients mangeant sur place.
+              </p>
+            </div>
+            <span class="tag" style="margin-top: 18px; align-self: flex-start;">Omnicanal : En ligne + Sur place</span>
+          </div>
+
+          <!-- Carte 4 : Écran Cuisine KDS & Rush -->
+          <div class="bento-card col-span-2">
+            <div>
+              <div class="bento-icon">👨‍🍳</div>
+              <h4>Écran KDS Cuisine avec Pause de Service</h4>
+              <p>
+                Transformez n'importe quelle tablette iPad ou Android en écran cuisine intelligent. Alertes sonores à chaque nouvelle commande, colonnes temps réel (*Attente, À préparer, Prêtes*), calcul du temps moyen d'attente et bouton « Pause Rush » en un tap pour souffler en plein coup de feu sans pénalité.
+              </p>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+              <span class="tag">🔔 Sonnerie Cuisine Intégrée</span>
+              <span class="tag">⏸️ Pause Rush en 1 Clic</span>
+              <span class="tag">📷 Scanner QR Comptoir Intégré</span>
+            </div>
+          </div>
+
+          <!-- Carte 5 : Module Livreur Dédié -->
+          <div class="bento-card">
+            <div>
+              <div class="bento-icon">🛵</div>
+              <h4>Interface Livreur Autonome</h4>
+              <p>
+                Espace dédié pour vos livreurs internes avec dispatching de commandes, calcul d'itinéraire GPS en un clic (Waze / Google Maps) et photo de preuve de livraison géolocalisée.
+              </p>
+            </div>
+            <span class="tag" style="margin-top: 18px; align-self: flex-start;">Zéro livreur tiers externe</span>
+          </div>
+
+          <!-- Carte 6 : Paiements & Sécurité Stripe -->
+          <div class="bento-card">
+            <div>
+              <div class="bento-icon">🔒</div>
+              <h4>Paiements Directs Stripe Connect</h4>
+              <p>
+                L'argent des commandes arrive directement sur le compte bancaire du restaurant. Compatible Apple Pay, Google Pay et CB avec sécurité bancaire 3D Secure et conformité PCI-DSS Level 1.
+              </p>
+            </div>
+            <span class="tag" style="margin-top: 18px; align-self: flex-start;">Virement direct sur votre IBAN</span>
+          </div>
+
+          <!-- Carte 7 : RGPD & Fichier Client Propriétaire -->
+          <div class="bento-card">
+            <div>
+              <div class="bento-icon">🛡️</div>
+              <h4>100 % Conforme RGPD</h4>
+              <p>
+                Données hébergées en Europe, gestion des consentements push, opt-out conforme et export CSV en 1 clic pour votre comptable ou votre marketing direct.
+              </p>
+            </div>
+            <span class="tag" style="margin-top: 18px; align-self: flex-start;">Données Hébergées en UE</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 🏷️ GRILLE TARIFAIRE -->
+    <section class="section" id="pricing">
+      <div class="container">
+        <div class="section-header reveal-on-scroll">
+          <div class="pill">Tarifs Simples & Transparents</div>
+          <h2 class="section-title">
+            Investissez dans <span class="gradient-text">votre propre outil</span>, pas dans des commissions
+          </h2>
+          <p class="text-lead">
+            Aucun frais caché, aucun engagement de durée. Rentabilisé dès votre premier week-end.
+          </p>
+        </div>
+
+        <div class="pricing-grid reveal-stagger">
+          <!-- STARTER : ZÉRO RISQUE -->
+          <div class="pricing-card">
+            <div>
+              <div class="pill" style="margin-bottom: 8px; font-size: 0.75rem;">1ER MOIS 100% OFFERT</div>
+              <h3 style="font-size: 1.4rem;">Starter Zéro Risque</h3>
+              <p style="font-size: 0.85rem; color: #9CA3AF; margin-top: 4px;">Idéal pour tester sans dépenser 1 centime d'avance.</p>
+              <div class="pricing-price">
+                0 €<span>/ mois d'abonnement</span>
+              </div>
+              <p style="font-size: 0.9rem; color: #F59E0B; font-weight: 700; margin: -8px 0 16px 0;">+ 8 % de commission sur vos ventes</p>
+              <ul class="pricing-features">
+                <li class="active">🎁 <strong>1er mois 100 % gratuit</strong> (sans CB)</li>
+                <li class="active">✔ <strong>8 % de commission</strong> (vs 30% Uber Eats)</li>
+                <li class="active">✔ Application PWA installable iOS & Android</li>
+                <li class="active">✔ Click & Collect + Commande à emporter</li>
+                <li class="active">✔ Paiement Stripe direct sur votre IBAN</li>
+                <li class="active">✔ Carte de fidélité CB 3D au comptoir</li>
+                <li class="active">✔ Écran Cuisine KDS avec alertes tablettes</li>
+                <li style="color: #6B7280;">✖ Module Livreur dédié</li>
+                <li style="color: #6B7280;">✖ Pushs illimités & Soir de match auto</li>
+              </ul>
+            </div>
+            <a href="#contact" class="btn btn-secondary" style="width: 100%;">Tester 1 mois gratuitement →</a>
+          </div>
+
+          <!-- PRO PERFORMANCE (FEATURED) -->
+          <div class="pricing-card featured">
+            <div class="pricing-badge">⭐ Le Plus Rentable dès 1 100 € de CA</div>
+            <div>
+              <h3 style="font-size: 1.4rem; color: var(--text-main);">Pro 0 % Commission</h3>
+              <p style="font-size: 0.85rem; color: #9CA3AF; margin-top: 4px;">Pour les snacks établis qui veulent garder 100 % de leur chiffre d'affaires.</p>
+              <div class="pricing-price">
+                89 €<span>/ mois fixe</span>
+              </div>
+              <p style="font-size: 0.9rem; color: #10B981; font-weight: 800; margin: -8px 0 16px 0;">0 % DE COMMISSION À VIE</p>
+              <ul class="pricing-features">
+                <li class="active">✔ <strong>0 % de commission sur toutes vos ventes</strong></li>
+                <li class="active">✔ Application PWA installable iOS & Android</li>
+                <li class="active">✔ Click & Collect + Livraison + Sur place</li>
+                <li class="active">✔ <strong>Module Livreur autonome</strong> (GPS + Preuve photo)</li>
+                <li class="active">✔ <strong>Pushs Marketing ILLIMITÉS</strong></li>
+                <li class="active">✔ <strong>Déclencheur auto « Soir de Match »</strong></li>
+                <li class="active">✔ Carte de fidélité CB 3D scannable au comptoir</li>
+                <li class="active">✔ Intégration complète de votre menu offerte en 48h</li>
+              </ul>
+            </div>
+            <a href="#contact" class="btn btn-primary" style="width: 100%;">Passer au 0 % Commission →</a>
+          </div>
+
+          <!-- FRANCHISE / MULTI-SITES -->
+          <div class="pricing-card">
+            <div>
+              <h3 style="font-size: 1.4rem;">Franchise & Réseaux</h3>
+              <p style="font-size: 0.85rem; color: #9CA3AF; margin-top: 4px;">À partir de 2 restaurants ou chaînes en développement.</p>
+              <div class="pricing-price">
+                149 €<span>/ mois</span>
+              </div>
+              <p style="font-size: 0.9rem; color: #10B981; font-weight: 800; margin: -8px 0 16px 0;">0 % DE COMMISSION À VIE</p>
+              <ul class="pricing-features">
+                <li class="active">✔ <strong>0 % de commission sur toutes vos ventes</strong></li>
+                <li class="active">✔ Multi-établissements centralisés</li>
+                <li class="active">✔ Domaines personnalisés dédiés inclus</li>
+                <li class="active">✔ Flotte de livreurs partagée</li>
+                <li class="active">✔ Pushs ciblés par restaurant</li>
+                <li class="active">✔ Fidélité multi-boutiques unifiée</li>
+                <li class="active">✔ Account Manager dédié + Support VIP 7j/7</li>
+              </ul>
+            </div>
+            <a href="#contact" class="btn btn-secondary" style="width: 100%;">Demander une démo Réseau</a>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 36px; color: #9CA3AF; font-size: 0.95rem;">
+          🔒 <strong>Zéro risque pour vous</strong> : 1er mois 100% offert, sans carte bancaire, sans engagement. Résiliation en 1 clic.
+        </div>
+      </div>
+    </section>
+
+    <!-- ❓ FAQ ACCORDÉON -->
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="section-header reveal-on-scroll">
+          <div class="pill">Vos Questions</div>
+          <h2 class="section-title">
+            Tout ce que vous devez <span class="gradient-text">savoir</span>
+          </h2>
+          <p class="text-lead">Des réponses claires et sans jargon technique pour lancer votre application sereinement.</p>
+        </div>
+
+        <div class="faq-list reveal-stagger">
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Mes clients vont-ils vraiment installer l'application s'il n'y a pas d'App Store ?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                <strong>Oui, et c'est même beaucoup plus facile !</strong> Sur l'App Store, 68 % des clients abandonnent avant la fin du téléchargement à cause d'un mot de passe Apple ID oublié ou d'un manque d'espace de stockage. Grâce à la technologie PWA, un simple scan de QR code sur vos boîtes de pizza ou vos emballages burger installe l'icône sur leur téléphone en 1 seconde sans aucun téléchargement lourd.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Dois-je changer ma caisse enregistreuse ou acheter du matériel coûteux ?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                <strong>Non, absolument pas !</strong> Notre solution fonctionne sur n'importe quel appareil que vous possédez déjà : une simple tablette iPad ou Android en cuisine, ou même votre propre smartphone. Vous pouvez imprimer les tickets ou simplement gérer les commandes sur l'écran tactile du KDS.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Combien de temps faut-il pour mettre en ligne mon restaurant ?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                <strong>Moins de 48 heures.</strong> Envoyez-nous simplement une photo de votre menu actuel ou un lien vers votre page existante : notre équipe configure vos catégories, vos produits, vos options/suppléments et votre logo. Vous n'avez plus qu'à connecter votre compte Stripe pour recevoir vos paiements directement sur votre compte bancaire.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Puis-je continuer à utiliser Uber Eats en parallèle ?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                <strong>Tout à fait !</strong> Beaucoup de restaurateurs utilisent Uber Eats pour capter de nouveaux clients de passage, puis glissent un flyer dans la commande pour leur faire passer leurs futures commandes sur leur propre application (avec des prix 10% moins chers et des points de fidélité). Vous convertissez ainsi progressivement vos clients Uber en habitués directs à 0 % de commission.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Suis-je engagé dans la durée ?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                <strong>Zéro engagement.</strong> Nos formules sont mensuelles et sans engagement. Vous pouvez arrêter votre abonnement en un clic depuis votre espace d'administration à tout moment.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 📩 CONTACT / CALL TO ACTION FINAL -->
+    <section class="section" id="contact" style="background: linear-gradient(180deg, transparent 0%, rgba(249, 115, 22, 0.08) 100%);">
+      <div class="container reveal-on-scroll" style="max-width: 800px; text-align: center;">
+        <div class="pill pill-glow">Prêt à reprendre le contrôle ?</div>
+        <h2 class="section-title" style="margin-top: 18px;">
+          Lancez l'application de votre restaurant <span class="gradient-text">dès cette semaine</span>
+        </h2>
+        <p class="text-lead" style="margin-bottom: 36px;">
+          Remplissez ce formulaire rapide pour recevoir votre démo interactive personnalisée avec votre logo et vos produits sous 24h.
+        </p>
+
+        <form id="lead-form" class="lead-form-box">
+          <div>
+            <label for="lead-resto" class="form-label">Nom de votre restaurant / enseigne *</label>
+            <input type="text" id="lead-resto" required placeholder="Ex. Le Kebab Gourmet, Pizza Bella..." class="form-input">
+          </div>
+          <div class="form-row-2col">
+            <div>
+              <label for="lead-phone" class="form-label">Votre numéro de téléphone (WhatsApp) *</label>
+              <input type="tel" id="lead-phone" required placeholder="06 12 34 56 78" class="form-input">
+            </div>
+            <div>
+              <label for="lead-city" class="form-label">Ville d'implantation *</label>
+              <input type="text" id="lead-city" required placeholder="Ex. Annecy, Lyon, Paris..." class="form-input">
+            </div>
+          </div>
+          <div>
+            <label for="lead-formula" class="form-label">Formule qui vous intéresse</label>
+            <select id="lead-formula" class="form-select">
+              <option value="Starter (8% commission · 1er mois 100% offert)" selected>Starter (8 % commission · 1er mois 100% offert sans CB)</option>
+              <option value="Pro (89 €/mois · 0% commission)">Pro (89 € / mois fixe · 0% commission à vie)</option>
+              <option value="Franchise (149 €/mois · Multi-sites)">Franchise (149 € / mois fixe · Multi-sites)</option>
+            </select>
+          </div>
+          <div>
+            <label for="lead-menu" class="form-label">Lien vers votre menu actuel (ou page Uber Eats / Instagram / Google)</label>
+            <input type="url" id="lead-menu" placeholder="https://..." class="form-input">
+          </div>
+          <button type="submit" id="lead-submit-btn" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 1.05rem; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span>💬 Envoyer ma demande sur WhatsApp (06 17 46 22 08) →</span>
+          </button>
+          <div id="lead-status" style="display: none; padding: 14px 18px; border-radius: 12px; font-size: 0.9rem; text-align: center; margin-top: 4px;"></div>
+          <p style="font-size: 0.75rem; color: var(--text-dim); text-align: center;">
+            🔒 Vos coordonnées restent strictement confidentielles. Échange direct avec notre responsable technique et commercial sur WhatsApp.
+          </p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- 🦶 FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand" style="margin-bottom: 14px;">
+            <div class="brand-icon" style="width: 48px; height: 48px; overflow: hidden; padding: 0; background: transparent; border-radius: 12px; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25);">
+              <img src="/code-crafters-logo.jpg" alt="Logo Code Crafters - Blason Hexagonal" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: block;">
+            </div>
+            <div>
+              <span class="brand-name" style="display: block; line-height: 1.15;">Snack<span class="gradient-text">SaaS</span> Pro</span>
+              <span style="font-size: 0.72rem; color: #F97316; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">Propulsé par Code Crafters</span>
+            </div>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 380px; line-height: 1.6;">
+            L'écosystème Click & Collect et PWA propriétaire pour les commerces de bouche et la restauration rapide. Reprenez votre indépendance face aux géants de la livraison.
+          </p>
+          <div style="margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #F97316; background: rgba(249, 115, 22, 0.08); border: 1px solid rgba(249, 115, 22, 0.25); padding: 6px 12px; border-radius: 99px; font-weight: 700;">
+            <span>⚡ Édité par Code Crafters (EI)</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="font-size: 1rem; margin-bottom: 14px; color: var(--text-main);">Application Démo</h4>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
+            <li><a href="https://snacking-template.web.app" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: none;">🌮 O'Tacos Fusion (Live) ↗</a></li>
+            <li><a href="#showcase" style="color: var(--text-muted); text-decoration: none;">📱 Tester la PWA en Direct</a></li>
+            <li><span style="color: #6B7280; font-size: 0.85rem;">🔒 Autres snacks sous NDA</span></li>
+            <li><a href="#contact" style="color: #34D399; font-weight: 700; text-decoration: none;">🚀 Démo Personnalisée 48h ↗</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="font-size: 1rem; margin-bottom: 14px; color: var(--text-main);">Légal & Société</h4>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-muted);">
+            <li>Auto-entreprise Code Crafters (EI)</li>
+            <li>100 % Conforme RGPD (UE)</li>
+            <li>Sécurité Bancaire Stripe Level 1</li>
+            <li>Hébergement Google Cloud Europe</li>
+            <li>Données Chiffrées AES-256</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="font-size: 1rem; margin-bottom: 14px; color: #FFFFFF;">Contact Direct</h4>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: #9CA3AF;">
+            <li>💬 WhatsApp : <a href="https://wa.me/33617462208?text=Bonjour%2C%20je%20souhaite%20des%20informations%20sur%20SnackSaaS%20Pro." target="_blank" rel="noopener noreferrer" style="color: #34D399; font-weight: 800; text-decoration: underline;">06 17 46 22 08</a></li>
+            <li>⚡ Réponse : Moins de 2h</li>
+            <li>🚀 Mise en ligne : 48h chrono</li>
+            <li>📍 Annecy / France entière</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 SnackSaaS Pro. Tous droits réservés.</span>
+        <span>Conçu pour libérer les restaurateurs des commissions abusives.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 💬 BOUTON FLOTTANT WHATSAPP -->
+  <a href="https://wa.me/33617462208?text=Bonjour%2C%20je%20souhaite%20des%20informations%20sur%20SnackSaaS%20Pro%20pour%20mon%20restaurant." target="_blank" rel="noopener noreferrer" class="floating-whatsapp-btn" aria-label="Discuter sur WhatsApp avec le créateur">
+    <span class="whatsapp-icon">💬</span>
+    <span class="whatsapp-text">Discuter sur WhatsApp</span>
+  </a>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

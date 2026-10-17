@@ -30,43 +30,81 @@ async function loadPushHistory() {
         snapshot.forEach(doc => history.push({ id: doc.id, ...doc.data() }));
 
         adminStore.setPushHistory(history);
-        renderLastCampaignStats(history[0]);
+        renderPushHistory(history);
 
     } catch (error) {
         console.error("Erreur historique push:", error);
     }
 }
 
-function renderLastCampaignStats(last) {
+function renderPushHistory(history) {
     const container = document.getElementById("last-campaign-stats");
     if (!container) return;
 
-    if (!last) {
-        container.innerHTML = `<p class="text-xs text-gray-400 italic text-center py-4">Aucune campagne envoyée.</p>`;
+    const list = Array.isArray(history) ? history : (history ? [history] : []);
+
+    if (list.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 px-4 bg-surface-2 rounded-2xl border border-dashed border-line">
+                <i data-lucide="bell-off" class="text-2xl text-text-muted mb-2"></i>
+                <p class="text-xs text-text-muted font-bold">Aucune campagne envoyée.</p>
+                <p class="text-[10px] text-text-muted mt-1">Vos notifications programmées et envoyées s'afficheront ici.</p>
+            </div>
+        `;
+        window.lucide?.createIcons?.();
         return;
     }
 
-    const date = last.dateCreation?.toDate ? last.dateCreation.toDate() : new Date(last.dateCreation);
-    
+    const TARGET_LABELS = {
+        all: "🚀 Tous",
+        active: "🔥 Actifs",
+        inactive: "❄️ Inactifs"
+    };
+
     container.innerHTML = `
         <div class="space-y-3">
-            <div class="p-3 bg-surface-2 rounded-2xl border border-line">
-                <p class="text-[10px] text-text-muted font-bold uppercase mb-1">Titre</p>
-                <p class="text-sm font-black text-text line-clamp-1">${escapeHTML(last.titre || "")}</p>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="p-3 bg-green-50 dark:bg-green-950/40 rounded-2xl border border-green-100 dark:border-green-800 text-center">
-                    <p class="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase mb-1">Envoyées</p>
-                    <p class="text-xl font-black text-green-700 dark:text-green-300">${parseInt(last.stats?.envoye) || 0}</p>
-                </div>
-                <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-2xl border border-blue-100 dark:border-blue-800 text-center">
-                    <p class="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase mb-1">Clics</p>
-                    <p class="text-xl font-black text-blue-700 dark:text-blue-300">${parseInt(last.stats?.clics) || 0}</p>
-                </div>
-            </div>
-            <p class="text-[10px] text-text-muted text-center italic">Dernier envoi : ${escapeHTML(date.toLocaleDateString())} à ${escapeHTML(date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}))}</p>
+            ${list.map((c) => {
+                const date = c.dateCreation?.toDate ? c.dateCreation.toDate() : (c.dateCreation != null ? new Date(c.dateCreation) : new Date());
+                const dateStr = !isNaN(date.getTime())
+                    ? date.toLocaleDateString("fr-FR", { day: '2-digit', month: '2-digit' }) + " · " + date.toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })
+                    : "—";
+                const targetLabel = TARGET_LABELS[c.cible] || c.cible || "Tous";
+                const isFlash = c.type === "flash" || c.isFlash === true;
+                const sentCount = parseInt(c.stats?.envoye ?? c.envoye ?? 0) || 0;
+                const clicksCount = parseInt(c.stats?.clics ?? c.clics ?? 0) || 0;
+
+                return `
+                    <div class="p-3.5 bg-surface-2 hover:bg-surface-3 transition rounded-2xl border border-line space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isFlash ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400' : 'bg-blue-500/15 text-blue-600 dark:text-blue-400'}">
+                                        ${isFlash ? '⚡ Flash' : '📣 Manuel'}
+                                    </span>
+                                    <span class="text-[9px] font-bold text-text-muted bg-surface px-1.5 py-0.5 rounded border border-line">
+                                        ${targetLabel}
+                                    </span>
+                                </div>
+                                <h4 class="text-xs font-black text-text line-clamp-1">${escapeHTML(c.titre || "Sans titre")}</h4>
+                            </div>
+                            <span class="text-[10px] text-text-muted shrink-0 font-medium">${escapeHTML(dateStr)}</span>
+                        </div>
+                        <p class="text-[11px] text-text-muted line-clamp-2 leading-relaxed">${escapeHTML(c.message || "")}</p>
+                        <div class="flex items-center gap-3 pt-1 border-t border-line/60 text-[10px] font-bold">
+                            <span class="text-green-600 dark:text-green-400">📤 <strong>${sentCount}</strong> envoyée${sentCount > 1 ? 's' : ''}</span>
+                            <span class="text-blue-600 dark:text-blue-400">👆 <strong>${clicksCount}</strong> clic${clicksCount > 1 ? 's' : ''}</span>
+                            ${sentCount > 0 ? `<span class="text-text-muted ml-auto font-black text-[9px]">${Math.round((clicksCount / sentCount) * 100)} % taux</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join("")}
         </div>
     `;
+    window.lucide?.createIcons?.();
+}
+
+function renderLastCampaignStats(arg) {
+    renderPushHistory(Array.isArray(arg) ? arg : (arg ? [arg] : []));
 }
 
 // Compatibilité legacy

@@ -236,35 +236,33 @@ class AdminMarketingUI {
     renderQuota() {
         if (!this.quotaContainer) return;
         const eligibility = adminStore.getPushEligibility();
-        
-        const percentage = (eligibility.count / eligibility.limit) * 100;
-        const colorClass = percentage >= 100 ? "bg-red-500" : percentage >= 50 ? "bg-orange-500" : "bg-green-500";
+        const count = parseInt(eligibility.count) || 0;
 
-        const safePct = Math.max(0, Math.min(100, Number(percentage) || 0));
         this.quotaContainer.innerHTML = `
-            <div class="space-y-2">
-                <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
-                    <span class="text-text-muted">Quota mensuel</span>
-                    <span class="${percentage >= 100 ? 'text-red-500' : 'text-text'}">${parseInt(eligibility.count) || 0} / ${parseInt(eligibility.limit) || 0}</span>
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i> Conseils Envois Manuels
+                    </span>
+                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        ${count} envoyé${count > 1 ? 's' : ''} ce mois
+                    </span>
                 </div>
-                <div class="w-full h-2 bg-surface-2 rounded-full overflow-hidden">
-                    <div class="h-full ${colorClass} transition-all duration-1000" style="width: ${safePct}%"></div>
-                </div>
-                <p class="text-[10px] text-text-muted italic">${escapeHTML(eligibility.message || 'Utilisez vos notifications stratégiquement pour maximiser l\'impact.')}</p>
+                <p class="text-xs font-bold text-text leading-snug">
+                    💡 Recommandation : 1 à 2 notifications manuelles / semaine max.
+                </p>
+                <p class="text-[11px] text-text-muted leading-relaxed">
+                    Le <strong class="text-text font-bold">Smart Advisor</strong> s'occupe déjà de vos notifications automatiques (météo, soirs de match, relances paniers). Réservez vos pushs manuels pour vos événements spéciaux et promos exclusives !
+                </p>
             </div>
         `;
+        window.lucide?.createIcons?.();
 
-        // Désactiver le bouton d'envoi si quota atteint
         const sendBtn = document.getElementById("btn-send-push");
         if (sendBtn) {
-            sendBtn.disabled = !eligibility.canSend;
-            if (!eligibility.canSend) {
-                sendBtn.classList.add("opacity-50", "grayscale");
-                sendBtn.title = eligibility.message;
-            } else {
-                sendBtn.classList.remove("opacity-50", "grayscale");
-                sendBtn.title = "";
-            }
+            sendBtn.disabled = false;
+            sendBtn.classList.remove("opacity-50", "grayscale");
+            sendBtn.title = "";
         }
     }
 
