@@ -231,6 +231,7 @@ export default defineConfig(({ command, mode }) => {
       __APP_VERSION__: JSON.stringify(appVersion()),
     },
     build: {
+      chunkSizeWarningLimit: 800,
       outDir: process.env.SNACK_ID ? `dist/${currentSnackId}` : 'dist',
       rollupOptions: {
         input: {

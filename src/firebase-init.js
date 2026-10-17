@@ -3,7 +3,7 @@
 // ============================================================================
 
 import "./scanner.js";
-import { extractTenantIdentifier } from "./core/tenantResolver.js";
+import { extractTenantIdentifier } from "./core/tenantIdentifier.js";
 
 import {
   GoogleAuthProvider,
