@@ -406,9 +406,9 @@
                                             <option value="inactive">❄️ Clients inactifs</option>
                                         </select>
                                     </div>
-                                    <div>
+                                    <div class="min-w-0">
                                         <label class="block text-xs font-black text-text-muted uppercase tracking-wider mb-2">Programmation</label>
-                                        <input type="datetime-local" id="push-date" class="w-full px-4 py-3 rounded-xl bg-surface-2 text-text border border-line focus:border-blue-500 outline-none font-bold text-base sm:text-sm">
+                                        <input type="datetime-local" id="push-date" class="w-full max-w-full min-w-0 box-border block px-3.5 py-3 rounded-xl bg-surface-2 text-text border border-line focus:border-blue-500 outline-none font-bold text-sm">
                                     </div>
                                 </div>
                                 <div>
@@ -513,7 +513,7 @@
                 </div>
 
                 <!-- Export avec filtre date -->
-                <div class="bg-surface rounded-2xl p-4 sm:p-6 shadow-sm border border-line">
+                <div class="bg-surface rounded-2xl p-4 sm:p-6 shadow-sm border border-line overflow-hidden">
                     <h3 class="text-base sm:text-lg font-bold text-text mb-4 flex items-center gap-2">
                         <i data-lucide="file-spreadsheet" class="text-green-500"></i> Export Livre de Caisse
                     </h3>
@@ -524,16 +524,16 @@
                         <button onclick="setComptaDateRange('last-month')" class="whitespace-nowrap px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-xs md:text-sm font-bold rounded-lg transition border border-line shrink-0">Mois précédent</button>
                         <button onclick="setComptaDateRange('quarter')" class="whitespace-nowrap px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-xs md:text-sm font-bold rounded-lg transition border border-line shrink-0">Ce trimestre</button>
                     </div>
-                    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
-                        <div class="flex-1">
+                    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end w-full min-w-0">
+                        <div class="flex-1 min-w-0 w-full">
                             <label class="text-xs text-text-muted font-bold uppercase tracking-wider block mb-1">Du</label>
-                            <input type="date" id="compta-date-start" class="w-full bg-surface-2 text-text border border-line rounded-xl px-3.5 py-2.5 sm:px-4 sm:py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="compta-date-start" class="w-full max-w-full min-w-0 box-border block bg-surface-2 text-text border border-line rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <div class="flex-1">
+                        <div class="flex-1 min-w-0 w-full">
                             <label class="text-xs text-text-muted font-bold uppercase tracking-wider block mb-1">Au</label>
-                            <input type="date" id="compta-date-end" class="w-full bg-surface-2 text-text border border-line rounded-xl px-3.5 py-2.5 sm:px-4 sm:py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="compta-date-end" class="w-full max-w-full min-w-0 box-border block bg-surface-2 text-text border border-line rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <button onclick="exportComptaCSV()" id="btn-export-compta" class="w-full sm:w-auto justify-center whitespace-nowrap bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md active:scale-95 flex items-center gap-2">
+                        <button onclick="exportComptaCSV()" id="btn-export-compta" class="w-full sm:w-auto shrink-0 justify-center whitespace-nowrap bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md active:scale-95 flex items-center gap-2">
                             <i data-lucide="file-spreadsheet"></i> Exporter (CSV)
                         </button>
                     </div>

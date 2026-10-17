@@ -83,6 +83,8 @@ body {
    donc ici ; le @media du @custom-variant n'est qu'un filet pré-hydratation / sans-JS.
    La palette (--color-primary/-accent), pilotée par AppUI, reste inchangée : seul le NEUTRE
    bascule, donc les 6 palettes fonctionnent en sombre sans réglage par palette. */
+:host(.dark),
+html.dark,
 .dark {
   --color-surface: #1a1d23;     /* cartes / surfaces */
   --color-text: #e5e7eb;        /* texte principal */
@@ -115,6 +117,18 @@ html.dark body {
   ::before,
   ::after {
     border-color: var(--color-line);
+  }
+
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"] {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
   }
 }
 

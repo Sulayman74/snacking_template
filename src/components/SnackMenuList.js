@@ -148,7 +148,7 @@ export class SnackMenuList extends SnackElement {
     const categories = [...new Set(menu.map(p => p.categorieId))].filter(Boolean);
 
     return html`
-      <div class="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-line shadow-sm">
+      <div class="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-line shadow-sm pt-[env(safe-area-inset-top,0px)]">
         <div class="container mx-auto px-4 py-3 flex items-center gap-3">
           <div class="relative flex-1">
             <input type="text" 
@@ -202,8 +202,8 @@ export class SnackMenuList extends SnackElement {
           return html`
             <section class="menu-section mb-10 pt-4 scroll-mt-32" id="cat-${catId}" data-cat-id="${catId}">
               <div class="flex items-center gap-3 mb-6">
-                <h2 class="text-2xl font-black text-text uppercase tracking-tight">${this.getCategoryName(catId)}</h2>
-                <div class="flex-1 h-px bg-primary/30"></div>
+                <h2 class="text-2xl font-black text-text dark:text-gray-100 uppercase tracking-tight">${this.getCategoryName(catId)}</h2>
+                <div class="flex-1 h-px bg-line/80 dark:bg-line"></div>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" role="list">
                 ${catProduits.map(p => html`<snack-menu-item .product="${p}" class="block"></snack-menu-item>`)}
