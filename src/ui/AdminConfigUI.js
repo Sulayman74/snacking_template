@@ -93,40 +93,46 @@ export class AdminConfigUI {
         const safeBreakEnd = escapeHTML(h.breakEnd || "17:00");
 
         return `
-        <div class="day-row flex flex-col gap-2 p-4 bg-surface rounded-2xl border border-line shadow-sm transition-all hover:border-blue-400">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <span class="w-24 font-black text-text uppercase tracking-tight text-sm">${safeDay}</span>
+        <div class="day-row flex flex-col gap-2.5 p-3.5 sm:p-4 bg-surface rounded-2xl border border-line shadow-sm transition-all hover:border-blue-400 overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-2.5 sm:gap-4">
+                <span class="w-20 sm:w-24 font-black text-text uppercase tracking-tight text-xs sm:text-sm shrink-0">${safeDay}</span>
 
-                <div class="flex items-center gap-2 ${isClosed ? "opacity-30 pointer-events-none" : ""}">
-                    <input type="time" class="hour-open p-2 rounded-xl border border-line font-bold text-text bg-surface-2 focus:border-blue-500 outline-none"
+                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ${isClosed ? "opacity-30 pointer-events-none" : ""}">
+                    <input type="time" class="hour-open px-2 py-1.5 sm:p-2 rounded-xl border border-line font-bold text-text bg-surface-2 focus:border-blue-500 outline-none text-xs sm:text-sm w-20 sm:w-24 text-center"
                         value="${safeOpen}" ${isClosed ? "disabled" : ""}>
-                    <span class="text-text-muted font-black">→</span>
-                    <input type="time" class="hour-close p-2 rounded-xl border border-line font-bold text-text bg-surface-2 focus:border-blue-500 outline-none"
+                    <span class="text-text-muted font-black text-xs sm:text-sm">→</span>
+                    <input type="time" class="hour-close px-2 py-1.5 sm:p-2 rounded-xl border border-line font-bold text-text bg-surface-2 focus:border-blue-500 outline-none text-xs sm:text-sm w-20 sm:w-24 text-center"
                         value="${safeClose}" ${isClosed ? "disabled" : ""}>
                 </div>
 
-                <button type="button"
-                    class="break-toggle text-[10px] px-3 py-1.5 rounded-full font-black border transition-all ${hasBreak && !isClosed ? "bg-blue-600 border-blue-600 text-white" : "bg-surface-2 border-line text-text-muted"}"
-                    onclick="window.toggleBreakRow(this)"
-                    ${isClosed ? "disabled" : ""}>
-                    <i data-lucide="coffee" class="mr-1"></i> COUPURE
-                </button>
+                <div class="flex items-center gap-2 ml-auto shrink-0">
+                    <button type="button"
+                        class="break-toggle text-[10px] px-2.5 py-1.5 rounded-full font-black border transition-all ${hasBreak && !isClosed ? "bg-blue-600 border-blue-600 text-white" : "bg-surface-2 border-line text-text-muted"}"
+                        onclick="window.toggleBreakRow(this)"
+                        ${isClosed ? "disabled" : ""}>
+                        <i data-lucide="coffee" class="mr-0.5 sm:mr-1"></i> COUPURE
+                    </button>
 
-                <label class="flex items-center gap-2 cursor-pointer ml-auto shrink-0 group">
-                    <input type="checkbox" class="hour-closed w-5 h-5 rounded-lg text-red-600 border-line focus:ring-red-500 transition-all cursor-pointer"
-                        ${isClosed ? "checked" : ""}
-                        onchange="window.toggleDayClosed(this)">
-                    <span class="text-xs font-black text-text-muted group-hover:text-red-500 transition-colors">FERMÉ</span>
-                </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer group shrink-0">
+                        <input type="checkbox" class="hour-closed w-4 h-4 sm:w-5 sm:h-5 rounded-lg text-red-600 border-line focus:ring-red-500 transition-all cursor-pointer"
+                            ${isClosed ? "checked" : ""}
+                            onchange="window.toggleDayClosed(this)">
+                        <span class="text-[11px] sm:text-xs font-black text-text-muted group-hover:text-red-500 transition-colors">FERMÉ</span>
+                    </label>
+                </div>
             </div>
 
-            <div class="break-row flex items-center gap-3 pl-0 sm:pl-28 mt-2 transition-all ${hasBreak && !isClosed ? "" : "hidden opacity-0"}">
-                <span class="text-[10px] font-black text-blue-500 uppercase">Fermeture</span>
-                <input type="time" class="hour-break-start p-2 rounded-xl border border-blue-500/30 font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 focus:border-blue-500 outline-none"
-                    value="${safeBreakStart}" ${isClosed ? "disabled" : ""}>
-                <span class="text-[10px] font-black text-blue-500 uppercase">Réouverture</span>
-                <input type="time" class="hour-break-end p-2 rounded-xl border border-blue-500/30 font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 focus:border-blue-500 outline-none"
-                    value="${safeBreakEnd}" ${isClosed ? "disabled" : ""}>
+            <div class="break-row flex flex-wrap items-center gap-2 sm:gap-3 pl-0 sm:pl-28 mt-1.5 transition-all ${hasBreak && !isClosed ? "" : "hidden opacity-0"}">
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="text-[10px] font-black text-blue-500 uppercase">Fermeture</span>
+                    <input type="time" class="hour-break-start px-2 py-1.5 sm:p-2 rounded-xl border border-blue-500/30 font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 focus:border-blue-500 outline-none text-xs sm:text-sm w-20 sm:w-24 text-center"
+                        value="${safeBreakStart}" ${isClosed ? "disabled" : ""}>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="text-[10px] font-black text-blue-500 uppercase">Réouverture</span>
+                    <input type="time" class="hour-break-end px-2 py-1.5 sm:p-2 rounded-xl border border-blue-500/30 font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 focus:border-blue-500 outline-none text-xs sm:text-sm w-20 sm:w-24 text-center"
+                        value="${safeBreakEnd}" ${isClosed ? "disabled" : ""}>
+                </div>
             </div>
         </div>`;
     }

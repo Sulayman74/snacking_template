@@ -242,6 +242,9 @@ window.switchAdminTab = (tabName, subTab = null) => {
 
   if (activeView) activeView.classList.remove("hidden");
 
+  const scrollContainer = document.getElementById("admin-views-scroll");
+  if (scrollContainer) scrollContainer.scrollTop = 0;
+
   // Le radar cuisine continue d'écouter (et de sonner) sur les autres onglets.
   if (tabName === "cuisine" && window.currentAdminSnackId) {
     window.startKitchenRadar();

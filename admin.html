@@ -186,8 +186,8 @@
             </div>
         </div>
     </aside>
-<main class="flex-1 flex flex-col h-screen relative overflow-hidden md:ml-20">
-        <header class="md:hidden bg-gray-900 text-white shadow-md z-10 flex justify-between items-center p-4">
+<main class="flex-1 min-h-0 flex flex-col h-full relative overflow-hidden md:ml-20">
+        <header class="md:hidden shrink-0 bg-gray-900 text-white shadow-md z-10 flex justify-between items-center p-4">
             <div class="flex items-center gap-2">
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <h1 class="text-xl font-black uppercase tracking-widest">Admin <span class="text-red-500">Fusion</span></h1>
@@ -209,7 +209,7 @@
             </div>
         </header>
 
-    <div class="flex-1 overflow-y-auto pb-2 md:pb-0"> 
+    <div id="admin-views-scroll" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pb-36 pb-[calc(9rem_+_env(safe-area-inset-bottom,0px))]"> 
         
         <!-- 🎛️ Capsule Unifiée Cuisine : Statut de charge & Pause de service unifiés -->
         <div class="sticky top-2 z-30 flex justify-center px-4 pointer-events-none mb-3">
@@ -277,7 +277,7 @@
             </button>
         </div>
 
-        <section id="view-cuisine" class="relative flex flex-col p-4 pb-20 md:p-6 h-full min-h-full">
+        <section id="view-cuisine" class="relative flex flex-col p-4 pb-4 md:p-6 min-h-full overflow-x-hidden">
             <!-- Sélecteur d'onglets Cuisine sur mobile (< 768px) -->
             <div class="flex md:hidden gap-1.5 p-1 bg-surface-3 rounded-2xl border border-line shrink-0 mb-4" id="kitchen-mobile-tabs" role="tablist">
                 <button type="button" onclick="window.switchKitchenTab('waiting')" id="tab-btn-waiting" role="tab" aria-selected="false" class="flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 text-text-muted hover:text-text">
@@ -320,7 +320,7 @@
             </div>
         </section>
 
-<section id="view-menu" class="hidden p-4 md:p-6 bg-surface-2 min-h-full">
+<section id="view-menu" class="hidden p-4 md:p-6 bg-surface-2 min-h-full overflow-x-hidden">
                 <div class="max-screen mx-auto text-text">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <div>
@@ -365,7 +365,7 @@
                 </div>
             </section>
 
-        <section id="view-marketing" class="hidden p-3.5 sm:p-5 md:p-6 bg-surface-2 min-h-full pb-32 pb-[calc(7rem_+_env(safe-area-inset-bottom,0px))] overflow-y-auto h-full">
+        <section id="view-marketing" class="hidden p-3.5 sm:p-5 md:p-6 bg-surface-2 min-h-full overflow-x-hidden">
             <div class="max-w-6xl mx-auto space-y-6 text-text">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -385,7 +385,7 @@
 
                         <form id="push-campaign-form" class="bg-surface p-4 sm:p-6 md:p-8 rounded-3xl shadow-sm border border-line space-y-5">
                             <h3 class="text-lg sm:text-xl font-black text-text mb-4 sm:mb-6 flex items-center gap-2">
-                                <i data-lucide="circle-plus" class="text-blue-500"></i> Nouvelle Campagne
+                                <i data-lucide="send" class="text-blue-500"></i> Nouvelle Campagne (Manuelle)
                             </h3>
                             
                             <div class="space-y-4">
@@ -435,9 +435,15 @@
                     <!-- Colonne Droite : Advisor & Stats -->
                     <div class="space-y-6">
                         <div class="bg-surface rounded-3xl p-4 sm:p-6 border border-line shadow-sm">
-                            <h3 class="text-base sm:text-lg font-black text-text mb-4 flex items-center gap-2">
-                                <i data-lucide="sparkles" class="text-amber-500"></i> Smart Advisor
-                            </h3>
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-base sm:text-lg font-black text-text flex items-center gap-2">
+                                    <i data-lucide="sparkles" class="text-amber-500"></i> Smart Advisor
+                                </h3>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 100% Automatique
+                                </span>
+                            </div>
+                            <p class="text-xs text-text-muted mb-4">Vos déclencheurs autonomes (météo locale, soirs de match, relances paniers) s'exécutent en arrière-plan sans intervention manuelle.</p>
                             <div id="marketing-tips-container" class="space-y-3">
                                 <!-- Injecté par AdminMarketingUI -->
                             </div>
@@ -457,7 +463,7 @@
             </div>
         </section>
         
-        <section id="view-compta" class="hidden flex-col h-full min-h-full overflow-y-auto p-3.5 sm:p-5 md:p-6 pb-32 pb-[calc(7rem_+_env(safe-area-inset-bottom,0px))] bg-surface-2">
+        <section id="view-compta" class="hidden flex-col min-h-full p-3.5 sm:p-5 md:p-6 bg-surface-2 overflow-x-hidden">
             <div class="max-w-5xl mx-auto w-full space-y-6 text-text">
 
                 <!-- En-tête -->
@@ -558,9 +564,7 @@
             </div>
         </section>
 
-    </div>
-
-        <section id="view-config" class="hidden p-3.5 sm:p-5 md:p-6 bg-surface-2 min-h-full pb-32 pb-[calc(7rem_+_env(safe-area-inset-bottom,0px))] overflow-y-auto h-full">
+        <section id="view-config" class="hidden p-3.5 sm:p-5 md:p-6 bg-surface-2 min-h-full overflow-x-hidden">
             <div class="max-w-4xl mx-auto space-y-6 text-text">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
@@ -771,7 +775,7 @@
                             </select>
                         </div>
                         <div class="pt-4 flex justify-end">
-                            <button type="submit" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-green-700 transition flex items-center gap-2">
+                            <button type="submit" class="w-full sm:w-auto justify-center bg-green-600 text-white px-8 py-3.5 rounded-xl font-bold shadow-md hover:bg-green-700 transition flex items-center gap-2 text-sm sm:text-base active:scale-95">
                                 <i data-lucide="save"></i> Mettre à jour les horaires
                             </button>
                         </div>
@@ -869,6 +873,8 @@
 
         </div>
     </section>
+
+    </div> <!-- Fin #admin-views-scroll -->
 
     <!-- Ancrages de compatibilité invisible pour l'architecture existante -->
     <div id="view-support" class="hidden" aria-hidden="true"></div>

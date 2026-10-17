@@ -109,29 +109,35 @@ class AdminMarketingUI {
 
         this.weatherCard.classList.remove("hidden");
         this.weatherCard.innerHTML = `
-            <div class="bg-linear-to-br ${insight.bgGradient} rounded-3xl p-6 text-white shadow-lg overflow-hidden relative">
-                <div class="flex items-start gap-5">
-                    <div class="shrink-0 w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                        <i data-lucide="${insight.icon}" class="${insight.iconColor} text-3xl"></i>
+            <div class="bg-linear-to-br ${insight.bgGradient} rounded-3xl p-5 sm:p-6 text-white shadow-lg overflow-hidden relative">
+                <div class="flex items-start gap-4 sm:gap-5">
+                    <div class="shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                        <i data-lucide="${insight.icon}" class="${insight.iconColor} text-2xl sm:text-3xl"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-baseline gap-3 flex-wrap">
-                            <span class="text-3xl font-black tracking-tight">${weather.temperature}°C</span>
-                            <span class="text-sm font-bold opacity-80 uppercase tracking-wider">${escapeHTML(weather.city)}</span>
+                        <div class="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+                            <span class="text-2xl sm:text-3xl font-black tracking-tight">${weather.temperature}°C</span>
+                            <span class="text-xs sm:text-sm font-bold opacity-80 uppercase tracking-wider truncate">${escapeHTML(weather.city)}</span>
                         </div>
-                        <h4 class="text-lg font-black mt-1">${escapeHTML(insight.title)}</h4>
-                        <p class="text-sm leading-snug mt-1 opacity-90">${escapeHTML(insight.advice)}</p>
+                        <h4 class="text-base sm:text-lg font-black mt-1">${escapeHTML(insight.title)}</h4>
+                        <p class="text-xs sm:text-sm leading-snug mt-1 opacity-90">${escapeHTML(insight.advice)}</p>
                     </div>
                 </div>
-                <button type="button" id="btn-weather-template"
-                        class="mt-5 w-full bg-white/95 hover:bg-white text-gray-900 font-black py-3 rounded-2xl shadow transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <i data-lucide="wand-sparkles"></i> Utiliser ce modèle
-                </button>
+                <div class="mt-4 pt-3 border-t border-white/20 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span class="inline-flex items-center gap-1.5 font-bold text-white text-xs">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                        </span>
+                        Notification météo automatique active
+                    </span>
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-white/20 text-white px-2.5 py-1 rounded-full">
+                        Géré par Smart Advisor
+                    </span>
+                </div>
             </div>
         `;
-
-        const btn = document.getElementById("btn-weather-template");
-        if (btn) btn.onclick = () => this.applyWeatherTemplate(insight.template);
+        window.lucide?.createIcons?.();
     }
 
     /**
@@ -225,7 +231,10 @@ class AdminMarketingUI {
                         <i data-lucide="${icon}" class="text-xs"></i>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <h5 class="text-xs font-black ${titleClass} mb-1">${escapeHTML(tip.title || "")}</h5>
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <h5 class="text-xs font-black ${titleClass} truncate">${escapeHTML(tip.title || "")}</h5>
+                            <span class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-surface/90 text-text border border-line shrink-0">Auto</span>
+                        </div>
                         <p class="text-[11px] ${msgClass} leading-relaxed">${escapeHTML(tip.message || "")}</p>
                     </div>
                 </div>
@@ -240,19 +249,19 @@ class AdminMarketingUI {
 
         this.quotaContainer.innerHTML = `
             <div class="space-y-1.5">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-2">
                     <span class="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i> Conseils Envois Manuels
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i> Campagnes Manuelles
                     </span>
-                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        ${count} envoyé${count > 1 ? 's' : ''} ce mois
+                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                        ${count} envoyée${count > 1 ? 's' : ''} ce mois
                     </span>
                 </div>
                 <p class="text-xs font-bold text-text leading-snug">
                     💡 Recommandation : 1 à 2 notifications manuelles / semaine max.
                 </p>
                 <p class="text-[11px] text-text-muted leading-relaxed">
-                    Le <strong class="text-text font-bold">Smart Advisor</strong> s'occupe déjà de vos notifications automatiques (météo, soirs de match, relances paniers). Réservez vos pushs manuels pour vos événements spéciaux et promos exclusives !
+                    Le <strong class="text-text font-bold">Smart Advisor</strong> envoie déjà vos notifications automatiques (météo, soirs de match, relances paniers) en continu. Réservez ce formulaire pour vos annonces ponctuelles et promos exclusives !
                 </p>
             </div>
         `;
