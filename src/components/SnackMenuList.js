@@ -220,13 +220,13 @@ export class SnackMenuList extends SnackElement {
           if (catProduits.length === 0) return '';
 
           return html`
-            <section class="menu-section reveal mb-10 pt-4 scroll-mt-32" id="cat-${catId}" data-cat-id="${catId}">
-              <div class="flex items-center gap-3 mb-6">
+            <section class="menu-section mb-10 pt-4 scroll-mt-32" id="cat-${catId}" data-cat-id="${catId}">
+              <div class="flex items-center gap-3 mb-6 reveal">
                 <h2 class="category-title text-2xl font-black uppercase tracking-tight">${this.getCategoryName(catId)}</h2>
                 <div class="category-divider flex-1 h-px"></div>
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" role="list">
-                ${catProduits.map(p => html`<snack-menu-item .product="${p}" class="block"></snack-menu-item>`)}
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stagger" role="list">
+                ${catProduits.map(p => html`<snack-menu-item .product="${p}" class="block reveal"></snack-menu-item>`)}
               </div>
             </section>
           `;

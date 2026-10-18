@@ -465,20 +465,27 @@ body.is-offline::after {
 .js-reveal .reveal:not(.is-visible),
 :host .reveal:not(.is-visible) {
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(32px) scale(0.96);
 }
 .reveal {
-  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  /* `scale` dans la liste : les cartes gardent leur hover:scale-* animé (Tailwind v4 =
+     propriété scale, distincte du transform de la révélation). */
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), scale 0.3s ease;
 }
 .reveal.is-visible {
   opacity: 1;
   transform: none;
 }
-/* Cascade légère entre enfants d'un même groupe (plafonnée : jamais plus de 280 ms). */
-.reveal-stagger > .reveal:nth-child(2) { transition-delay: 70ms; }
-.reveal-stagger > .reveal:nth-child(3) { transition-delay: 140ms; }
-.reveal-stagger > .reveal:nth-child(4) { transition-delay: 210ms; }
-.reveal-stagger > .reveal:nth-child(n + 5) { transition-delay: 280ms; }
+/* Le contenu suit le titre de sa section. */
+.reveal-after { transition-delay: 160ms; }
+/* Cascade des cartes d'une grille, PAR COLONNE (rang de 3) : chaque rangée se révèle de
+   gauche à droite quand elle entre dans l'écran, sans jamais dépasser 200 ms. Vaut pour
+   un conteneur light DOM (.reveal-stagger > …) et pour un composant Lit dont les cartes
+   sont dans le shadow DOM (:host(.reveal-stagger) …). */
+.reveal-stagger > .reveal:nth-child(3n + 2),
+:host(.reveal-stagger) .reveal:nth-child(3n + 2) { transition-delay: 100ms; }
+.reveal-stagger > .reveal:nth-child(3n + 3),
+:host(.reveal-stagger) .reveal:nth-child(3n + 3) { transition-delay: 200ms; }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal,
