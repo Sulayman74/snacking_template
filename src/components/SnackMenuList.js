@@ -11,13 +11,10 @@ export class SnackMenuList extends SnackElement {
     SnackElement.styles,
     css`
       .category-title {
-        color: var(--color-primary, var(--theme-primary, #dc2626));
-      }
-      :host(.dark) .category-title {
-        color: #ffffff !important;
+        color: var(--color-primary-ink);
       }
       .category-divider {
-        background-color: var(--color-primary, var(--theme-primary, #dc2626));
+        background-color: var(--color-primary);
         opacity: 0.35;
       }
       :host(.dark) .category-divider {
@@ -168,7 +165,7 @@ export class SnackMenuList extends SnackElement {
     const categories = [...new Set(menu.map(p => p.categorieId))].filter(Boolean);
 
     return html`
-      <div class="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-line shadow-sm pt-[env(safe-area-inset-top,0px)]">
+      <div class="sticky top-0 z-50 bg-surface/95 border-b border-line shadow-sm pt-[env(safe-area-inset-top,0px)]">
         <div class="container mx-auto px-4 py-3 flex items-center gap-3">
           <div class="relative flex-1">
             <input type="text" 

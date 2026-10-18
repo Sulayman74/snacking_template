@@ -13,7 +13,7 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-color: var(--color-primary-light, #f5f7f4); /* base = teinte claire du thème */
+  background-color: var(--bg-base, #f5f7f4); /* base = fond de page (teinte claire du thème en Phase 0) */
   background-image:
     radial-gradient(at 18% 12%, color-mix(in srgb, var(--color-accent,  transparent) 16%, transparent) 0, transparent 46%),
     radial-gradient(at 86% 10%, color-mix(in srgb, var(--color-primary, transparent) 10%, transparent) 0, transparent 42%),

@@ -67,9 +67,9 @@ export function showToast(message, type = "success") {
     msg.textContent = message;
 
     if (type === "success") {
-        toast.classList.add("bg-gray-900", "text-on-dark");
+        toast.classList.add("bg-screen", "text-on-dark");
         icon.setAttribute("data-lucide", "circle-check");
-        icon.classList.add("text-green-400");
+        icon.classList.add("text-status-ok");
     } else {
         toast.classList.add("bg-danger", "text-on-dark");
         icon.setAttribute("data-lucide", "triangle-alert");

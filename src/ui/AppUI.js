@@ -3,6 +3,7 @@
  * SOLID: Présentation. Écoute le Store pour se mettre à jour.
  */
 import { store } from "../core/Store.js";
+import { pickOnColor } from "../theme-palettes.js";
 import { escapeHTML, safeURL, showToast } from "../utils.js";
 import { getOrderingState, localClock } from "../core/openingHours.js";
 import { pauseStatus } from "../core/storefrontStatus.js";
@@ -91,6 +92,9 @@ class AppUI {
         root.style.setProperty("--theme-accent", accentHex);
         root.style.setProperty("--theme-primary-light", lightHex);
         root.style.setProperty("--theme-on-primary", onPrimaryHex);
+        // Texte sur fond ACCENT (bandeau fidélité, pastilles) : choisi par contraste, car
+        // un accent clair (lagon, or Belly) rend le blanc illisible (cf. pickOnColor).
+        root.style.setProperty("--theme-on-accent", pickOnColor(accentHex || primaryHex));
 
         // 📱 Barre d'état / barre d'adresse mobile aux couleurs du snack (le build pose
         // la couleur de snacks-seo.json ; ici on suit la config Firestore à chaud).
@@ -336,7 +340,8 @@ class AppUI {
         }
 
         const addrEl = document.getElementById("footer-address");
-        if (addrEl && cfg.contact?.address) {
+        // Sans rue ni ville, pas de lien : il n'aurait aucun nom accessible (Lighthouse link-name).
+        if (addrEl && cfg.contact?.address && (cfg.contact.address.street || cfg.contact.address.city)) {
             const a = cfg.contact.address;
             const full = `${a.street}, ${a.zip || ""} ${a.city || ""}`.trim();
             const isApple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
@@ -348,9 +353,9 @@ class AppUI {
         const s = cfg.contact?.socials;
         if (socials && s) {
             const parts = [];
-            if (s.instagram) parts.push(`<a href="${safeURL(s.instagram)}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-[#E4405F] text-2xl w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg></a>`);
-            if (s.facebook) parts.push(`<a href="${safeURL(s.facebook)}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-[#1877F2] text-2xl w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg></a>`);
-            if (s.tiktok) parts.push(`<a href="${safeURL(s.tiktok)}" target="_blank" rel="noopener noreferrer" class="hover:-translate-y-1 transition-transform group"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-on-dark group-hover:drop-shadow-[2px_2px_0_#ff0050] transition-all text-2xl w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></a>`);
+            if (s.instagram) parts.push(`<a href="${safeURL(s.instagram)}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="hover:-translate-y-1 transition-transform"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="brand-instagram text-2xl w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg></a>`);
+            if (s.facebook) parts.push(`<a href="${safeURL(s.facebook)}" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="hover:-translate-y-1 transition-transform"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="brand-facebook text-2xl w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg></a>`);
+            if (s.tiktok) parts.push(`<a href="${safeURL(s.tiktok)}" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="hover:-translate-y-1 transition-transform group"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="text-on-dark brand-tiktok-hover transition-all text-2xl w-[1em] h-[1em] inline-block align-[-0.125em]"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></a>`);
             socials.innerHTML = parts.join("");
         }
     }
@@ -365,7 +370,7 @@ class AppUI {
         const status = heroStatus ? this.getOpeningStatus(cfg) : null;
         if (status) {
             heroStatus.innerText = status.label;
-            heroStatus.className = `inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border rounded-full backdrop-blur-md text-on-dark ${status.classes}`;
+            heroStatus.className = `inline-block px-3 py-1 mb-4 text-sm font-bold uppercase border rounded-full text-on-dark ${status.classes}`;
         }
 
         list.innerHTML = cfg.hours.map((h, index) => {
@@ -379,7 +384,7 @@ class AppUI {
                 : (h.hasBreak ? `${safeOpen}–${safeBreakStart} / ${safeBreakEnd}–${safeClose}` : `${safeOpen} – ${safeClose}`);
             return `<li class="flex justify-between items-center py-2 ${isToday ? "text-on-dark/90 font-medium" : "text-on-dark/40"}">
                 <span class="flex items-center gap-2">
-                    ${isToday ? `<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>` : `<span class="w-1.5 h-1.5 inline-block"></span>`}
+                    ${isToday ? `<span class="w-1.5 h-1.5 rounded-full bg-status-ok inline-block"></span>` : `<span class="w-1.5 h-1.5 inline-block"></span>`}
                     ${escapeHTML(h.day || "")}
                 </span>
                 <span class="tabular-nums text-xs">${hoursText}</span>
@@ -388,8 +393,8 @@ class AppUI {
     }
 
     getOpeningStatus(cfg) {
-        const OPEN = "border-green-500 bg-green-600/50";
-        const CLOSED = "border-red-500 bg-red-500/50";
+        const OPEN = "border-status-ok bg-status-ok/50";
+        const CLOSED = "border-danger bg-danger/50";
         const state = getOrderingState(cfg?.hours, new Date(), cfg?.timezone, cfg?.lastOrderMinutesBeforeClose);
         if (!state.configured) return null; // horaires absents/mal formés : badge inchangé
         if (state.accepting) return { status: "ouvert", label: "Ouvert actuellement", classes: OPEN };
@@ -442,7 +447,7 @@ class AppUI {
 
     async initAppVisuals(cfg) {
         if (cfg.features?.maintenanceMode === true) {
-            document.body.innerHTML = `<div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white text-center px-4"><i data-lucide="wrench" class="text-6xl text-red-500 mb-6 animate-pulse"></i><h1 class="text-4xl font-black mb-4">${escapeHTML(cfg.identity?.name || "")}</h1><p class="text-gray-400">Maintenance en cours...</p></div>`;
+            document.body.innerHTML = `<div class="min-h-screen bg-screen flex flex-col items-center justify-center text-on-dark text-center px-4"><i data-lucide="wrench" class="text-6xl text-danger mb-6 animate-pulse"></i><h1 class="text-4xl font-black mb-4">${escapeHTML(cfg.identity?.name || "")}</h1><p class="text-on-dark-faint">Maintenance en cours...</p></div>`;
             return;
         }
         // 🔤 La police est désormais pilotée par --font-body (appliqué dans applyTheme),

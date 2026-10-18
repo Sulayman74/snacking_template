@@ -38,7 +38,7 @@ export class SnackMenuItem extends SnackElement {
     }
 
     return html`
-      <div class="bg-surface rounded-3xl overflow-hidden shadow-sm border border-line flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] cursor-pointer" 
+      <div class="bg-surface rounded-3xl overflow-hidden shadow-sm border border-line flex flex-col group transition-all duration-300 active:scale-[0.98] cursor-pointer" 
            role="listitem"
            data-action="open-product-modal"
            data-id="${p.id}"
@@ -52,7 +52,7 @@ export class SnackMenuItem extends SnackElement {
                  loading="lazy"
                  @error="${this._handleImageError}">
           ` : html`
-            <div class="absolute inset-0 flex flex-col items-center justify-center text-primary transition-opacity duration-300">
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-primary-ink transition-opacity duration-300">
               <i data-lucide="pizza" class="text-4xl mb-2 opacity-20"></i>
               <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">${t('product.photoPrep')}</span>
             </div>
@@ -64,14 +64,14 @@ export class SnackMenuItem extends SnackElement {
         <div class="p-5 flex flex-col flex-1">
           <div class="flex justify-between items-start mb-2 gap-2">
             <h3 class="text-lg font-black text-text leading-tight">${p.nom}</h3>
-            <span class="text-lg font-black text-primary whitespace-nowrap">${Number(p.prix).toFixed(2)} €</span>
+            <span class="text-lg font-black text-primary-ink whitespace-nowrap">${Number(p.prix).toFixed(2)} €</span>
           </div>
           <p class="text-text-muted text-xs font-medium leading-relaxed mb-4 line-clamp-2 flex-1">${p.description || ''}</p>
           
           <div class="flex items-center justify-between pt-4 border-t border-line">
             <div class="flex gap-2">
-              ${p.isVegan ? html`<span class="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[9px] font-bold uppercase tracking-widest">${t('product.vegan')}</span>` : nothing}
-              ${p.isSpicy ? html`<span class="px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 text-[9px] font-bold uppercase tracking-widest">${t('product.spicy')}</span>` : nothing}
+              ${p.isVegan ? html`<span class="px-2 py-0.5 rounded-full bg-status-ok/10 text-status-ok text-[9px] font-bold uppercase tracking-widest">${t('product.vegan')}</span>` : nothing}
+              ${p.isSpicy ? html`<span class="px-2 py-0.5 rounded-full bg-danger/10 text-danger text-[9px] font-bold uppercase tracking-widest">${t('product.spicy')}</span>` : nothing}
             </div>
             
             ${isSoldOut ? html`
@@ -99,7 +99,7 @@ export class SnackMenuItem extends SnackElement {
     e.target.style.display = 'none';
     const parent = e.target.parentElement;
     parent.innerHTML += `
-      <div class="absolute inset-0 flex flex-col items-center justify-center text-primary transition-opacity duration-300">
+      <div class="absolute inset-0 flex flex-col items-center justify-center text-primary-ink transition-opacity duration-300">
         <i data-lucide="pizza" class="text-4xl mb-2 opacity-20"></i>
         <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">${t('product.photoUnavail')}</span>
       </div>

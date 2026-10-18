@@ -183,18 +183,18 @@ function animerCarteFidelite(rawPoints, rawAvailable = 0) {
     const suffix = available > 1 ? ` (x${available})` : "";
     if (progressLabel) {
       progressLabel.innerText = `🎉 MENU OFFERT${suffix} ! PRÉSENTEZ CE CODE`;
-      progressLabel.classList.add("text-green-300", "animate-pulse");
+      progressLabel.classList.add("text-status-ok", "animate-pulse");
     }
-    if (giftIcon) giftIcon.classList.add("animate-bounce", "text-green-300");
+    if (giftIcon) giftIcon.classList.add("animate-bounce", "text-status-ok");
     if (typeof window.triggerVibration === "function")
       window.triggerVibration("jackpot");
   } else {
     const restants = maxPoints - progress;
     if (progressLabel) {
       progressLabel.innerText = `Encore ${restants} point${restants > 1 ? "s" : ""} avant ta récompense`;
-      progressLabel.classList.remove("text-green-300", "animate-pulse");
+      progressLabel.classList.remove("text-status-ok", "animate-pulse");
     }
-    if (giftIcon) giftIcon.classList.remove("animate-bounce", "text-green-300");
+    if (giftIcon) giftIcon.classList.remove("animate-bounce", "text-status-ok");
   }
 }
 

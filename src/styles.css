@@ -35,25 +35,60 @@
      Garder --color-primary pour un FOND (bg-primary + text-on-primary) ou pour du primary
      posé sur un fond de MARQUE (icône active de la barre .glass-nav, badge bg-white).
      Utilitaires générés : text-primary-ink, border-primary-ink, bg-primary-ink/10…
-     ⚠️ Pas dans les composants shadow DOM (snack-*) : leurs surfaces restent claires en
-     sombre (:host reçoit les valeurs claires de @theme), le primary brut y est lisible. */
+     Vaut aussi dans les composants shadow DOM (snack-*) : depuis la Phase 0 de la refonte,
+     les neutres traversent le shadow DOM via --theme-* et leurs surfaces sont sombres en sombre. */
   --color-primary-ink: var(--theme-primary-ink, var(--theme-primary, #dc2626));
-  /* 🎨 Neutres SÉMANTIQUES (CLAUDE.md theming). Couleurs NON liées à la palette : fixes
-     et intentionnelles, mais centralisées (plus de gris ni de rouges dispersés). Tailwind v4
-     génère bg-surface, text-text, text-text-muted, text-danger, text-on-dark, etc.
-     --color-danger reste pilotable au runtime si un jour un tenant veut sa propre teinte. */
-  --color-surface: #ffffff;      /* fond des cartes / surfaces claires */
-  --color-text: #1f2937;         /* texte principal (= gray-800) */
-  --color-text-muted: #6b7280;   /* texte secondaire (= gray-500) */
-  --color-danger: #dc2626;       /* erreurs / actions destructives (= red-600) */
-  --color-on-dark: #ffffff;      /* texte sur héros/nav sombre */
-  /* 🪜 Surfaces de SECOND niveau (profondeur). bg-surface-2 = panneaux/inputs posés sur une
-     carte ; bg-surface-3 = fills plus marqués (grabbers, séparateurs). --color-line = bordures.
-     Valeurs sombres dans .dark (remplace l'ancien stopgap). Tailwind génère bg-surface-2/-3,
-     border-line, etc. */
-  --color-surface-2: #f1f3f5;    /* ~ gray-50/100 : panneaux, inputs, sous-cartes */
-  --color-surface-3: #e5e7eb;    /* ~ gray-200/300 : fills marqués, grabbers, hover */
-  --color-line: #e5e7eb;         /* bordures (~ gray-200) */
+  /* 🎨 Neutres SÉMANTIQUES (CLAUDE.md theming). Couleurs NON liées à la palette, centralisées.
+     Déclarées via --theme-* (posés sur html par :root / .dark ci-dessous) : les custom
+     properties HÉRITENT à travers le shadow DOM alors que le `:root, :host` généré par
+     Tailwind redéclarait les valeurs CLAIRES dans chaque composant Lit (cartes blanches en
+     mode sombre). Tailwind génère bg-surface, text-text, text-text-muted, text-danger… */
+  --color-surface: var(--theme-surface, #ffffff);          /* cartes / surfaces */
+  --color-surface-2: var(--theme-surface-2, #f1f3f5);      /* panneaux, inputs, sous-cartes */
+  --color-surface-3: var(--theme-surface-3, #e5e7eb);      /* fills marqués, grabbers, hover */
+  --color-line: var(--theme-line, #e5e7eb);                /* bordures */
+  --color-text: var(--theme-text, #1f2937);                /* texte principal */
+  --color-text-muted: var(--theme-text-muted, #6b7280);    /* texte secondaire */
+  --color-danger: var(--theme-danger, #dc2626);            /* erreurs / actions destructives */
+  --color-danger-soft: var(--theme-danger-soft, #fca5a5);  /* danger sur fond sombre (pastilles) */
+  --color-on-dark: #ffffff;                                /* texte sur surfaces « écran » */
+  --color-on-dark-muted: #d1d5db;                          /* texte secondaire sur écran (= gray-300) */
+  --color-on-dark-faint: #9ca3af;                          /* mentions, petits liens sur écran (= gray-400) */
+  --color-on-accent: var(--theme-on-accent, #ffffff);      /* texte sur fond accent, calculé par AppUI */
+  /* 🖥️ Surfaces « écran » : SOMBRES dans les deux thèmes (pied de page, scanner, bandeaux PWA,
+     voiles de modales, dos de la carte fidélité). Pas des neutres : elles ne basculent pas. */
+  --color-screen: #111827;
+  --color-screen-2: #1f2937;
+  --color-screen-3: #374151;
+  --color-screen-deep: #0a0a0a;
+  /* 🚦 Statuts de commande et d'état (valeurs plus claires en sombre, cf. .dark). */
+  --color-status-ok: var(--theme-status-ok, #16a34a);
+  --color-status-ok-strong: #15803d;
+  --color-status-info: var(--theme-status-info, #2563eb);
+  --color-status-info-soft: #60a5fa;
+  --color-status-wait: var(--theme-status-wait, #ca8a04);
+  --color-status-warn: var(--theme-status-warn, #ea580c);
+  /* ⭐ Notation client et or de la carte fidélité (toujours sur fond sombre ou carte). */
+  --color-rating: #facc15;
+  --color-gold: #fcd34d;
+  --color-gold-strong: #fbbf24;
+  /* 🌤️ Météo du smart advisor : dégradés d'ambiance (données, pas thème). */
+  --color-weather-sun: #fbbf24;
+  --color-weather-heat: #f97316;
+  --color-weather-hot: #ef4444;
+  --color-weather-sky: #0ea5e9;
+  --color-weather-rain: #1d4ed8;
+  --color-weather-fog: #94a3b8;
+  --color-weather-cloud: #64748b;
+  --color-weather-cloud-deep: #334155;
+  --color-weather-night: #0f172a;
+  --color-weather-mist: #9ca3af;
+  --color-weather-mist-deep: #4b5563;
+  /* 🧊 Ombres et rayons (Tailwind génère shadow-card, shadow-card-lg, rounded-card, rounded-pill). */
+  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.06), 0 8px 24px rgb(17 24 39 / 0.08);
+  --shadow-card-lg: 0 2px 4px rgb(17 24 39 / 0.08), 0 16px 40px rgb(17 24 39 / 0.14);
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
   /* 🔤 Polices pilotées au runtime (comme les couleurs). Tailwind v4 génère font-body /
      font-display. Défaut = stack système (0 octet). Override JS via applyTheme :
      root.style.setProperty('--font-body', "'Poppins', sans-serif"). */
@@ -68,13 +103,22 @@ body {
   /* Base CLAIRE de la palette (pas la couleur pleine) : overscroll + pré-paint montrent
      la base, pas le primary saturé. Le splash garde --color-primary (moment de marque).
      NB: vite injecte la même valeur en !important dès le 1er octet (anti-flash). */
-  background: var(--color-primary-light);
+  background: var(--bg-base);
   min-height: 100%;
   /* Police pilotée par le thème (héritée par tout le contenu). Remplace l'ancien
      classList.add(font-sans) bugué dans AppUI. Override runtime via --font-body. */
   font-family: var(--font-body);
   /* Empêche les rebonds bizarres sur mobile lors du scroll */
   overscroll-behavior-y: none;
+}
+
+/* 🖼️ Fond de page CLAIR = base claire de la palette (Phase 1 de la refonte : neutre papier).
+   Les illustrations SVG inline des états vides lisent --illu-* (jetons fermés, 3 couleurs). */
+:root {
+  --bg-base: var(--color-primary-light, #f5f7f4);
+  --illu-stroke: var(--color-text);
+  --illu-main: var(--color-surface-3);
+  --illu-highlight: var(--color-primary-ink);
 }
 
 /* 🌗 Valeurs SOMBRES des tokens neutres — définies UNE seule fois.
@@ -86,14 +130,19 @@ body {
 :host(.dark),
 html.dark,
 .dark {
-  --color-surface: #1a1d23;     /* cartes / surfaces */
-  --color-text: #e5e7eb;        /* texte principal */
-  --color-text-muted: #9ca3af;  /* texte secondaire */
-  --color-danger: #f87171;      /* rouge plus clair -> lisible sur fond sombre (= red-400) */
-  --color-surface-2: #23272f;   /* panneaux/inputs en sombre */
-  --color-surface-3: #2d323b;   /* fills marqués / grabbers en sombre */
-  --color-line: #2d323b;        /* bordures en sombre */
-  --bg-base: #0f1115;           /* base du mesh + fond de page en sombre */
+  --theme-surface: #1a1d23;       /* cartes / surfaces */
+  --theme-surface-2: #23272f;     /* panneaux/inputs en sombre */
+  --theme-surface-3: #2d323b;     /* fills marqués / grabbers en sombre */
+  --theme-line: #2d323b;          /* bordures en sombre */
+  --theme-text: #e5e7eb;          /* texte principal */
+  --theme-text-muted: #9ca3af;    /* texte secondaire */
+  --theme-danger: #f87171;        /* rouge plus clair -> lisible sur fond sombre (= red-400) */
+  --theme-danger-soft: #fca5a5;
+  --theme-status-ok: #4ade80;
+  --theme-status-info: #60a5fa;
+  --theme-status-wait: #facc15;
+  --theme-status-warn: #fb923c;
+  --bg-base: #0f1115;             /* base du mesh + fond de page en sombre */
   /* 🖋️ Primary-encre lisible : même teinte et même chroma, luminosité OKLCH relevée à
      0,72 minimum (≥ 5,6:1 sur ces surfaces pour les 6 palettes ; un primary déjà clair,
      ex. sunflower, ne bouge pas). Syntaxe couleur relative : Safari 16.4+, Chrome 119+,
@@ -107,6 +156,22 @@ html.dark,
 html.dark,
 html.dark body {
   background: var(--bg-base) !important;
+}
+
+/* 🏷️ Couleurs de MARQUE imposées (logo Google, Instagram, Facebook, TikTok) : seule exception
+   tolérée aux jetons, isolée ici pour que ni index.html ni le JS ne portent d'hex. */
+.brand-google .g-red    { fill: #EA4335; }
+.brand-google .g-blue   { fill: #4285F4; }
+.brand-google .g-yellow { fill: #FBBC05; }
+.brand-google .g-green  { fill: #34A853; }
+.brand-instagram { color: #E4405F; }
+.brand-facebook  { color: #1877F2; }
+.group:hover .brand-tiktok-hover { color: #ff0050; }
+
+/* 🎁 Halo de la carte fidélité : dégradé radial statique teinté par l'accent, à la place
+   d'un disque flouté (filter: blur = coût GPU). Aucune couleur en dur. */
+.loyalty-halo {
+  background: radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--color-accent) 32%, transparent) 0, transparent 55%);
 }
 
 /* Couleur de bordure PAR DÉFAUT = token --color-line (Tailwind v4 met currentColor sinon).
@@ -195,7 +260,7 @@ html.dark body {
 }
 
 .splash-title {
-  color: #fff;
+  color: var(--color-on-dark);
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;

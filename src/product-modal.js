@@ -112,7 +112,7 @@ class ProductModalUI {
       document.getElementById("modal-fav-btn")?.classList.add("hidden");
       if (btn) {
         btn.textContent = "Épuisé";
-        btn.className = "w-full py-4 rounded-xl font-bold text-on-dark bg-gray-500 cursor-not-allowed flex justify-center items-center gap-2";
+        btn.className = "w-full py-4 rounded-xl font-bold text-on-dark bg-screen-3 cursor-not-allowed flex justify-center items-center gap-2";
         btn.onclick = null;
       }
       return;
@@ -154,12 +154,12 @@ class ProductModalUI {
 
     if (isFav) {
       icon?.classList.add("fill-current"); // cœur plein (Lucide = contour, rempli via fill-current)
-      btn.classList.add("text-red-500", "border-red-200");
+      btn.classList.add("text-danger", "border-danger/40");
       btn.classList.remove("text-text-muted", "border-line");
     } else {
       icon?.classList.remove("fill-current");
       btn.classList.add("text-text-muted", "border-line");
-      btn.classList.remove("text-red-500", "border-red-200");
+      btn.classList.remove("text-danger", "border-danger/40");
     }
   }
 

@@ -11,8 +11,15 @@
 // ============================================================================
 
 import { functions, httpsCallable, auth, db, doc, onSnapshot, onAuthStateChanged } from "./core/firebase.js";
+import { wheelSegmentColors } from "./theme-palettes.js";
 
-const PALETTE = ["#fbbf24", "#34d399", "#60a5fa", "#f472b6", "#a78bfa", "#fb923c", "#22d3ee", "#f87171"];
+// Segments de la roue : teinte du primaire du tenant tournée en OKLCH (cf. theme-palettes),
+// plus aucun hex en dur. Lus à l'affichage : la config arrive après le chargement du module.
+const SEGMENTS = 8;
+const segmentColors = () => {
+  const c = window.snackConfig?.theme?.colors || {};
+  return wheelSegmentColors(c.primaryHex, c.accentHex, SEGMENTS);
+};
 
 let overlayEl = null;
 let spinning = false;
@@ -36,7 +43,7 @@ export function renderWheelCta(rewardsAvailable, pending) {
 
   if (pending?.nom) {
     host.innerHTML = `
-      <div class="mt-4 w-full bg-white/15 backdrop-blur-md rounded-2xl p-4 border border-white/25 text-center">
+      <div class="mt-4 w-full bg-on-dark/15 rounded-2xl p-4 border border-on-dark/25 text-center">
         <p class="text-xs uppercase tracking-widest opacity-80 mb-1">🎁 Lot gagné</p>
         <p class="font-black text-lg">${esc(pending.nom)}</p>
         <p class="text-[11px] opacity-80 mt-1">🛍️ Offert sur ta prochaine commande</p>
@@ -47,7 +54,7 @@ export function renderWheelCta(rewardsAvailable, pending) {
   if (rewardsAvailable >= 1) {
     host.innerHTML = `
       <button type="button" data-action="open-loyalty-wheel"
-        class="mt-4 w-full bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-black py-4 rounded-2xl transition active:scale-95 shadow-lg flex items-center justify-center gap-2">
+        class="mt-4 w-full bg-gold-strong hover:bg-gold text-screen font-black py-4 rounded-2xl transition active:scale-95 shadow-lg flex items-center justify-center gap-2">
         <span class="text-xl">🎡</span> Tourne la roue !
       </button>`;
     return;
@@ -62,17 +69,17 @@ function ensureOverlay() {
   overlayEl = document.createElement("div");
   overlayEl.id = "loyalty-wheel-overlay";
   overlayEl.className =
-    "fixed inset-0 z-[120] hidden flex-col items-center justify-center bg-gray-900/95 backdrop-blur-md p-6 opacity-0 transition-opacity duration-300";
+    "fixed inset-0 z-[120] hidden flex-col items-center justify-center bg-screen/95 p-6 opacity-0 transition-opacity duration-300";
   overlayEl.innerHTML = `
     <h3 class="text-on-dark text-2xl font-black mb-6 text-center">🎡 Roue de la fortune</h3>
     <div class="relative w-72 h-72 max-w-[78vw] max-h-[78vw]">
       <!-- pointeur -->
       <div class="absolute left-1/2 -top-1 -translate-x-1/2 z-20 w-0 h-0 border-l-[10px] border-r-[10px] border-t-[20px] border-l-transparent border-r-transparent border-t-yellow-300 drop-shadow-lg"></div>
       <!-- disque (segments colorés, sans texte) -->
-      <div id="loyalty-wheel-disc" class="w-full h-full rounded-full border-[6px] border-yellow-300 shadow-2xl will-change-transform"
+      <div id="loyalty-wheel-disc" class="w-full h-full rounded-full border-[6px] border-gold shadow-2xl will-change-transform"
            style="transition: transform 4.4s cubic-bezier(0.16,1,0.3,1);"></div>
       <!-- moyeu central -->
-      <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-yellow-300 border-4 border-gray-900 z-10 flex items-center justify-center text-2xl">🎁</div>
+      <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-gold border-4 border-screen z-10 flex items-center justify-center text-2xl">🎁</div>
     </div>
     <p id="loyalty-wheel-status" class="text-on-dark/80 text-center mt-5 min-h-[1.5rem] text-sm font-medium"></p>
     <!-- reveal du lot gagné (gros + photo) -->
@@ -89,7 +96,7 @@ function drawWheel(pool) {
   const n = Math.max(1, pool.length);
   const seg = 360 / n;
   const stops = pool
-    .map((_, i) => `${PALETTE[i % PALETTE.length]} ${i * seg}deg ${(i + 1) * seg}deg`)
+    .map((_, i) => `${segmentColors()[i % SEGMENTS]} ${i * seg}deg ${(i + 1) * seg}deg`)
     .join(", ");
   disc.style.background = `conic-gradient(from -${seg / 2}deg, ${stops})`;
   disc.style.transform = "rotate(0deg)";
@@ -132,7 +139,7 @@ async function openWheel() {
     setTimeout(() => {
       reveal.innerHTML = `
         <p class="text-on-dark/80 text-xs uppercase tracking-widest mb-2">🎉 Tu as gagné</p>
-        ${won.image ? `<img src="${esc(won.image)}" alt="" class="w-24 h-24 object-cover rounded-2xl mx-auto mb-3 shadow-lg border-2 border-yellow-300" />` : ""}
+        ${won.image ? `<img src="${esc(won.image)}" alt="" class="w-24 h-24 object-cover rounded-2xl mx-auto mb-3 shadow-lg border-2 border-gold" />` : ""}
         <p class="text-on-dark text-2xl font-black leading-tight">${esc(won.nom)}</p>
         <p class="text-on-dark/70 text-xs mt-2">🛍️ Offert sur ta prochaine commande</p>`;
       reveal.classList.remove("hidden");
@@ -172,11 +179,11 @@ function updateCartWheelBanner() {
   if (!host) return;
   const prize = window.currentWheelPrize;
   host.innerHTML = prize?.nom
-    ? `<div class="mb-4 flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3">
+    ? `<div class="mb-4 flex items-center gap-3 bg-status-wait/10 border border-status-wait/30 rounded-2xl p-3">
          <span class="text-2xl">🎁</span>
          <div class="text-sm min-w-0">
-           <p class="font-black text-amber-700 dark:text-amber-400 uppercase text-[11px] tracking-wide">Lot gagné — offert</p>
-           <p class="font-bold text-text truncate">${esc(prize.nom)} <span class="text-green-600 dark:text-green-400">· gratuit sur cette commande</span></p>
+           <p class="font-black text-status-wait uppercase text-[11px] tracking-wide">Lot gagné — offert</p>
+           <p class="font-bold text-text truncate">${esc(prize.nom)} <span class="text-status-ok">· gratuit sur cette commande</span></p>
          </div>
        </div>`
     : "";

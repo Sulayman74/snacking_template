@@ -182,7 +182,7 @@ class DeliveryUI {
       return `
         <div class="bg-surface border border-line rounded-xl p-3 mb-4">
           ${addrLine}
-          <div class="flex items-center gap-2 text-sm text-red-700 dark:text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-2.5">
+          <div class="flex items-center gap-2 text-sm text-danger bg-danger/10 border border-danger/30 rounded-lg p-2.5">
             <i data-lucide="triangle-alert"></i>
             <span>Hors zone de livraison (${formatDistance(quote.distanceKm)} > ${d.radiusKm} km).</span>
           </div>
@@ -205,7 +205,7 @@ class DeliveryUI {
       </div>`;
 
     const minWarn = belowMin
-      ? `<div class="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 mt-2">
+      ? `<div class="flex items-center gap-2 text-xs text-status-wait bg-status-wait/10 border border-status-wait/30 rounded-lg p-2.5 mt-2">
            <i data-lucide="info"></i><span>Minimum de commande : ${d.minOrder.toFixed(2)} € (il manque ${(d.minOrder - subtotal).toFixed(2)} €).</span>
          </div>`
       : "";

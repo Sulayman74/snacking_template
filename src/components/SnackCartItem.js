@@ -75,7 +75,7 @@ export class SnackCartItem extends SnackElement {
           </div>
 
           <button type="button"
-                  class="w-11 h-11 -mt-1 -mr-1 shrink-0 transition-colors flex items-center justify-center cursor-pointer rounded-full ${isFav ? 'text-red-500' : 'text-text-muted hover:text-red-500'}"
+                  class="w-11 h-11 -mt-1 -mr-1 shrink-0 transition-colors flex items-center justify-center cursor-pointer rounded-full ${isFav ? 'text-danger' : 'text-text-muted hover:text-danger'}"
                   aria-pressed="${isFav ? 'true' : 'false'}"
                   aria-label="${isFav ? t('common.removeFavorite') : t('common.addFavorite')}"
                   @click="${this._toggleFavorite}">
@@ -85,7 +85,7 @@ export class SnackCartItem extends SnackElement {
 
         <div class="flex items-center justify-between gap-3">
           <div class="min-w-0">
-            <p class="text-primary font-black">${(unit * qty).toFixed(2)} €</p>
+            <p class="text-primary-ink font-black">${(unit * qty).toFixed(2)} €</p>
             ${qty > 1 ? html`<p class="text-[11px] text-text-muted">${t('cart.unitPrice', { price: unit.toFixed(2) })}</p>` : nothing}
           </div>
 

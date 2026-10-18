@@ -129,6 +129,7 @@ export default defineConfig(({ command, mode }) => {
           // (sinon les nappes accent restent transparentes jusqu'au boot JS).
           const splashStyle = `<style>
             :root,html,body{background:${lightHex} !important; color-scheme: light dark;}
+            #boot-splash{position:fixed;inset:0;background:${themeColor};z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}.splash-curtain{position:absolute;left:0;right:0;height:50%;background:${themeColor};z-index:1}.splash-curtain-top{top:0}.splash-curtain-bottom{bottom:0}
             :root{--color-primary:${themeColor};--color-accent:${accentHex};--color-primary-light:${lightHex};--theme-primary:${themeColor};--theme-accent:${accentHex};--theme-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
           </style>`;
           // 🌗 Anti-flash dark : pose la classe .dark sur <html> AVANT le 1er paint (et avant le
@@ -142,7 +143,9 @@ export default defineConfig(({ command, mode }) => {
 
           return html
             .replace('<html', `<html data-theme="${palette}"${fontKeyAttr}`) // override mesh par thème actif au 1er paint
-            .replace('<head>', `<head>\n    ${splashStyle}\n    ${antiFlashScript}`)
+            // Après <meta charset> : Lighthouse exige l'encodage dans les 1 024 premiers octets,
+            // le style et le script injectés le repoussaient à l'octet 1 017.
+            .replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${splashStyle}\n    ${antiFlashScript}`)
             .replace(/\{\{SEO_TITLE\}\}/g, seoData.title)
             .replace(/\{\{SEO_DESC\}\}/g, seoData.desc)
             .replace(/\{\{THEME_COLOR\}\}/g, themeColor)
