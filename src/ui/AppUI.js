@@ -4,6 +4,9 @@
  */
 import { store } from "../core/Store.js";
 import { pickOnColor } from "../theme-palettes.js";
+import { t } from "../i18n/index.js";
+import { marqueeSegments, marqueeHTML } from "../core/footerMarquee.js";
+import { watchInView } from "../core/reveal.js";
 import { escapeHTML, safeURL, showToast } from "../utils.js";
 import { getOrderingState, localClock } from "../core/openingHours.js";
 import { pauseStatus } from "../core/storefrontStatus.js";
@@ -33,6 +36,8 @@ class AppUI {
         // --- ÉCOUTEURS DU STORE (Flux réactif) ---
         store.addEventListener("config-updated", () => this.handleConfigUpdate());
         store.addEventListener("auth-updated", () => this.updateUI());
+        // Le bandeau du pied de page porte des libellés traduits : re-rendu au changement de langue.
+        window.addEventListener("snack:locale:changed", () => this.renderFooterMarquee());
         // L'heure avance : badge « Ouvert / Fermé » et bandeau pause à jour.
         store.addEventListener("clock-tick", () => {
             const cfg = store.state.config;
@@ -133,6 +138,7 @@ class AppUI {
 
         if (els.navName) els.navName.innerText = cfg.identity.name;
         if (els.footerCopyName) els.footerCopyName.innerText = cfg.identity.name;
+        this.renderFooterMarquee(cfg);
 
         // SEO
         const metaDesc = document.querySelector('meta[name="description"]');
@@ -270,6 +276,28 @@ class AppUI {
         } else {
             btn.setAttribute("data-action", "toggle-auth-modal");
             btn.innerHTML = "Connexion";
+        }
+    }
+
+    /**
+     * 🎞️ Bandeau défilant du pied de page : nom du restaurant en accent + services activés
+     * (src/core/footerMarquee.js). Décoratif (aria-hidden) ; les deux copies de la piste
+     * reçoivent le même HTML pour que la boucle se referme. Observé une seule fois pour
+     * ne tourner qu'à l'écran.
+     */
+    renderFooterMarquee(cfg = store.state.config) {
+        const el = document.getElementById("footer-marquee");
+        if (!el || !cfg) return;
+        const html = marqueeHTML(marqueeSegments(cfg), { t, escape: escapeHTML });
+        const copies = el.querySelectorAll(".marquee-copy");
+        for (const copy of copies) copy.innerHTML = html;
+        // Vitesse constante (~60 px/s) quelle que soit la longueur du texte : la boucle
+        // parcourt une copie par cycle. Une seule lecture de layout, après rendu.
+        const width = copies[0]?.scrollWidth || 0;
+        if (width) el.style.setProperty("--marquee-duration", `${Math.max(18, Math.round(width / 60))}s`);
+        if (!this._marqueeWatched) {
+            this._marqueeWatched = true;
+            watchInView(el);
         }
     }
 
