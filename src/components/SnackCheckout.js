@@ -328,7 +328,7 @@ export class SnackCheckout extends SnackElement {
       const linkEl = this.querySelector("#link-authentication-element");
       if (linkEl) {
         linkEl.scrollIntoView({ behavior: "smooth", block: "center" });
-        linkEl.style.outline = "2px solid var(--color-error, #ef4444)";
+        linkEl.style.outline = "2px solid var(--color-danger)";
         linkEl.style.borderRadius = "6px";
         setTimeout(() => {
           linkEl.style.outline = "";
@@ -513,7 +513,7 @@ export class SnackCheckout extends SnackElement {
 
   render() {
     return html`
-      <div id="payment-bottom-sheet" class="fixed inset-0 z-[100] items-end justify-center bg-black/60 backdrop-blur-sm transition-all duration-300 ${this.isOpen ? 'flex opacity-100' : 'hidden opacity-0'}">
+      <div id="payment-bottom-sheet" class="fixed inset-0 z-[100] items-end justify-center bg-screen-deep/60 transition-all duration-300 ${this.isOpen ? 'flex opacity-100' : 'hidden opacity-0'}">
         
         <!-- Backdrop -->
         <div class="absolute inset-0" @click="${this.closePaymentSheet}"></div>
@@ -526,7 +526,7 @@ export class SnackCheckout extends SnackElement {
           <div class="overflow-y-auto pr-1 custom-scrollbar">
             <div class="mb-6 text-center">
               <h3 class="text-xl font-black text-text">${t('payment.secureTitle')}</h3>
-              <p class="text-lg font-bold text-primary">${t('payment.total')} ${this.totalAmount.toFixed(2)} €</p>
+              <p class="text-lg font-bold text-primary-ink">${t('payment.total')} ${this.totalAmount.toFixed(2)} €</p>
             </div>
 
             <!-- Conteneurs Stripe en light DOM (cf. _stripeHost), projetés ici. -->
@@ -544,7 +544,7 @@ export class SnackCheckout extends SnackElement {
           <div class="mt-6 flex flex-col gap-3 flex-shrink-0 pb-4 md:pb-0">
             <button @click="${this.submitStripePayment}" 
                     ?disabled="${this.isProcessing}"
-                    class="flex w-full items-center justify-center rounded-xl bg-green-600 py-4 text-lg font-black text-on-dark shadow-lg transition active:scale-95 hover:bg-green-700 disabled:opacity-70 disabled:active:scale-100">
+                    class="flex w-full items-center justify-center rounded-xl bg-status-ok py-4 text-lg font-black text-on-dark shadow-lg transition active:scale-95 hover:bg-status-ok-strong disabled:opacity-70 disabled:active:scale-100">
               ${this.isProcessing 
                 ? html`<i data-lucide="loader-circle" class="animate-spin mr-2"></i> ${t('payment.processing')}` 
                 : html`<i data-lucide="lock" class="mr-2"></i> ${t('payment.pay')} ${this.totalAmount.toFixed(2)} €`}

@@ -7,6 +7,7 @@ Tu es un Senior Software Architect expert en SaaS Multi-Tenant. Ce projet utilis
 - **DRY :** Le moteur est dans `/core`. Les spécificités clients sont dans Firestore.
 - **Flux de Données :** Utilise EXCLUSIVEMENT `Store.js` pour l'état. L'UI doit écouter les événements du store (`config-updated`, `cart-updated`).
 - **Theming (Tailwind 4) :** Ne jamais coder de couleurs en dur. Utilise les CSS Variables (`--color-primary`, etc.) définies dans `AppUI.js`.
+- **Zéro couleur brute (refonte, Phase 0) :** dans la surface client (`index.html`, `src/` hors back-office) aucune classe `*-gray-*`, `*-white`, `*-black`, `*-red-*`, `*-green-*`… ni hex ni `style=""` : uniquement les jetons de `src/styles.css` (`surface*`, `text*`, `screen*`, `status-*`, `on-dark*`, `gold`, `rating`, `weather-*`). Seule exception : les classes `.brand-google` du logo Google. `npm run lint:theming` bloque toute réapparition.
 - **Primary en premier plan :** du primary en TEXTE, ICÔNE ou BORDURE sur une surface neutre (`bg-surface`, fond de page) s'écrit `text-primary-ink` / `border-primary-ink`, jamais `text-primary` ni `style="color: var(--color-primary)"` : en mode sombre, l'encre est éclaircie automatiquement (un primary foncé comme le navy Belly devenait invisible). `bg-primary` + `text-on-primary` pour les fonds pleins. Cf. le commentaire du jeton dans `src/styles.css`.
 
 ## 🔒 Sécurité & Backend (Firebase/Stripe)

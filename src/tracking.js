@@ -27,7 +27,7 @@ function openTrackingModal() {
   modal.classList.add("flex");
   setTimeout(() => {
     modal.classList.remove("opacity-0");
-    const inner = modal.querySelector(".bg-surface, .bg-white") || modal.firstElementChild;
+    const inner = modal.querySelector(".bg-surface") || modal.firstElementChild;
     if (inner) inner.classList.remove("scale-95");
   }, 10);
 }
@@ -36,7 +36,7 @@ function closeTrackingModal() {
   const modal = document.getElementById("order-tracking-modal");
   if (!modal) return;
   modal.classList.add("opacity-0");
-  const inner = modal.querySelector(".bg-surface, .bg-white") || modal.firstElementChild;
+  const inner = modal.querySelector(".bg-surface") || modal.firstElementChild;
   if (inner) inner.classList.add("scale-95");
   setTimeout(() => {
     modal.classList.add("hidden");
@@ -81,10 +81,10 @@ function forgetOrder(orderId) {
 // Badge flottant : visible sur mobile aussi (c'était `hidden md:flex` → le client
 // mobile perdait sa commande dès qu'il fermait la fenêtre de suivi).
 const BADGE_TONES = {
-  waiting: "bg-gray-800 text-on-dark",
-  cooking: "bg-yellow-500 text-on-dark shadow-[0_10px_25px_rgba(234,179,8,0.5)]",
-  ready: "bg-green-600 text-on-dark shadow-[0_10px_30px_rgba(22,163,74,0.6)] animate-pulse",
-  delivering: "bg-blue-600 text-on-dark animate-pulse",
+  waiting: "bg-screen-2 text-on-dark",
+  cooking: "bg-status-wait text-on-dark shadow-lg shadow-status-wait/50",
+  ready: "bg-status-ok text-on-dark shadow-lg shadow-status-ok/60 animate-pulse",
+  delivering: "bg-status-info text-on-dark animate-pulse",
 };
 function badgeClass(tone) {
   return `flex fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 transform -translate-x-1/2 ${BADGE_TONES[tone]} px-6 py-3 rounded-full shadow-xl font-black items-center gap-3 z-[60] cursor-pointer transition-all hover:scale-105 active:scale-95`;
@@ -162,7 +162,7 @@ function renderNotifPrompt() {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className =
-    "w-full bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 font-bold py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 border-2 border-blue-100 dark:border-blue-800 hover:border-blue-300 dark:hover:border-blue-700 active:scale-95";
+    "w-full bg-status-info/10 hover:bg-status-info/20 text-status-info font-bold py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 border-2 border-status-info/20 hover:border-status-info/50 active:scale-95";
   btn.innerHTML =
     '<i data-lucide="bell"></i><span>M\'avertir quand c\'est prêt</span>';
 
@@ -344,7 +344,7 @@ function startOrderTracking(orderId) {
             actionBtn.innerHTML =
               "<i data-lucide='car' aria-hidden='true' class='mr-2'></i> Je suis à 5 min / Sur place";
             actionBtn.className =
-              "w-full bg-blue-600 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-blue-700 transition active:scale-95";
+              "w-full bg-status-info text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-status-info/90 transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Signaler mon arrivée au restaurant pour lancer la cuisson");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "notify-arrival");
@@ -361,9 +361,9 @@ function startOrderTracking(orderId) {
 
           if (iconContainer) {
             iconContainer.className =
-              "w-24 h-24 bg-yellow-100 dark:bg-yellow-950/50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+              "w-24 h-24 bg-status-wait/15 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           }
-          window.swapIcon?.(icon, "flame", "text-5xl text-yellow-500 transition-transform duration-500 animate-pulse");
+          window.swapIcon?.(icon, "flame", "text-5xl text-status-wait transition-transform duration-500 animate-pulse");
           if (title) {
             title.textContent = "En cuisine !";
             title.className = "text-3xl font-black text-text tracking-tight";
@@ -380,7 +380,7 @@ function startOrderTracking(orderId) {
           if (actionBtn) {
             actionBtn.textContent = "Super, j'attends !";
             actionBtn.className =
-              "w-full bg-gray-900 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
+              "w-full bg-screen text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-screen-deep transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Fermer la fenêtre de suivi de commande");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
@@ -398,13 +398,13 @@ function startOrderTracking(orderId) {
 
           if (iconContainer) {
             iconContainer.className =
-              "w-24 h-24 bg-green-100 dark:bg-green-950/50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
+              "w-24 h-24 bg-status-ok/15 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500 scale-110";
           }
-          window.swapIcon?.(icon, "check", "text-5xl text-green-600 dark:text-green-400 transition-transform duration-500");
+          window.swapIcon?.(icon, "check", "text-5xl text-status-ok transition-transform duration-500");
           
           if (title) {
             title.textContent = "C'est prêt !";
-            title.className = "text-4xl font-black text-green-600 dark:text-green-400 tracking-tight";
+            title.className = "text-4xl font-black text-status-ok tracking-tight";
           }
           
           // 🎟️ AFFICHAGE DU CODE SECRET ET NOM CLIENT
@@ -435,7 +435,7 @@ function startOrderTracking(orderId) {
               ? "<i data-lucide='bike' aria-hidden='true' class='mr-2'></i> Super, j'attends le livreur"
               : "<i data-lucide='footprints' aria-hidden='true' class='mr-2'></i> J'arrive au comptoir !";
             actionBtn.className =
-              "w-full bg-green-600 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
+              "w-full bg-status-ok text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-status-ok-strong transition active:scale-95";
             actionBtn.setAttribute("aria-label", deliv ? "Fermer la fenêtre. Un livreur va arriver." : "Fermer la fenêtre. Commande prête à être retirée.");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
@@ -461,9 +461,9 @@ function startOrderTracking(orderId) {
           if (badgeText) badgeText.textContent = "EN LIVRAISON";
           if (iconContainer) {
             iconContainer.className =
-              "w-24 h-24 bg-blue-100 dark:bg-blue-950/50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
+              "w-24 h-24 bg-status-info/15 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner transition-colors duration-500";
           }
-          window.swapIcon?.(icon, "bike", "text-5xl text-blue-600 dark:text-blue-400 transition-transform duration-500 animate-pulse");
+          window.swapIcon?.(icon, "bike", "text-5xl text-status-info transition-transform duration-500 animate-pulse");
           if (title) {
             title.textContent = "En livraison !";
             title.className = "text-3xl font-black text-text tracking-tight";
@@ -473,7 +473,7 @@ function startOrderTracking(orderId) {
             const dest = commande.livraison;
             let distLine = "Votre livreur a récupéré la commande, il arrive !";
             if (isLatLng(driverPos) && isLatLng(dest)) {
-              distLine = `Votre livreur est à <b class="text-blue-600 dark:text-blue-400">${formatDistance(haversineKm(driverPos, dest))}</b> de chez vous.`;
+              distLine = `Votre livreur est à <b class="text-status-info">${formatDistance(haversineKm(driverPos, dest))}</b> de chez vous.`;
             }
             const driverName = window.escapeHTML(commande.livreur?.nom || "Votre livreur");
             subtitle.innerHTML = `<span class="block text-text-muted">${distLine}</span><span class="block mt-2 text-sm text-text-muted"><i data-lucide="user" class="mr-1"></i>${driverName}</span>`;
@@ -481,7 +481,7 @@ function startOrderTracking(orderId) {
           if (actionBtn) {
             actionBtn.innerHTML = "<i data-lucide='check' class='mr-2'></i> Suivre";
             actionBtn.className =
-              "w-full bg-gray-900 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-black transition active:scale-95";
+              "w-full bg-screen text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-screen-deep transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Fermer le suivi de livraison.");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");
@@ -496,12 +496,12 @@ function startOrderTracking(orderId) {
           if (trackingBadge) trackingBadge.className = "hidden";
           if (iconContainer) {
             iconContainer.className =
-              "w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner scale-110";
+              "w-24 h-24 bg-status-ok/15 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner scale-110";
           }
-          window.swapIcon?.(icon, "circle-check", "text-5xl text-green-600");
+          window.swapIcon?.(icon, "circle-check", "text-5xl text-status-ok");
           if (title) {
             title.textContent = "Livré ! 🎉";
-            title.className = "text-4xl font-black text-green-600 tracking-tight";
+            title.className = "text-4xl font-black text-status-ok tracking-tight";
           }
           if (subtitle) {
             const photo = commande.livreur?.dropoffUrl;
@@ -518,7 +518,7 @@ function startOrderTracking(orderId) {
           if (actionBtn) {
             actionBtn.innerHTML = "<i data-lucide='thumbs-up' class='mr-2'></i> Parfait, merci !";
             actionBtn.className =
-              "w-full bg-green-600 text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-green-700 transition active:scale-95";
+              "w-full bg-status-ok text-on-dark font-black py-4 rounded-xl text-lg shadow-lg hover:bg-status-ok-strong transition active:scale-95";
             actionBtn.setAttribute("aria-label", "Fermer. Commande livrée.");
             actionBtn.removeAttribute("onclick");
             actionBtn.setAttribute("data-action", "close-tracking-modal");

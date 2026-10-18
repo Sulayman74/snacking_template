@@ -19,8 +19,8 @@
 const INSIGHTS = {
     sunny: {
         icon: "sun",
-        iconColor: "text-yellow-300",
-        bgGradient: "from-amber-400 to-orange-500",
+        iconColor: "text-gold",
+        bgGradient: "from-weather-sun to-weather-heat",
         title: "Beau temps, belle journée",
         advice: "Profitez du trafic naturel : poussez vos boissons fraîches et accompagnements en upsell pré-paiement.",
         template: {
@@ -30,8 +30,8 @@ const INSIGHTS = {
     },
     hot: {
         icon: "thermometer-sun",
-        iconColor: "text-red-300",
-        bgGradient: "from-orange-500 to-red-500",
+        iconColor: "text-danger-soft",
+        bgGradient: "from-weather-heat to-weather-hot",
         title: "Forte chaleur",
         advice: "Mettez en avant glaces, sodas et boissons fraîches. C'est le moment idéal pour vos campagnes upsell.",
         template: {
@@ -41,8 +41,8 @@ const INSIGHTS = {
     },
     cold: {
         icon: "snowflake",
-        iconColor: "text-blue-200",
-        bgGradient: "from-sky-500 to-blue-700",
+        iconColor: "text-on-dark/80",
+        bgGradient: "from-weather-sky to-weather-rain",
         title: "Il fait froid dehors",
         advice: "Offrez une boisson chaude pour motiver le déplacement en Click & Collect. Petite attention, gros impact.",
         template: {
@@ -52,8 +52,8 @@ const INSIGHTS = {
     },
     rainy: {
         icon: "cloud-rain",
-        iconColor: "text-blue-200",
-        bgGradient: "from-slate-500 to-slate-700",
+        iconColor: "text-on-dark/80",
+        bgGradient: "from-weather-cloud to-weather-cloud-deep",
         title: "Pluie sur la ville",
         advice: "Le trafic baisse — relancez vos clients avec une boisson chaude offerte pour motiver le Click & Collect.",
         template: {
@@ -63,8 +63,8 @@ const INSIGHTS = {
     },
     snowy: {
         icon: "snowflake",
-        iconColor: "text-white",
-        bgGradient: "from-slate-400 to-slate-600",
+        iconColor: "text-on-dark",
+        bgGradient: "from-weather-fog to-weather-cloud",
         title: "Temps de neige",
         advice: "Encouragez le Click & Collect : pas d'attente sur place, repas chaud à emporter immédiatement.",
         template: {
@@ -74,8 +74,8 @@ const INSIGHTS = {
     },
     stormy: {
         icon: "zap",
-        iconColor: "text-yellow-300",
-        bgGradient: "from-slate-700 to-slate-900",
+        iconColor: "text-gold",
+        bgGradient: "from-weather-cloud-deep to-weather-night",
         title: "Orage en cours",
         advice: "Moment compliqué pour sortir — proposez une réduction Click & Collect pour les courageux.",
         template: {
@@ -85,8 +85,8 @@ const INSIGHTS = {
     },
     foggy: {
         icon: "cloud-fog",
-        iconColor: "text-gray-200",
-        bgGradient: "from-gray-400 to-gray-600",
+        iconColor: "text-on-dark/90",
+        bgGradient: "from-weather-mist to-weather-mist-deep",
         title: "Brouillard",
         advice: "Conditions un peu mornes — boostez l'énergie avec un café offert sur Click & Collect.",
         template: {
@@ -96,8 +96,8 @@ const INSIGHTS = {
     },
     cloudy: {
         icon: "cloud",
-        iconColor: "text-gray-200",
-        bgGradient: "from-slate-400 to-slate-600",
+        iconColor: "text-on-dark/90",
+        bgGradient: "from-weather-fog to-weather-cloud",
         title: "Temps couvert",
         advice: "Journée standard — bon moment pour pousser un upsell dessert ou boisson sur Click & Collect.",
         template: {

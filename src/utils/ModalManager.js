@@ -32,7 +32,7 @@ export async function confirmAction({
         cancelBtn.textContent = cancelText;
 
         if (type === "danger") {
-            confirmBtn.classList.add("bg-red-600", "hover:bg-red-700");
+            confirmBtn.classList.add("bg-danger", "hover:bg-danger/90");
         } else {
             confirmBtn.classList.add("bg-primary", "hover:opacity-90");
         }

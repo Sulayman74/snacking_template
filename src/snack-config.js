@@ -126,7 +126,7 @@ export function buildSnackConfig(snackId, data) {
     loyalty: {
       programName: data.loyaltyProgramName || "Club Fidélité",
       cardDesign: {
-        backgroundGradient: data.cardGradient || "from-primary to-gray-900",
+        backgroundGradient: data.cardGradient || "from-primary to-screen",
       },
     },
   };

@@ -22,9 +22,9 @@ function paintStars(stars, val) {
   stars.forEach((s, i) => {
     const filled = i < val;
     s.classList.toggle("far", !filled);
-    s.classList.toggle("text-gray-300", !filled);
+    s.classList.toggle("text-line", !filled);
     s.classList.toggle("fas", filled);
-    s.classList.toggle("text-yellow-400", filled);
+    s.classList.toggle("text-rating", filled);
     s.classList.toggle("scale-110", filled);
   });
 }
@@ -40,19 +40,19 @@ function getGoogleLink() {
 
 function handlePositive(feedbackText) {
   feedbackText.innerHTML =
-    '<span class="text-green-600 font-bold">Top ! On va sur Google... 🚀</span>';
+    '<span class="text-status-ok font-bold">Top ! On va sur Google... 🚀</span>';
   setTimeout(() => {
     const link = getGoogleLink();
     if (link) window.open(link, "_blank", "noopener,noreferrer");
     else
       feedbackText.innerHTML =
-        '<span class="text-green-600 font-bold">Merci pour votre amour ! ❤️</span>';
+        '<span class="text-status-ok font-bold">Merci pour votre amour ! ❤️</span>';
   }, 1000);
 }
 
 function handleCritical(val, feedbackText, sourceAvisInput, contactSection) {
   feedbackText.innerHTML =
-    '<span class="text-orange-500 font-bold">Dites-nous tout ci-dessous 👇</span>';
+    '<span class="text-status-warn font-bold">Dites-nous tout ci-dessous 👇</span>';
   if (sourceAvisInput) sourceAvisInput.value = `Note : ${val}/5`;
   setTimeout(() => {
     contactSection?.scrollIntoView({ behavior: "smooth" });

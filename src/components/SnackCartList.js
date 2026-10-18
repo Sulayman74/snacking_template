@@ -28,7 +28,7 @@ export class SnackCartList extends SnackElement {
     return html`
       <div id="cart-progress-bar" class="mb-4">
         <div class="rounded-xl bg-surface-3 p-3">
-          <p class="text-sm font-medium text-text mb-2">Plus que <span class="font-bold text-primary">${remaining.toFixed(2)} €</span> pour commander en livraison 🛵</p>
+          <p class="text-sm font-medium text-text mb-2">Plus que <span class="font-bold text-primary-ink">${remaining.toFixed(2)} €</span> pour commander en livraison 🛵</p>
           <div class="h-2 w-full rounded-full bg-line overflow-hidden">
             <div class="h-full rounded-full bg-primary transition-all duration-300" style="width:${pct}%"></div>
           </div>

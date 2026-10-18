@@ -7,7 +7,7 @@ import { statusMessage } from '../ui/statusMessage.js';
 
 const TONES = {
   danger: 'bg-danger/10 text-danger border-danger/30',
-  warn: 'bg-primary/10 text-text border-primary/40',
+  warn: 'bg-primary/10 text-text border-primary-ink/40',
   info: 'bg-surface-2 text-text border-line',
 };
 const ICONS = { danger: 'circle-alert', warn: 'clock', info: 'clock' };
