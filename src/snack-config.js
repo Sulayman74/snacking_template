@@ -125,6 +125,10 @@ export function buildSnackConfig(snackId, data) {
     },
     loyalty: {
       programName: data.loyaltyProgramName || "Club Fidélité",
+      // Réglages du restaurateur (admin → Cadeau fidélité) ; lus aussi par les Cloud
+      // Functions (orderCreation : minOrderCents, lib/loyalty : creditCooldownMin).
+      minOrderCents: Math.max(0, Math.round(Number(data.loyalty?.minOrderCents) || 0)),
+      creditCooldownMin: Number.isFinite(Number(data.loyalty?.creditCooldownMin)) ? Math.max(0, Number(data.loyalty.creditCooldownMin)) : 10,
       cardDesign: {
         backgroundGradient: data.cardGradient || "from-primary to-screen",
       },

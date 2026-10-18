@@ -9,6 +9,7 @@ export class AdminConfigUI {
         this.hoursForm = document.getElementById("config-hours-form");
         this.contactForm = document.getElementById("config-contact-form");
         this.deliveryForm = document.getElementById("config-delivery-form");
+        this.loyaltyForm = document.getElementById("config-loyalty-form");
 
         this.init();
     }
@@ -32,6 +33,12 @@ export class AdminConfigUI {
             this.deliveryForm.addEventListener("submit", (e) => this.handleDeliverySubmit(e));
             document.getElementById("config-resto-locate")?.addEventListener("click", () => this.locateResto());
         }
+        if (this.loyaltyForm) {
+            this.loyaltyForm.addEventListener("submit", (e) => this.handleLoyaltySubmit(e));
+            // Liste des cadeaux : une case par produit, écriture immédiate (pas de bouton).
+            adminStore.addEventListener("admin-products-updated", () => this.renderGiftProducts());
+            document.getElementById("config-gift-products")?.addEventListener("change", (e) => this.handleGiftToggle(e));
+        }
     }
 
     render() {
@@ -43,6 +50,20 @@ export class AdminConfigUI {
         const promoInput = document.getElementById("config-promo");
         if (descInput) descInput.value = cfg.identity?.description || "";
         if (promoInput) promoInput.value = cfg.config?.promoPhrase || cfg.promoPhrase || "";
+
+        // 1b. Fidélité
+        const lo = cfg.loyalty || {};
+        const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
+        setV("config-loyalty-name", lo.programName || "");
+        setV("config-loyalty-minorder", lo.minOrderCents ? String(lo.minOrderCents / 100) : "0");
+        setV("config-loyalty-cooldown", String(lo.creditCooldownMin ?? 10));
+        const state = document.getElementById("config-loyalty-state");
+        if (state) {
+            const on = cfg.features?.enableLoyaltyCard !== false;
+            state.textContent = on ? "Activé" : "Désactivé — géré par votre offre";
+            state.className = `text-sm font-bold ${on ? "text-green-600" : "text-text-muted"}`;
+        }
+        this.renderGiftProducts();
 
         // 2. Horaires
         if (this.hoursGrid) {
@@ -135,6 +156,53 @@ export class AdminConfigUI {
                 </div>
             </div>
         </div>`;
+    }
+
+    /** 🎁 Liste des produits cochables comme cadeau surprise (par catégorie, puis nom). */
+    renderGiftProducts() {
+        const host = document.getElementById("config-gift-products");
+        if (!host) return;
+        const products = [...(adminStore.state.products || [])].sort((a, b) => String(a.categorieId || "").localeCompare(String(b.categorieId || "")) || String(a.nom || "").localeCompare(String(b.nom || "")));
+        const count = products.filter((p) => p.eligibleForWheel === true).length;
+        const counter = document.getElementById("config-gift-count");
+        if (counter) counter.textContent = count ? `· ${count} coché${count > 1 ? "s" : ""}` : "· aucun pour l'instant";
+        if (!products.length) {
+            host.innerHTML = `<p class="text-sm text-text-muted col-span-full">Ajoutez d'abord des produits dans l'onglet Carte.</p>`;
+            return;
+        }
+        host.innerHTML = products.map((p) => `
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-surface border border-line cursor-pointer hover:border-pink-300 transition ${p.isAvailable === false ? "opacity-60" : ""}">
+                <input type="checkbox" data-gift-product="${escapeHTML(p.id)}" ${p.eligibleForWheel === true ? "checked" : ""} class="w-5 h-5 rounded text-pink-600 border-line focus:ring-pink-500 cursor-pointer">
+                <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-bold text-text truncate">${escapeHTML(p.nom || "")}</span>
+                    <span class="block text-xs text-text-muted">${escapeHTML(p.categorieId || "")} · ${Number(p.prix || 0).toFixed(2)} €${p.isAvailable === false ? " · épuisé" : ""}</span>
+                </span>
+            </label>`).join("");
+    }
+
+    async handleGiftToggle(e) {
+        const input = e.target;
+        const id = input?.dataset?.giftProduct;
+        if (!id) return;
+        const eligible = input.checked;
+        try {
+            await adminStore.setProductGiftEligible(db, fs, id, eligible);
+            showToast(eligible ? "Produit ajouté aux cadeaux 🎁" : "Produit retiré des cadeaux", "success");
+        } catch (err) {
+            input.checked = !eligible;
+            showToast(err?.message || "Enregistrement impossible.", "error");
+        }
+    }
+
+    handleLoyaltySubmit(e) {
+        e.preventDefault();
+        const name = document.getElementById("config-loyalty-name")?.value.trim() || "";
+        const minOrderEur = Number(document.getElementById("config-loyalty-minorder")?.value || 0);
+        const cooldown = Number(document.getElementById("config-loyalty-cooldown")?.value ?? 10);
+        adminStore.updateConfigField("loyalty.programName", name);
+        adminStore.updateConfigField("loyalty.minOrderCents", Number.isFinite(minOrderEur) ? Math.round(minOrderEur * 100) : 0);
+        adminStore.updateConfigField("loyalty.creditCooldownMin", Number.isFinite(cooldown) ? cooldown : 10);
+        this.saveToServer("Fidélité mise à jour !");
     }
 
     handleIdentitySubmit(e) {

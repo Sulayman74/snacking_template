@@ -115,7 +115,7 @@ exports.redeemLoyaltyReward = onCall({ region: "europe-west1" }, async (request)
 });
 
 // ============================================================================
-// 🎡 FIDÉLITÉ : ROUE DE LA FORTUNE — tirage SERVEUR du lot (anti-triche)
+// 🎁 FIDÉLITÉ : CADEAU SURPRISE — choix SERVEUR du produit offert (anti-triche)
 // ============================================================================
 // Le CLIENT déclenche le spin, mais le lot est tiré CÔTÉ SERVEUR parmi les produits
 // `eligibleForWheel` du snack (liste curated par l'admin). Consomme UNE récompense
@@ -144,7 +144,7 @@ exports.spinLoyaltyWheel = onCall({ region: "europe-west1" }, async (request) =>
     .filter((p) => p.isAvailable !== false)
     .map((p) => ({ id: p.id, nom: p.nom || "Lot", image: p.image || null }));
   if (pool.length === 0) {
-    throw new HttpsError("failed-precondition", "Aucun lot configuré pour la roue. Contactez le restaurant.");
+    throw new HttpsError("failed-precondition", "Aucun cadeau configuré par le restaurant.");
   }
 
   // 🎲 Tirage SERVEUR (le client ne choisit JAMAIS son lot).
@@ -160,9 +160,9 @@ exports.spinLoyaltyWheel = onCall({ region: "europe-west1" }, async (request) =>
     const points = (d.pointsBySnack || {})[snackId] || 0;
     const available = (d.rewardsAvailable || {})[snackId] || 0;
     const effective = available + Math.floor(points / MAX_LOYALTY_POINTS); // banque + legacy
-    if (effective < 1) throw new HttpsError("failed-precondition", "Aucune récompense à jouer.");
+    if (effective < 1) throw new HttpsError("failed-precondition", "Aucun cadeau à ouvrir.");
     if ((d.pendingWheelReward || {})[snackId]) {
-      throw new HttpsError("failed-precondition", "Tu as déjà un lot en attente de retrait.");
+      throw new HttpsError("failed-precondition", "Tu as déjà un cadeau en attente.");
     }
 
     tx.update(clientRef, {
@@ -211,7 +211,7 @@ exports.redeemWheelReward = onCall({ region: "europe-west1" }, async (request) =
     if (!snap.exists) throw new HttpsError("not-found", "Ce QR code n'est pas dans la base.");
     const d = snap.data();
     const pending = (d.pendingWheelReward || {})[snackId];
-    if (!pending) throw new HttpsError("failed-precondition", "Aucun lot de roue en attente pour ce client.");
+    if (!pending) throw new HttpsError("failed-precondition", "Aucun cadeau en attente pour ce client.");
 
     tx.update(clientRef, {
       [`pendingWheelReward.${snackId}`]: FieldValue.delete(),

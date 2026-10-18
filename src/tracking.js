@@ -91,6 +91,15 @@ function badgeClass(tone) {
 }
 
 // Bloc « reçu » : code de retrait, récapitulatif et, en retrait, où aller.
+/** 🎁 Rappel du cadeau fidélité après une commande (progression diffusée par loyalty-gift.js). */
+function giftReminderHTML() {
+  const lp = window.loyaltyProgress;
+  if (!lp) return "";
+  const esc = window.escapeHTML || ((s) => String(s ?? ""));
+  const text = lp.ready > 0 || lp.pending ? t("loyalty.trackingGiftReady") : t("loyalty.trackingProgress", { n: lp.remaining });
+  return `<p class="mt-3 text-sm font-bold text-primary-ink">${esc(text)}</p>`;
+}
+
 function receiptHTML(commande) {
   const esc = window.escapeHTML || ((s) => String(s ?? ""));
   const code = esc(commande.secretCode || "");
@@ -337,7 +346,7 @@ function startOrderTracking(orderId) {
           }
           if (subtitle) {
             subtitle.innerHTML =
-              `Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.${receiptHTML(commande)}`;
+              `Cliquez ci-dessous quand vous êtes <b>à 5 minutes</b> pour qu'on lance la cuisson.${giftReminderHTML()}${receiptHTML(commande)}`;
           }
 
           if (actionBtn) {

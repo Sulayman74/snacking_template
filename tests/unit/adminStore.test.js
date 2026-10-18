@@ -46,6 +46,19 @@ describe("AdminStore.validate (config + horaires)", () => {
   });
 });
 
+describe("AdminStore.validate (fidélité)", () => {
+  it("refuse un panier minimum négatif, un délai hors 0-1440 ou un nom trop long", () => {
+    store.setConfig({ identity: { name: "A" }, hours: [], loyalty: { minOrderCents: -1 } });
+    expect(store.validate().errors.join(" ")).toMatch(/panier minimum/);
+    store.setConfig({ identity: { name: "A" }, hours: [], loyalty: { creditCooldownMin: 2000 } });
+    expect(store.validate().errors.join(" ")).toMatch(/1440/);
+    store.setConfig({ identity: { name: "A" }, hours: [], loyalty: { programName: "x".repeat(41) } });
+    expect(store.validate().errors.join(" ")).toMatch(/40 caractères/);
+    store.setConfig({ identity: { name: "A" }, hours: [], loyalty: { programName: "Club", minOrderCents: 500, creditCooldownMin: 10 } });
+    expect(store.validate().valid).toBe(true);
+  });
+});
+
 describe("AdminStore.getSalesKPIs", () => {
   it("total/moyenne depuis l'agrégat serveur (CA brut + nb commandes)", () => {
     store.setSalesAggregate({ count: 4, total: 100 });

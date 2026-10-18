@@ -494,7 +494,7 @@
         <!-- Barre de progression et récompenses sous la carte -->
         <div class="w-full max-w-sm mt-3 px-1">
           <div class="flex justify-between text-xs font-bold mb-2">
-            <span id="progress-text" class="text-on-dark/90 uppercase tracking-wide">Encore 10 points avant récompense</span>
+            <span id="progress-text" class="text-on-dark/90 uppercase tracking-wide">Encore 10 commandes avant ton cadeau</span>
             <i data-lucide="gift" id="gift-icon" class="text-gold text-lg"></i>
           </div>
           <div class="w-full bg-screen-deep/40 rounded-full h-3 overflow-hidden shadow-inner border border-on-dark/15">
@@ -502,8 +502,8 @@
           </div>
         </div>
           
-          <!-- 🎡 Roue de la fortune (rempli par loyalty-wheel.js selon rewardsAvailable / pendingWheelReward) -->
-          <div id="card-wheel-cta"></div>
+          <!-- 🎁 Cadeau surprise (rempli par loyalty-gift.js selon rewardsAvailable / pendingWheelReward) -->
+          <div id="card-gift-cta"></div>
 
           <!-- BOUTON ACTIVER LES NOTIFICATIONS (visible uniquement si permission "default") -->
           <button id="promo-notif-btn" data-action="request-notif" class="hidden mt-6 w-full bg-on-dark/20 hover:bg-on-dark/30 text-on-dark font-black py-4 rounded-2xl transition flex items-center justify-center gap-3 border border-on-dark/30 active:scale-95 shadow-lg group">
@@ -610,7 +610,7 @@
 
       <!-- Corps du panier défilable (articles + options de retrait/livraison réunies) -->
       <div id="cart-modal-body" class="px-5 py-4 md:px-6 md:py-6 overflow-y-auto flex-1 space-y-5 overscroll-contain">
-        <div id="cart-wheel-prize"></div>
+        <div id="cart-gift-prize"></div>
         <snack-status-pill context="cart" class="block empty:hidden"></snack-status-pill>
         <div id="cart-items-container" class="space-y-4"></div>
         <div id="cart-progress-bar" class="empty:hidden"></div>

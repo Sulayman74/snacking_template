@@ -164,12 +164,12 @@ document.addEventListener("click", async (event) => {
       window.closeClientCard();
       break;
 
-    case "open-loyalty-wheel":
-      window.openLoyaltyWheel?.();
+    case "open-loyalty-gift":
+      window.openLoyaltyGift?.();
       break;
 
-    case "close-loyalty-wheel":
-      window.closeLoyaltyWheel?.();
+    case "close-loyalty-gift":
+      window.closeLoyaltyGift?.();
       break;
 
     case "open-admin-scanner":

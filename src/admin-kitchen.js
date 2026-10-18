@@ -195,12 +195,12 @@ export function createTicketElement(id, commande) {
        </div>`
     : "";
 
-  // 🎡 Lot de roue OFFERT sur cette commande (fidélité) : le staff doit l'ajouter gratuitement.
+  // 🎁 Cadeau fidélité OFFERT sur cette commande : le staff doit l'ajouter gratuitement.
   const wheelPrizeHtml = commande.wheelPrize?.nom
-    ? `<div class="mb-3 flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+    ? `<div class="mb-3 flex items-center gap-2 bg-status-wait/10 border border-status-wait/30 rounded-xl p-3">
          <span class="text-xl">🎁</span>
          <div class="text-sm min-w-0">
-           <p class="font-black text-amber-700 dark:text-amber-400 uppercase text-xs tracking-wide">Lot fidélité — OFFERT</p>
+           <p class="font-black text-status-wait uppercase text-xs tracking-wide">Cadeau fidélité — À OFFRIR</p>
            <p class="text-text font-bold">${escapeHTML(commande.wheelPrize.nom)}</p>
          </div>
        </div>`

@@ -169,7 +169,25 @@ export default {
     referralButton: "GIVE A FREE FRIES TO A FRIEND 🍟",
     installForNotifications: "On iPhone: install the app (Share → “Add to Home Screen”) to get notifications",
     notificationsBlocked: "Notifications blocked in your browser",
-    receivePromos: "Receive offers & promotions"
+    receivePromos: "Receive offers & promotions",
+    giftTitle: "Your loyalty gift",
+    openGift: "Open my gift",
+    giftPreparing: "Preparing your gift…",
+    giftForYou: "For you",
+    giftNextOrder: "Free with your next order",
+    giftPendingTitle: "Your gift",
+    giftError: "The gift could not be opened. Please try again.",
+    giftReady: "🎁 Your gift is ready! Open it below",
+    giftReadyMany: "🎁 {n} gifts ready! Open them below",
+    remainingOrder: "1 more order until your gift",
+    remainingOrders: "{n} more orders until your gift",
+    progressDefault: "10 more orders until your gift",
+    homeProgress: "{progress}/{max} · {n} more order(s) until your surprise gift",
+    homeGiftReady: "🎁 Your surprise gift is waiting in your card!",
+    cartGiftTitle: "Your loyalty gift",
+    cartGiftFree: "free with this order",
+    trackingProgress: "🎁 Only {n} more order(s) until your surprise gift",
+    trackingGiftReady: "🎁 Your surprise gift is waiting in your loyalty card"
   },
   ingredients: {
     sauces: {

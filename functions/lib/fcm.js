@@ -19,8 +19,8 @@ async function sendRewardPush(userId, snackId) {
     const targets = await getUserPushTargets(userId, snackId, "client");
     await sendToTargets(targets, {
       notification: {
-        title: "🎁 Menu offert !",
-        body: "Bravo ! Tu as atteint le palier fidélité. Ton prochain menu est offert 🍟",
+        title: "🎁 Ton cadeau fidélité est prêt !",
+        body: "10 commandes, merci ! Ouvre ton cadeau surprise dans ta carte fidélité.",
       },
       data: { type: "REWARD_UNLOCKED", snackId: String(snackId) },
     });
