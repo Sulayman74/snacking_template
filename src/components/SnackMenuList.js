@@ -3,6 +3,7 @@ import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
 import { StoreController } from '../store/StoreController.js';
 import { t } from '../i18n/index.js';
+import { observeReveal } from '../core/reveal.js';
 import './SnackMenuItem.js';
 import './SnackStatusPill.js';
 
@@ -62,6 +63,8 @@ export class SnackMenuList extends SnackElement {
     if (window.lucide) {
       window.lucide.createIcons({ root: this.shadowRoot });
     }
+    // Nouvelles sections (menu arrivé, recherche) : révélation au défilement, idempotent.
+    observeReveal(this.shadowRoot);
   }
 
   getCategoryName(id) {
@@ -217,7 +220,7 @@ export class SnackMenuList extends SnackElement {
           if (catProduits.length === 0) return '';
 
           return html`
-            <section class="menu-section mb-10 pt-4 scroll-mt-32" id="cat-${catId}" data-cat-id="${catId}">
+            <section class="menu-section reveal mb-10 pt-4 scroll-mt-32" id="cat-${catId}" data-cat-id="${catId}">
               <div class="flex items-center gap-3 mb-6">
                 <h2 class="category-title text-2xl font-black uppercase tracking-tight">${this.getCategoryName(catId)}</h2>
                 <div class="category-divider flex-1 h-px"></div>

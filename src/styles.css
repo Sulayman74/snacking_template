@@ -459,7 +459,36 @@ body.is-offline::after {
    Neutralise les animations infinies (.liquid-blob float, jumping-icon) et les transitions
    pour les utilisateurs sensibles au mouvement, sans casser le rendu final (les états
    `forwards` restent appliqués car l'anim joue en ~0ms). */
+/* ✨ Révélation au défilement (src/core/reveal.js). Masqué SEULEMENT si html.js-reveal (JS
+   actif) ou dans un composant Lit (:host, rendu par JS de toute façon) ; transition sur
+   transform et opacity seulement (composition GPU, zéro layout, zéro CLS). */
+.js-reveal .reveal:not(.is-visible),
+:host .reveal:not(.is-visible) {
+  opacity: 0;
+  transform: translateY(14px);
+}
+.reveal {
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+/* Cascade légère entre enfants d'un même groupe (plafonnée : jamais plus de 280 ms). */
+.reveal-stagger > .reveal:nth-child(2) { transition-delay: 70ms; }
+.reveal-stagger > .reveal:nth-child(3) { transition-delay: 140ms; }
+.reveal-stagger > .reveal:nth-child(4) { transition-delay: 210ms; }
+.reveal-stagger > .reveal:nth-child(n + 5) { transition-delay: 280ms; }
+
 @media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .js-reveal .reveal:not(.is-visible),
+  :host .reveal:not(.is-visible) {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
