@@ -671,6 +671,43 @@
                 </div>
 
                 <div class="bg-surface p-6 rounded-3xl shadow-sm border border-line">
+                    <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
+                        <i data-lucide="gift" class="text-pink-500"></i> Cadeau fidélité
+                    </h3>
+                    <p class="text-sm text-text-muted mb-5">1 point par commande payée. À 10 points, le client ouvre un cadeau surprise choisi parmi vos produits cochés ci-dessous, offert sur sa commande suivante.</p>
+                    <form id="config-loyalty-form" class="space-y-5">
+                        <div class="flex items-center justify-between bg-surface-2 p-4 rounded-2xl border border-line">
+                            <span class="font-bold text-text"><i data-lucide="star" class="mr-1"></i> Programme fidélité</span>
+                            <span id="config-loyalty-state" class="text-sm font-bold text-text-muted">…</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-text mb-2">Nom du programme</label>
+                                <input type="text" maxlength="40" id="config-loyalty-name" placeholder="Club Fidélité" class="w-full px-4 py-3 rounded-xl bg-surface-2 text-text border border-line focus:border-pink-400 outline-none transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-text mb-2">Panier minimum pour gagner un point (€)</label>
+                                <input type="number" step="0.5" min="0" id="config-loyalty-minorder" placeholder="0 = aucun" class="w-full px-4 py-3 rounded-xl bg-surface-2 text-text border border-line focus:border-pink-400 outline-none transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-text mb-2">Délai minimum entre deux points (min)</label>
+                                <input type="number" step="1" min="0" max="1440" id="config-loyalty-cooldown" placeholder="10" class="w-full px-4 py-3 rounded-xl bg-surface-2 text-text border border-line focus:border-pink-400 outline-none transition">
+                            </div>
+                        </div>
+                        <div class="bg-surface-2 p-4 rounded-2xl border border-line">
+                            <p class="text-sm font-bold text-text mb-1">Produits offerts en cadeau surprise <span id="config-gift-count" class="text-text-muted font-medium"></span></p>
+                            <p class="text-xs text-text-muted mb-3">Cochez des produits de valeur comparable : le cadeau est tiré au sort parmi eux. Sans produit coché, le client ne peut pas ouvrir son cadeau.</p>
+                            <div id="config-gift-products" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto"></div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 transition flex items-center gap-2">
+                                <i data-lucide="save"></i> Enregistrer la fidélité
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-surface p-6 rounded-3xl shadow-sm border border-line">
                     <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
                         <i data-lucide="contact" class="text-purple-500"></i> Coordonnées & Réseaux
                     </h3>
@@ -1086,7 +1123,7 @@
             <label
               class="font-bold text-amber-400 text-sm cursor-pointer"
               for="edit-eligible-wheel"
-              >🎡 Lot possible sur la roue de la fortune</label
+              >🎁 Peut être offert en cadeau fidélité (surprise à 10 commandes)</label
             >
           </div>
           <div class="mb-4 bg-green-500/10 p-4 rounded-xl border border-green-500/20">

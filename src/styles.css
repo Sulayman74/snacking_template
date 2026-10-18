@@ -242,6 +242,28 @@ html.dark body {
   to { transform: translateX(-50%); }
 }
 
+/* 🎁 Boîte du cadeau surprise (src/loyalty-gift.js) : secousse pendant le choix serveur,
+   puis « pop » à l'ouverture. transform + opacity seulement ; neutralisé en reduced-motion
+   par la règle globale (la boîte s'ouvre instantanément). */
+.gift-box.is-shaking {
+  animation: gift-shake 0.9s ease-in-out infinite;
+}
+.gift-box.is-open {
+  animation: gift-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes gift-shake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-8deg) scale(1.04); }
+  40% { transform: rotate(8deg) scale(1.06); }
+  60% { transform: rotate(-6deg) scale(1.04); }
+  80% { transform: rotate(6deg) scale(1.02); }
+}
+@keyframes gift-pop {
+  0% { transform: scale(1); opacity: 1; }
+  55% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.6); opacity: 0; }
+}
+
 /* 🎁 Halo de la carte fidélité : dégradé radial statique teinté par l'accent, à la place
    d'un disque flouté (filter: blur = coût GPU). Aucune couleur en dur. */
 .loyalty-halo {

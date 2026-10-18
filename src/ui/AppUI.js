@@ -36,6 +36,8 @@ class AppUI {
         // --- ÉCOUTEURS DU STORE (Flux réactif) ---
         store.addEventListener("config-updated", () => this.handleConfigUpdate());
         store.addEventListener("auth-updated", () => this.updateUI());
+        // 🎁 Points ou cadeau mis à jour : le bloc fidélité de l'accueil suit.
+        window.addEventListener("loyalty:progress", () => this.updateUI());
         // Le bandeau du pied de page porte des libellés traduits : re-rendu au changement de langue.
         window.addEventListener("snack:locale:changed", () => this.renderFooterMarquee());
         // L'heure avance : badge « Ouvert / Fermé » et bandeau pause à jour.
@@ -269,7 +271,13 @@ class AppUI {
                 btn.innerHTML = '<i data-lucide="camera" class="mr-2"></i> Scanner Client';
             } else {
                 if (title) title.innerText = cfg.loyalty?.programName || "Club Fidélité";
-                if (desc) desc.innerText = "Gagnez des points à chaque commande !";
+                // 🎁 Rappel du cadeau : progression partagée (loyalty-gift.js → loyalty:progress).
+                const lp = window.loyaltyProgress;
+                if (desc) {
+                    desc.innerText = !lp ? t("loyalty.clubDesc")
+                        : lp.ready > 0 || lp.pending ? t("loyalty.homeGiftReady")
+                        : t("loyalty.homeProgress", { progress: lp.progress, max: lp.max, n: lp.remaining });
+                }
                 btn.setAttribute("data-action", "open-client-card");
                 btn.innerHTML = '<i data-lucide="qr-code" class="mr-2"></i> Ma Carte';
             }

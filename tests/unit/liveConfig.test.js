@@ -29,6 +29,18 @@ describe("buildSnackConfig", () => {
   });
 });
 
+describe("buildSnackConfig — réglages fidélité (admin → Cadeau fidélité)", () => {
+  it("expose programName, minOrderCents et creditCooldownMin avec des défauts sûrs", () => {
+    const cfg = buildSnackConfig("s1", { nom: "A", loyaltyProgramName: "Club Belly", loyalty: { minOrderCents: 1250.6, creditCooldownMin: 30 } });
+    expect(cfg.loyalty.programName).toBe("Club Belly");
+    expect(cfg.loyalty.minOrderCents).toBe(1251);
+    expect(cfg.loyalty.creditCooldownMin).toBe(30);
+    const def = buildSnackConfig("s1", { nom: "A" }).loyalty;
+    expect(def).toMatchObject({ programName: "Club Fidélité", minOrderCents: 0, creditCooldownMin: 10 });
+    expect(buildSnackConfig("s1", { nom: "A", loyalty: { minOrderCents: -5, creditCooldownMin: "x" } }).loyalty).toMatchObject({ minOrderCents: 0, creditCooldownMin: 10 });
+  });
+});
+
 describe("loadSnackConfig — écoute en direct", () => {
   let updates;
   beforeEach(() => {

@@ -3,6 +3,8 @@
 // ============================================================================
 // Dépendances : window.showToast, window.triggerVibration, window.snackConfig
 //               window.messaging
+import { progressSummary } from "./core/loyaltyProgress.js";
+import { t } from "./i18n/index.js";
 import {
   auth,
   db,
@@ -148,10 +150,10 @@ function openClientCard() {
       const rawPoints = (data.pointsBySnack || {})[currentSnackId] || 0;
       const rawAvailable = (data.rewardsAvailable || {})[currentSnackId] || 0;
       animerCarteFidelite(rawPoints, rawAvailable);
-      // 🎡 CTA roue de la fortune : récompenses jouables (banque + paliers legacy) +
-      // lot déjà gagné en attente. Rendu par le module autonome loyalty-wheel.js.
-      const effectiveRewards = rawAvailable + Math.floor(rawPoints / 10);
-      window.renderWheelCta?.(effectiveRewards, (data.pendingWheelReward || {})[currentSnackId] || null);
+      // 🎁 Cadeau surprise : cadeaux prêts à ouvrir (banque + paliers legacy) + cadeau
+      // déjà ouvert en attente. Rendu par le module autonome loyalty-gift.js.
+      const { ready } = progressSummary(rawPoints, rawAvailable);
+      window.renderGiftCta?.(ready, (data.pendingWheelReward || {})[currentSnackId] || null);
     }
   });
 }
@@ -166,10 +168,7 @@ function openClientCard() {
  * @returns {void}
  */
 function animerCarteFidelite(rawPoints, rawAvailable = 0) {
-  const maxPoints = 10;
-  const progress = rawPoints % maxPoints;                          // 0..9
-  const available = rawAvailable + Math.floor(rawPoints / maxPoints); // banque + legacy
-  const ratio = Math.min((progress / maxPoints) * 100, 100);
+  const { progress, remaining, ready: available, ratio } = progressSummary(rawPoints, rawAvailable);
 
   const pointsText = document.getElementById("card-points");
   const progressBar = document.getElementById("card-progress-bar");
@@ -180,18 +179,16 @@ function animerCarteFidelite(rawPoints, rawAvailable = 0) {
   if (progressBar) progressBar.style.width = `${ratio}%`;
 
   if (available > 0) {
-    const suffix = available > 1 ? ` (x${available})` : "";
     if (progressLabel) {
-      progressLabel.innerText = `🎉 MENU OFFERT${suffix} ! PRÉSENTEZ CE CODE`;
+      progressLabel.innerText = available > 1 ? t("loyalty.giftReadyMany", { n: available }) : t("loyalty.giftReady");
       progressLabel.classList.add("text-status-ok", "animate-pulse");
     }
     if (giftIcon) giftIcon.classList.add("animate-bounce", "text-status-ok");
     if (typeof window.triggerVibration === "function")
       window.triggerVibration("jackpot");
   } else {
-    const restants = maxPoints - progress;
     if (progressLabel) {
-      progressLabel.innerText = `Encore ${restants} point${restants > 1 ? "s" : ""} avant ta récompense`;
+      progressLabel.innerText = remaining === 1 ? t("loyalty.remainingOrder") : t("loyalty.remainingOrders", { n: remaining });
       progressLabel.classList.remove("text-status-ok", "animate-pulse");
     }
     if (giftIcon) giftIcon.classList.remove("animate-bounce", "text-status-ok");

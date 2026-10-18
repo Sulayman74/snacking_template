@@ -80,6 +80,15 @@ export class AdminStore extends EventTarget {
         // 1. Identité
         if (!cfg.identity?.name?.trim()) errors.push("Le nom du snack est obligatoire.");
         
+        // 1b. Fidélité (réglages du restaurateur)
+        if (cfg.loyalty) {
+            const minOrder = Number(cfg.loyalty.minOrderCents);
+            if (cfg.loyalty.minOrderCents !== undefined && (!Number.isFinite(minOrder) || minOrder < 0)) errors.push("Fidélité : le panier minimum doit être un montant positif ou 0.");
+            const cooldown = Number(cfg.loyalty.creditCooldownMin);
+            if (cfg.loyalty.creditCooldownMin !== undefined && (!Number.isFinite(cooldown) || cooldown < 0 || cooldown > 1440)) errors.push("Fidélité : le délai entre deux points doit être entre 0 et 1440 minutes.");
+            if (String(cfg.loyalty.programName || "").length > 40) errors.push("Fidélité : le nom du programme dépasse 40 caractères.");
+        }
+
         // 2. Horaires
         if (cfg.hours) {
             cfg.hours.forEach(h => {
@@ -183,6 +192,15 @@ export class AdminStore extends EventTarget {
                 dataToSave.restaurantLng = Number.isFinite(Number(cfg.geo?.lng)) ? Number(cfg.geo.lng) : null;
             }
 
+            // 🎁 Fidélité : nom du programme (champ plat) + réglages (chemins pointés → le
+            // map `loyalty` n'est pas écrasé, seules ces deux clés sont écrites).
+            if (cfg.loyalty) {
+                const num = (v, def) => (Number.isFinite(Number(v)) ? Number(v) : def);
+                dataToSave.loyaltyProgramName = String(cfg.loyalty.programName || "").trim() || "Club Fidélité";
+                dataToSave["loyalty.minOrderCents"] = Math.max(0, Math.round(num(cfg.loyalty.minOrderCents, 0)));
+                dataToSave["loyalty.creditCooldownMin"] = Math.max(0, Math.round(num(cfg.loyalty.creditCooldownMin, 10)));
+            }
+
             await updateDoc(snackRef, dataToSave);
             this.setSaving(false);
             return true;
@@ -193,6 +211,18 @@ export class AdminStore extends EventTarget {
     }
 
     // --- PRODUCT ACTIONS ---
+
+    /**
+     * 🎁 Coche ou décoche un produit comme cadeau fidélité possible (eligibleForWheel,
+     * nom de champ historique). Écriture ciblée, état local mis à jour, liste rafraîchie.
+     */
+    async setProductGiftEligible(db, fs, productId, eligible) {
+        const { doc, updateDoc } = fs;
+        await updateDoc(doc(db, "produits", productId), { eligibleForWheel: !!eligible });
+        const product = this.#state.products.find((p) => p.id === productId);
+        if (product) product.eligibleForWheel = !!eligible;
+        this.emit("admin-products-updated");
+    }
 
     validateProduct(p) {
         const errors = [];

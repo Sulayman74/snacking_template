@@ -169,7 +169,25 @@ export default {
     referralButton: "OFFRE UNE FRITE À UN AMI 🍟",
     installForNotifications: "Sur iPhone : installez l'app (Partager → « Sur l'écran d'accueil ») pour recevoir les notifications",
     notificationsBlocked: "Notifications bloquées dans votre navigateur",
-    receivePromos: "Recevoir les offres & promos"
+    receivePromos: "Recevoir les offres & promos",
+    giftTitle: "Ton cadeau fidélité",
+    openGift: "Ouvrir mon cadeau",
+    giftPreparing: "On prépare ton cadeau…",
+    giftForYou: "Pour toi",
+    giftNextOrder: "Offert sur ta prochaine commande",
+    giftPendingTitle: "Ton cadeau",
+    giftError: "Le cadeau n'a pas pu être ouvert. Réessaie.",
+    giftReady: "🎁 Ton cadeau est prêt ! Ouvre-le ci-dessous",
+    giftReadyMany: "🎁 {n} cadeaux prêts ! Ouvre-les ci-dessous",
+    remainingOrder: "Encore 1 commande avant ton cadeau",
+    remainingOrders: "Encore {n} commandes avant ton cadeau",
+    progressDefault: "Encore 10 commandes avant ton cadeau",
+    homeProgress: "{progress}/{max} · encore {n} commande(s) avant ton cadeau surprise",
+    homeGiftReady: "🎁 Ton cadeau surprise t'attend dans ta carte !",
+    cartGiftTitle: "Ton cadeau fidélité",
+    cartGiftFree: "offert sur cette commande",
+    trackingProgress: "🎁 Plus que {n} commande(s) avant ton cadeau surprise",
+    trackingGiftReady: "🎁 Ton cadeau surprise t'attend dans ta carte fidélité"
   },
   ingredients: {
     sauces: {
