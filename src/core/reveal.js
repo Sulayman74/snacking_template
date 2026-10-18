@@ -63,3 +63,20 @@ export function initReveal(doc = document) {
   }
   return observeReveal(doc);
 }
+
+/**
+ * Pose `className` sur `el` tant qu'il est à l'écran, la retire sinon (observateur
+ * continu, seuil 0). Sert à mettre en pause une animation décorative hors écran
+ * (bandeau du pied de page). Sans IntersectionObserver : classe posée d'emblée.
+ * @param {Element} el
+ * @param {string} [className="in-view"]
+ */
+export function watchInView(el, className = "in-view") {
+  if (!el) return null;
+  if (typeof IntersectionObserver !== "function") { el.classList.add(className); return null; }
+  const io = new IntersectionObserver((entries) => {
+    for (const entry of entries) entry.target.classList.toggle(className, entry.isIntersecting);
+  }, { threshold: 0 });
+  io.observe(el);
+  return io;
+}

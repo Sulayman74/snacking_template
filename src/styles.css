@@ -175,6 +175,73 @@ html.dark body {
 .brand-facebook  { color: #1877F2; }
 .group:hover .brand-tiktok-hover { color: #ff0050; }
 
+/* 🌌 Mesh STATIQUE du pied de page : deux nappes radiales teintées par la marque du
+   restaurant sur l'ardoise. Un seul paint, aucune animation (un mesh animé = GPU pour rien). */
+.footer-mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(60% 55% at 10% 0%, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 70%),
+    radial-gradient(55% 50% at 92% 100%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 70%);
+}
+
+/* 🎞️ Bandeau défilant du pied de page (décoratif, aria-hidden ; contenu : AppUI.renderFooterMarquee).
+   UNE animation transform (composée par le GPU) sur une piste de deux copies identiques :
+   translateX(-50 %) reboucle sans couture. En pause tant que le pied de page n'est pas à
+   l'écran (.in-view posé par watchInView), figé sous prefers-reduced-motion. Hauteur
+   réservée avant remplissage : zéro CLS. */
+.marquee {
+  --marquee-size: clamp(2.25rem, 8vw, 5rem);
+  min-height: calc(var(--marquee-size) * 1.15);
+  overflow: hidden;
+  white-space: nowrap;
+}
+@supports (mask-image: linear-gradient(#000, #000)) or (-webkit-mask-image: linear-gradient(#000, #000)) {
+  .marquee {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  }
+}
+.marquee-track {
+  display: inline-flex;
+  animation: marquee-slide var(--marquee-duration, 40s) linear infinite; /* durée posée par AppUI : vitesse constante */
+  animation-play-state: paused;
+}
+.marquee.in-view .marquee-track {
+  animation-play-state: running;
+}
+.marquee-copy {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: var(--marquee-size);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-on-dark) 34%, transparent); /* repli sans text-stroke */
+}
+@supports (-webkit-text-stroke: 1px #000) {
+  .marquee-copy {
+    color: transparent;
+    -webkit-text-stroke: 1px color-mix(in srgb, var(--color-on-dark) 42%, transparent);
+  }
+  .marquee-copy .marquee-accent,
+  .marquee-copy .marquee-dot {
+    -webkit-text-stroke: 0;
+  }
+}
+.marquee-copy .marquee-accent {
+  color: var(--color-accent);
+}
+.marquee-copy .marquee-dot {
+  color: color-mix(in srgb, var(--color-on-dark) 30%, transparent);
+  padding: 0 0.45em;
+}
+@keyframes marquee-slide {
+  to { transform: translateX(-50%); }
+}
+
 /* 🎁 Halo de la carte fidélité : dégradé radial statique teinté par l'accent, à la place
    d'un disque flouté (filter: blur = coût GPU). Aucune couleur en dur. */
 .loyalty-halo {
@@ -488,6 +555,9 @@ body.is-offline::after {
 :host(.reveal-stagger) .reveal:nth-child(3n + 3) { transition-delay: 200ms; }
 
 @media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
   .reveal,
   .js-reveal .reveal:not(.is-visible),
   :host .reveal:not(.is-visible) {

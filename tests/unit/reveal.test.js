@@ -82,3 +82,26 @@ describe("initReveal / observeReveal", () => {
     expect(root.querySelector(".reveal.is-visible")).not.toBeNull();
   });
 });
+
+describe("watchInView", () => {
+  it("pose puis retire la classe selon l'intersection, sans jamais désobserver", async () => {
+    const { watchInView } = await load();
+    const el = document.getElementById("a");
+    const io = watchInView(el, "in-view");
+    expect(instances).toHaveLength(1);
+    expect(instances[0].options).toEqual({ threshold: 0 });
+    instances[0].cb([{ target: el, isIntersecting: true }], instances[0]);
+    expect(el.classList.contains("in-view")).toBe(true);
+    instances[0].cb([{ target: el, isIntersecting: false }], instances[0]);
+    expect(el.classList.contains("in-view")).toBe(false);
+    expect(instances[0].observed.has(el)).toBe(true);
+    expect(io).toBe(instances[0]);
+  });
+  it("sans IntersectionObserver : classe posée d'emblée ; élément absent : null", async () => {
+    const { watchInView } = await load({ io: false });
+    const el = document.getElementById("a");
+    expect(watchInView(el)).toBeNull();
+    expect(el.classList.contains("in-view")).toBe(true);
+    expect(watchInView(null)).toBeNull();
+  });
+});

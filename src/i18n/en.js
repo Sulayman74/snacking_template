@@ -12,6 +12,11 @@ export default {
     theme: "Theme",
     call: "Call"
   },
+  footer: {
+    marqueeCollect: "Click & Collect",
+    marqueeDelivery: "Delivery",
+    marqueeLoyalty: "Loyalty club",
+  },
   home: {
     stars: "Our Stars",
     starsDesc: "Current favorites, approved by the team.",
