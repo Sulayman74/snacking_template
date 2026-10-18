@@ -36,10 +36,12 @@ export function renderGiftCta(rewardsAvailable, pending) {
 
   if (pending?.nom) {
     host.innerHTML = `
-      <div class="mt-4 w-full bg-on-dark/15 rounded-2xl p-4 border border-on-dark/25 text-center">
-        <p class="text-xs uppercase tracking-widest opacity-80 mb-1">🎁 ${esc(t("loyalty.giftPendingTitle"))}</p>
-        <p class="font-black text-lg">${esc(pending.nom)}</p>
-        <p class="text-[11px] opacity-80 mt-1">🛍️ ${esc(t("loyalty.giftNextOrder"))}</p>
+      <!-- Couleurs explicites : la feuille de la carte est sombre dans les DEUX schémas,
+           le texte hérité (text-text) y serait illisible en mode clair. -->
+      <div class="mt-4 w-full bg-on-dark/10 rounded-2xl p-4 border border-gold/40 text-center">
+        <p class="text-xs uppercase tracking-widest text-gold font-bold mb-1">🎁 ${esc(t("loyalty.giftPendingTitle"))}</p>
+        <p class="font-black text-lg text-on-dark">${esc(pending.nom)}</p>
+        <p class="text-[11px] text-on-dark/80 mt-1">🛍️ ${esc(t("loyalty.giftNextOrder"))}</p>
       </div>`;
     return;
   }
