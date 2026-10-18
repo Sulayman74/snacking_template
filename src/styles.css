@@ -25,8 +25,8 @@
 @theme {
   --color-primary: var(--theme-primary, #dc2626); /* ruby par défaut — écrasé par applySaaSThemeToHTML */
   --color-accent: var(--theme-accent, #dc2626);
-  --color-primary-light: var(--theme-primary-light, #f5f7f4); /* NEUTRE par défaut : si le flash survient avant l'injection
-                                     vite/runtime, il est gris neutre, pas rose ruby */
+  --color-primary-light: var(--theme-primary-light, #f5f7f4); /* teinte claire de la marque : manifest et décor
+                                     (Phase 1 : le fond de page est un NEUTRE, --bg-base) */
   --color-on-primary: var(--theme-on-primary, #ffffff);
   /* 🖋️ Primary « encre » : le primary quand il sert de TEXTE / ICÔNE / BORDURE sur une
      surface NEUTRE (bg-surface, bg-surface-2, fond de page). En clair = le primary. En
@@ -43,24 +43,26 @@
      properties HÉRITENT à travers le shadow DOM alors que le `:root, :host` généré par
      Tailwind redéclarait les valeurs CLAIRES dans chaque composant Lit (cartes blanches en
      mode sombre). Tailwind génère bg-surface, text-text, text-text-muted, text-danger… */
+  /* Valeurs = src/theme-neutrals.js (source JS pour le build et les tests). */
   --color-surface: var(--theme-surface, #ffffff);          /* cartes / surfaces */
-  --color-surface-2: var(--theme-surface-2, #f1f3f5);      /* panneaux, inputs, sous-cartes */
-  --color-surface-3: var(--theme-surface-3, #e5e7eb);      /* fills marqués, grabbers, hover */
-  --color-line: var(--theme-line, #e5e7eb);                /* bordures */
-  --color-text: var(--theme-text, #1f2937);                /* texte principal */
-  --color-text-muted: var(--theme-text-muted, #6b7280);    /* texte secondaire */
-  --color-danger: var(--theme-danger, #dc2626);            /* erreurs / actions destructives */
+  --color-surface-2: var(--theme-surface-2, #f3f0eb);      /* panneaux, inputs, sous-cartes */
+  --color-surface-3: var(--theme-surface-3, #e8e3dc);      /* fills marqués, grabbers, hover */
+  --color-line: var(--theme-line, #dcd6cd);                /* bordures */
+  --color-text: var(--theme-text, #1c1917);                /* texte principal */
+  --color-text-muted: var(--theme-text-muted, #5c564f);    /* texte secondaire */
+  --color-danger: var(--theme-danger, #b91c1c);            /* erreurs / actions destructives */
   --color-danger-soft: var(--theme-danger-soft, #fca5a5);  /* danger sur fond sombre (pastilles) */
   --color-on-dark: #ffffff;                                /* texte sur surfaces « écran » */
-  --color-on-dark-muted: #d1d5db;                          /* texte secondaire sur écran (= gray-300) */
-  --color-on-dark-faint: #9ca3af;                          /* mentions, petits liens sur écran (= gray-400) */
+  --color-on-dark-muted: #d6d3d1;                          /* texte secondaire sur écran (chaud) */
+  --color-on-dark-faint: #a8a29e;                          /* mentions, petits liens sur écran (chaud) */
+  --color-footer: var(--theme-footer, #1f1b18);            /* pied de page ardoise, sombre dans les deux thèmes */
   --color-on-accent: var(--theme-on-accent, #ffffff);      /* texte sur fond accent, calculé par AppUI */
   /* 🖥️ Surfaces « écran » : SOMBRES dans les deux thèmes (pied de page, scanner, bandeaux PWA,
      voiles de modales, dos de la carte fidélité). Pas des neutres : elles ne basculent pas. */
-  --color-screen: #111827;
-  --color-screen-2: #1f2937;
-  --color-screen-3: #374151;
-  --color-screen-deep: #0a0a0a;
+  --color-screen: #1c1917;
+  --color-screen-2: #292524;
+  --color-screen-3: #44403c;
+  --color-screen-deep: #0c0a09;
   /* 🚦 Statuts de commande et d'état (valeurs plus claires en sombre, cf. .dark). */
   --color-status-ok: var(--theme-status-ok, #16a34a);
   --color-status-ok-strong: #15803d;
@@ -85,8 +87,8 @@
   --color-weather-mist: #9ca3af;
   --color-weather-mist-deep: #4b5563;
   /* 🧊 Ombres et rayons (Tailwind génère shadow-card, shadow-card-lg, rounded-card, rounded-pill). */
-  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.06), 0 8px 24px rgb(17 24 39 / 0.08);
-  --shadow-card-lg: 0 2px 4px rgb(17 24 39 / 0.08), 0 16px 40px rgb(17 24 39 / 0.14);
+  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.06), 0 8px 24px rgb(28 25 23 / 0.08);
+  --shadow-card-lg: 0 2px 4px rgb(28 25 23 / 0.08), 0 16px 40px rgb(28 25 23 / 0.14);
   --radius-card: 1.25rem;
   --radius-pill: 999px;
   /* 🔤 Polices pilotées au runtime (comme les couleurs). Tailwind v4 génère font-body /
@@ -112,10 +114,14 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* 🖼️ Fond de page CLAIR = base claire de la palette (Phase 1 de la refonte : neutre papier).
+/* 🖼️ Fond de page CLAIR = neutre papier (plus la teinte de la marque : sobriété, même
+   lisibilité sur toutes les palettes). Valeur miroir de theme-neutrals.js.
+   🖋️ Encre en CLAIR : luminosité OKLCH bornée à 0,52 max — un primaire lumineux (jaune
+   sunflower, vert forest) passait sous 4,5:1 en texte sur fond clair.
    Les illustrations SVG inline des états vides lisent --illu-* (jetons fermés, 3 couleurs). */
 :root {
-  --bg-base: var(--color-primary-light, #f5f7f4);
+  --bg-base: #faf8f5;
+  --theme-primary-ink: oklch(from var(--theme-primary, #dc2626) min(l, 0.52) c h);
   --illu-stroke: var(--color-text);
   --illu-main: var(--color-surface-3);
   --illu-highlight: var(--color-primary-ink);
@@ -130,19 +136,20 @@ body {
 :host(.dark),
 html.dark,
 .dark {
-  --theme-surface: #1a1d23;       /* cartes / surfaces */
-  --theme-surface-2: #23272f;     /* panneaux/inputs en sombre */
-  --theme-surface-3: #2d323b;     /* fills marqués / grabbers en sombre */
-  --theme-line: #2d323b;          /* bordures en sombre */
-  --theme-text: #e5e7eb;          /* texte principal */
-  --theme-text-muted: #9ca3af;    /* texte secondaire */
-  --theme-danger: #f87171;        /* rouge plus clair -> lisible sur fond sombre (= red-400) */
+  --theme-surface: #1c1917;       /* cartes / surfaces (ardoise chaude) */
+  --theme-surface-2: #262220;     /* panneaux/inputs en sombre */
+  --theme-surface-3: #332e2a;     /* fills marqués / grabbers en sombre */
+  --theme-line: #3d3732;          /* bordures en sombre */
+  --theme-text: #f3efe9;          /* texte principal */
+  --theme-text-muted: #b3aba2;    /* texte secondaire */
+  --theme-danger: #f87171;        /* rouge plus clair -> lisible sur fond sombre */
+  --theme-footer: #0d0b0a;        /* pied de page */
   --theme-danger-soft: #fca5a5;
   --theme-status-ok: #4ade80;
   --theme-status-info: #60a5fa;
   --theme-status-wait: #facc15;
   --theme-status-warn: #fb923c;
-  --bg-base: #0f1115;             /* base du mesh + fond de page en sombre */
+  --bg-base: #121010;             /* base du mesh + fond de page en sombre */
   /* 🖋️ Primary-encre lisible : même teinte et même chroma, luminosité OKLCH relevée à
      0,72 minimum (≥ 5,6:1 sur ces surfaces pour les 6 palettes ; un primary déjà clair,
      ex. sunflower, ne bouge pas). Syntaxe couleur relative : Safari 16.4+, Chrome 119+,

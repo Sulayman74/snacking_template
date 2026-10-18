@@ -11,6 +11,7 @@
     "typecheck:functions": "tsc -p functions/jsconfig.json",
     "icons:generate": "node scripts/generate-icons.mjs",
     "perf:build": "VITE_E2E_TESTING=true SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 vite build --outDir .perf/dist",
+    "theme:shots": "npm run perf:build && firebase emulators:exec --only auth,firestore,storage --project snacking-template \"node scripts/theme-shots.mjs\"",
     "perf:lighthouse": "npm run perf:build && firebase emulators:exec --only auth,firestore,functions,storage --project snacking-template \"node scripts/perf-lighthouse.mjs\"",
     "build:tacos": "SNACK_ID=Ym1YiO4Ue5Fb5UXlxr06 vite build",
     "build:pizza": "SNACK_ID=PsobiuoeUzNmHnwGtaRu vite build",

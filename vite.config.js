@@ -6,6 +6,7 @@ import { execSync } from 'child_process'
 import tailwindcss from '@tailwindcss/vite'
 import { resolveFont, fontFaceCss, fontPreloadLinks } from './src/theme-fonts.js'
 import { SAAS_THEMES } from './src/theme-palettes.js'
+import { NEUTRALS } from './src/theme-neutrals.js'
 import { manifestIcons, htmlIcons } from './scripts/lib/icons.mjs'
 
 const seoPath = resolve(__dirname, 'snacks-seo.json');
@@ -121,14 +122,14 @@ export default defineConfig(({ command, mode }) => {
           // a explicitement un fontKey (override admin).
           const fontVars = `--font-body:${font.body};--font-display:${font.display || font.body};`;
           // Injecté en premier dans <head> dès le 1er octet : tue le flash blanc ET le flash
-          // de mauvaise couleur. Le FOND DE PAGE est la base claire (lightHex) — visible en
+          // de mauvaise couleur. Le FOND DE PAGE est le neutre papier (theme-neutrals.js) — visible en
           // overscroll / avant peinture du contenu. Le SPLASH (#boot-splash) garde --color-primary
           // (couleur de marque pleine) via sa propre règle. --color-primary-light est posé ici
           // pour que body et composants thémés aient la bonne base avant le boot du JS.
           // --color-accent posé ici aussi -> le fond mesh (.app-bg) est complet dès le 1er paint
           // (sinon les nappes accent restent transparentes jusqu'au boot JS).
           const splashStyle = `<style>
-            :root,html,body{background:${lightHex} !important; color-scheme: light dark;}
+            :root,html,body{background:${NEUTRALS.light.bgBase} !important; color-scheme: light dark;}
             #boot-splash{position:fixed;inset:0;background:${themeColor};z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}.splash-curtain{position:absolute;left:0;right:0;height:50%;background:${themeColor};z-index:1}.splash-curtain-top{top:0}.splash-curtain-bottom{bottom:0}
             :root{--color-primary:${themeColor};--color-accent:${accentHex};--color-primary-light:${lightHex};--theme-primary:${themeColor};--theme-accent:${accentHex};--theme-primary-light:${lightHex};${fontVars}--logo-url:url("${iconUrl}")}
           </style>`;

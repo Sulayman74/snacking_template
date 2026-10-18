@@ -3,8 +3,8 @@
  * 🎛️ Garde-fou theming — refonte Phase 0 : ZÉRO couleur brute dans la surface client.
  *
  * Balaye index.html et tout src/ (hors back-office admin / livreur / superadmin, service
- * worker, et les trois modules qui DÉFINISSENT les couleurs : theme-palettes.js,
- * theme-fonts.js, icons.js). Toute classe Tailwind de couleur brute (text-gray-300,
+ * worker, et les modules qui DÉFINISSENT les couleurs : theme-palettes.js,
+ * theme-neutrals.js, theme-fonts.js, icons.js). Toute classe Tailwind de couleur brute (text-gray-300,
  * bg-white, border-red-500…), tout hex, tout `style=""` porteur de couleur, tout
  * `text-primary` brut (lire text-primary-ink) et tout `backdrop-blur` (un seul, en CSS,
  * pour la barre basse) font échouer `npm run lint:theming`.
@@ -19,7 +19,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname;
-const EXCLUDE = /(^|\/)(admin|livreur|superadmin|scanner|sw)[^/]*\.js$|\/sw\/|\/ui\/(Admin|Livreur)|theme-palettes\.js$|theme-fonts\.js$|icons\.js$/;
+const EXCLUDE = /(^|\/)(admin|livreur|superadmin|scanner|sw)[^/]*\.js$|\/sw\/|\/ui\/(Admin|Livreur)|theme-palettes\.js$|theme-neutrals\.js$|theme-fonts\.js$|icons\.js$/;
 
 function walk(dir) {
   const out = [];
