@@ -210,12 +210,15 @@
           <h2 class="md:text-4xl text-2xl font-black text-text mb-6 tracking-tight reveal">Donnez-nous votre avis</h2>
           <div class="reveal reveal-after bg-surface-2 rounded-3xl p-8 max-w-lg mx-auto border border-accent shadow-sm">
             <h3 class="text-xl text-text font-bold mb-4">Et vous, c'était comment ?</h3>
-            <div class="flex justify-center items-center gap-3 text-4xl mb-4 cursor-pointer" id="interactive-stars">
-              <i data-lucide="star" data-value="1" class="text-text-muted hover:text-rating transition"></i>
-              <i data-lucide="star" data-value="2" class="text-text-muted hover:text-rating transition"></i>
-              <i data-lucide="star" data-value="3" class="text-text-muted hover:text-rating transition"></i>
-              <i data-lucide="star" data-value="4" class="text-text-muted hover:text-rating transition"></i>
-              <i data-lucide="star" data-value="5" class="text-text-muted hover:text-rating transition"></i>
+            <!-- Boutons (pas les <svg> eux-mêmes) : les icônes lucide ont pointer-events:none
+                 (styles.css) pour que le clic remonte toujours au contrôle ; un bouton par étoile
+                 rend aussi la notation accessible au clavier. -->
+            <div class="flex justify-center items-center gap-3 text-4xl mb-4" id="interactive-stars" role="group" aria-label="Votre note">
+              <button type="button" data-value="1" aria-label="Noter 1 sur 5" class="text-text-muted hover:text-rating transition cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-primary-ink"><i data-lucide="star"></i></button>
+              <button type="button" data-value="2" aria-label="Noter 2 sur 5" class="text-text-muted hover:text-rating transition cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-primary-ink"><i data-lucide="star"></i></button>
+              <button type="button" data-value="3" aria-label="Noter 3 sur 5" class="text-text-muted hover:text-rating transition cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-primary-ink"><i data-lucide="star"></i></button>
+              <button type="button" data-value="4" aria-label="Noter 4 sur 5" class="text-text-muted hover:text-rating transition cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-primary-ink"><i data-lucide="star"></i></button>
+              <button type="button" data-value="5" aria-label="Noter 5 sur 5" class="text-text-muted hover:text-rating transition cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-primary-ink"><i data-lucide="star"></i></button>
             </div>
             <p id="rating-feedback" class="text-text-muted font-medium min-h-[1.5rem]"></p>
           </div>

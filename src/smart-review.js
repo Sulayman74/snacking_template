@@ -18,14 +18,14 @@ const PROMPT_AT_VISIT = 3;
 const PROMPT_DELAY_MS = 5000;
 const PULSE_DURATION_MS = 2500;
 
-function paintStars(stars, val) {
+/** Peint les boutons-étoiles : couleur héritée par le <svg> lucide (currentColor). */
+export function paintStars(stars, val) {
   stars.forEach((s, i) => {
     const filled = i < val;
-    s.classList.toggle("far", !filled);
-    s.classList.toggle("text-line", !filled);
-    s.classList.toggle("fas", filled);
+    s.classList.toggle("text-text-muted", !filled);
     s.classList.toggle("text-rating", filled);
     s.classList.toggle("scale-110", filled);
+    s.setAttribute("aria-pressed", filled ? "true" : "false");
   });
 }
 
@@ -82,8 +82,9 @@ function maybePromptAfterVisits(reviewsSection) {
   }, PROMPT_DELAY_MS);
 }
 
-function setupReviews() {
-  const stars = document.querySelectorAll("#interactive-stars i");
+export function setupReviews() {
+  // Un <button data-value> par étoile (l'icône lucide à l'intérieur ne reçoit pas les clics).
+  const stars = document.querySelectorAll("#interactive-stars button[data-value]");
   const feedbackText = document.getElementById("rating-feedback");
   const sourceAvisInput = document.getElementById("source-avis");
   const contactSection = document.getElementById("contact");
@@ -101,7 +102,8 @@ function setupReviews() {
 
   stars.forEach((star) => {
     star.addEventListener("click", (e) => {
-      const val = parseInt(e.target.getAttribute("data-value"), 10);
+      // currentTarget : le clic peut partir du <svg>/<path> interne, jamais porteur de data-value.
+      const val = parseInt(e.currentTarget.getAttribute("data-value"), 10);
       window.triggerVibration?.("light");
       paintStars(stars, val);
       // L'utilisateur a interagi → plus jamais de prompt auto
