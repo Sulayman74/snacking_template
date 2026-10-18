@@ -149,13 +149,13 @@
 
       <section id="bestsellers" class="py-16 bg-surface-2">
         <div class="container mx-auto px-4">
-          <div class="text-center mb-10">
+          <div class="text-center mb-10 reveal">
             <h2 class="text-4xl text-text uppercase font-bold mb-3 tracking-tight" data-i18n="home.stars">Nos Stars</h2>
             <p class="text-text-muted text-lg" data-i18n="home.starsDesc">Les favoris du moment, validés par la team.</p>
           </div>
-          <snack-bestsellers id="bestsellers-container" role="list" class="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-auto md:px-0">
+          <snack-bestsellers id="bestsellers-container" role="list" class="reveal-stagger flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-auto md:px-0">
           </snack-bestsellers>
-          <div class="text-center">
+          <div class="text-center reveal reveal-after">
             <button data-action="switch-menu" class="bg-screen-2 text-on-dark px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-screen-deep transition-all duration-300">
               <span data-i18n="home.viewMenu">Voir toute la carte</span> <i data-lucide="arrow-right" class="ml-2 text-accent"></i>
             </button>
@@ -186,8 +186,8 @@
 
       <section id="loyalty" class="py-5 hidden bg-surface">
         <div class="container mx-auto px-4">
-          <h2 class="text-4xl text-center font-black text-text mb-4 tracking-tight" data-i18n="loyalty.title">Bons plans</h2>
-          <div id="loyalty-card" class="max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-text border border-primary-ink shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]">
+          <h2 class="text-4xl text-center font-black text-text mb-4 tracking-tight reveal" data-i18n="loyalty.title">Bons plans</h2>
+          <div id="loyalty-card" class="reveal reveal-after max-w-4xl mx-auto rounded-3xl p-8 md:p-14 text-text border border-primary-ink shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]">
             <div class="loyalty-halo absolute inset-0 pointer-events-none" aria-hidden="true"></div>
             <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
               <div class="text-center md:text-left flex-1">
@@ -207,8 +207,8 @@
 
       <section id="reviews" class="py-8 bg-surface">
         <div class="container mx-auto px-4 text-center">
-          <h2 class="md:text-4xl text-2xl font-black text-text mb-6 tracking-tight">Donnez-nous votre avis</h2>
-          <div class="bg-surface-2 rounded-3xl p-8 max-w-lg mx-auto border border-accent shadow-sm">
+          <h2 class="md:text-4xl text-2xl font-black text-text mb-6 tracking-tight reveal">Donnez-nous votre avis</h2>
+          <div class="reveal reveal-after bg-surface-2 rounded-3xl p-8 max-w-lg mx-auto border border-accent shadow-sm">
             <h3 class="text-xl text-text font-bold mb-4">Et vous, c'était comment ?</h3>
             <div class="flex justify-center items-center gap-3 text-4xl mb-4 cursor-pointer" id="interactive-stars">
               <i data-lucide="star" data-value="1" class="text-text-muted hover:text-rating transition"></i>
@@ -224,11 +224,11 @@
 
       <section id="contact" class="py-10 bg-surface-2">
         <div class="container mx-auto px-4 max-w-2xl">
-          <div class="text-center mb-8">
+          <div class="text-center mb-8 reveal">
             <h2 id="form-title" class="text-4xl font-black text-text mb-4 tracking-tight">Une question ?</h2>
             <p id="form-desc" class="text-text-muted text-lg">Nous sommes là pour vous répondre.</p>
           </div>
-          <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="space-y-4 bg-surface p-6 md:p-10 rounded-3xl shadow-xl">
+          <form id="contact-form" action="https://formspree.io/f/mykdrzlq" method="POST" class="reveal reveal-after space-y-4 bg-surface p-6 md:p-10 rounded-3xl shadow-xl">
             <input type="hidden" name="source_avis" id="source-avis" value="contact_direct" />
             <div>
               <label for="contact-field" class="sr-only" data-i18n="contact.fieldPlaceholder">Email ou Téléphone</label>
@@ -248,9 +248,9 @@
 
   <div class="relative z-10 container mx-auto px-6 max-w-6xl">
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-16 reveal-stagger">
       
-      <div class="bg-screen-2/40 p-6 md:p-8 rounded-2xl border border-screen-3/30 flex flex-col items-center md:items-start text-center md:text-left">
+      <div class="reveal bg-screen-2/40 p-6 md:p-8 rounded-2xl border border-screen-3/30 flex flex-col items-center md:items-start text-center md:text-left">
         <h3 class="text-sm md:text-xl font-bold mb-6 text-on-dark-muted uppercase tracking-widest flex items-center gap-3">
           <i data-lucide="map-pin" id="find-us" class="text-accent"></i> Nous trouver
         </h3>
@@ -261,7 +261,7 @@
           </div>
       </div>
 
-      <div class="bg-screen-2/40 p-6 md:p-8 rounded-2xl border border-screen-3/30">
+      <div class="reveal bg-screen-2/40 p-6 md:p-8 rounded-2xl border border-screen-3/30">
         <h3 class="text-sm md:text-xl font-bold mb-6 text-on-dark-muted uppercase tracking-widest flex items-center gap-3 justify-center md:justify-start">
           <i data-lucide="clock" id="o-clock" class="text-accent"></i> Horaires
         </h3>
@@ -271,7 +271,7 @@
 
     </div>
 
-    <div class="border-t border-screen-2 pt-10">
+    <div class="border-t border-screen-2 pt-10 reveal">
       <div class="flex flex-col md:flex-row justify-between items-center gap-10">
         
         <div class="flex flex-col items-center md:items-start space-y-6 text-center md:text-left order-2 md:order-1">

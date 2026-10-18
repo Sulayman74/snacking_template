@@ -28,6 +28,7 @@ import "./components/SnackBestsellers.js";
 import "./components/SnackCheckout.js";
 import { startStatusClock } from "./ui/StatusUI.js";
 import { initI18n } from "./i18n/index.js";
+import { initReveal } from "./core/reveal.js";
 
 // ============================================================================
 // 🌍 INITIALISATION DE L'INTERNATIONALISATION
@@ -46,3 +47,10 @@ startStatusClock();
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) window.resumeOrderTracking?.();
 });
+
+// ✨ Révélation au défilement des sections sous le pli (sobre, GPU, coupée en reduced-motion).
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => initReveal(), { once: true });
+} else {
+  initReveal();
+}

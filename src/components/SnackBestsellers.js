@@ -3,6 +3,7 @@ import { SnackElement } from './SnackElement.js';
 import { store } from '../core/Store.js';
 import { StoreController } from '../store/StoreController.js';
 import './SnackMenuItem.js';
+import { observeReveal } from '../core/reveal.js';
 
 const NON_STANDALONE = new Set(["supplements", "extras"]);
 
@@ -10,6 +11,11 @@ export class SnackBestsellers extends SnackElement {
   
   // Abonnement automatique aux changements du menu
   menuController = new StoreController(this, 'menu-updated');
+
+  updated() {
+    // Cartes vedettes révélées en cascade (l'hôte porte .reveal-stagger, cf. index.html).
+    observeReveal(this.shadowRoot);
+  }
 
   render() {
     const menu = store.state.menu;
@@ -24,7 +30,7 @@ export class SnackBestsellers extends SnackElement {
 
     return html`
       ${top3.map(p => html`
-        <snack-menu-item .product="${p}" class="block snap-center shrink-0 w-[85%] md:w-auto"></snack-menu-item>
+        <snack-menu-item .product="${p}" class="reveal block snap-center shrink-0 w-[85%] md:w-auto"></snack-menu-item>
       `)}
     `;
   }
