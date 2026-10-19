@@ -11,7 +11,7 @@ import { setupA2HS } from "./a2hs.js";
 import { auth } from "./core/firebase.js";
 import { t } from "./i18n/index.js";
 
-import { clearAppBadge } from "./core/appBadge.js";
+import { setupAppBadgeAutoClear } from "./core/appBadge.js";
 
 // ============================================================================
 // ⚙️ SERVICE WORKER — STRATÉGIE "PROMPT" (mise à jour non-intrusive)
@@ -21,14 +21,7 @@ import { clearAppBadge } from "./core/appBadge.js";
 setupSWUpdatePrompt({ context: "Client" });
 
 // 🔴 Remise à zéro automatique du badge dès l'ouverture de l'app ou retour au premier plan
-clearAppBadge();
-if (typeof document !== "undefined") {
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      clearAppBadge();
-    }
-  });
-}
+setupAppBadgeAutoClear();
 
 // ============================================================================
 // 🌐 DÉTECTION CONNEXION (ONLINE / OFFLINE)

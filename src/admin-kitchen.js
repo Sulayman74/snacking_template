@@ -502,6 +502,11 @@ function startKitchenRadar() {
   console.log("🟢 Radar Cuisine ACTIVÉ.");
 }
 
+export function syncKitchenBadge() {
+  setAppBadgeCount(countPendingKitchenOrders(kitchenOrdersMap.values()));
+}
+window.syncKitchenBadge = syncKitchenBadge;
+
 function stopKitchenRadar() {
   unwatchKitchenSnack();
   if (unsubscribeKitchenRadar) {

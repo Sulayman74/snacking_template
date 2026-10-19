@@ -14,8 +14,11 @@ export const PENDING_KITCHEN_STATUSES = Object.freeze(["en_attente_client", "nou
 export function setAppBadgeCount(count) {
   if (typeof navigator === "undefined" || !("setAppBadge" in navigator)) return;
   const n = Math.max(0, Math.floor(Number(count) || 0));
-  const p = n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge();
-  p?.catch?.(() => {}); // non autorisé (app non installée…) : sans conséquence
+  if (n > 0) {
+    navigator.setAppBadge(n)?.catch?.(() => {});
+  } else {
+    clearAppBadge();
+  }
 }
 
 /**
@@ -25,10 +28,32 @@ export function clearAppBadge() {
   if (typeof navigator !== "undefined" && "clearAppBadge" in navigator) {
     navigator.clearAppBadge()?.catch?.(() => {});
   }
-  if (typeof navigator !== "undefined" && navigator.serviceWorker?.controller) {
+  if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
     try {
-      navigator.serviceWorker.controller.postMessage({ type: "CLEAR_BADGE" });
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "CLEAR_BADGE" });
+      } else {
+        navigator.serviceWorker.ready
+          ?.then((reg) => reg.active?.postMessage({ type: "CLEAR_BADGE" }))
+          ?.catch?.(() => {});
+      }
     } catch {}
+  }
+}
+
+/**
+ * Configure la remise à zéro automatique du badge dès le chargement
+ * et à chaque retour au premier plan (visibilitychange).
+ * À inclure sur chaque surface (client, admin, livreur).
+ */
+export function setupAppBadgeAutoClear() {
+  clearAppBadge();
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        clearAppBadge();
+      }
+    });
   }
 }
 

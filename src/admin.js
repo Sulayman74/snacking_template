@@ -23,7 +23,11 @@ import "./ui/AdminUpsellUI.js";
 import { confirmAction } from "./utils/ModalManager.js";
 import { setupSWUpdatePrompt } from "./sw-update.js";
 import { setupA2HS } from "./a2hs.js";
+import { setupAppBadgeAutoClear } from "./core/appBadge.js";
 import { initAdminNotifs } from "./admin-notifs.js";
+
+// 🔴 Remise à zéro initiale du badge lors de l'accès à l'espace Admin.
+setupAppBadgeAutoClear();
 import {
   auth,
   db,
@@ -157,6 +161,9 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) return;
   if (isShiftStarted() && window.currentAdminSnackId && typeof window.startKitchenRadar === "function") {
     window.startKitchenRadar(); // idempotent
+    if (typeof window.syncKitchenBadge === "function") {
+      window.syncKitchenBadge();
+    }
   }
 });
 

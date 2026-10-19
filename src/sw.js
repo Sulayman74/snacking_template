@@ -230,7 +230,8 @@ async function handlePush(event) {
   if (focused) {
     focused.postMessage({ type: "PUSH_FOREGROUND", title: msg.title, body: msg.body, url: msg.url });
     if (!mustAlwaysShowNotification(self.navigator.userAgent)) {
-      if (msg.badgeCount === null) await syncBadgeWithNotifications(1);
+      // App déjà ouverte au premier plan : le toast in-app suffit, pas d'incrémentation
+      // du badge d'icône d'accueil pour une notification déjà vue à l'écran.
       return;
     }
   }
@@ -256,8 +257,15 @@ self.addEventListener("push", (event) => {
 
 async function handleNotificationClick(event) {
   const { url = `${self.location.origin}/`, campaignId } = event.notification.data || {};
-  // La notification cliquée est fermée (cf. listener) : on décrémente le badge (-1)
-  await syncBadgeWithNotifications(-1);
+  const target = new URL(url);
+  const surface = (path) => (path.startsWith("/admin") ? "admin" : path.startsWith("/livreur") ? "livreur" : path.startsWith("/superadmin") ? "superadmin" : "client");
+
+  // Pour le client / livreur, la notification cliquée est fermée : on décrémente le badge (-1).
+  // Pour l'admin (/admin), le badge reflète les commandes en attente en cuisine,
+  // géré directement par le radar Firestore → on ne décrémente pas à l'aveugle.
+  if (surface(target.pathname) !== "admin") {
+    await syncBadgeWithNotifications(-1);
+  }
 
   // 📊 Tracking best-effort du clic campagne (stats.clics côté serveur).
   if (campaignId) {
@@ -269,8 +277,6 @@ async function handleNotificationClick(event) {
 
   // Fenêtre déjà ouverte sur la même surface (client / admin / livreur) → on la
   // réutilise ; sinon on en ouvre une nouvelle.
-  const target = new URL(url);
-  const surface = (path) => (path.startsWith("/admin") ? "admin" : path.startsWith("/livreur") ? "livreur" : path.startsWith("/superadmin") ? "superadmin" : "client");
   const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
   const existing = windows.find((c) => {
     try {
@@ -293,7 +299,13 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 // Notification balayée sans être ouverte : elle n'est plus « non lue » → décrémentation du badge (-1)
+// Sauf pour l'admin où le badge représente les commandes en attente en cuisine.
 self.addEventListener("notificationclose", (event) => {
+  const { url = "" } = event.notification?.data || {};
+  try {
+    const u = new URL(url, self.location.origin);
+    if (u.pathname.startsWith("/admin")) return;
+  } catch {}
   event.waitUntil(syncBadgeWithNotifications(-1));
 });
 

@@ -55,6 +55,13 @@ describe("parsePushPayload — FCM", () => {
     expect(parsePushPayload({ notification: { title: "t" }, data: { badge: "abc" } }, O).badgeCount).toBeNull();
   });
 
+  it("icône de badge de notification (monochrome)", () => {
+    expect(parsePushPayload({ webpush: { notification: { badge: "/badge-icon.png" } } }, O).badgeIcon).toBe("/badge-icon.png");
+    expect(parsePushPayload({ notification: { badge: "/badge-icon-notif.png" } }, O).badgeIcon).toBe("/badge-icon-notif.png");
+    expect(parsePushPayload({ data: { badgeIcon: "/badge-icon-data.png" } }, O).badgeIcon).toBe("/badge-icon-data.png");
+    expect(parsePushPayload({}, O).badgeIcon).toBeUndefined();
+  });
+
   it("payload vide ou illisible → notification par défaut vers l'accueil", () => {
     expect(parsePushPayload(null, O)).toMatchObject({ title: "Nouvelle notification", body: "", url: `${O}/` });
   });

@@ -67,6 +67,15 @@ export function parsePushPayload(payload, origin) {
     ? Math.floor(badge)
     : null;
 
+  const rawBadgeIcon =
+    (p.webpush && typeof p.webpush.notification === "object" && typeof p.webpush.notification.badge === "string")
+      ? p.webpush.notification.badge
+      : typeof n.badge === "string" && n.badge
+      ? n.badge
+      : typeof data.badgeIcon === "string" && data.badgeIcon
+      ? data.badgeIcon
+      : undefined;
+
   return {
     title: String(n.title || DEFAULT_TITLE).slice(0, 200),
     body: String(n.body || "").slice(0, 1000),
@@ -74,6 +83,7 @@ export function parsePushPayload(payload, origin) {
     icon: typeof n.icon === "string" && n.icon ? n.icon : iconForUrl(url),
     image: typeof n.image === "string" && n.image ? n.image : undefined,
     badgeCount,
+    badgeIcon: rawBadgeIcon,
     campaignId: typeof data.campaignId === "string" ? data.campaignId : "",
     snackId: typeof data.snackId === "string" ? data.snackId : "",
     // Regroupement système : même tag → la nouvelle notification remplace l'ancienne

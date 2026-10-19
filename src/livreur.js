@@ -7,11 +7,15 @@
 
 import { setupSWUpdatePrompt } from "./sw-update.js";
 import { setupA2HS } from "./a2hs.js";
+import { setupAppBadgeAutoClear } from "./core/appBadge.js";
 import "./utils.js";
 import "./firebase-init.js";
 import "./theme-mode.js";
 import "./icons.js";
 import "./ui/LivreurUI.js";
+
+// 🔴 Remise à zéro automatique du badge dès l'ouverture de l'app ou retour au premier plan
+setupAppBadgeAutoClear();
 
 // SW + bandeau de mise à jour (pattern prompt mutualisé) : jamais d'auto-reload
 // pendant qu'un livreur valide une photo de preuve.
