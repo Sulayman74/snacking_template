@@ -280,16 +280,36 @@ html.dark body {
     border-color: var(--color-line);
   }
 
-  input[type="date"],
-  input[type="datetime-local"],
-  input[type="time"] {
+  input,
+  select,
+  textarea {
     max-width: 100%;
     box-sizing: border-box;
   }
 
+  /* 📱 Prévention du zoom forcé iOS Safari sur mobile (< 640px) */
+  @media (max-width: 639px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"] {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    min-height: 42px;
+  }
+
   input[type="date"]::-webkit-date-and-time-value,
-  input[type="datetime-local"]::-webkit-date-and-time-value {
+  input[type="datetime-local"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value {
     text-align: left;
+    min-height: 1.25em;
   }
 }
 

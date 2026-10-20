@@ -79,56 +79,238 @@ class AdminProductsUI {
         });
     }
 
+    /**
+     * Retourne le libellé formaté d'une catégorie avec son emoji canonique.
+     * @param {string} c - ID ou nom de la catégorie
+     * @returns {string}
+     */
+    getCategoryLabel(c) {
+        const meta = {
+            burgers: "🍔 Burgers",
+            tacos: "🌯 Tacos",
+            pizzas: "🍕 Pizzas",
+            drinks: "🥤 Boissons",
+            boissons: "🥤 Boissons",
+            sides: "🍟 Accompagnements",
+            accompagnements: "🍟 Accompagnements",
+            desserts: "🍰 Desserts",
+            supplements: "🧀 Suppléments / Extras",
+            extras: "🧀 Suppléments / Extras",
+            menus: "🍱 Menus",
+            salades: "🥗 Salades",
+            sandwiches: "🥪 Sandwiches",
+            paninis: "🥖 Paninis",
+            texmex: "🍗 Tex-Mex",
+            crepes: "🥞 Crêpes & Gaufres",
+            glaces: "🍦 Glaces"
+        };
+        if (meta[c]) return meta[c];
+        if (!c) return "";
+        return c.charAt(0).toUpperCase() + c.slice(1);
+    }
+
+    /**
+     * Met à jour les options du select de filtre de catégorie sans recréer le DOM inutilement.
+     */
+    updateFilterCategorySelect(allProducts, selectedCategory, categoryCounts) {
+        const categorySelect = document.getElementById("admin-product-category");
+        if (!categorySelect) return;
+
+        const defaultCategories = ["burgers", "tacos", "pizzas", "drinks", "sides", "desserts", "supplements"];
+        const existingCategories = allProducts.map(p => p.categorieId).filter(Boolean);
+        const categories = [...new Set([...existingCategories, ...defaultCategories])];
+
+        const selectKey = `${allProducts.length}:${categories.join(",")}:${Object.values(categoryCounts).join(",")}`;
+        if (categorySelect.dataset.renderedKey !== selectKey) {
+            categorySelect.innerHTML = `<option value="">Toutes les catégories (${allProducts.length})</option>` + 
+                categories.map(cat => {
+                    const count = categoryCounts[cat] || 0;
+                    const label = this.getCategoryLabel(cat);
+                    const suffix = count > 0 ? ` (${count})` : "";
+                    return `<option value="${escapeHTML(cat)}" ${selectedCategory === cat ? 'selected' : ''}>${escapeHTML(label + suffix)}</option>`;
+                }).join("");
+            categorySelect.dataset.renderedKey = selectKey;
+        }
+
+        if (categorySelect.value !== selectedCategory) {
+            categorySelect.value = selectedCategory;
+        }
+    }
+
+    /**
+     * Affiche les badges / pills de catégories scrollables horizontalement avec décomptes.
+     */
+    renderCategoryPills(categories, categoryCounts, selectedCategory, totalCount) {
+        const container = document.getElementById("admin-category-pills");
+        if (!container) return;
+
+        if (totalCount === 0 && categories.length === 0) {
+            container.innerHTML = "";
+            container.dataset.renderedKey = "";
+            return;
+        }
+
+        const categoriesKey = `${totalCount}:${categories.join(",")}:${Object.values(categoryCounts).join(",")}`;
+        const isAllActive = !selectedCategory;
+
+        if (container.dataset.renderedKey !== categoriesKey) {
+            let html = `
+                <button type="button"
+                        data-category=""
+                        onclick="if(window.setAdminProductCategory) window.setAdminProductCategory('')"
+                        role="tab"
+                        aria-selected="${isAllActive}"
+                        class="category-pill whitespace-nowrap px-3.5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center shrink-0 cursor-pointer ${isAllActive ? 'bg-primary text-on-primary shadow-sm' : 'bg-surface hover:bg-surface-2 text-text border border-line'}">
+                    <span>✨ Toutes</span>
+                    <span class="category-pill-count ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${isAllActive ? 'bg-white/20 text-on-primary' : 'bg-surface-3 text-text-muted'}">${totalCount}</span>
+                </button>
+            `;
+
+            categories.forEach(cat => {
+                const count = categoryCounts[cat] || 0;
+                const isActive = selectedCategory === cat;
+                const label = this.getCategoryLabel(cat);
+                html += `
+                    <button type="button"
+                            data-category="${escapeHTML(cat)}"
+                            onclick="if(window.setAdminProductCategory) window.setAdminProductCategory('${escapeHTML(cat)}')"
+                            role="tab"
+                            aria-selected="${isActive}"
+                            class="category-pill whitespace-nowrap px-3.5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm transition flex items-center shrink-0 cursor-pointer ${isActive ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface hover:bg-surface-2 text-text border border-line font-medium'}">
+                        <span>${escapeHTML(label)}</span>
+                        <span class="category-pill-count ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${isActive ? 'bg-white/20 text-on-primary' : 'bg-surface-3 text-text-muted'}">${count}</span>
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+            container.dataset.renderedKey = categoriesKey;
+        } else {
+            // Mise à jour fluide de l'état actif sans recréer le DOM pour préserver le défilement tactile
+            const pills = container.querySelectorAll(".category-pill");
+            pills.forEach(pill => {
+                const cat = pill.getAttribute("data-category") || "";
+                const isActive = (!selectedCategory && !cat) || (selectedCategory === cat);
+                pill.setAttribute("aria-selected", String(isActive));
+
+                if (isActive) {
+                    pill.classList.remove("bg-surface", "hover:bg-surface-2", "text-text", "border", "border-line", "font-medium");
+                    pill.classList.add("bg-primary", "text-on-primary", "font-bold", "shadow-sm");
+                } else {
+                    pill.classList.remove("bg-primary", "text-on-primary", "shadow-sm");
+                    pill.classList.add("bg-surface", "hover:bg-surface-2", "text-text", "border", "border-line", "font-medium");
+                }
+
+                const badge = pill.querySelector(".category-pill-count");
+                if (badge) {
+                    if (isActive) {
+                        badge.classList.remove("bg-surface-3", "text-text-muted");
+                        badge.classList.add("bg-white/20", "text-on-primary");
+                    } else {
+                        badge.classList.remove("bg-white/20", "text-on-primary");
+                        badge.classList.add("bg-surface-3", "text-text-muted");
+                    }
+                }
+            });
+        }
+    }
+
     render() {
         if (!this.grid) return;
-        let products = adminStore.state.products;
+        const allProducts = adminStore.state.products || [];
         
-        // --- 1. Remplir dynamiquement le select de catégories ---
-        const categorySelect = document.getElementById("admin-product-category");
-        if (categorySelect && products.length > 0) {
-            const currentCat = categorySelect.value;
-            const defaultCategories = ["burgers", "tacos", "pizzas", "drinks", "sides", "desserts", "supplements"];
-            const existingCategories = products.map(p => p.categorieId).filter(Boolean);
-            const categories = [...new Set([...existingCategories, ...defaultCategories])];
-            const catLabel = (c) => {
-                if (c === "supplements" || c === "extras") return "🧀 Suppléments / Extras";
-                if (c === "burgers") return "🍔 Burgers";
-                if (c === "tacos") return "🌯 Tacos";
-                if (c === "pizzas") return "🍕 Pizzas";
-                if (c === "drinks") return "🥤 Boissons";
-                if (c === "sides") return "🍟 Accompagnements";
-                if (c === "desserts") return "🍰 Desserts";
-                return c;
-            };
-            categorySelect.innerHTML = `<option value="">Toutes les catégories</option>` + 
-                categories.map(cat => `<option value="${escapeHTML(cat)}" ${currentCat === cat ? 'selected' : ''}>${escapeHTML(catLabel(cat))}</option>`).join("");
-            if (currentCat && categories.includes(currentCat)) {
-                categorySelect.value = currentCat;
+        // --- 1. Catégories et comptages ---
+        const categoryCounts = {};
+        allProducts.forEach(p => {
+            if (p.categorieId) {
+                categoryCounts[p.categorieId] = (categoryCounts[p.categorieId] || 0) + 1;
             }
+        });
+        const existingCategories = [...new Set(allProducts.map(p => p.categorieId).filter(Boolean))];
+
+        const categorySelect = document.getElementById("admin-product-category");
+        const selectedCategory = categorySelect ? categorySelect.value : "";
+        const searchInput = document.getElementById("admin-product-search");
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+        // Remplir le select de filtres
+        this.updateFilterCategorySelect(allProducts, selectedCategory, categoryCounts);
+
+        // Remplir les pills de catégories
+        const pillCategories = selectedCategory && !existingCategories.includes(selectedCategory)
+            ? [...existingCategories, selectedCategory]
+            : existingCategories;
+        this.renderCategoryPills(pillCategories, categoryCounts, selectedCategory, allProducts.length);
+
+        // Bouton effacer la recherche
+        const clearBtn = document.getElementById("admin-product-search-clear");
+        if (clearBtn) {
+            clearBtn.classList.toggle("hidden", !searchTerm);
         }
 
         // --- 2. Filtrer les produits ---
-        const searchInput = document.getElementById("admin-product-search");
-        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : "";
-        const selectedCategory = categorySelect ? categorySelect.value : "";
+        let products = allProducts;
 
         if (searchTerm) {
             products = products.filter(p => 
                 (p.nom && p.nom.toLowerCase().includes(searchTerm)) || 
-                (p.description && p.description.toLowerCase().includes(searchTerm))
+                (p.description && p.description.toLowerCase().includes(searchTerm)) ||
+                (p.categorieId && p.categorieId.toLowerCase().includes(searchTerm))
             );
         }
 
         if (selectedCategory) {
             products = products.filter(p => p.categorieId === selectedCategory);
         }
+
+        // --- 3. Barre de statut des filtres actifs ---
+        const filterStatus = document.getElementById("admin-products-filter-status");
+        const countText = document.getElementById("admin-products-count-text");
+        if (filterStatus && countText) {
+            const isFiltered = Boolean(searchTerm || selectedCategory);
+            if (isFiltered && allProducts.length > 0) {
+                filterStatus.classList.remove("hidden");
+                const catLabel = selectedCategory ? this.getCategoryLabel(selectedCategory) : "";
+                const details = [];
+                if (catLabel) details.push(`catégorie « ${catLabel} »`);
+                if (searchTerm) details.push(`recherche « ${searchTerm} »`);
+                countText.textContent = `${products.length} produit${products.length > 1 ? "s" : ""} trouvé${products.length > 1 ? "s" : ""} sur ${allProducts.length} (${details.join(", ")})`;
+            } else {
+                filterStatus.classList.add("hidden");
+            }
+        }
         
+        // --- 4. Affichage de la grille ou état vide ---
         if (products.length === 0) {
-            this.grid.innerHTML = `<p class="col-span-full text-center py-10 text-text-muted font-bold">Aucun produit trouvé.</p>`;
+            if (allProducts.length === 0) {
+                this.grid.innerHTML = `
+                    <div class="col-span-full py-16 text-center text-text-muted font-bold">
+                        <i data-lucide="utensils-crossed" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
+                        <p class="text-lg">Aucun produit dans votre carte.</p>
+                        <p class="text-sm font-normal mt-1">Cliquez sur « Nouveau » pour ajouter votre premier produit.</p>
+                    </div>`;
+            } else {
+                this.grid.innerHTML = `
+                    <div class="col-span-full py-12 px-4 text-center bg-surface rounded-3xl border border-line shadow-sm">
+                        <div class="w-12 h-12 mx-auto rounded-2xl bg-surface-2 flex items-center justify-center text-text-muted mb-3">
+                            <i data-lucide="search-x" class="w-6 h-6"></i>
+                        </div>
+                        <h4 class="text-text font-black text-lg mb-1">Aucun produit ne correspond à vos filtres</h4>
+                        <p class="text-text-muted text-sm mb-4 max-w-sm mx-auto">
+                            Essayez d'ajuster votre recherche ou de choisir une autre catégorie.
+                        </p>
+                        <button type="button" onclick="if(window.resetAdminProductFilters) window.resetAdminProductFilters()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-surface-2 hover:bg-surface-3 text-text rounded-xl font-bold border border-line text-sm transition active:scale-95 cursor-pointer shadow-sm">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            <span>Réinitialiser les filtres</span>
+                        </button>
+                    </div>`;
+            }
+            window.lucide?.createIcons?.();
             return;
         }
 
         this.grid.innerHTML = products.map(p => this.renderProductCard(p)).join("");
+        window.lucide?.createIcons?.();
     }
 
     renderProductCard(p) {
@@ -375,19 +557,8 @@ class AdminProductsUI {
         const existingCategories = adminStore.state.products.map(p => p.categorieId).filter(Boolean);
         const categories = [...new Set([...existingCategories, ...defaultCategories])];
 
-        const catLabel = (c) => {
-            if (c === "supplements" || c === "extras") return "🧀 Suppléments / Extras";
-            if (c === "burgers") return "🍔 Burgers";
-            if (c === "tacos") return "🌯 Tacos";
-            if (c === "pizzas") return "🍕 Pizzas";
-            if (c === "drinks") return "🥤 Boissons";
-            if (c === "sides") return "🍟 Accompagnements";
-            if (c === "desserts") return "🍰 Desserts";
-            return c;
-        };
-
         sel.innerHTML =
-            categories.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(catLabel(c))}</option>`).join("") +
+            categories.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(this.getCategoryLabel(c))}</option>`).join("") +
             `<option value="NEW">➕ Nouvelle catégorie…</option>`;
 
         if (selected && categories.includes(selected)) sel.value = selected;
@@ -470,3 +641,33 @@ window.closeAdminProductModal = () => {
     }
 };
 window.filterAdminProducts = () => adminProductsUI.render();
+
+window.setAdminProductCategory = (category) => {
+    const categorySelect = document.getElementById("admin-product-category");
+    if (categorySelect) {
+        categorySelect.value = category;
+    }
+    adminProductsUI.render();
+    const container = document.getElementById("admin-category-pills");
+    const activePill = container?.querySelector('button[aria-selected="true"]');
+    if (activePill && typeof activePill.scrollIntoView === "function") {
+        activePill.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+    }
+};
+
+window.clearAdminProductSearch = () => {
+    const searchInput = document.getElementById("admin-product-search");
+    if (searchInput) {
+        searchInput.value = "";
+        searchInput.focus();
+    }
+    adminProductsUI.render();
+};
+
+window.resetAdminProductFilters = () => {
+    const searchInput = document.getElementById("admin-product-search");
+    if (searchInput) searchInput.value = "";
+    const categorySelect = document.getElementById("admin-product-category");
+    if (categorySelect) categorySelect.value = "";
+    adminProductsUI.render();
+};

@@ -40,19 +40,20 @@ window.addTailleRow = (nom = "", prix = "") => {
   const container = document.getElementById("edit-tailles-list");
   if (!container) return;
   const row = document.createElement("div");
-  row.className = "flex gap-2 items-center taille-row animate-fade-in";
+  row.className = "flex gap-2 items-center taille-row animate-fade-in w-full min-w-0";
   row.innerHTML = `
     <input type="text" placeholder="Ex: M, L, 33cm…" value="${escapeHTML(String(nom))}"
-      class="edit-taille-nom flex-1 px-3 py-2 rounded-lg border border-line focus:border-blue-500 outline-none text-sm font-bold">
+      class="edit-taille-nom flex-1 min-w-0 px-3 py-2 rounded-lg border border-line bg-surface-2 text-text focus:border-blue-500 outline-none text-base sm:text-sm font-bold">
     <input type="number" step="0.10" min="0" placeholder="Prix" value="${prix !== "" ? escapeHTML(String(prix)) : ""}"
-      class="edit-taille-prix w-24 px-3 py-2 rounded-lg border border-line focus:border-blue-500 outline-none text-sm font-bold text-center">
+      class="edit-taille-prix w-20 sm:w-24 shrink-0 px-2 sm:px-3 py-2 rounded-lg border border-line bg-surface-2 text-text focus:border-blue-500 outline-none text-base sm:text-sm font-bold text-center">
     <span class="text-text-muted text-sm font-bold shrink-0">€</span>
     <button type="button" onclick="this.closest('.taille-row').remove()"
-      class="w-8 h-8 shrink-0 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition">
+      class="w-8 h-8 shrink-0 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition" aria-label="Supprimer la taille">
       <i data-lucide="x" class="text-xs"></i>
     </button>
   `;
   container.appendChild(row);
+  window.lucide?.createIcons?.();
 };
 
 // Initialisation des comportements de formulaire (A11y/UX)

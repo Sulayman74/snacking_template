@@ -116,17 +116,9 @@ export class AdminConfigUI {
         return `
         <div class="day-row flex flex-col gap-2.5 p-3.5 sm:p-4 bg-surface rounded-2xl border border-line shadow-sm transition-all hover:border-blue-400 overflow-hidden">
             <div class="flex flex-wrap items-center justify-between gap-2.5 sm:gap-4">
-                <span class="w-20 sm:w-24 font-black text-text uppercase tracking-tight text-xs sm:text-sm shrink-0">${safeDay}</span>
+                <span class="day-name w-auto sm:w-24 font-black text-text uppercase tracking-tight text-xs sm:text-sm shrink-0 order-1">${safeDay}</span>
 
-                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ${isClosed ? "opacity-30 pointer-events-none" : ""}">
-                    <input type="time" class="hour-open px-2 py-1.5 sm:p-2 rounded-xl border border-line font-bold text-text bg-surface-2 focus:border-blue-500 outline-none text-xs sm:text-sm w-20 sm:w-24 text-center"
-                        value="${safeOpen}" ${isClosed ? "disabled" : ""}>
-                    <span class="text-text-muted font-black text-xs sm:text-sm">→</span>
-                    <input type="time" class="hour-close px-2 py-1.5 sm:p-2 rounded-xl border border-line font-bold text-text bg-surface-2 focus:border-blue-500 outline-none text-xs sm:text-sm w-20 sm:w-24 text-center"
-                        value="${safeClose}" ${isClosed ? "disabled" : ""}>
-                </div>
-
-                <div class="flex items-center gap-2 ml-auto shrink-0">
+                <div class="flex items-center gap-2 shrink-0 order-2 sm:order-3 sm:ml-auto">
                     <button type="button"
                         class="break-toggle text-[10px] px-2.5 py-1.5 rounded-full font-black border transition-all ${hasBreak && !isClosed ? "bg-blue-600 border-blue-600 text-white" : "bg-surface-2 border-line text-text-muted"}"
                         onclick="window.toggleBreakRow(this)"
@@ -141,17 +133,25 @@ export class AdminConfigUI {
                         <span class="text-[11px] sm:text-xs font-black text-text-muted group-hover:text-red-500 transition-colors">FERMÉ</span>
                     </label>
                 </div>
+
+                <div class="hours-range-container flex items-center gap-2 w-full sm:w-auto order-3 sm:order-2 shrink-0 ${isClosed ? "opacity-30 pointer-events-none" : ""}">
+                    <input type="time" class="hour-open flex-1 sm:flex-initial sm:w-28 px-3 py-2 sm:py-1.5 rounded-xl border border-line font-bold text-text bg-surface-2 focus:border-blue-500 outline-none text-base sm:text-sm text-center min-w-0"
+                        value="${safeOpen}" ${isClosed ? "disabled" : ""}>
+                    <span class="text-text-muted font-black text-xs sm:text-sm shrink-0">→</span>
+                    <input type="time" class="hour-close flex-1 sm:flex-initial sm:w-28 px-3 py-2 sm:py-1.5 rounded-xl border border-line font-bold text-text bg-surface-2 focus:border-blue-500 outline-none text-base sm:text-sm text-center min-w-0"
+                        value="${safeClose}" ${isClosed ? "disabled" : ""}>
+                </div>
             </div>
 
-            <div class="break-row flex flex-wrap items-center gap-2 sm:gap-3 pl-0 sm:pl-28 mt-1.5 transition-all ${hasBreak && !isClosed ? "" : "hidden opacity-0"}">
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <span class="text-[10px] font-black text-blue-500 uppercase">Fermeture</span>
-                    <input type="time" class="hour-break-start px-2 py-1.5 sm:p-2 rounded-xl border border-blue-500/30 font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 focus:border-blue-500 outline-none text-xs sm:text-sm w-20 sm:w-24 text-center"
+            <div class="break-row flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pl-0 sm:pl-28 mt-1.5 transition-all ${hasBreak && !isClosed ? "" : "hidden opacity-0"}">
+                <div class="flex items-center gap-2 flex-1 sm:flex-initial min-w-0">
+                    <span class="text-[10px] font-black text-blue-500 uppercase shrink-0 w-20 sm:w-auto">Fermeture</span>
+                    <input type="time" class="hour-break-start flex-1 sm:flex-initial sm:w-28 px-3 py-2 sm:py-1.5 rounded-xl border border-blue-500/30 font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 focus:border-blue-500 outline-none text-base sm:text-sm text-center min-w-0"
                         value="${safeBreakStart}" ${isClosed ? "disabled" : ""}>
                 </div>
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <span class="text-[10px] font-black text-blue-500 uppercase">Réouverture</span>
-                    <input type="time" class="hour-break-end px-2 py-1.5 sm:p-2 rounded-xl border border-blue-500/30 font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 focus:border-blue-500 outline-none text-xs sm:text-sm w-20 sm:w-24 text-center"
+                <div class="flex items-center gap-2 flex-1 sm:flex-initial min-w-0">
+                    <span class="text-[10px] font-black text-blue-500 uppercase shrink-0 w-20 sm:w-auto">Réouverture</span>
+                    <input type="time" class="hour-break-end flex-1 sm:flex-initial sm:w-28 px-3 py-2 sm:py-1.5 rounded-xl border border-blue-500/30 font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 focus:border-blue-500 outline-none text-base sm:text-sm text-center min-w-0"
                         value="${safeBreakEnd}" ${isClosed ? "disabled" : ""}>
                 </div>
             </div>
@@ -294,7 +294,7 @@ export class AdminConfigUI {
         e.preventDefault();
         const rows = this.hoursGrid.querySelectorAll(".day-row");
         const hours = Array.from(rows).map(row => ({
-            day: row.querySelector("span.font-black").innerText.trim(),
+            day: (row.querySelector(".day-name, span.font-black")?.textContent || "").trim(),
             open: row.querySelector(".hour-open").value,
             close: row.querySelector(".hour-close").value,
             closed: row.querySelector(".hour-closed").checked,
@@ -366,5 +366,9 @@ window.toggleDayClosed = (checkbox) => {
         breakToggle.classList.remove("opacity-30", "pointer-events-none");
     }
     
-    row.querySelector(".flex.items-center.gap-2")?.classList.toggle("opacity-30", checkbox.checked);
+    const hoursContainer = row.querySelector(".hours-range-container") || row.querySelector(".flex.items-center.gap-2");
+    if (hoursContainer) {
+        hoursContainer.classList.toggle("opacity-30", checkbox.checked);
+        hoursContainer.classList.toggle("pointer-events-none", checkbox.checked);
+    }
 };

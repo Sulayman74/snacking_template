@@ -65,3 +65,59 @@ describe("AdminConfigUI.handleContactSubmit (régression coordonnées)", () => {
     expect(adminStore.saveConfig).toHaveBeenCalledOnce();
   });
 });
+
+describe("AdminConfigUI.renderDayRow (horaires responsives)", () => {
+  it("génère une structure responsive avec classes flex/order adaptées au mobile", () => {
+    const ui = new AdminConfigUI();
+    const html = ui.renderDayRow({
+      day: "Lundi",
+      open: "11:30",
+      close: "22:30",
+      hasBreak: true,
+      breakStart: "14:30",
+      breakEnd: "18:00",
+      closed: false,
+    });
+
+    expect(html).toContain("day-name");
+    expect(html).toContain("hours-range-container");
+    expect(html).toContain("min-w-0");
+    expect(html).toContain("break-row");
+    expect(html).toContain("hour-open");
+    expect(html).toContain("hour-close");
+    expect(html).toContain("hour-break-start");
+    expect(html).toContain("hour-break-end");
+  });
+
+  it("handleHoursSubmit extrait correctement les horaires avec la structure responsive", () => {
+    document.body.innerHTML = `
+      <form id="config-hours-form">
+        <div id="config-hours-grid"></div>
+        <select id="config-last-order"><option value="15" selected>15 min</option></select>
+      </form>
+    `;
+    const ui = new AdminConfigUI();
+    const grid = document.getElementById("config-hours-grid");
+    grid.innerHTML = ui.renderDayRow({
+      day: "Mardi",
+      open: "11:00",
+      close: "23:00",
+      hasBreak: false,
+      breakStart: "15:00",
+      breakEnd: "17:00",
+      closed: false,
+    });
+
+    vi.spyOn(adminStore, "saveConfig").mockResolvedValue(true);
+    ui.handleHoursSubmit(new Event("submit"));
+
+    const savedHours = adminStore.state.config.hours;
+    expect(savedHours).toHaveLength(1);
+    expect(savedHours[0].day).toBe("Mardi");
+    expect(savedHours[0].open).toBe("11:00");
+    expect(savedHours[0].close).toBe("23:00");
+    expect(savedHours[0].closed).toBe(false);
+    expect(adminStore.state.config.lastOrderMinutesBeforeClose).toBe(15);
+  });
+});
+
