@@ -3,6 +3,7 @@ import { db, fs } from "../core/firebase.js";
 import { escapeHTML, showToast } from "../utils.js";
 import { getWeatherForCity } from "../services/weatherService.js";
 import { getInsight } from "../services/weatherInsights.js";
+import { analyzeProductSales } from "../services/productSalesInsights.js";
 
 class AdminMarketingUI {
     constructor() {
@@ -12,6 +13,9 @@ class AdminMarketingUI {
         this.weatherCard = document.getElementById("weather-insight-card");
         this.flashBtn = document.getElementById("btn-flash-offer");
         this.flashHint = document.getElementById("flash-offer-hint");
+        this.suggestionsWidget = document.getElementById("marketing-sales-suggestions-widget");
+        this.suggestionsList = document.getElementById("marketing-product-suggestions-list");
+        this.cachedSuggestions = [];
 
         this.init();
     }
@@ -23,6 +27,9 @@ class AdminMarketingUI {
         adminStore.addEventListener("admin-config-updated", () => this.renderWeatherInsight());
         // 🔥 Le bouton offre flash reflète la charge cuisine (rushMode serveur).
         adminStore.addEventListener("admin-kitchen-load-updated", () => this.renderFlashEligibility());
+        // 📊 Les suggestions de vente réagissent aux commandes et aux produits
+        adminStore.addEventListener("admin-sales-updated", () => this.renderProductSuggestions());
+        adminStore.addEventListener("admin-products-updated", () => this.renderProductSuggestions());
         if (this.form) {
             this.form.addEventListener("submit", (e) => this.handleSubmit(e));
         }
@@ -32,12 +39,14 @@ class AdminMarketingUI {
         // 1er essai au montage (si la config est déjà chargée)
         this.renderWeatherInsight();
         this.renderFlashEligibility();
+        this.renderProductSuggestions();
     }
 
     render() {
         this.renderTips();
         this.renderQuota();
         this.renderFlashEligibility();
+        this.renderProductSuggestions();
     }
 
     /**
@@ -319,6 +328,131 @@ class AdminMarketingUI {
             btn.disabled = false;
         }
     }
+
+    /**
+     * Affiche le widget interactif de suggestions de push basées sur les ventes (Compta ⇄ Push).
+     */
+    renderProductSuggestions() {
+        if (!this.suggestionsList) return;
+
+        const products = adminStore.state.products || [];
+        const sales = adminStore.state.sales || [];
+
+        const { totalCoreProducts, suggestions } = analyzeProductSales(products, sales);
+        this.cachedSuggestions = suggestions;
+
+        if (totalCoreProducts === 0) {
+            this.suggestionsList.innerHTML = `<p class="col-span-full text-xs text-text-muted italic py-3 text-center">Aucun plat principal configuré sur la carte.</p>`;
+            return;
+        }
+
+        if (suggestions.length === 0) {
+            this.suggestionsList.innerHTML = `
+                <div class="col-span-full p-4 bg-surface-2 rounded-2xl border border-line text-center space-y-1">
+                    <p class="text-xs font-bold text-text">Toutes vos ventes sont équilibrées ! 🎯</p>
+                    <p class="text-[11px] text-text-muted">Aucune non-vente critique détectée sur vos plats principaux.</p>
+                </div>`;
+            return;
+        }
+
+        const BADGE_STYLES = {
+            amber: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30",
+            emerald: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30",
+            orange: "bg-orange-500/15 text-orange-700 dark:text-orange-400 border border-orange-500/30",
+        };
+
+        this.suggestionsList.innerHTML = suggestions.map((s) => {
+            const badgeClass = BADGE_STYLES[s.badgeColor] || "bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30";
+            const safeImg = s.productImage ? escapeHTML(s.productImage) : "";
+            const isFlash = s.type === "flash";
+
+            return `
+                <div class="p-3.5 bg-surface-2 hover:bg-surface-3 transition rounded-2xl border border-line flex flex-col justify-between space-y-3">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeClass}">
+                                ${escapeHTML(s.badge)}
+                            </span>
+                            <span class="text-xs font-black text-text">${parseFloat(s.productPrice || 0).toFixed(2)} €</span>
+                        </div>
+
+                        <div class="flex items-start gap-2.5">
+                            ${safeImg ? `
+                                <img src="${safeImg}" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-line" alt="${escapeHTML(s.productName)}">
+                            ` : `
+                                <div class="w-11 h-11 rounded-xl bg-surface-3 flex items-center justify-center shrink-0 text-base">🍔</div>
+                            `}
+                            <div class="min-w-0 flex-1">
+                                <h4 class="text-xs font-black text-text line-clamp-1">${escapeHTML(s.productName)}</h4>
+                                <p class="text-[10px] text-text-muted font-bold">${escapeHTML(s.diagnostic)}</p>
+                            </div>
+                        </div>
+
+                        <p class="text-[11px] text-text-muted leading-relaxed italic border-l-2 border-line pl-2">
+                            "${escapeHTML(s.push.title)}"
+                        </p>
+                    </div>
+
+                    <button type="button"
+                            onclick="if(window.applyProductPushSuggestion) window.applyProductPushSuggestion('${escapeHTML(s.id)}')"
+                            class="w-full py-2.5 px-3 ${isFlash ? 'bg-orange-500 hover:bg-orange-600' : 'bg-primary hover:opacity-90'} text-on-primary rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-sm cursor-pointer">
+                        <i data-lucide="${isFlash ? 'zap' : 'send'}" class="w-3.5 h-3.5"></i>
+                        <span>${isFlash ? 'Pré-remplir l\'Offre Flash' : 'Pré-remplir ce Push'}</span>
+                    </button>
+                </div>
+            `;
+        }).join("");
+
+        window.lucide?.createIcons?.();
+    }
+
+    /**
+     * Pré-remplit le formulaire de push manuel en 1 clic avec les données de la suggestion.
+     * @param {string} suggestionId
+     */
+    applySuggestion(suggestionId) {
+        let suggestion = (this.cachedSuggestions || []).find((s) => s.id === suggestionId);
+        if (!suggestion) {
+            const { suggestions } = analyzeProductSales(adminStore.state.products || [], adminStore.state.sales || []);
+            suggestion = suggestions.find((s) => s.id === suggestionId);
+        }
+        if (!suggestion) {
+            showToast("Suggestion introuvable.", "error");
+            return;
+        }
+
+        const titleEl = document.getElementById("push-title");
+        const msgEl = document.getElementById("push-message");
+        const targetEl = document.getElementById("push-target");
+        const productLinkEl = document.getElementById("push-product-link");
+
+        if (titleEl) {
+            titleEl.value = suggestion.push.title;
+            titleEl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        if (msgEl) {
+            msgEl.value = suggestion.push.message;
+            msgEl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        if (targetEl && suggestion.push.target) {
+            targetEl.value = suggestion.push.target;
+            targetEl.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        if (productLinkEl && suggestion.productId) {
+            productLinkEl.value = suggestion.productId;
+            productLinkEl.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+
+        if (titleEl) {
+            titleEl.focus();
+            titleEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+        showToast(`Campagne pré-remplie pour « ${suggestion.productName} » ! Relisez et envoyez.`, "success");
+    }
 }
 
 export const adminMarketingUI = new AdminMarketingUI();
+
+// Global Bridge pour l'interface
+window.applyProductPushSuggestion = (id) => adminMarketingUI.applySuggestion(id);

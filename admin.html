@@ -399,6 +399,28 @@
                         <!-- 🌤️ Weather Insight (injecté par AdminMarketingUI / masqué si fail-safe) -->
                         <div id="weather-insight-card" class="hidden"></div>
 
+                        <!-- 🎯 Widget Recommandations Produits (Compta ⇄ Push) -->
+                        <div id="marketing-sales-suggestions-widget" class="bg-surface p-4 sm:p-6 rounded-3xl shadow-sm border border-line space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                        <i data-lucide="target" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-base sm:text-lg font-black text-text leading-tight">Opportunités Push basées sur vos Ventes</h3>
+                                        <p class="text-xs text-text-muted">Analysez vos ventes/non-ventes réelles et pré-remplissez une campagne en 1 clic.</p>
+                                    </div>
+                                </div>
+                                <span class="hidden sm:inline-flex text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                    Plats Clés
+                                </span>
+                            </div>
+
+                            <div id="marketing-product-suggestions-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <p class="col-span-full text-xs text-text-muted italic py-4 text-center">Analyse de vos ventes en cours...</p>
+                            </div>
+                        </div>
+
                         <form id="push-campaign-form" class="bg-surface p-4 sm:p-6 md:p-8 rounded-3xl shadow-sm border border-line space-y-5">
                             <h3 class="text-lg sm:text-xl font-black text-text mb-4 sm:mb-6 flex items-center gap-2">
                                 <i data-lucide="send" class="text-blue-500"></i> Nouvelle Campagne (Manuelle)
@@ -563,6 +585,22 @@
                     </h3>
                     <div id="compta-history-table">
                         <p class="text-center text-text-muted py-8">Chargement en cours...</p>
+                    </div>
+                </div>
+
+                <!-- 📊 Tendances Plats : Ventes & Non-Ventes -->
+                <div class="bg-surface rounded-2xl p-4 sm:p-6 shadow-sm border border-line" id="compta-product-trends-card">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+                            <i data-lucide="utensils" class="text-blue-500"></i> Tendances Plats : Ventes & Non-Ventes
+                        </h3>
+                        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                            Plats Principaux
+                        </span>
+                    </div>
+                    <p class="text-xs text-text-muted mb-4">Diagnostic de performance de vos plats (hors boissons, desserts et suppléments).</p>
+                    <div id="compta-product-trends-content">
+                        <p class="text-center text-text-muted py-6">Chargement des tendances...</p>
                     </div>
                 </div>
 

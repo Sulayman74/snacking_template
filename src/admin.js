@@ -261,6 +261,10 @@ window.switchAdminTab = (tabName, subTab = null) => {
 
     if (tabName === "marketing") {
       window.loadPushHistory();
+      // Charge les ventes en arrière-plan si pas encore chargées pour les suggestions
+      if (!adminStore.state.sales || adminStore.state.sales.length === 0) {
+        window.loadComptaDashboard?.();
+      }
       // Si on n'a pas encore de produits en mémoire, on les charge d'abord
       if (window.adminProducts.length === 0) {
         window.loadAdminProducts().then(() => {

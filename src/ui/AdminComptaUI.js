@@ -2,6 +2,7 @@ import { adminStore } from "../core/AdminStore.js";
 import { escapeHTML, showToast } from "../utils.js";
 import { functions, httpsCallable } from "../core/firebase.js";
 import { computeOrderRow } from "../services/comptaService.js";
+import { analyzeProductSales } from "../services/productSalesInsights.js";
 
 class AdminComptaUI {
     constructor() {
@@ -15,6 +16,7 @@ class AdminComptaUI {
 
     init() {
         adminStore.addEventListener("admin-sales-updated", () => this.render());
+        adminStore.addEventListener("admin-products-updated", () => this.renderProductTrends());
         // Le statut Stripe dépend de la config (admin-config-updated), pas des ventes.
         adminStore.addEventListener("admin-config-updated", () => this.renderStripeStatus());
     }
@@ -24,6 +26,7 @@ class AdminComptaUI {
         this.renderHistory();
         this.renderStripeStatus();
         this.refreshStripeStatus(); // statut live (une fois par chargement de page)
+        this.renderProductTrends();
     }
 
     /**
@@ -498,6 +501,86 @@ class AdminComptaUI {
                     : (order.paiement?.statut === "rembourse" ? `<p class="text-center text-xs font-bold text-text-muted">Commande remboursée.</p>` : "")}
             </div>
         </div>`;
+    }
+
+    /**
+     * Affiche l'encart synthétique de diagnostic Ventes / Non-Ventes pour les plats principaux.
+     */
+    renderProductTrends() {
+        const container = document.getElementById("compta-product-trends-content");
+        if (!container) return;
+
+        const products = adminStore.state.products || [];
+        const sales = adminStore.state.sales || [];
+
+        const { totalCoreProducts, stars, nonVentes } = analyzeProductSales(products, sales);
+
+        if (totalCoreProducts === 0) {
+            container.innerHTML = `<p class="text-xs text-text-muted italic py-4 text-center">Aucun plat principal configuré sur la carte.</p>`;
+            return;
+        }
+
+        if (sales.length === 0) {
+            container.innerHTML = `<p class="text-xs text-text-muted italic py-4 text-center">Sélectionnez une période avec des ventes pour afficher le diagnostic.</p>`;
+            return;
+        }
+
+        const topStar = stars[0];
+        const topNonVentes = nonVentes.slice(0, 3);
+
+        container.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Bloc Star -->
+                <div class="p-3.5 bg-surface-2 rounded-xl border border-line space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            ⭐ N°1 des Ventes (Locomotive)
+                        </span>
+                        ${topStar ? `<span class="text-xs font-black text-text">${topStar.unitsSold} vendu${topStar.unitsSold > 1 ? 's' : ''}</span>` : ''}
+                    </div>
+                    ${topStar ? `
+                        <div class="flex items-center gap-3">
+                            ${topStar.image ? `<img src="${escapeHTML(topStar.image)}" class="w-10 h-10 rounded-lg object-cover border border-line" alt="">` : '<div class="w-10 h-10 rounded-lg bg-surface-3 flex items-center justify-center text-sm">🍔</div>'}
+                            <div class="min-w-0 flex-1">
+                                <h4 class="text-sm font-black text-text truncate">${escapeHTML(topStar.nom)}</h4>
+                                <p class="text-[11px] text-text-muted font-bold">${topStar.revenue.toFixed(2)} € générés · Prix: ${parseFloat(topStar.prix).toFixed(2)} €</p>
+                            </div>
+                        </div>
+                    ` : `
+                        <p class="text-xs text-text-muted italic">Aucun plat vendu sur cette période.</p>
+                    `}
+                </div>
+
+                <!-- Bloc Non-Ventes -->
+                <div class="p-3.5 bg-surface-2 rounded-xl border border-line space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                            💤 Plats en Sommeil (0 vente)
+                        </span>
+                        <span class="text-xs font-black text-text">${nonVentes.length} plat${nonVentes.length > 1 ? 's' : ''}</span>
+                    </div>
+                    ${topNonVentes.length > 0 ? `
+                        <div class="space-y-1.5">
+                            ${topNonVentes.map(nv => `
+                                <div class="flex items-center justify-between text-xs font-bold py-0.5 border-b border-line/40 last:border-0">
+                                    <span class="text-text truncate pr-2">• ${escapeHTML(nv.nom)}</span>
+                                    <span class="text-text-muted shrink-0">${parseFloat(nv.prix).toFixed(2)} €</span>
+                                </div>
+                            `).join("")}
+                        </div>
+                    ` : `
+                        <p class="text-xs text-text-muted italic">Félicitations ! Tous vos plats principaux ont enregistré des ventes.</p>
+                    `}
+                </div>
+            </div>
+
+            <!-- Passerelle vers Marketing -->
+            <button type="button" onclick="if(window.switchAdminTab) window.switchAdminTab('marketing')" class="mt-4 w-full py-2.5 px-4 bg-surface-2 hover:bg-surface-3 rounded-xl border border-line text-xs font-bold text-primary-ink flex items-center justify-center gap-2 transition cursor-pointer">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>Voir les opportunités et lancer un Push sur ces plats →</span>
+            </button>
+        `;
+        window.lucide?.createIcons?.();
     }
 }
 
