@@ -13,14 +13,35 @@ import { escapeHTML } from "../utils.js";
 class AdminUpsellUI {
     constructor() {
         this.tableEl = document.getElementById("upsell-stats-table");
+        this.currentPage = 1;
+        this.pageSize = 5;
         this.init();
     }
 
     init() {
-        adminStore.addEventListener("admin-upsell-updated", () => this.render());
+        adminStore.addEventListener("admin-upsell-updated", () => {
+            this.currentPage = 1;
+            this.render();
+        });
+
+        document.addEventListener("click", (e) => {
+            const btn = e.target.closest("#upsell-stats-table [data-upsell-page]");
+            if (btn && !btn.disabled) {
+                const page = parseInt(btn.dataset.upsellPage, 10);
+                if (!isNaN(page)) {
+                    this.setPage(page);
+                }
+            }
+        });
+    }
+
+    setPage(page) {
+        this.currentPage = page;
+        this.render();
     }
 
     render() {
+        if (!this.tableEl) this.tableEl = document.getElementById("upsell-stats-table");
         if (!this.tableEl) return;
         const rows = adminStore.state.upsellStats || [];
 
@@ -32,8 +53,52 @@ class AdminUpsellUI {
                     <p class="text-text-muted text-sm mt-1">Les suggestions affichées et acceptées s'afficheront ici.</p>
                 </div>
             `;
+            window.lucide?.createIcons?.();
             return;
         }
+
+        const totalPages = Math.ceil(rows.length / this.pageSize) || 1;
+        if (this.currentPage > totalPages) this.currentPage = totalPages;
+        if (this.currentPage < 1) this.currentPage = 1;
+
+        const startIndex = (this.currentPage - 1) * this.pageSize;
+        const endIndex = Math.min(startIndex + this.pageSize, rows.length);
+        const pagedRows = rows.slice(startIndex, endIndex);
+
+        const paginationHtml = totalPages > 1 ? `
+            <div class="flex items-center justify-between gap-2 pt-4 border-t border-line mt-4 text-xs">
+                <span class="text-text-muted text-[11px] font-medium">
+                    Affichage <strong class="text-text">${startIndex + 1}–${endIndex}</strong> sur <strong class="text-text">${rows.length}</strong> produits
+                </span>
+                <div class="flex items-center gap-1.5">
+                    <button
+                        type="button"
+                        data-upsell-page="${this.currentPage - 1}"
+                        ${this.currentPage <= 1 ? "disabled" : ""}
+                        class="px-2.5 py-1.5 rounded-xl border border-line bg-surface-2 hover:bg-surface-3 disabled:opacity-40 disabled:cursor-not-allowed text-text font-bold transition flex items-center gap-1 text-xs"
+                        title="Page précédente"
+                        aria-label="Page précédente"
+                    >
+                        <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Précédent</span>
+                    </button>
+                    <span class="px-2.5 py-1 text-[11px] font-black text-text bg-surface-2 rounded-lg border border-line">
+                        ${this.currentPage} / ${totalPages}
+                    </span>
+                    <button
+                        type="button"
+                        data-upsell-page="${this.currentPage + 1}"
+                        ${this.currentPage >= totalPages ? "disabled" : ""}
+                        class="px-2.5 py-1.5 rounded-xl border border-line bg-surface-2 hover:bg-surface-3 disabled:opacity-40 disabled:cursor-not-allowed text-text font-bold transition flex items-center gap-1 text-xs"
+                        title="Page suivante"
+                        aria-label="Page suivante"
+                    >
+                        <span class="hidden sm:inline">Suivant</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        ` : "";
 
         this.tableEl.innerHTML = `
             <!-- Desktop Table -->
@@ -49,16 +114,19 @@ class AdminUpsellUI {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-line">
-                        ${rows.map((r) => this.renderRow(r)).join("")}
+                        ${pagedRows.map((r) => this.renderRow(r)).join("")}
                     </tbody>
                 </table>
             </div>
 
             <!-- Mobile Cards -->
             <div class="block md:hidden space-y-2.5">
-                ${rows.map((r) => this.renderMobileCard(r)).join("")}
+                ${pagedRows.map((r) => this.renderMobileCard(r)).join("")}
             </div>
+
+            ${paginationHtml}
         `;
+        window.lucide?.createIcons?.();
     }
 
     renderMobileCard(r) {
@@ -137,3 +205,4 @@ class AdminUpsellUI {
 }
 
 export const adminUpsellUI = new AdminUpsellUI();
+window.changeUpsellPage = (page) => adminUpsellUI.setPage(page);

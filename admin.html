@@ -563,13 +563,13 @@
                         <button onclick="setComptaDateRange('quarter')" class="whitespace-nowrap px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text text-xs md:text-sm font-bold rounded-lg transition border border-line shrink-0">Ce trimestre</button>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end w-full min-w-0">
-                        <div class="flex-1 min-w-0 w-full">
+                        <div class="flex-1 min-w-0 w-full overflow-hidden">
                             <label class="text-xs text-text-muted font-bold uppercase tracking-wider block mb-1">Du</label>
-                            <input type="date" id="compta-date-start" class="w-full max-w-full min-w-0 box-border block bg-surface-2 text-text border border-line rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="compta-date-start" class="appearance-none w-full max-w-full min-w-0 box-border block bg-surface-2 text-text border border-line rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <div class="flex-1 min-w-0 w-full">
+                        <div class="flex-1 min-w-0 w-full overflow-hidden">
                             <label class="text-xs text-text-muted font-bold uppercase tracking-wider block mb-1">Au</label>
-                            <input type="date" id="compta-date-end" class="w-full max-w-full min-w-0 box-border block bg-surface-2 text-text border border-line rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="compta-date-end" class="appearance-none w-full max-w-full min-w-0 box-border block bg-surface-2 text-text border border-line rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <button onclick="exportComptaCSV()" id="btn-export-compta" class="w-full sm:w-auto shrink-0 justify-center whitespace-nowrap bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md active:scale-95 flex items-center gap-2">
                             <i data-lucide="file-spreadsheet"></i> Exporter (CSV)
