@@ -367,28 +367,28 @@ class AdminMarketingUI {
             const isFlash = s.type === "flash";
 
             return `
-                <div class="p-3.5 bg-surface-2 hover:bg-surface-3 transition rounded-2xl border border-line flex flex-col justify-between space-y-3">
-                    <div class="space-y-2">
+                <div class="p-4 bg-surface-2 hover:bg-surface-3 transition rounded-2xl border border-line flex flex-col justify-between space-y-3.5 shadow-2xs">
+                    <div class="space-y-2.5">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeClass}">
+                            <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${badgeClass}">
                                 ${escapeHTML(s.badge)}
                             </span>
-                            <span class="text-xs font-black text-text">${parseFloat(s.productPrice || 0).toFixed(2)} €</span>
+                            <span class="text-xs sm:text-sm font-black text-text">${parseFloat(s.productPrice || 0).toFixed(2)} €</span>
                         </div>
 
-                        <div class="flex items-start gap-2.5">
+                        <div class="flex items-start gap-3">
                             ${safeImg ? `
-                                <img src="${safeImg}" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-line" alt="${escapeHTML(s.productName)}">
+                                <img src="${safeImg}" class="w-12 h-12 rounded-xl object-cover shrink-0 border border-line shadow-2xs" alt="${escapeHTML(s.productName)}">
                             ` : `
-                                <div class="w-11 h-11 rounded-xl bg-surface-3 flex items-center justify-center shrink-0 text-base">🍔</div>
+                                <div class="w-12 h-12 rounded-xl bg-surface-3 flex items-center justify-center shrink-0 text-lg">🍔</div>
                             `}
                             <div class="min-w-0 flex-1">
-                                <h4 class="text-xs font-black text-text line-clamp-1">${escapeHTML(s.productName)}</h4>
-                                <p class="text-[10px] text-text-muted font-bold">${escapeHTML(s.diagnostic)}</p>
+                                <h4 class="text-xs sm:text-sm font-black text-text line-clamp-2 leading-snug">${escapeHTML(s.productName)}</h4>
+                                <p class="text-xs text-text-muted font-medium mt-0.5">${escapeHTML(s.diagnostic)}</p>
                             </div>
                         </div>
 
-                        <p class="text-[11px] text-text-muted leading-relaxed italic border-l-2 border-line pl-2">
+                        <p class="text-xs text-text/85 leading-relaxed italic border-l-2 border-line pl-2.5">
                             "${escapeHTML(s.push.title)}"
                         </p>
                     </div>
